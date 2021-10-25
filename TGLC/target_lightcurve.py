@@ -1,5 +1,5 @@
-from SEBIT.source import *
-from SEBIT.ePSF import *
+from TGLC.source import *
+from TGLC.ePSF import *
 import numpy as np
 import matplotlib.pyplot as plt
 from os.path import exists
