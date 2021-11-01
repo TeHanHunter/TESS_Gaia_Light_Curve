@@ -1,5 +1,7 @@
 from TGLC.source import *
 from TGLC.ePSF import *
+from TGLC.local_background import *
+
 import numpy as np
 import matplotlib.pyplot as plt
 from os.path import exists
@@ -7,14 +9,15 @@ import pickle
 from wotan import flatten
 
 if __name__ == '__main__':
-    target = 'TIC_110602878'
+    target = input('Target identifier or coordinates: ') or 'NGC_7654'
     catalog = Catalogs.query_object(target, radius=0.0618625, catalog="TIC")
     coord = SkyCoord(catalog[0]['ra'], catalog[0]['dec'], unit="deg")
     sector_table = Tesscut.get_sectors(coord)
     print(sector_table)
 
-    preferred_path = '/mnt/c/Users/tehan/Desktop/TIC_110602878/'
-    sector = int(input('Which sector to work on?'))  # None if do not know
+    preferred_path = input('Local Directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654/'
+    sector = int(input('Which sector to work on?'))
+    # None if do not know
     # Fetch TESS and Gaia data
     source_exists = exists(f'{preferred_path}source_{target}_sector_{sector}.pkl')
     if source_exists:
@@ -22,7 +25,7 @@ if __name__ == '__main__':
             source = pickle.load(input_)
     else:
         with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
-            source = Source(target, size=30, sector=sector, search_gaia=True, mag_threshold=15)
+            source = Source(target, size=90, sector=sector, search_gaia=True, mag_threshold=15)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
     factor = 4
@@ -84,10 +87,33 @@ if __name__ == '__main__':
                     lightcurve[i, j] = source.flux[j][y_shift, x_shift] - \
                                        np.dot(r_A, epsf[j])[0:source.size ** 2].reshape(source.size, source.size)[
                                            y_shift, x_shift]
+                source.gaia['variability'][i] = np.std(lightcurve[i] / np.median(lightcurve[i]))
         np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
+        with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
+            pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+
+    # local background
+    do_bg = input(
+        'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')
+    while do_bg == 'y':
+        bg_target = input('Star designation to do local background: [format: "Gaia DR2 5615115246375112192"]') or bg_target
+        range = input(
+            'Range to search for comparison stars (arcsec): [default 0.0083 arcsec, approximately 3*3 pixels]') or 0.0083
+        target_index, chosen_index = comparison_star(source, target=bg_target, range=float(range))
+        bg_modification, bg_mod_err = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
+        if np.isnan(bg_modification):
+            print(f'!!!Not sufficient stars ({len(chosen_index)}) nearby, consider enlarge the range of search.')
+            continue
+        lightcurve[target_index] = lightcurve[target_index] - bg_modification
+        print(f'Found {len(chosen_index)} comparison stars. Background modification is {bg_modification}, with error {bg_mod_err}')
+        do_bg = input(
+            "Do you wish to refine another star's local background? [y/n] (recommended for dim star in a crowded region)")
+    # np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
 
     # plt.plot(source.time[:2000] % 5.352446, flatten_lc[:2000], '.', ms=2, label='Sector_34')
     # plt.plot(sect7[0] % 5.352446, sect7[1], '.', ms=2, label='Sector_7')
     # plt.legend()
     # plt.savefig(f'{preferred_path}lc_comparison.png', dpi=300)
     # plt.show()
+
+    # first, find close mag stars, then low variability, and lastly close.70 more computationally efficient

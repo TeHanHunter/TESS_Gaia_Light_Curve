@@ -15,7 +15,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 class Source(object):
     """
-    Get FFI cut using TESScut
+    Get FFI cut using TESScut and Gaia DR2 catalog
 
     Parameters
     ----------
