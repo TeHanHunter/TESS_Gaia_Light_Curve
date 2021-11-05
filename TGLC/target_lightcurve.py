@@ -15,8 +15,9 @@ if __name__ == '__main__':
     sector_table = Tesscut.get_sectors(coord)
     print(sector_table)
 
-    preferred_path = input('Local Directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654/'
-    sector = int(input('Which sector to work on?'))
+    preferred_path = input('Local directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654/'
+    sector = int(input('Which sector to work on?') or sector_table['sector'][0])
+    size = int(input('How many pixels to analysis? [default 30]') or 30)
     # None if do not know
     # Fetch TESS and Gaia data
     source_exists = exists(f'{preferred_path}source_{target}_sector_{sector}.pkl')
@@ -25,7 +26,7 @@ if __name__ == '__main__':
             source = pickle.load(input_)
     else:
         with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
-            source = Source(target, size=90, sector=sector, search_gaia=True, mag_threshold=15)
+            source = Source(target, size=size, sector=sector, search_gaia=True, mag_threshold=15)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
     factor = 4
@@ -76,8 +77,8 @@ if __name__ == '__main__':
     if lc_exists:
         lightcurve = np.load(f'{preferred_path}lc_{target}_sector_{sector}.npy')
     else:
-        lightcurve = np.zeros((min(100, len(source.gaia)), len(source.time)))
-        for i in range(0, min(100, len(source.gaia))):
+        lightcurve = np.zeros((min(10000, len(source.gaia)), len(source.time)))
+        for i in range(0, min(10000, len(source.gaia))):
             r_A = reduced_A(A, star_info, star_num=i)
             x_shift = x_round[i]
             y_shift = y_round[i]
@@ -98,13 +99,13 @@ if __name__ == '__main__':
     while do_bg == 'y':
         bg_target = input('Star designation to do local background: [format: "Gaia DR2 5615115246375112192"]') or bg_target
         range = input(
-            'Range to search for comparison stars (arcsec): [default 0.0083 arcsec, approximately 3*3 pixels]') or 0.0083
-        target_index, chosen_index = comparison_star(source, target=bg_target, range=float(range))
-        bg_modification, bg_mod_err = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
+            'Range to search for comparison stars (degree): [default 0.03 degree, approximately 12*12 pixels]') or 0.03
+        target_index, chosen_index = comparison_star(source, target=bg_target, range=float(range), variability=0.1)
+        bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
         if np.isnan(bg_modification):
             print(f'!!!Not sufficient stars ({len(chosen_index)}) nearby, consider enlarge the range of search.')
             continue
-        lightcurve[target_index] = lightcurve[target_index] - bg_modification
+        lightcurve[target_index] = lightcurve[target_index] + bg_modification
         print(f'Found {len(chosen_index)} comparison stars. Background modification is {bg_modification}, with error {bg_mod_err}')
         do_bg = input(
             "Do you wish to refine another star's local background? [y/n] (recommended for dim star in a crowded region)")

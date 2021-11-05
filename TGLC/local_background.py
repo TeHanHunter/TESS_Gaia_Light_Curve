@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def comparison_star(source, target=None, range=0.0083):
+def comparison_star(source, target=None, range=0.03, variability=0.01):
     """
     :param source: source object
     :param target: target designation with the format 'Gaia DR2 5615115246375112192'
@@ -14,9 +14,9 @@ def comparison_star(source, target=None, range=0.0083):
     target_ra = source.gaia['ra'][index]
     target_dec = source.gaia['dec'][index]
 
-    similar_mag = np.where(
-        np.logical_and(source.gaia['tess_mag'] >= target_mag - 1, source.gaia['tess_mag'] <= target_mag + 1))
-    low_variability = np.where(np.logical_and(source.gaia['variability'] > 0, source.gaia['variability'] <= 0.01))
+    similar_mag = np.where(source.gaia['tess_mag'] >= target_mag - 1)
+    low_variability = np.where(
+        np.logical_and(source.gaia['variability'] > 0, source.gaia['variability'] <= variability))
     best_comparison = np.intersect1d(similar_mag, low_variability)
     print(best_comparison)
     close_ra = np.where(
@@ -33,7 +33,8 @@ def bg_mod(source, lightcurve=None, sector=1, chosen_index=np.zeros(1)):
     x = int(source.gaia[f'Sector_{sector}_x'][0])
     y = int(source.gaia[f'Sector_{sector}_y'][0])
     bg_mod = np.zeros(len(chosen_index))
+    f_0 = np.median(source.flux[:, y, x])
     for i, index in enumerate(chosen_index):
-        bg_mod[i] = np.median(lightcurve[index]) - np.median(
-            source.flux[:, y, x] * source.gaia['tess_flux_ratio'][index])
-    return np.mean(bg_mod), np.std(bg_mod)
+        bg_mod[i] = (source.gaia['tess_flux_ratio'][index] * f_0 - np.median(lightcurve[index])) / (
+                    1 - source.gaia['tess_flux_ratio'][index])
+    return np.mean(bg_mod), np.std(bg_mod), bg_mod
