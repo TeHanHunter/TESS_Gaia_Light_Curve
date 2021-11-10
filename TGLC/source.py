@@ -54,6 +54,7 @@ class Source(object):
     flux_cut = None
     flux_cut_err = None
     inner_star = []
+    # TODO: when close to the edge of CCD, could have nan edge.
 
     def __init__(self, name, size=15, sector=None, search_gaia=True, mag_threshold=15):
         super(Source, self).__init__()

@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def comparison_star(source, target=None, range=0.03, variability=0.01):
+def comparison_star(source, target=None, search_range=0.03, variability=0.01):
     """
     :param source: source object
     :param target: target designation with the format 'Gaia DR2 5615115246375112192'
-    :param range: farthest acceptable comparison stars in arcsec
+    :param search_range: farthest acceptable comparison stars in arcsec
     :return: indexes of the comparison stars
     """
 
@@ -20,9 +20,9 @@ def comparison_star(source, target=None, range=0.03, variability=0.01):
     best_comparison = np.intersect1d(similar_mag, low_variability)
     print(best_comparison)
     close_ra = np.where(
-        np.logical_and(source.gaia['ra'] >= target_ra - range, source.gaia['ra'] <= target_ra + range))
+        np.logical_and(source.gaia['ra'] >= target_ra - search_range, source.gaia['ra'] <= target_ra + search_range))
     close_dec = np.where(
-        np.logical_and(source.gaia['dec'] >= target_dec - range, source.gaia['dec'] <= target_dec + range))
+        np.logical_and(source.gaia['dec'] >= target_dec - search_range, source.gaia['dec'] <= target_dec + search_range))
     close_target = np.intersect1d(close_ra, close_dec)
     print(close_target)
     chosen_index = np.intersect1d(best_comparison, close_target)
@@ -32,9 +32,9 @@ def comparison_star(source, target=None, range=0.03, variability=0.01):
 def bg_mod(source, lightcurve=None, sector=1, chosen_index=np.zeros(1)):
     x = int(source.gaia[f'Sector_{sector}_x'][0])
     y = int(source.gaia[f'Sector_{sector}_y'][0])
-    bg_mod = np.zeros(len(chosen_index))
+    bg_mod = np.zeros((len(chosen_index), len(source.time)))
     f_0 = np.median(source.flux[:, y, x])
     for i, index in enumerate(chosen_index):
-        bg_mod[i] = (source.gaia['tess_flux_ratio'][index] * f_0 - np.median(lightcurve[index])) / (
+        bg_mod[i] = (source.gaia['tess_flux_ratio'][index] * f_0 - lightcurve[index]) / (
                     1 - source.gaia['tess_flux_ratio'][index])
     return np.mean(bg_mod), np.std(bg_mod), bg_mod

@@ -89,7 +89,7 @@ def get_psf(source, factor=2):
     coord = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
     x_coord, y_coord = np.meshgrid(coord, coord)
 
-    dist = (x_coord ** 2 + y_coord ** 2) * 5e-5 # 5e-5
+    dist = (x_coord ** 2 + y_coord ** 2) * 5e-5
     # remove center compression
     remove_index = (np.arange(over_size) + 1) * over_size - 1
     diag = np.diag(np.ones(over_size ** 2))
