@@ -30,7 +30,7 @@ if __name__ == '__main__':
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
     factor = 4
-    regularization = 5e2  # the smaller, the smoother
+    regularization = 5e2 # 5e2  # the smaller, the smoother
     A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor)
     fit, fluxfit = fit_psf(A, source, over_size, time=0, regularization=regularization)  # 4e2
     plt.imshow(fit[0:-1].reshape(11 * factor + 1, 11 * factor + 1), origin='lower')
@@ -98,14 +98,14 @@ if __name__ == '__main__':
         'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')
     while do_bg == 'y':
         bg_target = input('Star designation to do local background: [format: "Gaia DR2 5615115246375112192"]') or bg_target
-        range = input(
+        search_range = input(
             'Range to search for comparison stars (degree): [default 0.03 degree, approximately 12*12 pixels]') or 0.03
-        target_index, chosen_index = comparison_star(source, target=bg_target, range=float(range), variability=0.1)
+        target_index, chosen_index = comparison_star(source, target=bg_target, search_range=float(search_range), variability=0.05)
         bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
         if np.isnan(bg_modification):
             print(f'!!!Not sufficient stars ({len(chosen_index)}) nearby, consider enlarge the range of search.')
             continue
-        lightcurve[target_index] = lightcurve[target_index] + bg_modification
+        # lightcurve[target_index] = lightcurve[target_index] + bg_modification
         print(f'Found {len(chosen_index)} comparison stars. Background modification is {bg_modification}, with error {bg_mod_err}')
         do_bg = input(
             "Do you wish to refine another star's local background? [y/n] (recommended for dim star in a crowded region)")
