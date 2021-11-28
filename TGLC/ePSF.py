@@ -52,6 +52,7 @@ def get_psf(source, factor=2):
     # nstars = source.nstars
     size = source.size  # TODO: must be even?
     flux_ratio = np.array(source.gaia['tess_flux_ratio'])
+    # flux_ratio = 0.9998 * flux_ratio + 0.0002
     x_shift = np.array(source.gaia[f'Sector_{source.sector}_x'])
     y_shift = np.array(source.gaia[f'Sector_{source.sector}_y'])
 
@@ -89,20 +90,21 @@ def get_psf(source, factor=2):
     coord = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
     x_coord, y_coord = np.meshgrid(coord, coord)
 
-    dist = (x_coord ** 2 + y_coord ** 2) * 5e-5
+    variance = psf_size
+    dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * 1e-4  # 1e-3
     # remove center compression
     remove_index = (np.arange(over_size) + 1) * over_size - 1
-    diag = np.diag(np.ones(over_size ** 2))
-    A_1 = diag - np.concatenate((np.zeros((over_size ** 2, 1)), diag[:, 0: - 1]), axis=-1)
-    A_1 = np.delete(A_1, remove_index, 0)
-    A_1 = np.concatenate((A_1, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
-    A_2 = diag - np.concatenate((np.zeros((over_size ** 2, over_size)), diag[:, 0: - over_size]), axis=-1)
-    A_2 = A_2[0: - over_size]
-    A_2 = np.concatenate((A_2, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
+    # diag = np.diag(np.ones(over_size ** 2))
+    # A_1 = diag - np.concatenate((np.zeros((over_size ** 2, 1)), diag[:, 0: - 1]), axis=-1)
+    # A_1 = np.delete(A_1, remove_index, 0)
+    # A_1 = np.concatenate((A_1, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
+    # A_2 = diag - np.concatenate((np.zeros((over_size ** 2, over_size)), diag[:, 0: - over_size]), axis=-1)
+    # A_2 = A_2[0: - over_size]
+    # A_2 = np.concatenate((A_2, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
     A_3 = np.diag(dist.flatten())
     A_3 = np.concatenate((A_3, (np.zeros((over_size ** 2, 1)))), axis=-1)
-    A = np.append(A, A_1, axis=0)
-    A = np.append(A, A_2, axis=0)
+    # A = np.append(A, A_1, axis=0)
+    # A = np.append(A, A_2, axis=0)
     A = np.append(A, A_3, axis=0)
     return A, star_info, over_size, x_round, y_round
 
@@ -116,10 +118,10 @@ def reduced_A(A, star_info, star_num=0):
 
 def fit_psf(A, source, over_size, time=0, regularization=8e2):
     b = source.flux[time].flatten()
-    b = np.append(b, np.zeros(2 * over_size * (over_size - 1)))
+    # b = np.append(b, np.zeros(2 * over_size * (over_size - 1)))
     b = np.append(b, np.zeros(over_size ** 2))
-    scaler = np.sqrt(source.flux_err[0].flatten() ** 2 + source.flux[time].flatten())
-    scaler = np.append(scaler, regularization * np.ones(2 * over_size * (over_size - 1)))
+    scaler = (source.flux_err[0].flatten() ** 2 + source.flux[time].flatten()) ** 0.8
+    # scaler = np.append(scaler, regularization * np.ones(2 * over_size * (over_size - 1)))
     scaler = np.append(scaler, np.ones(over_size ** 2))
     fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
     fluxfit = np.dot(A, fit)
