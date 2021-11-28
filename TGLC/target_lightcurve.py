@@ -97,34 +97,44 @@ if __name__ == '__main__':
                     lightcurve[i, j] = source.flux[j][y_shift, x_shift] - \
                                        np.dot(r_A, epsf[j])[0:source.size ** 2].reshape(source.size, source.size)[
                                            y_shift, x_shift]
-                source.gaia['variability'][i] = np.std(lightcurve[i] / np.median(lightcurve[i]))
+                # source.gaia['variability'][i] = np.std(lightcurve[i] / np.median(lightcurve[i]))
         np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
-        with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
-            pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
-
+        # with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
+        #     pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     print('Lightcurve finished. ')
     # local background
 
     do_bg = input(
         "Do you wish to refine the dim star's background? [y/n] (recommended for crowded region)")
     if do_bg == 'y':
+        mod_lightcurve = lightcurve
+        bg = np.zeros(10000)
+        for i in range(1, min(10000, len(source.gaia))):
+            bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=[i])
+            mod_lightcurve[i] = lightcurve[i] + bg_modification
+            bg[i] = bg_modification
+        np.save(f'{preferred_path}lc_mod_{target}_sector_{sector}.npy', mod_lightcurve)
 
+    plt.figure()
+    plt.plot(np.log10(np.median(lightcurve, axis=1)))
+    plt.plot(np.log10(np.median(mod_lightcurve, axis=1)))
+    plt.show()
 
-    do_bg = input(
-        'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')
-    while do_bg == 'y':
-        bg_target = input('Star designation to do local background: [format: "Gaia DR2 5615115246375112192"]') or bg_target
-        search_range = input(
-            'Range to search for comparison stars (degree): [default 0.03 degree, approximately 12*12 pixels]') or 0.03
-        target_index, chosen_index = comparison_star(source, target=bg_target, search_range=float(search_range), variability=0.05)
-        bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
-        if np.isnan(bg_modification):
-            print(f'!!!Not sufficient stars ({len(chosen_index)}) nearby, consider enlarge the range of search.')
-            continue
-        # lightcurve[target_index] = lightcurve[target_index] + bg_modification
-        print(f'Found {len(chosen_index)} comparison stars. Background modification is {bg_modification}, with error {bg_mod_err}')
-        do_bg = input(
-            "Do you wish to refine another star's local background? [y/n] (recommended for dim star in a crowded region)")
+    # do_bg = input(
+    #     'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')
+    # while do_bg == 'y':
+    #     bg_target = input('Star designation to do local background: [format: "Gaia DR2 5615115246375112192"]') or bg_target
+    #     search_range = input(
+    #         'Range to search for comparison stars (degree): [default 0.03 degree, approximately 12*12 pixels]') or 0.03
+    #     target_index, chosen_index = comparison_star(source, target=bg_target, search_range=float(search_range), variability=0.05)
+    #     bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
+    #     if np.isnan(bg_modification):
+    #         print(f'!!!Not sufficient stars ({len(chosen_index)}) nearby, consider enlarge the range of search.')
+    #         continue
+    #     # lightcurve[target_index] = lightcurve[target_index] + bg_modification
+    #     print(f'Found {len(chosen_index)} comparison stars. Background modification is {bg_modification}, with error {bg_mod_err}')
+    #     do_bg = input(
+    #         "Do you wish to refine another star's local background? [y/n] (recommended for dim star in a crowded region)")
     # np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
 
     # plt.plot(source.time[:2000] % 5.352446, flatten_lc[:2000], '.', ms=2, label='Sector_34')
