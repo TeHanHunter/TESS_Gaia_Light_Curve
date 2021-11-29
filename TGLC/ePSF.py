@@ -109,11 +109,18 @@ def get_psf(source, factor=2):
     return A, star_info, over_size, x_round, y_round
 
 
-def reduced_A(A, star_info, star_num=0):
-    info = star_info[star_num]
-    A_ = np.zeros(np.shape(A))
-    A_[info[0], info[1]] = info[2]
-    return A - A_
+# def reduced_A(A, star_info, star_num=0):
+#     info = star_info[star_num]
+#     A_ = np.zeros(np.shape(A))
+#     A_[info[0], info[1]] = info[2]
+#     return A - A_
+
+def reduced_A(A, source, star_info=[], x=0, y=0, star_num=0):
+    star_position = int(x + source.size * y)
+    A_ = np.zeros(np.shape(A)[-1])
+    index = np.where(star_info[star_num][0] == star_position)
+    A_[star_info[star_num][1][index]] = star_info[star_num][2][index]
+    return A[star_position, :] - A_
 
 
 def fit_psf(A, source, over_size, time=0, regularization=8e2):
@@ -123,10 +130,8 @@ def fit_psf(A, source, over_size, time=0, regularization=8e2):
     scaler = (source.flux_err[0].flatten() ** 2 + source.flux[time].flatten()) ** 0.8
     # scaler = np.append(scaler, regularization * np.ones(2 * over_size * (over_size - 1)))
     scaler = np.append(scaler, np.ones(over_size ** 2))
-    # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
-    # fluxfit = np.dot(A, fit)
-    res = lsq_linear(A / scaler[:, np.newaxis], b / scaler, lsmr_tol='auto', verbose=1)
-    fit = res[0]
+    fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
+    fluxfit = np.dot(A, fit)
     fluxfit = np.dot(A, fit)
     return fit, fluxfit
 
@@ -138,7 +143,7 @@ if __name__ == '__main__':
         source = pickle.load(input)
     factor = 4
     A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor)
-    fit, fluxfit = fit_psf(A, source, over_size, time=0, regularization=4e2) # 4e2
+    fit, fluxfit = fit_psf(A, source, over_size, time=0, regularization=4e2)  # 4e2
     plt.imshow(fit[0:-1].reshape(11 * factor + 1, 11 * factor + 1), origin='lower')
     # plt.savefig('/mnt/c/users/tehan/desktop/epsf_grid.png', dpi=300)
     plt.show()
@@ -168,7 +173,6 @@ if __name__ == '__main__':
     # plt.plot(lightcurve[i])
     # plt.plot(source.flux[:, y_shift, x_shift] - epsf[:, -1])
     # plt.show()
-
 
     fig, ax = plt.subplots(1, 3, figsize=(18, 5))
     plot0 = ax[0].imshow(np.log10(source.flux[0]),
