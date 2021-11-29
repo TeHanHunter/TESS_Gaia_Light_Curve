@@ -1,7 +1,7 @@
 import numpy as np
-from scipy import interpolate
 import matplotlib.pyplot as plt
 import pickle
+from scipy.optimize import lsq_linear
 
 
 def bilinear(x, y, repeat=25):
@@ -123,7 +123,10 @@ def fit_psf(A, source, over_size, time=0, regularization=8e2):
     scaler = (source.flux_err[0].flatten() ** 2 + source.flux[time].flatten()) ** 0.8
     # scaler = np.append(scaler, regularization * np.ones(2 * over_size * (over_size - 1)))
     scaler = np.append(scaler, np.ones(over_size ** 2))
-    fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
+    # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
+    # fluxfit = np.dot(A, fit)
+    res = lsq_linear(A / scaler[:, np.newaxis], b / scaler, lsmr_tol='auto', verbose=1)
+    fit = res[0]
     fluxfit = np.dot(A, fit)
     return fit, fluxfit
 

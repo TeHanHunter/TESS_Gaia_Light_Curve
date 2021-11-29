@@ -16,7 +16,7 @@ if __name__ == '__main__':
     sector_table = Tesscut.get_sectors(coord)
     print(sector_table)
 
-    preferred_path = input('Local directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/benchmark/'
+    preferred_path = input('Local directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/'
     sector = int(input('Which sector to work on?') or sector_table['sector'][0])
     size = int(input('How many pixels to analysis? [default 90]') or 90)
     # None if do not know
@@ -114,11 +114,10 @@ if __name__ == '__main__':
             mod_lightcurve[i] = lightcurve[i] + bg_modification
             bg[i] = bg_modification
         np.save(f'{preferred_path}lc_mod_{target}_sector_{sector}.npy', mod_lightcurve)
-
-    plt.figure()
-    plt.plot(np.log10(np.median(lightcurve, axis=1)))
-    plt.plot(np.log10(np.median(mod_lightcurve, axis=1)))
-    plt.show()
+        plt.figure()
+        plt.plot(np.log10(np.median(lightcurve, axis=1)))
+        plt.plot(np.log10(np.median(mod_lightcurve, axis=1)))
+        plt.show()
 
     # do_bg = input(
     #     'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')
