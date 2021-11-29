@@ -16,7 +16,7 @@ if __name__ == '__main__':
     sector_table = Tesscut.get_sectors(coord)
     print(sector_table)
 
-    preferred_path = input('Local directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/benchmark/'
+    preferred_path = input('Local directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/'
     sector = int(input('Which sector to work on?') or sector_table['sector'][0])
     size = int(input('How many pixels to analysis? [default 90]') or 90)
     # None if do not know
@@ -67,7 +67,6 @@ if __name__ == '__main__':
     plt.title('Normalized residual')
     plt.savefig(f'{preferred_path}normalized_residual.png', dpi=300)
 
-
     # Fit ePSF
     epsf_exists = exists(f'{preferred_path}epsf_{target}_sector_{sector}.npy')
     if epsf_exists:
@@ -87,26 +86,25 @@ if __name__ == '__main__':
         lightcurve = np.load(f'{preferred_path}lc_{target}_sector_{sector}.npy')
     else:
         lightcurve = np.zeros((min(10000, len(source.gaia)), len(source.time)))
-        for i in range(0, min(10000, len(source.gaia))):
-            r_A = reduced_A(A, star_info, star_num=i)
-            x_shift = x_round[i]
-            y_shift = y_round[i]
-            if 0 <= x_shift <= source.size - 1 and 0 <= y_shift <= source.size - 1:
-                print(i)
+        for i in tqdm(range(0, min(10000, len(source.gaia)))):
+            r_A = reduced_A(A, source, star_info = star_info, x=x_round[i], y=y_round[i], star_num=i)
+
+            if 0 <= x_round[i] <= source.size - 1 and 0 <= y_round[i] <= source.size - 1:
                 for j in range(len(source.time)):
-                    lightcurve[i, j] = source.flux[j][y_shift, x_shift] - \
-                                       np.dot(r_A, epsf[j])[0:source.size ** 2].reshape(source.size, source.size)[
-                                           y_shift, x_shift]
+                    lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, epsf[j])
                 # source.gaia['variability'][i] = np.std(lightcurve[i] / np.median(lightcurve[i]))
         np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
         # with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
         #     pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     print('Lightcurve finished. ')
-    # local background
 
+    # local background
     do_bg = input(
         "Do you wish to refine the dim star's background? [y/n] (recommended for crowded region)")
     if do_bg == 'y':
+
+        plt.figure()
+        plt.plot(np.log10(np.median(lightcurve, axis=1)))
         mod_lightcurve = lightcurve
         bg = np.zeros(10000)
         for i in range(1, min(10000, len(source.gaia))):
@@ -114,11 +112,8 @@ if __name__ == '__main__':
             mod_lightcurve[i] = lightcurve[i] + bg_modification
             bg[i] = bg_modification
         np.save(f'{preferred_path}lc_mod_{target}_sector_{sector}.npy', mod_lightcurve)
-
-    plt.figure()
-    plt.plot(np.log10(np.median(lightcurve, axis=1)))
-    plt.plot(np.log10(np.median(mod_lightcurve, axis=1)))
-    plt.show()
+        plt.plot(np.log10(np.median(mod_lightcurve, axis=1)))
+        plt.show()
 
     # do_bg = input(
     #     'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')

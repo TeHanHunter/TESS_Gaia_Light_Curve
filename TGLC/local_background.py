@@ -37,4 +37,5 @@ def bg_mod(source, lightcurve=None, sector=1, chosen_index=np.zeros(1)):
     for i, index in enumerate(chosen_index):
         bg_mod[i] = (source.gaia['tess_flux_ratio'][index] * f_0 - lightcurve[index]) / (
                     1 - source.gaia['tess_flux_ratio'][index])
+
     return np.mean(bg_mod), np.std(bg_mod), bg_mod
