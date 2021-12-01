@@ -1,7 +1,7 @@
 import numpy as np
-from scipy import interpolate
 import matplotlib.pyplot as plt
 import pickle
+from scipy.optimize import lsq_linear
 
 
 def bilinear(x, y, repeat=25):
@@ -52,6 +52,7 @@ def get_psf(source, factor=2):
     # nstars = source.nstars
     size = source.size  # TODO: must be even?
     flux_ratio = np.array(source.gaia['tess_flux_ratio'])
+    # flux_ratio = 0.9998 * flux_ratio + 0.0002
     x_shift = np.array(source.gaia[f'Sector_{source.sector}_x'])
     y_shift = np.array(source.gaia[f'Sector_{source.sector}_y'])
 
@@ -89,39 +90,48 @@ def get_psf(source, factor=2):
     coord = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
     x_coord, y_coord = np.meshgrid(coord, coord)
 
-    dist = (x_coord ** 2 + y_coord ** 2) * 5e-5
+    variance = psf_size
+    dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * 1e-4  # 1e-3
     # remove center compression
     remove_index = (np.arange(over_size) + 1) * over_size - 1
-    diag = np.diag(np.ones(over_size ** 2))
-    A_1 = diag - np.concatenate((np.zeros((over_size ** 2, 1)), diag[:, 0: - 1]), axis=-1)
-    A_1 = np.delete(A_1, remove_index, 0)
-    A_1 = np.concatenate((A_1, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
-    A_2 = diag - np.concatenate((np.zeros((over_size ** 2, over_size)), diag[:, 0: - over_size]), axis=-1)
-    A_2 = A_2[0: - over_size]
-    A_2 = np.concatenate((A_2, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
+    # diag = np.diag(np.ones(over_size ** 2))
+    # A_1 = diag - np.concatenate((np.zeros((over_size ** 2, 1)), diag[:, 0: - 1]), axis=-1)
+    # A_1 = np.delete(A_1, remove_index, 0)
+    # A_1 = np.concatenate((A_1, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
+    # A_2 = diag - np.concatenate((np.zeros((over_size ** 2, over_size)), diag[:, 0: - over_size]), axis=-1)
+    # A_2 = A_2[0: - over_size]
+    # A_2 = np.concatenate((A_2, (np.zeros((over_size * (over_size - 1), 1)))), axis=-1)
     A_3 = np.diag(dist.flatten())
     A_3 = np.concatenate((A_3, (np.zeros((over_size ** 2, 1)))), axis=-1)
-    A = np.append(A, A_1, axis=0)
-    A = np.append(A, A_2, axis=0)
+    # A = np.append(A, A_1, axis=0)
+    # A = np.append(A, A_2, axis=0)
     A = np.append(A, A_3, axis=0)
     return A, star_info, over_size, x_round, y_round
 
 
-def reduced_A(A, star_info, star_num=0):
-    info = star_info[star_num]
-    A_ = np.zeros(np.shape(A))
-    A_[info[0], info[1]] = info[2]
-    return A - A_
+# def reduced_A(A, star_info, star_num=0):
+#     info = star_info[star_num]
+#     A_ = np.zeros(np.shape(A))
+#     A_[info[0], info[1]] = info[2]
+#     return A - A_
+
+def reduced_A(A, source, star_info=[], x=0, y=0, star_num=0):
+    star_position = int(x + source.size * y)
+    A_ = np.zeros(np.shape(A)[-1])
+    index = np.where(star_info[star_num][0] == star_position)
+    A_[star_info[star_num][1][index]] = star_info[star_num][2][index]
+    return A[star_position, :] - A_
 
 
 def fit_psf(A, source, over_size, time=0, regularization=8e2):
     b = source.flux[time].flatten()
-    b = np.append(b, np.zeros(2 * over_size * (over_size - 1)))
+    # b = np.append(b, np.zeros(2 * over_size * (over_size - 1)))
     b = np.append(b, np.zeros(over_size ** 2))
-    scaler = np.sqrt(source.flux_err[0].flatten() ** 2 + source.flux[time].flatten())
-    scaler = np.append(scaler, regularization * np.ones(2 * over_size * (over_size - 1)))
+    scaler = (source.flux_err[0].flatten() ** 2 + source.flux[time].flatten()) ** 0.8
+    # scaler = np.append(scaler, regularization * np.ones(2 * over_size * (over_size - 1)))
     scaler = np.append(scaler, np.ones(over_size ** 2))
     fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
+    fluxfit = np.dot(A, fit)
     fluxfit = np.dot(A, fit)
     return fit, fluxfit
 
@@ -133,7 +143,7 @@ if __name__ == '__main__':
         source = pickle.load(input)
     factor = 4
     A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor)
-    fit, fluxfit = fit_psf(A, source, over_size, time=0, regularization=4e2) # 4e2
+    fit, fluxfit = fit_psf(A, source, over_size, time=0, regularization=4e2)  # 4e2
     plt.imshow(fit[0:-1].reshape(11 * factor + 1, 11 * factor + 1), origin='lower')
     # plt.savefig('/mnt/c/users/tehan/desktop/epsf_grid.png', dpi=300)
     plt.show()
@@ -163,7 +173,6 @@ if __name__ == '__main__':
     # plt.plot(lightcurve[i])
     # plt.plot(source.flux[:, y_shift, x_shift] - epsf[:, -1])
     # plt.show()
-
 
     fig, ax = plt.subplots(1, 3, figsize=(18, 5))
     plot0 = ax[0].imshow(np.log10(source.flux[0]),

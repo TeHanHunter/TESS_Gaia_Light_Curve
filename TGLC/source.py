@@ -180,7 +180,6 @@ class Source(object):
         Below is dividing the cut into 9 regions: center, 4 corners and 4 edges. By deciding which
         region a star is at, returns a cut of its neighborhood.
         """
-
         self.z = np.arange(121)
         x = self.gaia[f'Sector_{self.sector}_x']
         y = self.gaia[f'Sector_{self.sector}_y']
