@@ -18,7 +18,7 @@ def sector(target='', print_sector=True):
     return sector_table
 
 
-def ffi(target='', sector=1, local_directory=''):
+def ffi(target='', sector=1, local_directory='', size=90):
     source_exists = exists(f'{local_directory}source_{target}_sector_{sector}.pkl')
     if source_exists:
         with open(f'{local_directory}source_{target}_sector_{sector}.pkl', 'rb') as input_:
@@ -77,9 +77,10 @@ def epsf(factor=4, local_directory='', num_stars=10000, edge_compression=1e-4, p
 if __name__ == '__main__':
     target = 'NGC_7654'  # Target identifier or coordinates
     sector_table = sector(target=target)
-
-    local_directory = '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/'
+    local_directory = os.path.join(os.getcwd(), f'{target}')
+    if not os.path.exists(local_directory):
+        os.makedirs(local_directory)
     sector = int(sector_table['sector'][0])
     size = 90  # int
-    source = ffi(target=target, sector=sector, local_directory=local_directory)
+    source = ffi(target=target, sector=sector, size=size, local_directory=local_directory)
     flatten_lc = epsf(factor=4, local_directory=local_directory)
