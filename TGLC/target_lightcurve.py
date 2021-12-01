@@ -2,140 +2,84 @@ from TGLC.source import *
 from TGLC.ePSF import *
 from TGLC.local_background import *
 
-import numpy as np
-import matplotlib.pyplot as plt
-from os.path import exists
 import pickle
-from tqdm import tqdm
+import numpy as np
+from os.path import exists
+from tqdm import trange
 from wotan import flatten
 
-if __name__ == '__main__':
-    target = input('Target identifier or coordinates: ') or 'NGC_7654'
+
+def sector(target='', print_sector=True):
     catalog = Catalogs.query_object(target, radius=0.0618625, catalog="TIC")
     coord = SkyCoord(catalog[0]['ra'], catalog[0]['dec'], unit="deg")
     sector_table = Tesscut.get_sectors(coord)
-    print(sector_table)
+    if print_sector:
+        print(sector_table)
+    return sector_table
 
-    preferred_path = input('Local directory to save results: ') or '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/'
-    sector = int(input('Which sector to work on?') or sector_table['sector'][0])
-    size = int(input('How many pixels to analysis? [default 90]') or 90)
-    # None if do not know
-    # Fetch TESS and Gaia data
-    source_exists = exists(f'{preferred_path}source_{target}_sector_{sector}.pkl')
+
+def ffi(target='', sector=1, local_directory=''):
+    source_exists = exists(f'{local_directory}source_{target}_sector_{sector}.pkl')
     if source_exists:
-        with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'rb') as input_:
+        with open(f'{local_directory}source_{target}_sector_{sector}.pkl', 'rb') as input_:
             source = pickle.load(input_)
+        print('Loaded ffi from directory. ')
     else:
-        with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
+        with open(f'{local_directory}source_{target}_sector_{sector}.pkl', 'wb') as output:
             source = Source(target, size=size, sector=sector, search_gaia=True, mag_threshold=15)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+    return source
 
-    factor = 4
-    regularization = 1e10  # 5e2  # the smaller, the smoother
-    A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor)
-    fit, fluxfit = fit_psf(A, source, over_size, time=0, regularization=regularization)  # 4e2
-    plt.imshow(fit[0:-1].reshape(11 * factor + 1, 11 * factor + 1), origin='lower')
-    # plt.title(str(regularization))
-    plt.savefig(f'{preferred_path}epsf_grid_sector_{sector}.png', dpi=300)
 
-    # Plots
-    # ePSF fit
-    fig, ax = plt.subplots(1, 3, figsize=(18, 5))
-    plot0 = ax[0].imshow(np.log10(source.flux[0]),
-                         vmin=np.min(np.log10(source.flux[0])),
-                         vmax=np.max(np.log10(source.flux[0])),
-                         origin='lower')
-    plot1 = ax[1].imshow(np.log10(fluxfit[0:source.size ** 2].reshape(source.size, source.size)),
-                         vmin=np.min(np.log10(source.flux[0])),
-                         vmax=np.max(np.log10(source.flux[0])),
-                         origin='lower')
-    residual = (source.flux[0] - fluxfit[0:source.size ** 2].reshape(source.size, source.size))
-    plot2 = ax[2].imshow(residual, origin='lower', vmin=- np.max(residual), vmax=np.max(residual), cmap='RdBu')
-    ax[0].set_title('Raw Data counts in log_10')
-    ax[1].set_title('ePSF Model in log_10')
-    ax[2].set_title('Residual')
-    fig.colorbar(plot0, ax=ax[0])
-    fig.colorbar(plot1, ax=ax[1])
-    fig.colorbar(plot2, ax=ax[2])
-    plt.savefig(f'{preferred_path}{target}_epsf_residual_sector_{sector}.png', dpi=300)
-
-    plt.figure()
-    normalized_residual = residual / source.flux[0]
-    plt.imshow(normalized_residual, origin='lower', cmap='RdBu', vmin=- np.max(np.abs(normalized_residual)),
-               vmax=np.max(np.abs(normalized_residual)))
-    plt.colorbar()
-    plt.title('Normalized residual')
-    plt.savefig(f'{preferred_path}normalized_residual.png', dpi=300)
-
-    # Fit ePSF
-    epsf_exists = exists(f'{preferred_path}epsf_{target}_sector_{sector}.npy')
+def epsf(factor=4, local_directory='', num_stars=10000, edge_compression=1e-4, power=0.8, flat=True, return_epsf=False):
+    A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor, edge_compression=edge_compression)
+    epsf_exists = exists(f'{local_directory}epsf_{target}_sector_{sector}.npy')
     if epsf_exists:
-        epsf = np.load(f'{preferred_path}epsf_{target}_sector_{sector}.npy')
+        e_psf = np.load(f'{local_directory}epsf_{target}_sector_{sector}.npy')
+        print('Loaded ePSF from directory. ')
     else:
-        epsf = np.zeros((len(source.time), (11 * factor + 1) ** 2 + 1))
-        for i in tqdm(range(len(source.time))):
-            fit, fluxfit = fit_psf(A, source, over_size, time=i, regularization=regularization)
-            epsf[i] = fit
-        np.save(f'{preferred_path}epsf_{target}_sector_{sector}.npy', epsf)
-
-    print('ePSF finished. ')
-
-    # Get lightcurves
-    lc_exists = exists(f'{preferred_path}lc_{target}_sector_{sector}.npy')
+        print('Fitting ePSF for all epochs... ')
+        e_psf = np.zeros((len(source.time), (11 * factor + 1) ** 2 + 1))
+        for i in trange(len(source.time), desc='Fitting ePSF'):
+            fit, fluxfit = fit_psf(A, source, over_size, power=power, time=i)
+            e_psf[i] = fit
+    np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
+    lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     if lc_exists:
-        lightcurve = np.load(f'{preferred_path}lc_{target}_sector_{sector}.npy')
+        lightcurve = np.load(f'{local_directory}lc_{target}_sector_{sector}.npy')
+        print('Loaded lc from directory. ')
     else:
-        lightcurve = np.zeros((min(10000, len(source.gaia)), len(source.time)))
-        for i in tqdm(range(0, min(10000, len(source.gaia)))):
-            r_A = reduced_A(A, source, star_info = star_info, x=x_round[i], y=y_round[i], star_num=i)
-
+        lightcurve = np.zeros((min(num_stars, len(source.gaia)), len(source.time)))
+        for i in trange(0, min(num_stars, len(source.gaia)), desc='Fitting lc'):
+            r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
             if 0 <= x_round[i] <= source.size - 1 and 0 <= y_round[i] <= source.size - 1:
                 for j in range(len(source.time)):
-                    lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, epsf[j])
-                # source.gaia['variability'][i] = np.std(lightcurve[i] / np.median(lightcurve[i]))
-        np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
-        # with open(f'{preferred_path}source_{target}_sector_{sector}.pkl', 'wb') as output:
-        #     pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
-    print('Lightcurve finished. ')
+                    lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
+        np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
 
-    # local background
-    do_bg = input(
-        "Do you wish to refine the dim star's background? [y/n] (recommended for crowded region)")
-    if do_bg == 'y':
+    mod_lightcurve = lightcurve
+    for i in trange(1, min(num_stars, len(source.gaia)), desc='Adjusting background'):
+        bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=[i])
+        mod_lightcurve[i] = lightcurve[i] + bg_modification
+    np.save(f'{local_directory}lc_mod_{target}_sector_{sector}.npy', mod_lightcurve)
 
-        plt.figure()
-        plt.plot(np.log10(np.median(lightcurve, axis=1)))
-        mod_lightcurve = lightcurve
-        bg = np.zeros(10000)
-        for i in range(1, min(10000, len(source.gaia))):
-            bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=[i])
-            mod_lightcurve[i] = lightcurve[i] + bg_modification
-            bg[i] = bg_modification
-        np.save(f'{preferred_path}lc_mod_{target}_sector_{sector}.npy', mod_lightcurve)
-        plt.plot(np.log10(np.median(mod_lightcurve, axis=1)))
-        plt.show()
+    if flat:
+        flatten_lc = np.zeros(np.shape(lightcurve))
+        for i in trange(np.shape(lightcurve)[0], desc='Falttening lc'):
+            flatten_lc[i] = flatten(source.time, mod_lightcurve[i] / np.median(mod_lightcurve[i]), window_length=1,
+                                    method='biweight', return_trend=False)
+        np.save(f'{local_directory}lc_flatten_{target}_sector_{sector}.npy', flatten_lc)
+        return flatten_lc, e_psf if return_epsf else flatten_lc
+    else:
+        return mod_lightcurve, e_psf if return_epsf else mod_lightcurve
 
-    # do_bg = input(
-    #     'Do you wish to refine the local background of a specific target? [y/n] (recommended for dim star in a crowded region)')
-    # while do_bg == 'y':
-    #     bg_target = input('Star designation to do local background: [format: "Gaia DR2 5615115246375112192"]') or bg_target
-    #     search_range = input(
-    #         'Range to search for comparison stars (degree): [default 0.03 degree, approximately 12*12 pixels]') or 0.03
-    #     target_index, chosen_index = comparison_star(source, target=bg_target, search_range=float(search_range), variability=0.05)
-    #     bg_modification, bg_mod_err, bg_arr = bg_mod(source, lightcurve=lightcurve, sector=sector, chosen_index=chosen_index)
-    #     if np.isnan(bg_modification):
-    #         print(f'!!!Not sufficient stars ({len(chosen_index)}) nearby, consider enlarge the range of search.')
-    #         continue
-    #     # lightcurve[target_index] = lightcurve[target_index] + bg_modification
-    #     print(f'Found {len(chosen_index)} comparison stars. Background modification is {bg_modification}, with error {bg_mod_err}')
-    #     do_bg = input(
-    #         "Do you wish to refine another star's local background? [y/n] (recommended for dim star in a crowded region)")
-    # np.save(f'{preferred_path}lc_{target}_sector_{sector}.npy', lightcurve)
 
-    # plt.plot(source.time[:2000] % 5.352446, flatten_lc[:2000], '.', ms=2, label='Sector_34')
-    # plt.plot(sect7[0] % 5.352446, sect7[1], '.', ms=2, label='Sector_7')
-    # plt.legend()
-    # plt.savefig(f'{preferred_path}lc_comparison.png', dpi=300)
-    # plt.show()
+if __name__ == '__main__':
+    target = 'NGC_7654'  # Target identifier or coordinates
+    sector_table = sector(target=target)
 
-    # first, find close mag stars, then low variability, and lastly close.70 more computationally efficient
+    local_directory = '/mnt/c/Users/tehan/Desktop/NGC_7654_mod_gaia/'
+    sector = int(sector_table['sector'][0])
+    size = 90  # int
+    source = ffi(target=target, sector=sector, local_directory=local_directory)
+    flatten_lc = epsf(factor=4, local_directory=local_directory)

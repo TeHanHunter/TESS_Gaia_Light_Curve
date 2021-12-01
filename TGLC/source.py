@@ -57,6 +57,19 @@ class Source(object):
     # TODO: when close to the edge of CCD, could have nan edge.
 
     def __init__(self, name, size=15, sector=None, search_gaia=True, mag_threshold=15):
+        """
+
+        :param name: str or float
+        Target identifier (e.g. "NGC 7654" or "M31"),
+        or coordinate in the format of ra dec (e.g. 351.40691 61.646657)
+        :param size: int, optional
+        The side length in pixel  of TESScut image
+        :param sector: int, optional
+        The sector for which data should be returned. If None, returns the earliest observed sector
+        :param search_gaia: boolean, optional
+        Whether to search gaia targets in the field
+        :param mag_threshold:
+        """
         super(Source, self).__init__()
         self.name = name
         self.size = size

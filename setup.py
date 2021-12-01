@@ -1,6 +1,6 @@
 import sys
 import setuptools
-from TGLC.version import __version__
+from TGLC.__init__ import __version__
 
 sys.path.insert(0, "TGLC")
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -19,6 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires= ['numpy', 'astropy', 'astroquery', 'matplotlib', 'pickle', 'tqdm', 'wotan'],
     packages=setuptools.find_packages(include=['TGLC', 'TGLC.*']),
     python_requires=">=3.6",
 )
