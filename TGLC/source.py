@@ -1,6 +1,7 @@
 import os
 import sys
 import warnings
+import tqdm
 import numpy as np
 from astropy.wcs import WCS
 from astroquery.mast import Tesscut
@@ -80,6 +81,7 @@ class Source(object):
         dec = catalog[0]['dec']
         coord = SkyCoord(ra, dec, unit="deg")
         hdulist = Tesscut.get_cutouts(coord, self.size)
+        print('a')
         sector_table = Tesscut.get_sectors(coord)
         self.sector_table = sector_table
         if sector is None:
@@ -101,6 +103,7 @@ class Source(object):
         self.time = data_time
         self.flux = data_flux
         self.flux_err = data_flux_err
+        print('b')
         if search_gaia:
             catalogdata = Catalogs.query_object(self.name, radius=(self.size + 2) * 21 * 0.707 / 3600, catalog="Gaia")
             # catalogdata.sort("phot_g_mean_mag")
@@ -110,6 +113,7 @@ class Source(object):
             y = np.zeros(len(gaia_targets))
             tess_mag = np.zeros(len(gaia_targets))
             for i, designation in enumerate(gaia_targets['designation']):
+                print('i')
                 pixel = self.wcs.all_world2pix(
                     np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
                 x[i] = pixel[0][0]
@@ -213,4 +217,4 @@ class Source(object):
 
 if __name__ == '__main__':
     # target = Source('NGC 7654')
-    source = Source('351.1378304925981 61.311247660185245', size=3, sector=24)
+    source = Source('NGC_7654', size=15, sector=1)

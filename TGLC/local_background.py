@@ -30,8 +30,8 @@ def comparison_star(source, target=None, search_range=0.03, variability=0.01):
 
 
 def bg_mod(source, lightcurve=None, sector=1, chosen_index=np.zeros(1)):
-    x = int(source.gaia[f'Sector_{sector}_x'][0])
-    y = int(source.gaia[f'Sector_{sector}_y'][0])
+    x = int(source.gaia[f'sector_{sector}_x'][0])
+    y = int(source.gaia[f'sector_{sector}_y'][0])
     bg_mod = np.zeros((len(chosen_index), len(source.time)))
     f_0 = np.median(source.flux[:, y, x])
     for i, index in enumerate(chosen_index):

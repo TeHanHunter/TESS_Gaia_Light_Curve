@@ -50,8 +50,8 @@ def get_psf(source, factor=2, edge_compression=1e-4):
     size = source.size  # TODO: must be even?
     flux_ratio = np.array(source.gaia['tess_flux_ratio'])
     # flux_ratio = 0.9998 * flux_ratio + 0.0002
-    x_shift = np.array(source.gaia[f'Sector_{source.sector}_x'])
-    y_shift = np.array(source.gaia[f'Sector_{source.sector}_y'])
+    x_shift = np.array(source.gaia[f'sector_{source.sector}_x'])
+    y_shift = np.array(source.gaia[f'sector_{source.sector}_y'])
 
     x_round = np.round(x_shift).astype(int)
     y_round = np.round(y_shift).astype(int)
