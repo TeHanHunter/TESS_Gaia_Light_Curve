@@ -76,12 +76,12 @@ def epsf(factor=4, local_directory='', target=None, sector=0, num_stars=10000, e
 
 if __name__ == '__main__':
     target = 'NGC_7654'  # Target identifier or coordinates
-    # sector_table = sector(target=target)
     local_directory = f'/mnt/c/users/tehan/desktop/{target}/'
     # local_directory = os.path.join(os.getcwd(), f'{target}/')
     if not os.path.exists(local_directory):
         os.makedirs(local_directory)
-    # sector = int(sector_table['sector'][0])
     size = 90  # int
     source = ffi(target=target, size=size, local_directory=local_directory)
+    print(source.sector_table)
+    # source.select_sector(sector=18)
     flatten_lc = epsf(factor=4, target=target, sector=source.sector, local_directory=local_directory)
