@@ -44,7 +44,6 @@ def epsf(factor=4, local_directory='', target=None, sector=0, num_stars=10000, e
             fit, fluxfit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
         np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
-    e_psf = np.median(e_psf, axis=0)
     lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     if lc_exists:
         lightcurve = np.load(f'{local_directory}lc_{target}_sector_{sector}.npy')
@@ -55,7 +54,7 @@ def epsf(factor=4, local_directory='', target=None, sector=0, num_stars=10000, e
             r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
             if 0 <= x_round[i] <= source.size - 1 and 0 <= y_round[i] <= source.size - 1:
                 for j in range(len(source.time)):
-                    lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf)
+                    lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
         np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
 
     mod_lightcurve = lightcurve
