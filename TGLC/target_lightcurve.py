@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from TGLC.ffi import *
 from TGLC.ePSF import *
 from TGLC.local_background import *
@@ -9,13 +11,13 @@ from tqdm import trange
 from wotan import flatten
 
 
-def sector(target='', print_sector=True):
-    catalog = Catalogs.query_object(target, radius=0.0618625, catalog="TIC")
-    coord = SkyCoord(catalog[0]['ra'], catalog[0]['dec'], unit="deg")
-    sector_table = Tesscut.get_sectors(coord)
-    if print_sector:
-        print(sector_table)
-    return sector_table
+# def sector(target='', print_sector=True):
+#     catalog = Catalogs.query_object(target, radius=0.0618625, catalog="TIC")
+#     coord = SkyCoord(catalog[0]['ra'], catalog[0]['dec'], unit="deg")
+#     sector_table = Tesscut.get_sectors(coord)
+#     if print_sector:
+#         print(sector_table)
+#     return sector_table
 
 
 def ffi(target='', local_directory='', size=90):
@@ -31,7 +33,7 @@ def ffi(target='', local_directory='', size=90):
     return source
 
 
-def epsf(factor=4, local_directory='', target=None, sector=0, num_stars=10000, edge_compression=1e-4, power=0.8,
+def epsf(source, factor=4, local_directory='', target=None, sector=0, num_stars=2000, edge_compression=1e-4, power=1,
          flat=True, return_epsf=False):
     A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor, edge_compression=edge_compression)
     epsf_exists = exists(f'{local_directory}epsf_{target}_sector_{sector}.npy')
@@ -39,10 +41,15 @@ def epsf(factor=4, local_directory='', target=None, sector=0, num_stars=10000, e
         e_psf = np.load(f'{local_directory}epsf_{target}_sector_{sector}.npy')
         print('Loaded ePSF from directory. ')
     else:
-        e_psf = np.zeros((len(source.time), (11 * factor + 1) ** 2 + 1))
+        e_psf = np.zeros((len(source.time), over_size ** 2 + 1))
         for i in trange(len(source.time), desc='Fitting ePSF'):
             fit, fluxfit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
+            # plt.imshow(source.flux[i] - fluxfit[:8100].reshape(90,90))
+            # plt.colorbar()
+            # plt.show()
+            # plt.imshow(fit[:-1].reshape(23, 23))
+            # plt.show()
         np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
     lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     if lc_exists:
@@ -76,7 +83,7 @@ def epsf(factor=4, local_directory='', target=None, sector=0, num_stars=10000, e
 
 if __name__ == '__main__':
     target = 'NGC_7654'  # Target identifier or coordinates
-    local_directory = f'/mnt/c/users/tehan/desktop/{target}/'
+    local_directory = f'/mnt/c/users/tehan/desktop/{target}_new_bilinear/'
     # local_directory = os.path.join(os.getcwd(), f'{target}/')
     if not os.path.exists(local_directory):
         os.makedirs(local_directory)
@@ -84,4 +91,4 @@ if __name__ == '__main__':
     source = ffi(target=target, size=size, local_directory=local_directory)
     print(source.sector_table)
     # source.select_sector(sector=18)
-    flatten_lc = epsf(factor=4, target=target, sector=source.sector, local_directory=local_directory)
+    flatten_lc = epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)

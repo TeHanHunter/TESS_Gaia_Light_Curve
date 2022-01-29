@@ -3,16 +3,24 @@ import matplotlib.pyplot as plt
 import pickle
 
 
-def bilinear(x, y, repeat=25):
-    """
-    value = a + (b - a) * y + (a - c) * x + (b + d - a - c) * x * y
-    coefficients of a, b, c, d [1 + x - y - x * y, y + x * y, -x - x * y, x * y]
-    (x+1)*(1-y)
+# def bilinear(x, y, repeat=25):
+#     """
+#     value = a + (b - a) * y + (a - c) * x + (b + d - a - c) * x * y
+#     coefficients of a, b, c, d [1 + x - y - x * y, y + x * y, -x - x * y, x * y]
+#     (x+1)*(1-y)
+#
+#     a, c = array[0]
+#     b, d = array[1]
+#     """
+#     return np.array([1 + x - y - x * y, -x - x * y, y + x * y, x * y] * repeat)
 
-    a, c = array[0]
-    b, d = array[1]
+def bilinear(x, y, repeat=45):
     """
-    return np.array([1 + x - y - x * y, -x - x * y, y + x * y, x * y] * repeat)
+    np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
+    b, d = array[1]
+    a, c = array[0]
+    """
+    return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 
 
 def paraboloid(z_0, z_1, z_2, z_3, z_4, z_5, scale=0.1):
@@ -40,7 +48,7 @@ def paraboloid(z_0, z_1, z_2, z_3, z_4, z_5, scale=0.1):
     return x_max, y_max
 
 
-def get_psf(source, factor=2, edge_compression=1e-4):
+def get_psf(source, factor=2, edge_compression=1e-4, c=np.array([0, 0, 0])):
     # even only
     if factor % 2 != 0:
         raise ValueError('Factor must be even.')
@@ -50,8 +58,14 @@ def get_psf(source, factor=2, edge_compression=1e-4):
     size = source.size  # TODO: must be even?
     flux_ratio = np.array(source.gaia['tess_flux_ratio'])
     # flux_ratio = 0.9998 * flux_ratio + 0.0002
-    x_shift = np.array(source.gaia[f'sector_{source.sector}_x'])
-    y_shift = np.array(source.gaia[f'sector_{source.sector}_y'])
+    # x_shift = np.array(source.gaia[f'sector_{source.sector}_x'])
+    # y_shift = np.array(source.gaia[f'sector_{source.sector}_y'])
+
+    x_ = np.array(source.gaia[f'sector_{source.sector}_x'])
+    y_ = np.array(source.gaia[f'sector_{source.sector}_y'])
+
+    x_shift = (x_ - c[0]) * np.cos(c[2]) - (y_ - c[1]) * np.sin(c[2])
+    y_shift = (x_ - c[0]) * np.sin(c[2]) + (y_ - c[1]) * np.cos(c[2])
 
     x_round = np.round(x_shift).astype(int)
     y_round = np.round(y_shift).astype(int)
@@ -93,7 +107,9 @@ def get_psf(source, factor=2, edge_compression=1e-4):
     return A, star_info, over_size, x_round, y_round
 
 
-def reduced_A(A, source, star_info=[], x=0, y=0, star_num=0):
+def reduced_A(A, source, star_info=None, x=0, y=0, star_num=0):
+    if star_info is None:
+        star_info = []
     star_position = int(x + source.size * y)
     A_ = np.zeros(np.shape(A)[-1])
     index = np.where(star_info[star_num][0] == star_position)
