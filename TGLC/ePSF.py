@@ -1,18 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import pickle
 
-
-# def bilinear(x, y, repeat=25):
-#     """
-#     value = a + (b - a) * y + (a - c) * x + (b + d - a - c) * x * y
-#     coefficients of a, b, c, d [1 + x - y - x * y, y + x * y, -x - x * y, x * y]
-#     (x+1)*(1-y)
-#
-#     a, c = array[0]
-#     b, d = array[1]
-#     """
-#     return np.array([1 + x - y - x * y, -x - x * y, y + x * y, x * y] * repeat)
 
 def bilinear(x, y, repeat=45):
     """
@@ -120,8 +107,13 @@ def reduced_A(A, source, star_info=None, x=0, y=0, star_num=0):
 def fit_psf(A, source, over_size, power=0.8, time=0):
     b = source.flux[time].flatten()
     b = np.append(b, np.zeros(over_size ** 2))
-    scaler = (source.flux_err[0].flatten() ** 2 + source.flux[time].flatten()) ** power
+    scaler = (source.flux[time].flatten()) ** power #source.flux_err[time].flatten() ** 2 +
     scaler = np.append(scaler, np.ones(over_size ** 2))
-    fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
-    fluxfit = np.dot(A, fit)
-    return fit, fluxfit
+
+    # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
+    a = A / scaler[:, np.newaxis]
+    b = b / scaler
+    alpha = np.dot(a.T, a)
+    beta = np.dot(a.T, b)
+    fit = np.linalg.solve(alpha, beta)
+    return fit

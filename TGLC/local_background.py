@@ -22,7 +22,8 @@ def comparison_star(source, target=None, search_range=0.03, variability=0.01):
     close_ra = np.where(
         np.logical_and(source.gaia['ra'] >= target_ra - search_range, source.gaia['ra'] <= target_ra + search_range))
     close_dec = np.where(
-        np.logical_and(source.gaia['dec'] >= target_dec - search_range, source.gaia['dec'] <= target_dec + search_range))
+        np.logical_and(source.gaia['dec'] >= target_dec - search_range,
+                       source.gaia['dec'] <= target_dec + search_range))
     close_target = np.intersect1d(close_ra, close_dec)
     print(close_target)
     chosen_index = np.intersect1d(best_comparison, close_target)
@@ -36,6 +37,6 @@ def bg_mod(source, lightcurve=None, sector=1, chosen_index=np.zeros(1)):
     f_0 = np.median(source.flux[:, y, x])
     for i, index in enumerate(chosen_index):
         bg_mod[i] = (source.gaia['tess_flux_ratio'][index] * f_0 - lightcurve[index]) / (
-                    1 - source.gaia['tess_flux_ratio'][index])
+                1 - source.gaia['tess_flux_ratio'][index])
 
     return np.mean(bg_mod), np.std(bg_mod), bg_mod
