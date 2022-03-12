@@ -10,14 +10,29 @@ import pickle
 
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], sector=0, size=95, camera=1,
-                 ccd=1):
+    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], sector=0, size=95, camera=1, ccd=1, cadence=[]):
         """
-        :param name: str or float
-        Target identifier (e.g. "NGC 7654" or "M31"),
-        or coordinate in the format of ra dec (e.g. 351.40691 61.646657)
+        Source object that includes all data from TESS and Gaia DR2
+        :param x: int, required
+        starting horizontal pixel coordinate
+        :param y: int, required
+        starting vertical pixel coordinate
+        :param flux: np.ndarray, required
+        3d data cube, the time series of a all FFI from a CCD
+        :param time: np.ndarray, required
+        1d array of time
+        :param wcs: astropy.wcs.wcs.WCS, required
+        WCS Keywords of the TESS FFI
+        :param sector: int, required
+        TESS sector number
         :param size: int, optional
-        The side length in pixel  of TESScut image
+        the side length in pixel  of TESScut image
+        :param camera: int, optional
+        camera number
+        :param ccd: int, optional
+        CCD number
+        :param cadence: list, required
+        list of cadences of TESS FFI
         """
         super(Source, self).__init__()
         coord = wcs.pixel_to_world([x + 47], [y + 47])[0].to_string()
@@ -25,10 +40,14 @@ class Source(object):
         self.sector = sector
         self.camera = camera
         self.ccd = ccd
+        self.cadence = cadence
         catalogdata = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
-        # TODO: maybe increase search radius
         print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
+                                                catalog="TIC")
+        print(f'Found {len(catalogdata_tic)} TIC objects.')
+        self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + 95, x:x + 95]
         self.time = np.array(time)
@@ -66,13 +85,25 @@ class Source(object):
 
 
 def cut_ffi(sector=24, ccd='4-3', path='/mnt/d/TESS_Sector_24/'):
+    """
+    Generate Source object from the calibrated FFI downloaded directly from MAST
+    :param sector: int, required
+    TESS sector number
+    :param ccd: string, required
+    ccd and camera numbers in the format of '2-3' for camera 2, ccd 3
+    :param path: string, required
+    path to the FFI folder
+    :return:
+    """
     input_files = glob(path + '*' + ccd + '-????-?_ffic.fits')
     time = []
     bad_quality = []
+    cadence = []
     flux = np.empty((len(input_files), 2048, 2048))
     for i, file in enumerate(tqdm(input_files)):
         with fits.open(file, mode='denywrite') as hdul:
             if hdul[1].header['DQUALITY'] == 0:
+                cadence.append(hdul[0].header['FFIINDEX'])
                 time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
                 flux_ = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
                 flux[i - len(bad_quality)] = flux_
@@ -83,11 +114,12 @@ def cut_ffi(sector=24, ccd='4-3', path='/mnt/d/TESS_Sector_24/'):
     hdul = fits.open(input_files[good_quality[0]])
     wcs = WCS(hdul[1].header)
 
-    # 95*95 cuts with 2 pixel redundant, 22*22 cuts
+    # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
+    # try 77*77 with 4 redundant, (28*28 cuts)
     for i in trange(22):
         for j in range(22):
             with open(path + ccd + f'/source_{i}_{j}.pkl', 'wb') as output:
-                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, wcs=wcs)
+                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, wcs=wcs, cadence=cadence)
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
 

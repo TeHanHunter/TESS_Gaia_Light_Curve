@@ -1,42 +1,36 @@
 import numpy as np
+from tqdm import trange
 
 
-def comparison_star(source, target=None, search_range=0.03, variability=0.01):
+def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, mag_lim=12):
     """
-    :param source: source object
-    :param target: target designation with the format 'Gaia DR2 5615115246375112192'
-    :param search_range: farthest acceptable comparison stars in arcsec
-    :return: indexes of the comparison stars
+    background modification
+    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    Source or Source_cut object
+    :param lightcurve: np.ndarray, required
+    ePSF lightcurve
+    :param sector: int, required
+    TESS sector number
+    :param num_stars: int, required
+    number of stars
+    :param mag_lim: int, optional
+    lower limiting magnitude of the stars to choose as reference
+    :return: modified light curve
     """
-
-    index = np.where(target == source.gaia['designation'])
-    target_mag = source.gaia['tess_mag'][index]
-    target_ra = source.gaia['ra'][index]
-    target_dec = source.gaia['dec'][index]
-
-    similar_mag = np.where(source.gaia['tess_mag'] >= target_mag - 1)
-    low_variability = np.where(
-        np.logical_and(source.gaia['variability'] > 0, source.gaia['variability'] <= variability))
-    best_comparison = np.intersect1d(similar_mag, low_variability)
-    print(best_comparison)
-    close_ra = np.where(
-        np.logical_and(source.gaia['ra'] >= target_ra - search_range, source.gaia['ra'] <= target_ra + search_range))
-    close_dec = np.where(
-        np.logical_and(source.gaia['dec'] >= target_dec - search_range,
-                       source.gaia['dec'] <= target_dec + search_range))
-    close_target = np.intersect1d(close_ra, close_dec)
-    print(close_target)
-    chosen_index = np.intersect1d(best_comparison, close_target)
-    return index, chosen_index
-
-
-def bg_mod(source, lightcurve=None, sector=1, chosen_index=np.zeros(1)):
-    x = int(source.gaia[f'sector_{sector}_x'][0])
-    y = int(source.gaia[f'sector_{sector}_y'][0])
-    bg_mod = np.zeros((len(chosen_index), len(source.time)))
-    f_0 = np.median(source.flux[:, y, x])
-    for i, index in enumerate(chosen_index):
-        bg_mod[i] = (source.gaia['tess_flux_ratio'][index] * f_0 - lightcurve[index]) / (
-                1 - source.gaia['tess_flux_ratio'][index])
-
-    return np.mean(bg_mod), np.std(bg_mod), bg_mod
+    mod_lightcurve = lightcurve
+    x = source.gaia[f'sector_{sector}_x']
+    y = source.gaia[f'sector_{sector}_y']
+    inner_stars = []
+    for i in range(num_stars):
+        if 0.5 <= x[i] <= source.size - 1.5 and 0.5 <= y[i] <= source.size - 1.5:
+            inner_stars.append(i)
+        if len(inner_stars) == 5:
+            break
+    for j in trange(np.array(source.gaia['tess_mag']).searchsorted(mag_lim, 'right'), num_stars,
+                    desc='Adjusting background'):
+        bg = np.zeros(5)
+        for i, index in enumerate(inner_stars):
+            bg[i] = source.gaia['tess_flux_ratio'][j] * np.median(source.flux[:, int(y[index]), int(x[index])]) / \
+                    source.gaia['tess_flux_ratio'][index] - np.median(lightcurve[j])
+        mod_lightcurve[j] = lightcurve[j] + np.median(bg)
+    return mod_lightcurve

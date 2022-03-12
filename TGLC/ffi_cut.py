@@ -17,13 +17,16 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 class Source_cut(object):
-    def __init__(self, name, size=15):
+    def __init__(self, name, size=15, cadence=[]):
         """
-        :param name: str or float
+        Source_cut object that includes all data from TESS and Gaia DR2
+        :param name: str, required
         Target identifier (e.g. "NGC 7654" or "M31"),
-        or coordinate in the format of ra dec (e.g. 351.40691 61.646657)
+        or coordinate in the format of ra dec (e.g. '351.40691 61.646657')
         :param size: int, optional
         The side length in pixel  of TESScut image
+        :param cadence: list, required
+        list of cadences of TESS FFI
         """
         super(Source_cut, self).__init__()
         self.name = name
@@ -34,29 +37,46 @@ class Source_cut(object):
         self.flux = []
         self.flux_err = []
         self.gaia = []
+        self.cadence = cadence
         catalogdata = Catalogs.query_object(self.name, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
+        print(catalogdata[0]['designation'])
         # TODO: maybe increase search radius
         print(f'Found {len(catalogdata)} Gaia DR2 objects.')
         ra = catalogdata[0]['ra']
         dec = catalogdata[0]['dec']
         coord = SkyCoord(ra, dec, unit="deg")
+        catalogdata_tic = Catalogs.query_object(coord.to_string(), radius=(self.size + 2) * 21 * 0.707 / 3600,
+                                            catalog="TIC")
+        print(f'Found {len(catalogdata_tic)} TIC objects.')
+        self.tic = catalogdata_tic['ID', 'GAIA']
         sector_table = Tesscut.get_sectors(coord)
         hdulist = Tesscut.get_cutouts(coord, self.size)
         self.catalogdata = catalogdata
         self.sector_table = sector_table
+        self.camera = int(sector_table[0]['camera'])
+        self.ccd = int(sector_table[0]['ccd'])
         self.hdulist = hdulist
         self.select_sector(sector=sector_table['sector'][0])
 
     def select_sector(self, sector=1):
+        """
+        select sector to use if target is in multi-sectors
+        :param sector: int, required
+        TESS sector number
+        :return:
+        """
         if self.sector == sector:
             print(f'Already in sector {sector}.')
             return
         elif sector not in self.sector_table['sector']:
             print(f'Sector {sector} does not cover this region. Please refer to sector table.')
             return
+        index = list(self.sector_table['sector']).index(sector)
         self.sector = sector
-        hdu = self.hdulist[list(self.sector_table['sector']).index(sector)]
+        self.camera = int(self.sector_table[index]['camera'])
+        self.ccd = int(self.sector_table[index]['ccd'])
+        hdu = self.hdulist[index]
         wcs = WCS(hdu[2].header)
         data_time = hdu[1].data['TIME']
         data_flux = hdu[1].data['FLUX']
@@ -102,6 +122,16 @@ class Source_cut(object):
 
 
 def ffi(target='', local_directory='', size=90):
+    """
+    Function to generate Source_cut objects
+    :param target: string, required
+    target name
+    :param local_directory: string, required
+    output directory
+    :param size: int, required
+    FFI cut side length
+    :return: TGLC.ffi_cut.Source_cut
+    """
     source_exists = exists(f'{local_directory}source_{target}.pkl')
     if source_exists:
         with open(f'{local_directory}source_{target}.pkl', 'rb') as input_:

@@ -3,6 +3,7 @@ import numpy as np
 
 def bilinear(x, y, repeat=45):
     """
+    A bilinear formula
     np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
     b, d = array[1]
     a, c = array[0]
@@ -10,32 +11,24 @@ def bilinear(x, y, repeat=45):
     return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 
 
-def paraboloid(z_0, z_1, z_2, z_3, z_4, z_5, scale=0.1):
-    """
-    z = c_1 x^2 + c_2 y^2 + c_3 xy + c_4 x + c_5 y + c_6
-
-    Parameters:
-        z_0: x = 0, y = 0
-        z_1: x = 0.1, y = 0
-        z_2: x = 0, y = 0.1
-        z_3: x = -0.1, y = 0
-        z_4: x = 0, y = -0.1
-        z_5: x = 0.1, y = 0.1
-    """
-
-    c_1 = (z_3 + z_1 - 2 * z_0) / (2 * scale ** 2)
-    c_2 = (z_4 + z_2 - 2 * z_0) / (2 * scale ** 2)
-    c_4 = (z_1 - z_3) / (2 * scale)
-    c_5 = (z_2 - z_4) / (2 * scale)
-    c_6 = z_0
-    c_3 = z_5 * scale ** -2 - 100 * c_6 * scale ** -2 - c_4 * scale ** -1 - c_5 * scale ** -1 - c_1 - c_2
-    x_max = (2 * c_1 * c_4 - c_3 * c_5) / (c_3 ** 2 - 4 * c_1 * c_2)
-    y_max = (2 * c_1 * c_5 - c_3 * c_4) / (c_3 ** 2 - 4 * c_1 * c_2)
-    print(c_1, c_2)
-    return x_max, y_max
-
-
 def get_psf(source, factor=2, edge_compression=1e-4, c=np.array([0, 0, 0])):
+    """
+    Generate matrix for PSF fitting
+    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    Source or Source_cut object
+    :param factor: int, optional
+    effective PSF oversampling factor
+    :param edge_compression: float, optional
+    parameter for edge compression
+    :param c: np.ndarray, optional
+    manual modification of Gaia positions in the format of [x, y, theta]
+    :return: A, star_info, over_size, x_round, y_round
+    A: 2d matrix for least_square
+    star_info: star parameters
+    over_size: size of oversampled grid of ePSF
+    x_round: star horizontal pixel coordinates rounded
+    y_round: star vertical pixel coordinates rounded
+    """
     # even only
     if factor % 2 != 0:
         raise ValueError('Factor must be even.')
@@ -94,7 +87,23 @@ def get_psf(source, factor=2, edge_compression=1e-4, c=np.array([0, 0, 0])):
     return A, star_info, over_size, x_round, y_round
 
 
-def reduced_A(A, source, star_info=None, x=0, y=0, star_num=0):
+def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0):
+    """
+    Produce matrix for least_square fitting without a certain target
+    :param A: np.ndarray, required
+    2d matrix for least_square
+    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    Source or Source_cut object
+    :param star_info: np.ndarray, required
+    star parameters
+    :param x: float, required
+    target horizontal pixel coordinate
+    :param y: float, required
+    target vertical pixel coordinate
+    :param star_num: int, required
+    target star index
+    :return: reduced A, matrix for least_square fix without the target star
+    """
     if star_info is None:
         star_info = []
     star_position = int(x + source.size * y)
@@ -105,9 +114,24 @@ def reduced_A(A, source, star_info=None, x=0, y=0, star_num=0):
 
 
 def fit_psf(A, source, over_size, power=0.8, time=0):
+    """
+    fit_psf using least_square (improved performance by changing to np.linalg.solve)
+    :param A: np.ndarray, required
+    2d matrix for least_square
+    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    Source or Source_cut object
+    :param over_size: int, required
+    size of oversampled grid of ePSF
+    :param power: float, optional
+    power for weighting bright stars' contribution to the fit. 1 means same contribution from all stars,
+    <1 means emphasizing dimmer stars
+    :param time: int, required
+    time index of this ePSF fit
+    :return: fit result
+    """
     b = source.flux[time].flatten()
     b = np.append(b, np.zeros(over_size ** 2))
-    scaler = (source.flux[time].flatten()) ** power #source.flux_err[time].flatten() ** 2 +
+    scaler = (source.flux[time].flatten()) ** power  # source.flux_err[time].flatten() ** 2 +
     scaler = np.append(scaler, np.ones(over_size ** 2))
 
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
