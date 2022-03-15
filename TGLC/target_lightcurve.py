@@ -79,16 +79,16 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], fl
     c1 = fits.Column(name='time', array=np.array(time), format='D')  # E
     c2 = fits.Column(name='psf_flux', array=np.array(lc), format='D')
     c3 = fits.Column(name='psf_flux_err',
-                     array=1.4826 * np.median(np.abs(lc - np.median(lc))) * np.ones(len(lc)), format='D')
+                     array=1.4826 * np.median(np.abs(lc - np.median(lc))) * np.ones(len(lc)), format='E')
     c4 = fits.Column(name='cal_flux', array=np.array(cal_lc), format='D')
     c5 = fits.Column(name='cal_flux_err',
-                     array=1.4826 * np.median(np.abs(cal_lc - np.median(cal_lc))) * np.ones(len(cal_lc)), format='D')
-    c6 = fits.Column(name='cadence_num', array=np.array(cadence), format='D')  # 32 bit int
-    c7 = fits.Column(name='flags', array=np.array(flag), format='D')
+                     array=1.4826 * np.median(np.abs(cal_lc - np.median(cal_lc))) * np.ones(len(cal_lc)), format='E')
+    c6 = fits.Column(name='cadence_num', array=np.array(cadence), format='J')  # 32 bit int
+    c7 = fits.Column(name='flags', array=np.array(flag), format='I')
     table_hdu_1 = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7])
     table_hdu_1.header.append(('INHERIT', 'T', 'inherit the primary header'), end=True)
     table_hdu_1.header.append(('EXTNAME', 'LIGHTCURVE', 'name of extension'), end=True)
-    table_hdu_1.header.append(('EXTVER', 'ePSF', 'effective Point Spread Function'),  # TODO: version?
+    table_hdu_1.header.append(('EXTVER', 1, 'effective Point Spread Function'),  # TODO: version?
                               end=True)
     table_hdu_1.header.append(('TELESCOP', 'TESS', 'telescope'), end=True)
     table_hdu_1.header.append(('INSTRUME', 'TESS Photometer', 'detector type'), end=True)
@@ -159,8 +159,8 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
             e_psf[i] = fit
         np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
     # print(np.std(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)))
-    plt.imshow(np.log10(np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)), origin='lower')
-    plt.show()
+    # plt.imshow(np.log10(np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)), origin='lower')
+    # plt.show()
     lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     num_stars = np.array(source.gaia['tess_mag']).searchsorted(limit_mag, 'right')
     if lc_exists:
