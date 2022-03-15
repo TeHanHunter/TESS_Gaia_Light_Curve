@@ -76,14 +76,14 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], fl
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
     t_start = source.time[0]
     t_stop = source.time[-1]
-    c1 = fits.Column(name='Time', array=np.array(time), format='D')
+    c1 = fits.Column(name='time', array=np.array(time), format='D')  # E
     c2 = fits.Column(name='psf_flux', array=np.array(lc), format='D')
     c3 = fits.Column(name='psf_flux_err',
                      array=1.4826 * np.median(np.abs(lc - np.median(lc))) * np.ones(len(lc)), format='D')
     c4 = fits.Column(name='cal_flux', array=np.array(cal_lc), format='D')
     c5 = fits.Column(name='cal_flux_err',
                      array=1.4826 * np.median(np.abs(cal_lc - np.median(cal_lc))) * np.ones(len(cal_lc)), format='D')
-    c6 = fits.Column(name='cadence_num', array=np.array(cadence), format='D')
+    c6 = fits.Column(name='cadence_num', array=np.array(cadence), format='D')  # 32 bit int
     c7 = fits.Column(name='flags', array=np.array(flag), format='D')
     table_hdu_1 = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7])
     table_hdu_1.header.append(('INHERIT', 'T', 'inherit the primary header'), end=True)
@@ -158,7 +158,9 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
         np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
-
+    # print(np.std(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)))
+    plt.imshow(np.log10(np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)), origin='lower')
+    plt.show()
     lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     num_stars = np.array(source.gaia['tess_mag']).searchsorted(limit_mag, 'right')
     if lc_exists:
@@ -173,7 +175,6 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
                 for j in range(len(source.time)):
                     lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
         np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
-
     mod_lc_exists = exists(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
     if mod_lc_exists:
         mod_lightcurve = np.load(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')

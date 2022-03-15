@@ -35,7 +35,7 @@ class Source(object):
         list of cadences of TESS FFI
         """
         super(Source, self).__init__()
-        coord = wcs.pixel_to_world([x + 47], [y + 47])[0].to_string()
+        coord = wcs.pixel_to_world([x + 47 + 44], [y + 47])[0].to_string()
         self.size = size
         self.sector = sector
         self.camera = camera
@@ -84,18 +84,20 @@ class Source(object):
         self.gaia = gaia_targets
 
 
-def cut_ffi(sector=24, ccd='4-3', path='/mnt/d/TESS_Sector_24/'):
+def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
     TESS sector number
-    :param ccd: string, required
-    ccd and camera numbers in the format of '2-3' for camera 2, ccd 3
+    :param camera: int, required
+    camera number
+    :param ccd: int, required
+    ccd number
     :param path: string, required
     path to the FFI folder
     :return:
     """
-    input_files = glob(path + '*' + ccd + '-????-?_ffic.fits')
+    input_files = glob(f'{path}*{camera}-{ccd}-????-?_ffic.fits')
     time = []
     bad_quality = []
     cadence = []
@@ -118,10 +120,10 @@ def cut_ffi(sector=24, ccd='4-3', path='/mnt/d/TESS_Sector_24/'):
     # try 77*77 with 4 redundant, (28*28 cuts)
     for i in trange(22):
         for j in range(22):
-            with open(path + ccd + f'/source_{i}_{j}.pkl', 'wb') as output:
+            with open(path + f'/{camera}-{ccd}/source_{i}_{j}.pkl', 'wb') as output:
                 source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, wcs=wcs, cadence=cadence)
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-    cut_ffi(sector=17, ccd='3-2', path='/mnt/d/TESS_Sector_17/')
+    cut_ffi(sector=17, camera=2, ccd=3, path='/mnt/d/TESS_Sector_17/')
