@@ -43,10 +43,10 @@ class Source(object):
         self.cadence = cadence
         catalogdata = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
-        print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
         catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
-        print(f'Found {len(catalogdata_tic)} TIC objects.')
+        # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + 95, x:x + 95]

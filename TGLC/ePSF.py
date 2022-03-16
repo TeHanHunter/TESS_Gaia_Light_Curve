@@ -11,7 +11,7 @@ def bilinear(x, y, repeat=45):
     return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 
 
-def get_psf(source, factor=2, edge_compression=1e-4, c=np.array([0, 0, 0])):
+def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0])):
     """
     Generate matrix for PSF fitting
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -32,7 +32,7 @@ def get_psf(source, factor=2, edge_compression=1e-4, c=np.array([0, 0, 0])):
     # even only
     if factor % 2 != 0:
         raise ValueError('Factor must be even.')
-    psf_size = 11
+    psf_size = psf_size
     half_size = int((psf_size - 1) / 2)
     over_size = psf_size * factor + 1
     size = source.size  # TODO: must be even?
