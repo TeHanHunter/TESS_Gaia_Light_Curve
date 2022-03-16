@@ -187,7 +187,8 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
     #     if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
     #         lc_output(source, local_directory=local_directory + 'psf_lc/', index=i, time=source.time,
     #                   lc=mod_lightcurve[i], calibration='psf')
-    os.mkdir(os.path.join(local_directory, 'lc'))
+    # os.mkdir(os.path.join(local_directory, 'lc'))
+    os.makedirs(os.path.join(local_directory, 'lc'), exist_ok=True)
     for i in trange(num_stars, desc='Flattening lc'):
         flag = np.zeros(len(source.time))
         negative = np.where(mod_lightcurve[i] < 0)[0]

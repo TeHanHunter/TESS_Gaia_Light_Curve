@@ -1,7 +1,7 @@
 from TGLC.ffi import *
 
 if __name__ == '__main__':
-    sector = input('Sector: ')
+    sector = 17
     for i in range(16):
         cut_ffi(sector=sector, camera=1 + i // 4, ccd=1 + i % 4, path=f'/home/tehan/data/sector{sector}/')
     # input_files = glob(f'/mnt/d/TESS_Sector_17/*2-3-????-?_ffic.fits')
