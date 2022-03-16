@@ -101,7 +101,7 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
     time = []
     bad_quality = []
     cadence = []
-    flux = np.empty((len(input_files), 2048, 2048))
+    flux = np.empty((len(input_files), 2048, 2048), dtype=np.float32)
     for i, file in enumerate(tqdm(input_files)):
         with fits.open(file, mode='denywrite') as hdul:
             if hdul[1].header['DQUALITY'] == 0:
@@ -118,6 +118,7 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
+    os.mkdir(path + f'/{camera}-{ccd}/')
     for i in trange(22):
         for j in range(22):
             with open(path + f'/{camera}-{ccd}/source_{i}_{j}.pkl', 'wb') as output:
