@@ -10,7 +10,7 @@ import pickle
 
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], sector=0, size=95, camera=1, ccd=1, cadence=[]):
+    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], quality=[], sector=0, size=95, camera=1, ccd=1, cadence=[]):
         """
         Source object that includes all data from TESS and Gaia DR2
         :param x: int, required
@@ -41,6 +41,7 @@ class Source(object):
         self.camera = camera
         self.ccd = ccd
         self.cadence = cadence
+        self.quality = quality
         catalogdata = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
@@ -99,21 +100,17 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
     """
     input_files = glob(f'{path}*{camera}-{ccd}-????-?_ffic.fits')
     time = []
-    bad_quality = []
+    quality = []
     cadence = []
     flux = np.empty((len(input_files), 2048, 2048), dtype=np.float32)
     for i, file in enumerate(tqdm(input_files)):
         with fits.open(file, mode='denywrite') as hdul:
-            if hdul[1].header['DQUALITY'] == 0:
-                cadence.append(hdul[0].header['FFIINDEX'])
-                time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
-                flux_ = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
-                flux[i - len(bad_quality)] = flux_
-            else:
-                bad_quality.append(i)
-    good_quality = list(set((list(range(0, len(input_files))))) - set(bad_quality))
+            quality.append(hdul[1].header['DQUALITY'])
+            cadence.append(hdul[0].header['FFIINDEX'])
+            time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
+            flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
     np.save(path + f'/sector{sector}_time.npy', time)
-    hdul = fits.open(input_files[good_quality[0]])
+    hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
@@ -122,7 +119,7 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
     for i in trange(22):
         for j in range(22):
             with open(path + f'{camera}-{ccd}/source_{i}_{j}.pkl', 'wb') as output:
-                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, wcs=wcs, cadence=cadence)
+                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, quality=quality, wcs=wcs, cadence=cadence)
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
 

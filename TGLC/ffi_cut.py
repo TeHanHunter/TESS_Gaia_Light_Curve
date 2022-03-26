@@ -10,6 +10,7 @@ from astroquery.mast import Catalogs
 from astroquery.mast import Tesscut
 import pickle
 from os.path import exists
+from TGLC.target_lightcurve import *
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -145,4 +146,13 @@ def ffi(target='', local_directory='', size=90):
 
 
 if __name__ == '__main__':
-    source = Source_cut('NGC_7654', size=90)
+    target = 'TIC 455784423'  # Target identifier or coordinates TOI-3714
+    local_directory = f'/mnt/c/users/tehan/desktop/{target}/'
+    # local_directory = os.path.join(os.getcwd(), f'{target}/')
+    if not os.path.exists(local_directory):
+        os.makedirs(local_directory)
+    size = 90  # int, suggests big cuts
+    source = ffi(target=target, size=size, local_directory=local_directory)
+    # source.select_sector(sector=24)
+    print(source.sector_table)
+    epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)  # TODO: power?

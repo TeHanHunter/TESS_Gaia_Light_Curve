@@ -15,7 +15,8 @@ from TGLC.ffi_cut import *
 from TGLC.local_background import *
 
 
-def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], flag=[], cadence=[]):
+def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg=[], tess_flag=[],
+              tglc_flag=np.array([]), cadence=[]):
     """
     lc output to .FITS file in MAST HLSP standards
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -76,16 +77,18 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], fl
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
     t_start = source.time[0]
     t_stop = source.time[-1]
-    c1 = fits.Column(name='time', array=np.array(time), format='D')  # E
+    c1 = fits.Column(name='time', array=np.array(time), format='D')
     c2 = fits.Column(name='psf_flux', array=np.array(lc), format='D')
     c3 = fits.Column(name='psf_flux_err',
                      array=1.4826 * np.median(np.abs(lc - np.median(lc))) * np.ones(len(lc)), format='E')
     c4 = fits.Column(name='cal_flux', array=np.array(cal_lc), format='D')
     c5 = fits.Column(name='cal_flux_err',
                      array=1.4826 * np.median(np.abs(cal_lc - np.median(cal_lc))) * np.ones(len(cal_lc)), format='E')
-    c6 = fits.Column(name='cadence_num', array=np.array(cadence), format='J')  # 32 bit int
-    c7 = fits.Column(name='flags', array=np.array(flag), format='I')
-    table_hdu_1 = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7])
+    c6 = fits.Column(name='background', array=bg, format='E')
+    c7 = fits.Column(name='cadence_num', array=np.array(cadence), format='J')  # 32 bit int
+    c8 = fits.Column(name='TESS_flags', array=np.array(tess_flag), format='I')  # 16 bit int
+    c9 = fits.Column(name='TGLC_flags', array=tglc_flag, format='I')
+    table_hdu_1 = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7, c8, c9])
     table_hdu_1.header.append(('INHERIT', 'T', 'inherit the primary header'), end=True)
     table_hdu_1.header.append(('EXTNAME', 'LIGHTCURVE', 'name of extension'), end=True)
     table_hdu_1.header.append(('EXTVER', 1, 'effective Point Spread Function'),  # TODO: version?
@@ -93,7 +96,7 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], fl
     table_hdu_1.header.append(('TELESCOP', 'TESS', 'telescope'), end=True)
     table_hdu_1.header.append(('INSTRUME', 'TESS Photometer', 'detector type'), end=True)
     table_hdu_1.header.append(('FILTER', 'TESS', 'the filter used for the observations'), end=True)
-    table_hdu_1.header.append(('OBJECT', source.gaia[index]['designation'], 'string version of GaiaDR2 designation'),
+    table_hdu_1.header.append(('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR2 ID'),
                               end=True)
     table_hdu_1.header.append(('GAIADR2', objid, 'integer version of GaiaDR2 designation'), end=True)
     table_hdu_1.header.append(('RADESYS', 'ICRS', 'reference frame of celestial coordinates'), end=True)
@@ -107,13 +110,15 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], fl
     table_hdu_1.header.append(('TELAPS', t_stop - t_start, '[d] TSTOP-TSTART'), end=True)
     table_hdu_1.header.append(('TSTART', t_start, '[d] observation start time in TBJD'), end=True)
     table_hdu_1.header.append(('TSTOP', t_stop, '[d] observation end time in TBJD'), end=True)
+    table_hdu_1.header.append(('MJD_BEG', t_start + 56999.5, '[d] start time in barycentric MJD'), end=True)
+    table_hdu_1.header.append(('MJD_END', t_stop + 56999.5, '[d] end time in barycentric MJD'), end=True)
     table_hdu_1.header.append(('TIMEDEL', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
                               end=True)
     table_hdu_1.header.append(('WOTAN_WL', 1, 'wotan detrending window length'), end=True)
     table_hdu_1.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
 
     hdul = fits.HDUList([primary_hdu, table_hdu_1])
-    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_s00{source.sector}_gaiaid_{objid}_llc.fits')
+    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s00{source.sector}_tess_v1_llc.fits')
     return
 
     #  1. background fixed (brightest star selected out of frame) use 10 brightest and take the median
@@ -123,7 +128,8 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], fl
     #  5. for 10-min cadence targets, do we need bigger RAM?
 
 
-def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=16, edge_compression=1e-4, power=1):
+def epsf(source, psf_size=11, factor=2, local_directory='', target=None, sector=0, limit_mag=16, edge_compression=1e-4,
+         power=1):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -146,7 +152,8 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
     <1 means emphasizing dimmer stars
     :return:
     """
-    A, star_info, over_size, x_round, y_round = get_psf(source, factor=factor, edge_compression=edge_compression)
+    A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
+                                                        edge_compression=edge_compression)
 
     epsf_exists = exists(f'{local_directory}epsf_{target}_sector_{sector}.npy')
     if epsf_exists:
@@ -158,8 +165,11 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
         np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
+    quality = np.zeros(len(source.time), dtype=np.int16)
+    quality[abs(e_psf[:, -1] - np.median(e_psf[:, -1])) >= np.std(e_psf[:, -1])] += 1
     # print(np.std(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)))
-    # plt.imshow(np.log10(np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)), origin='lower')
+    # plt.imshow(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95), origin='lower')
+    # plt.colorbar()
     # plt.show()
     lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     num_stars = np.array(source.gaia['tess_mag']).searchsorted(limit_mag, 'right')
@@ -170,8 +180,8 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
         lightcurve = np.zeros((num_stars, len(source.time)))
         for i in trange(0, num_stars, desc='Fitting lc'):
             r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
-            if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[
-                i] <= source.size - 1.5:  # one pixel width tolerance
+            if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
+                # one pixel width tolerance
                 for j in range(len(source.time)):
                     lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
         np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
@@ -190,24 +200,18 @@ def epsf(source, factor=2, local_directory='', target=None, sector=0, limit_mag=
     # os.mkdir(os.path.join(local_directory, 'lc'))
     os.makedirs(os.path.join(local_directory, 'lc'), exist_ok=True)
     for i in trange(num_stars, desc='Flattening lc'):
-        flag = np.zeros(len(source.time))
-        negative = np.where(mod_lightcurve[i] < 0)[0]
-        flag[negative] = 1
         if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
-            flatten_lc = flatten(source.time, mod_lightcurve[i] / np.median(mod_lightcurve[i]),
+            flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
                                  window_length=1, method='biweight', return_trend=False)
-            lc_output(source, local_directory=local_directory + 'lc/', index=i, time=source.time,
-                      lc=mod_lightcurve[i], cal_lc=flatten_lc, flag=flag)
+            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality,
+                      tglc_flag=quality, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
 
 
 if __name__ == '__main__':
-    target = 'TIC 455784423'  # Target identifier or coordinates TOI-3714
-    local_directory = f'/mnt/c/users/tehan/desktop/{target}/'
-    # local_directory = os.path.join(os.getcwd(), f'{target}/')
+    target = '0_0'
+    local_directory = f'/mnt/d/TESS_Sector_17/11epsf/'
     if not os.path.exists(local_directory):
         os.makedirs(local_directory)
-    size = 90  # int, suggests big cuts
-    source = ffi(target=target, size=size, local_directory=local_directory)
-    # source.select_sector(sector=24)
-    print(source.sector_table)
+    with open(f'/mnt/d/TESS_Sector_17/1-1/source_{target}.pkl', 'rb') as input_:
+        source = pickle.load(input_)
     epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)  # TODO: power?

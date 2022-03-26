@@ -30,7 +30,7 @@ def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, mag_lim=12):
                     desc='Adjusting background'):
         bg = np.zeros(5)
         for i, index in enumerate(inner_stars):
-            bg[i] = source.gaia['tess_flux_ratio'][j] * np.median(source.flux[:, int(y[index]), int(x[index])]) / \
-                    source.gaia['tess_flux_ratio'][index] - np.median(lightcurve[j])
-        mod_lightcurve[j] = lightcurve[j] + np.median(bg)
+            bg[i] = source.gaia['tess_flux_ratio'][j] * np.nanmedian(source.flux[:, int(y[index]), int(x[index])]) / \
+                    source.gaia['tess_flux_ratio'][index] - np.nanmedian(lightcurve[j])
+        mod_lightcurve[j] = lightcurve[j] + np.nanmedian(bg)
     return mod_lightcurve
