@@ -118,7 +118,7 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
     os.makedirs(path + f'{camera}-{ccd}/', exist_ok=True)
     for i in trange(22):
         for j in range(22):
-            with open(path + f'{camera}-{ccd}/source_{i}_{j}.pkl', 'wb') as output:
+            with open(path + f'{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
                 source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, quality=quality, wcs=wcs, cadence=cadence)
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 

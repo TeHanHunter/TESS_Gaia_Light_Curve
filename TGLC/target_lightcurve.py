@@ -208,10 +208,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, sector=
 
 
 if __name__ == '__main__':
-    target = '0_0'
+    ccd = '1-1'
     local_directory = f'/mnt/d/TESS_Sector_17/11epsf/'
-    if not os.path.exists(local_directory):
-        os.makedirs(local_directory)
-    with open(f'/mnt/d/TESS_Sector_17/1-1/source_{target}.pkl', 'rb') as input_:
-        source = pickle.load(input_)
-    epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)  # TODO: power?
+    os.makedirs(local_directory, exist_ok=True)
+    for i in range(484):
+        target = f'{(i // 4):02d}_{(i % 4):02d}'
+        with open(f'/mnt/d/TESS_Sector_17/{ccd}/source_{target}.pkl', 'rb') as input_:
+            source = pickle.load(input_)
+        epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)  # TODO: power?
