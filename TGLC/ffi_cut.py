@@ -155,4 +155,5 @@ if __name__ == '__main__':
     source = ffi(target=target, size=size, local_directory=local_directory)
     # source.select_sector(sector=24)
     print(source.sector_table)
-    epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)  # TODO: power?
+    epsf(source, factor=2, target=target, sector=source.sector, ccd='2_oversampling', local_directory=local_directory)
+    # TODO: power?

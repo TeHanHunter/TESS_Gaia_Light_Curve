@@ -114,11 +114,14 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
     table_hdu_1.header.append(('MJD_END', t_stop + 56999.5, '[d] end time in barycentric MJD'), end=True)
     table_hdu_1.header.append(('TIMEDEL', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
                               end=True)
+    table_hdu_1.header.append(('XPTIME', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
+                              end=True)
     table_hdu_1.header.append(('WOTAN_WL', 1, 'wotan detrending window length'), end=True)
     table_hdu_1.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
 
     hdul = fits.HDUList([primary_hdu, table_hdu_1])
-    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s00{source.sector}_tess_v1_llc.fits')
+    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s00{source.sector:02d}_tess_v1_llc.fits',
+                 overwrite=True)
     return
 
     #  1. background fixed (brightest star selected out of frame) use 10 brightest and take the median
@@ -128,8 +131,8 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
     #  5. for 10-min cadence targets, do we need bigger RAM?
 
 
-def epsf(source, psf_size=11, factor=2, local_directory='', target=None, sector=0, limit_mag=16, edge_compression=1e-4,
-         power=1):
+def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='', sector=0, limit_mag=16,
+         edge_compression=1e-4, power=1):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -154,65 +157,76 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, sector=
     """
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
-
-    epsf_exists = exists(f'{local_directory}epsf_{target}_sector_{sector}.npy')
+    epsf_loc = f'{local_directory}epsf/{ccd}/epsf_{target}_sector_{sector}.npy'
+    epsf_exists = exists(epsf_loc)
     if epsf_exists:
-        e_psf = np.load(f'{local_directory}epsf_{target}_sector_{sector}.npy')
+        e_psf = np.load(epsf_loc)
         print('Loaded ePSF from directory. ')
     else:
         e_psf = np.zeros((len(source.time), over_size ** 2 + 1))
         for i in trange(len(source.time), desc='Fitting ePSF'):
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
-        np.save(f'{local_directory}epsf_{target}_sector_{sector}.npy', e_psf)
+        np.save(epsf_loc, e_psf)
+
     quality = np.zeros(len(source.time), dtype=np.int16)
-    quality[abs(e_psf[:, -1] - np.median(e_psf[:, -1])) >= np.std(e_psf[:, -1])] += 1
+    quality[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= np.nanstd(e_psf[:, -1]) / 8] += 1
+    index_1 = np.where(np.array(source.quality) == 0)[0]
+    index_2 = np.where(quality == 0)[0]
+    index = np.intersect1d(index_1, index_2)
     # print(np.std(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)))
     # plt.imshow(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95), origin='lower')
     # plt.colorbar()
     # plt.show()
-    lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
+    # lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     num_stars = np.array(source.gaia['tess_mag']).searchsorted(limit_mag, 'right')
-    if lc_exists:
-        lightcurve = np.load(f'{local_directory}lc_{target}_sector_{sector}.npy')
-        print('Loaded lc from directory. ')
-    else:
-        lightcurve = np.zeros((num_stars, len(source.time)))
-        for i in trange(0, num_stars, desc='Fitting lc'):
-            r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
-            if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
-                # one pixel width tolerance
-                for j in range(len(source.time)):
-                    lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
-        np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
+    # if lc_exists:
+    #     lightcurve = np.load(f'{local_directory}lc_{target}_sector_{sector}.npy')
+    #     print('Loaded lc from directory. ')
+    # else:
+    lightcurve = np.zeros((num_stars, len(source.time)))
+    for i in trange(0, num_stars, desc='Fitting lc'):
+        r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
+        if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
+            # one pixel width tolerance
+            for j in range(len(source.time)):
+                lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
+        # np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
     mod_lc_exists = exists(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
-    if mod_lc_exists:
-        mod_lightcurve = np.load(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
-        print('Loaded mod_lc from directory. ')
-    else:
-        mod_lightcurve = bg_mod(source, lightcurve=lightcurve, sector=sector, num_stars=num_stars)
-        np.save(f'{local_directory}lc_mod_{target}_sector_{sector}.npy', mod_lightcurve)
+    # if mod_lc_exists:
+    #     mod_lightcurve = np.load(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
+    #     print('Loaded mod_lc from directory. ')
+    # else:
+    mod_lightcurve = bg_mod(source, lightcurve=lightcurve, sector=sector, num_stars=num_stars, target=target)
     # os.mkdir(os.path.join(local_directory, 'psf_lc'))
     # for i in trange(0, num_stars, desc='Saving psf lc'):
     #     if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
     #         lc_output(source, local_directory=local_directory + 'psf_lc/', index=i, time=source.time,
     #                   lc=mod_lightcurve[i], calibration='psf')
     # os.mkdir(os.path.join(local_directory, 'lc'))
-    os.makedirs(os.path.join(local_directory, 'lc'), exist_ok=True)
+    # os.makedirs(os.path.join(local_directory, 'lc'), exist_ok=True)
+    mag = []
+    mean_diff = []
     for i in trange(num_stars, desc='Flattening lc'):
         if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
+            mag.append(source.gaia['tess_mag'][i])
+            mean_diff.append(np.nanmean(
+                np.abs(np.diff(mod_lightcurve[i][index] / np.nanmedian(mod_lightcurve[i][index])))))
             flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
                                  window_length=1, method='biweight', return_trend=False)
             lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality,
                       tglc_flag=quality, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
 
+    np.save(local_directory + f'mean_diff{factor}_{target}.npy', np.array([mag, mean_diff]))
+
 
 if __name__ == '__main__':
+    sector = 17
     ccd = '1-1'
-    local_directory = f'/mnt/d/TESS_Sector_17/11epsf/'
-    os.makedirs(local_directory, exist_ok=True)
+    local_directory = f'/mnt/d/TESS_Sector_17/'
+    os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
     for i in range(484):
-        target = f'{(i // 4):02d}_{(i % 4):02d}'
-        with open(f'/mnt/d/TESS_Sector_17/{ccd}/source_{target}.pkl', 'rb') as input_:
+        target = f'{(i // 22):02d}_{(i % 22):02d}'
+        with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
             source = pickle.load(input_)
-        epsf(source, factor=2, target=target, sector=source.sector, local_directory=local_directory)  # TODO: power?
+        epsf(source, factor=2, target=target, ccd=ccd, sector=source.sector, local_directory=local_directory)

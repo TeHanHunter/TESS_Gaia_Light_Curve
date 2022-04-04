@@ -2,8 +2,14 @@ from TGLC.ffi import *
 
 if __name__ == '__main__':
     sector = 17
+    # local_directory = f'/home/tehan/data/sector{sector:02d}/'
+    local_directory = f'/mnt/d/TESS_Sector_17/'
+    os.makedirs(local_directory + f'lc/', exist_ok=True)
+    os.makedirs(local_directory + f'epsf/', exist_ok=True)
+    os.makedirs(local_directory + f'ffi/', exist_ok=True)
+    os.makedirs(local_directory + f'source/', exist_ok=True)
     for i in range(16):
-        cut_ffi(sector=sector, camera=1 + i // 4, ccd=1 + i % 4, path=f'/home/tehan/data/sector{sector}/')
+        cut_ffi(sector=sector, camera=1 + i // 4, ccd=1 + i % 4, path=local_directory)
     # input_files = glob(f'/mnt/d/TESS_Sector_17/*2-3-????-?_ffic.fits')
     # with fits.open(input_files[0], mode='denywrite') as hdul:
     #     wcs = WCS(hdul[1].header)

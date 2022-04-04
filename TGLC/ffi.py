@@ -10,7 +10,8 @@ import pickle
 
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], quality=[], sector=0, size=95, camera=1, ccd=1, cadence=[]):
+    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], quality=[], exposure=1800, sector=0, size=95, camera=1,
+                 ccd=1, cadence=[]):
         """
         Source object that includes all data from TESS and Gaia DR2
         :param x: int, required
@@ -42,7 +43,8 @@ class Source(object):
         self.ccd = ccd
         self.cadence = cadence
         self.quality = quality
-        catalogdata = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
+        self.exposure = exposure
+        catalogdata = Catalogs.query_object(coord, radius=(self.size + 8) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
         catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
@@ -64,7 +66,7 @@ class Source(object):
                 np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
-            if -2 < x_gaia[i] < self.size + 1 and -2 < y_gaia[i] < self.size + 1:
+            if -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
                 dif = gaia_targets['phot_bp_mean_mag'][i] - gaia_targets['phot_rp_mean_mag'][i]
                 tess_mag[i] = gaia_targets['phot_g_mean_mag'][
                                   i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
@@ -85,7 +87,7 @@ class Source(object):
         self.gaia = gaia_targets
 
 
-def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
+def cut_ffi(sector=1, camera=1, ccd=1, path=''):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
@@ -98,7 +100,7 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'{path}*{camera}-{ccd}-????-?_ffic.fits')
+    input_files = glob(f'{path}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     time = []
     quality = []
     cadence = []
@@ -109,17 +111,19 @@ def cut_ffi(sector=1, camera=1, ccd=1, path='/mnt/d/TESS_Sector_24/'):
             cadence.append(hdul[0].header['FFIINDEX'])
             time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
             flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
-    np.save(path + f'/sector{sector}_time.npy', time)
+    np.save(path + f'source/sector{sector}_time.npy', time)
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
+    exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
-    os.makedirs(path + f'{camera}-{ccd}/', exist_ok=True)
+    os.makedirs(path + f'source/{camera}-{ccd}/', exist_ok=True)
     for i in trange(22):
         for j in range(22):
-            with open(path + f'{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
-                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, quality=quality, wcs=wcs, cadence=cadence)
+            with open(path + f'source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
+                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, quality=quality, wcs=wcs,
+                                exposure=exposure, cadence=cadence)
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
 

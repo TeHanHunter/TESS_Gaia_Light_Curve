@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import trange
 
 
-def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, mag_lim=12):
+def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, mag_lim=12, target=''):
     """
     background modification
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -26,6 +26,9 @@ def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, mag_lim=12):
             inner_stars.append(i)
         if len(inner_stars) == 5:
             break
+    x_ = []
+    y_ = []
+    local_bg = []
     for j in trange(np.array(source.gaia['tess_mag']).searchsorted(mag_lim, 'right'), num_stars,
                     desc='Adjusting background'):
         bg = np.zeros(5)
@@ -33,4 +36,8 @@ def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, mag_lim=12):
             bg[i] = source.gaia['tess_flux_ratio'][j] * np.nanmedian(source.flux[:, int(y[index]), int(x[index])]) / \
                     source.gaia['tess_flux_ratio'][index] - np.nanmedian(lightcurve[j])
         mod_lightcurve[j] = lightcurve[j] + np.nanmedian(bg)
+        x_.append(x[j])
+        y_.append(y[j])
+        local_bg.append(np.nanmedian(bg))
+    np.save(f'/mnt/c/users/tehan/desktop/local_bg{target}.npy', np.array([x_, y_, local_bg]))
     return mod_lightcurve
