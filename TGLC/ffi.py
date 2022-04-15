@@ -10,7 +10,7 @@ import pickle
 
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], quality=[], exposure=1800, sector=0, size=95, camera=1,
+    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], quality=[], exposure=1800, sector=0, size=150, camera=1,
                  ccd=1, cadence=[]):
         """
         Source object that includes all data from TESS and Gaia DR2
@@ -36,7 +36,7 @@ class Source(object):
         list of cadences of TESS FFI
         """
         super(Source, self).__init__()
-        coord = wcs.pixel_to_world([x + 47 + 44], [y + 47])[0].to_string()
+        coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
         self.size = size
         self.sector = sector
         self.camera = camera
@@ -44,15 +44,15 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
-        catalogdata = Catalogs.query_object(coord, radius=(self.size + 8) * 21 * 0.707 / 3600,
+        catalogdata = Catalogs.query_object(coord, radius=(self.size + 4) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 2) * 21 * 0.707 / 3600,
+        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 4) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
         # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
-        self.flux = flux[:len(time), y:y + 95, x:x + 95]
+        self.flux = flux[:len(time), y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
         gaia_targets = self.catalogdata[
@@ -87,7 +87,7 @@ class Source(object):
         self.gaia = gaia_targets
 
 
-def cut_ffi(sector=1, camera=1, ccd=1, path=''):
+def cut_ffi(sector=1, camera=1, ccd=1, size=150, path=''):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
@@ -119,11 +119,12 @@ def cut_ffi(sector=1, camera=1, ccd=1, path=''):
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
     os.makedirs(path + f'source/{camera}-{ccd}/', exist_ok=True)
-    for i in trange(22):
-        for j in range(22):
+    for i in trange(14):  # 22
+        for j in range(14):  # 22
             with open(path + f'source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
-                source = Source(x=i * 93, y=j * 93, flux=flux, sector=sector, time=time, quality=quality, wcs=wcs,
-                                exposure=exposure, cadence=cadence)
+                source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, sector=sector, time=time, size=size,
+                                quality=quality, wcs=wcs,
+                                exposure=exposure, cadence=cadence)  # 93
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
 

@@ -9,9 +9,9 @@ if __name__ == '__main__':
     # local_directory = f'/home/tehan/data/sector{sector:02d}/'
     local_directory = f'/mnt/d/TESS_Sector_17/'
     os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
-    with open(local_directory + f'source/{ccd}/source_11_11.pkl', 'rb') as input_:
+    with open(local_directory + f'source/{ccd}/source_07_07.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    epsf(source, factor=2, target='11_11', ccd=ccd, sector=source.sector,
+    epsf(source, factor=2, target='07_07', ccd=ccd, sector=source.sector,
          local_directory=local_directory)  # TODO: power?
     # for i in range(484):
     #     target = f'{(i // 22):02d}_{(i % 22):02d}'

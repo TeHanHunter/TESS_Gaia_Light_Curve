@@ -15,7 +15,7 @@ from TGLC.ffi_cut import *
 from TGLC.local_background import *
 
 
-def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg=[], tess_flag=[],
+def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg=[], tess_flag=[], scale=1,
               tglc_flag=np.array([]), cadence=[]):
     """
     lc output to .FITS file in MAST HLSP standards
@@ -60,8 +60,8 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
         fits.Card('TELESCOP', 'TESS', 'telescope'),
         fits.Card('INSTRUME', 'TESS Photometer', 'detector type'),
         fits.Card('FILTER', 'TESS', 'the filter used for the observations'),
-        fits.Card('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR2 designation'),
-        fits.Card('GAIADR2', objid, 'integer version of Gaia DR2 designation'),
+        fits.Card('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR2 ID'),
+        fits.Card('GAIADR2', objid, 'integer version of Gaia DR2 ID'),
         fits.Card('TICID', ticid, 'TESS Input Catalog ID'),
         fits.Card('SECTOR', source.sector, 'observation sector'),
         fits.Card('CAMERA', source.camera, 'camera No.'),
@@ -77,6 +77,10 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
     t_start = source.time[0]
     t_stop = source.time[-1]
+    if source.sector < 28:
+        exposure_time = 1800
+    else:
+        exposure_time = 600
     c1 = fits.Column(name='time', array=np.array(time), format='D')
     c2 = fits.Column(name='psf_flux', array=np.array(lc), format='D')
     c3 = fits.Column(name='psf_flux_err',
@@ -114,8 +118,8 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
     table_hdu_1.header.append(('MJD_END', t_stop + 56999.5, '[d] end time in barycentric MJD'), end=True)
     table_hdu_1.header.append(('TIMEDEL', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
                               end=True)
-    table_hdu_1.header.append(('XPTIME', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
-                              end=True)
+    table_hdu_1.header.append(('XPTIME', exposure_time, '[s] time resolution of data'), end=True)
+    table_hdu_1.header.append(('SCALE', scale, '[e-/s] normalization factor'), end=True)
     table_hdu_1.header.append(('WOTAN_WL', 1, 'wotan detrending window length'), end=True)
     table_hdu_1.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
 
@@ -186,8 +190,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='',
     # else:
     lightcurve = np.zeros((num_stars, len(source.time)))
     for i in trange(0, num_stars, desc='Fitting lc'):
-        r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
         if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
+            r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
             # one pixel width tolerance
             for j in range(len(source.time)):
                 lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
@@ -210,11 +214,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='',
     for i in trange(num_stars, desc='Flattening lc'):
         if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
             mag.append(source.gaia['tess_mag'][i])
-            mean_diff.append(np.nanmean(
-                np.abs(np.diff(mod_lightcurve[i][index] / np.nanmedian(mod_lightcurve[i][index])))))
+            mean_diff.append(np.nanmean(np.abs(np.diff(mod_lightcurve[i][index]))))
             flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
                                  window_length=1, method='biweight', return_trend=False)
-            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality,
+            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality, scale=np.nanmedian(mod_lightcurve[i][index]),
                       tglc_flag=quality, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
 
     np.save(local_directory + f'mean_diff{factor}_{target}.npy', np.array([mag, mean_diff]))
