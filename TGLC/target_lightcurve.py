@@ -10,12 +10,13 @@ from tqdm import trange
 from wotan import flatten
 import matplotlib.pyplot as plt
 
-from TGLC.ePSF import *
+from TGLC.effective_psf import *
 from TGLC.ffi_cut import *
 from TGLC.local_background import *
+from matplotlib import colors
+import pickle
 
-
-def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg=[], tess_flag=[], scale=1,
+def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg=[], tess_flag=[], scale=1.,
               tglc_flag=np.array([]), cadence=[]):
     """
     lc output to .FITS file in MAST HLSP standards
@@ -135,7 +136,7 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
     #  5. for 10-min cadence targets, do we need bigger RAM?
 
 
-def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='', sector=0, limit_mag=16,
+def epsf(source, psf_size=11, factor=2, local_directory='', cut_x=0, cut_y=0, ccd='', sector=0, limit_mag=16,
          edge_compression=1e-4, power=1):
     """
     User function that unites all necessary steps
@@ -159,6 +160,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='',
     <1 means emphasizing dimmer stars
     :return:
     """
+    target = f'{cut_x:02d}_{cut_y:02d}'
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
     epsf_loc = f'{local_directory}epsf/{ccd}/epsf_{target}_sector_{sector}.npy'
@@ -178,10 +180,12 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='',
     index_1 = np.where(np.array(source.quality) == 0)[0]
     index_2 = np.where(quality == 0)[0]
     index = np.intersect1d(index_1, index_2)
+    x_left = 1.5 if cut_x != 0 else -0.5
+    x_right = 2.5 if cut_x != 13 else 0.5
+    y_left = 1.5 if cut_y != 0 else -0.5
+    y_right = 2.5 if cut_y != 13 else 0.5
     # print(np.std(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95)))
-    # plt.imshow(source.flux[0] - np.dot(A, e_psf[0])[:95 ** 2].reshape(95, 95), origin='lower')
-    # plt.colorbar()
-    # plt.show()
+    # np.save('/mnt/c/users/tehan/desktop/7654/contamination_8.npy', np.dot(A, e_psf[0])[:50 ** 2].reshape(50, 50))
     # lc_exists = exists(f'{local_directory}lc_{target}_sector_{sector}.npy')
     num_stars = np.array(source.gaia['tess_mag']).searchsorted(limit_mag, 'right')
     # if lc_exists:
@@ -190,13 +194,13 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='',
     # else:
     lightcurve = np.zeros((num_stars, len(source.time)))
     for i in trange(0, num_stars, desc='Fitting lc'):
-        if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
+        if x_left <= x_round[i] <= source.size - x_right and y_left <= y_round[i] <= source.size - y_right:
             r_A = reduced_A(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i)
             # one pixel width tolerance
             for j in range(len(source.time)):
                 lightcurve[i, j] = source.flux[j][y_round[i], x_round[i]] - np.dot(r_A, e_psf[j])
         # np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
-    mod_lc_exists = exists(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
+    # mod_lc_exists = exists(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
     # if mod_lc_exists:
     #     mod_lightcurve = np.load(f'{local_directory}lc_mod_{target}_sector_{sector}.npy')
     #     print('Loaded mod_lc from directory. ')
@@ -209,18 +213,24 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, ccd='',
     #                   lc=mod_lightcurve[i], calibration='psf')
     # os.mkdir(os.path.join(local_directory, 'lc'))
     # os.makedirs(os.path.join(local_directory, 'lc'), exist_ok=True)
-    mag = []
-    mean_diff = []
-    for i in trange(num_stars, desc='Flattening lc'):
-        if 0.5 <= x_round[i] <= source.size - 1.5 and 0.5 <= y_round[i] <= source.size - 1.5:
-            mag.append(source.gaia['tess_mag'][i])
-            mean_diff.append(np.nanmean(np.abs(np.diff(mod_lightcurve[i][index]))))
-            flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
-                                 window_length=1, method='biweight', return_trend=False)
-            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality, scale=np.nanmedian(mod_lightcurve[i][index]),
-                      tglc_flag=quality, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
 
-    np.save(local_directory + f'mean_diff{factor}_{target}.npy', np.array([mag, mean_diff]))
+    # mag = []
+    # mean_diff = []
+    # for i in trange(num_stars, desc='Flattening lc'):
+    #     if x_left <= x_round[i] <= source.size - x_right and y_left <= y_round[i] <= source.size - y_right:
+    #         if 1.5 <= x_round[i] <= source.size - 2.5 and 1.5 <= y_round[i] <= source.size - 2.5:
+    #             quality_ = quality
+    #         else:
+    #             quality_ = quality + 2
+    #         mag.append(source.gaia['tess_mag'][i])
+    #         mean_diff.append(np.nanmean(np.abs(np.diff(mod_lightcurve[i][index]))))
+    #         flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
+    #                              window_length=1, method='biweight', return_trend=False)
+    #         lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality,
+    #                   scale=float(np.nanmedian(mod_lightcurve[i][index])),
+    #                   tglc_flag=quality_, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
+
+    # np.save(local_directory + f'mean_diff{factor}_{target}.npy', np.array([mag, mean_diff]))
 
 
 if __name__ == '__main__':

@@ -39,6 +39,7 @@ class Source_cut(object):
         self.flux_err = []
         self.gaia = []
         self.cadence = cadence
+        self.quality = []
         catalogdata = Catalogs.query_object(self.name, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         print(catalogdata[0]['designation'])
@@ -90,6 +91,7 @@ class Source_cut(object):
         self.time = data_time
         self.flux = data_flux
         self.flux_err = data_flux_err
+        self.quality = np.zeros(len(data_time))
 
         gaia_targets = self.catalogdata[
             'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
@@ -146,14 +148,5 @@ def ffi(target='', local_directory='', size=90):
 
 
 if __name__ == '__main__':
-    target = 'TIC 455784423'  # Target identifier or coordinates TOI-3714
-    local_directory = f'/mnt/c/users/tehan/desktop/{target}/'
-    # local_directory = os.path.join(os.getcwd(), f'{target}/')
-    if not os.path.exists(local_directory):
-        os.makedirs(local_directory)
-    size = 90  # int, suggests big cuts
-    source = ffi(target=target, size=size, local_directory=local_directory)
-    # source.select_sector(sector=24)
-    print(source.sector_table)
-    epsf(source, factor=2, target=target, sector=source.sector, ccd='2_oversampling', local_directory=local_directory)
+    target = 'NGC 7654'  # Target identifier or coordinates TOI-3714
     # TODO: power?

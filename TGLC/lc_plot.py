@@ -6,6 +6,9 @@ from astropy.io import ascii
 import pickle
 from astropy.io import fits
 from matplotlib.patches import ConnectionPatch
+from matplotlib import colors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import cmasher as cmr
 
 
 def figure_1():
@@ -324,7 +327,7 @@ def figure_2():
             ax1.set_xlabel('TBJD', labelpad=0)
         ax1.set_ylabel('Normalized Flux', labelpad=0)
         ax2.set_xlabel('Phase (days)', labelpad=0)
-        ax1.set_title(f'{source.gaia[index[i]]["designation"]}', loc = 'left')
+        ax1.set_title(f'{source.gaia[index[i]]["designation"]}', loc='left')
         ax2.set_title(f'P = {period[i]}' + f' TESS magnitude = {source.gaia[index[i]]["tess_mag"]:.2f}')
     ax1.legend(bbox_to_anchor=(0.9, -.35))
     ax2.legend(bbox_to_anchor=(-.8, -.35))
@@ -374,7 +377,7 @@ def figure_3():
     plt.plot(mean_diff3[0], mean_diff3[1], 'D', c='r', ms=1.5, label='TGLC')
     plt.legend(loc=2)
     plt.xlabel('TESS magnitude')
-    plt.ylabel(r'Mean Adjacent Difference ($e^-$/ $s$)')
+    plt.ylabel(r'Mean Adjacent Difference ($\mathrm{e^-}$/ s)')
     plt.yscale('log')
     plt.savefig('/mnt/c/users/tehan/desktop/MAD.png', bbox_inches='tight', dpi=300)
     plt.show()
@@ -398,5 +401,83 @@ def figure_4():
     plt.show()
 
 
+def figure_5():
+    ccd = '1-2'
+    cut_x = 11
+    cut_y = 11
+    # local_directory = f'/mnt/d/TESS_Sector_17/'
+    # with open(local_directory + f'source/{ccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
+    #     source = pickle.load(input_)
+    with open(f'/mnt/c/users/tehan/desktop/7654/source_NGC 7654.pkl', 'rb') as input_:
+        source = pickle.load(input_)
+    # plt.imshow(source.flux[0], origin='lower', norm=colors.LogNorm())
+    # plt.scatter(source.gaia['sector_17_x'][:100], source.gaia['sector_17_y'][:100], s=0.5, c='r')
+    # plt.scatter(source.gaia['sector_17_x'][6], source.gaia['sector_17_y'][6], s=0.5, c='r')
+    # plt.colorbar()
+    # plt.show()
+    contamination = np.load('/mnt/c/users/tehan/desktop/7654/contamination.npy')
+    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_8.npy')
+    fig = plt.figure(constrained_layout=False, figsize=(11, 4))
+    gs = fig.add_gridspec(1, 31)
+    gs.update(wspace=1, hspace=0.1)
+
+    # cmap = plt.get_cmap('cmr.fusion')  # MPL
+    cmap = 'RdBu'
+    ax1 = fig.add_subplot(gs[0, 0:10], projection=source.wcs)
+    ax1.set_title('TESS FFI', pad=10)
+    im1 = ax1.imshow(source.flux[0], origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
+    ax1.scatter(source.gaia['sector_17_x'][:100], source.gaia['sector_17_y'][:100], s=5, c='r')
+    ax1.scatter(source.gaia['sector_17_x'][8], source.gaia['sector_17_y'][8], s=30, c='r', marker='*')
+    ax1.coords['pos.eq.ra'].set_axislabel('Right Ascension', minpad=-1)
+    ax1.coords['pos.eq.ra'].set_axislabel_position('l')
+    ax1.coords['pos.eq.dec'].set_axislabel('Declination')
+    ax1.coords['pos.eq.dec'].set_axislabel_position('b')
+    ax1.coords.grid(color='k', ls='dotted')
+    ax1.tick_params(axis='x', labelbottom=True)
+    ax1.tick_params(axis='y', labelleft=True)
+
+    ax2 = fig.add_subplot(gs[0, 10:20], projection=source.wcs)
+    ax2.set_title('Simulated background stars', pad=10)
+    im2 = ax2.imshow(contamination_8, origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
+    ax2.scatter(source.gaia['sector_17_x'][:8], source.gaia['sector_17_y'][:8], s=5, c='r')
+    ax2.scatter(source.gaia['sector_17_x'][9:100], source.gaia['sector_17_y'][9:100], s=5, c='r')
+    # ax2.set_xticks([20, 25, 30, 35, 40])
+    # ax2.set_yticks([20, 25, 30, 35, 40])
+
+    ax2.coords['pos.eq.ra'].set_ticklabel_visible(False)
+    ax2.coords['pos.eq.dec'].set_axislabel('Declination')
+    ax2.coords['pos.eq.dec'].set_axislabel_position('b')
+    ax2.coords.grid(color='k', ls='dotted')
+    ax2.tick_params(axis='x', labelbottom=True)
+    ax2.tick_params(axis='y', labelleft=True)
+
+    ax3 = fig.add_subplot(gs[0, 20:30], projection=source.wcs)
+    ax3.set_title('Decontaminated target star', pad=10)
+    im3 = ax3.imshow(source.flux[0] - contamination_8, origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
+    ax3.scatter(source.gaia['sector_17_x'][0], source.gaia['sector_17_y'][0], s=5, c='r',
+                label='background stars')
+    ax3.scatter(source.gaia['sector_17_x'][8], source.gaia['sector_17_y'][8], s=30, c='r', marker='*',
+                label='target star')
+    ax3.coords['pos.eq.ra'].set_ticklabel_visible(False)
+    ax3.coords['pos.eq.dec'].set_axislabel('Declination')
+    ax3.coords['pos.eq.dec'].set_axislabel_position('b')
+    ax3.coords.grid(color='k', ls='dotted')
+    ax3.tick_params(axis='x', labelbottom=True)
+    ax3.tick_params(axis='y', labelleft=True)
+
+    # divider = make_axes_locatable(ax3)
+    # cax = divider.append_axes('right', size='5%', pad=0.05)
+    ax_cb = fig.colorbar(im3, cax=fig.add_subplot(gs[0, 30]), orientation='vertical',
+                         boundaries=np.linspace(-1000, 5000, 1000),
+                         ticks=[-1000, 0, 1000, 2000, 3000, 4000, 5000], aspect=50, shrink=0.7)
+    ax_cb.ax.set_yticklabels(['-1', '0', '1', '2', '3', '4', '5'])
+    ax_cb.ax.set_ylabel(r'TESS Flux ($\times 1000$ $\mathrm{e^-}$/ s) ')
+    ax3.legend(loc=4, prop={'size': 8})
+    plt.setp([ax1, ax2, ax3], xlim=(21.5, 36.5), ylim=(18.5, 33.5))
+    plt.savefig('/mnt/c/users/tehan/desktop/remove_contamination.png', bbox_inches='tight', dpi=300)
+    plt.show()
+    plt.close()
+
+
 if __name__ == '__main__':
-    figure_3()
+    figure_5()
