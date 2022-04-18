@@ -42,7 +42,7 @@ class Source_cut(object):
         self.quality = []
         catalogdata = Catalogs.query_object(self.name, radius=(self.size + 2) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
-        print(catalogdata[0]['designation'])
+        print(f'Target Gaia: {catalogdata[0]["designation"]}')
         # TODO: maybe increase search radius
         print(f'Found {len(catalogdata)} Gaia DR2 objects.')
         ra = catalogdata[0]['ra']
@@ -53,6 +53,7 @@ class Source_cut(object):
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         sector_table = Tesscut.get_sectors(coord)
+        print(sector_table)
         hdulist = Tesscut.get_cutouts(coord, self.size)
         self.catalogdata = catalogdata
         self.sector_table = sector_table
@@ -135,13 +136,13 @@ def ffi(target='', local_directory='', size=90):
     FFI cut side length
     :return: TGLC.ffi_cut.Source_cut
     """
-    source_exists = exists(f'{local_directory}source_{target}.pkl')
+    source_exists = exists(f'{local_directory}source/source_{target}.pkl')
     if source_exists:
-        with open(f'{local_directory}source_{target}.pkl', 'rb') as input_:
+        with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
             source = pickle.load(input_)
         print('Loaded ffi from directory. ')
     else:
-        with open(f'{local_directory}source_{target}.pkl', 'wb') as output:
+        with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
             source = Source_cut(target, size=size)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source

@@ -16,8 +16,8 @@ from astropy.io import ascii
 from glob import glob
 
 if __name__ == '__main__':
-    # local_directory = '/home/tehan/data/exoplanets/'
-    local_directory = '/mnt/c/users/tehan/downloads/'
+    local_directory = '/home/tehan/data/exoplanets/'
+    # local_directory = '/mnt/c/users/tehan/downloads/'
     os.makedirs(local_directory + f'transits/', exist_ok=True)
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/test/', exist_ok=True)

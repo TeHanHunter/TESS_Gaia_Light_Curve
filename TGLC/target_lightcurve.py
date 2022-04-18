@@ -17,7 +17,7 @@ from matplotlib import colors
 import pickle
 
 def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg=[], tess_flag=[], scale=1.,
-              tglc_flag=np.array([]), cadence=[]):
+              tglc_flag=np.array([]), cadence=[], cut_x=0, cut_y=0):
     """
     lc output to .FITS file in MAST HLSP standards
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -67,6 +67,9 @@ def lc_output(source, local_directory='', index=0, time=[], lc=[], cal_lc=[], bg
         fits.Card('SECTOR', source.sector, 'observation sector'),
         fits.Card('CAMERA', source.camera, 'camera No.'),
         fits.Card('CCD', source.ccd, 'CCD No.'),
+        fits.Card('CUT_x', cut_x, 'FFI cut x index'),
+        fits.Card('CUT_y', cut_y, 'FFI cut y index'),
+        fits.Card('CUTSIZE', source.size, 'FFI cut size'),
         fits.Card('RADESYS', 'ICRS', 'reference frame of celestial coordinates'),
         fits.Card('RA_OBJ', source.gaia[index]['ra'], '[deg] right ascension, J2000'),
         fits.Card('DEC_OBJ', source.gaia[index]['dec'], '[deg] declination, J2000'),
@@ -216,19 +219,19 @@ def epsf(source, psf_size=11, factor=2, local_directory='', cut_x=0, cut_y=0, cc
 
     # mag = []
     # mean_diff = []
-    # for i in trange(num_stars, desc='Flattening lc'):
-    #     if x_left <= x_round[i] <= source.size - x_right and y_left <= y_round[i] <= source.size - y_right:
-    #         if 1.5 <= x_round[i] <= source.size - 2.5 and 1.5 <= y_round[i] <= source.size - 2.5:
-    #             quality_ = quality
-    #         else:
-    #             quality_ = quality + 2
-    #         mag.append(source.gaia['tess_mag'][i])
-    #         mean_diff.append(np.nanmean(np.abs(np.diff(mod_lightcurve[i][index]))))
-    #         flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
-    #                              window_length=1, method='biweight', return_trend=False)
-    #         lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality,
-    #                   scale=float(np.nanmedian(mod_lightcurve[i][index])),
-    #                   tglc_flag=quality_, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
+    for i in trange(num_stars, desc='Flattening lc'):
+        if x_left <= x_round[i] <= source.size - x_right and y_left <= y_round[i] <= source.size - y_right:
+            if 1.5 <= x_round[i] <= source.size - 2.5 and 1.5 <= y_round[i] <= source.size - 2.5:
+                quality_ = quality
+            else:
+                quality_ = quality + 2
+            # mag.append(source.gaia['tess_mag'][i])
+            # mean_diff.append(np.nanmean(np.abs(np.diff(mod_lightcurve[i][index]))))
+            flatten_lc = flatten(source.time, mod_lightcurve[i] / np.nanmedian(mod_lightcurve[i]),
+                                 window_length=1, method='biweight', return_trend=False)
+            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality,
+                      scale=float(np.nanmedian(mod_lightcurve[i][index])), cut_x=cut_x, cut_y=cut_y,
+                      tglc_flag=quality_, bg=e_psf[:, -1], time=source.time, lc=mod_lightcurve[i], cal_lc=flatten_lc)
 
     # np.save(local_directory + f'mean_diff{factor}_{target}.npy', np.array([mag, mean_diff]))
 
