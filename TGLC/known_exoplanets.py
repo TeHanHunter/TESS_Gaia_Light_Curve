@@ -16,18 +16,16 @@ from astropy.io import ascii
 from glob import glob
 
 if __name__ == '__main__':
-    local_directory = '/home/tehan/data/exoplanets/'
+    # local_directory = '/home/tehan/data/exoplanets/'
+    local_directory = '/mnt/c/users/tehan/downloads/'
     os.makedirs(local_directory + f'transits/', exist_ok=True)
-    data = ascii.read(local_directory + 'PS_2022.04.17_18.17.28.csv')
+    os.makedirs(local_directory + f'lc/', exist_ok=True)
+    os.makedirs(local_directory + f'epsf/test/', exist_ok=True)
+    os.makedirs(local_directory + f'source/', exist_ok=True)
+    data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57.csv')
     hosts = list(set(data['hostname']))
     for i in range(len(hosts)):
         target = hosts[i]  # Target identifier or coordinates TOI-3714
-        os.makedirs(local_directory + f'lc/', exist_ok=True)
-        os.makedirs(local_directory + f'epsf/test/', exist_ok=True)
-        os.makedirs(local_directory + f'source/', exist_ok=True)
-        # local_directory = os.path.join(os.getcwd(), f'{target}/')
-        if not os.path.exists(local_directory):
-            os.makedirs(local_directory)
         size = 50  # int, suggests big cuts
         source = ffi(target=target, size=size, local_directory=local_directory)
         for j in range(len(source.sector_table)):
