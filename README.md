@@ -2,6 +2,8 @@
 
 TESS FFI light curves fitted with effective PSF and decontaminated with Gaia DR2 
 
+Light curves are being fitted and will be available through MAST HLSP. 
+
 ![light_curve_comparison_1251](https://user-images.githubusercontent.com/49893001/164130093-879c9275-7168-4fb4-bf4f-975747a55b76.png)
 Example of performence in a crowded area of NGC 7654
 
