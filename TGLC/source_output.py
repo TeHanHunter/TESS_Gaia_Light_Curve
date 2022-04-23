@@ -1,9 +1,9 @@
 from TGLC.ffi import *
 
 if __name__ == '__main__':
-    sector = 17
-    # local_directory = f'/home/tehan/data/sector{sector:02d}/'
-    local_directory = f'/mnt/d/TESS_Sector_17/'
+    sector = 40
+    local_directory = f'/home/tehan/data/sector{sector:02d}/'
+    # local_directory = f'/mnt/d/TESS_Sector_17/'
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'ffi/', exist_ok=True)

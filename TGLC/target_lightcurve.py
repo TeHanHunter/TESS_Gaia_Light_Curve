@@ -74,6 +74,8 @@ def lc_output(source, local_directory='', index=0, time=None, lc=None, cal_lc=No
         fits.Card('EXTNAME', 'PRIMARY', 'name of extension'),
         fits.Card('EXTDATA', 'aperture', 'decontaminated FFI cut for aperture photometry'),
         fits.Card('EXTVER', 1, 'extension version'),
+        fits.Card('TIMESYS', 'TDB', 'TESS Barycentric Dynamical Time'),
+        fits.Card('BUNIT', 'e-/s', 'flux unit'),
         fits.Card('STAR_X', star_x, 'star x position in cut'),
         fits.Card('STAR_Y', star_y, 'star y position in cut'),
         fits.Card('COMMENT', 'hdul[0].data[star_y,star_x,:]=lc'),
@@ -139,7 +141,9 @@ def lc_output(source, local_directory='', index=0, time=None, lc=None, cal_lc=No
     table_hdu.header.append(('TASSIGN', 'SPACECRAFT', 'where time is assigned'), end=True)
     table_hdu.header.append(('BJDREFI', 2457000, 'integer part of BJD reference date'), end=True)
     table_hdu.header.append(('BJDREFR', 0.0, 'fraction of the day in BJD reference date'), end=True)
+    table_hdu.header.append(('TIMESYS', 'TDB', 'TESS Barycentric Dynamical Time'), end=True)
     table_hdu.header.append(('TIMEUNIT', 'd', 'time unit for TIME'), end=True)
+    table_hdu.header.append(('BUNIT', 'e-/s', 'psf_flux unit'), end=True)
     table_hdu.header.append(('TELAPS', t_stop - t_start, '[d] TSTOP-TSTART'), end=True)
     table_hdu.header.append(('TSTART', t_start, '[d] observation start time in TBJD'), end=True)
     table_hdu.header.append(('TSTOP', t_stop, '[d] observation end time in TBJD'), end=True)
