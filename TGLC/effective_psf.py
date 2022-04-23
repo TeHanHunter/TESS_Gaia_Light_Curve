@@ -79,9 +79,9 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
         star_info.append(
             (np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
              flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))))
+
     coord = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
     x_coord, y_coord = np.meshgrid(coord, coord)
-
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
     A_mod = np.diag(dist.flatten())
@@ -90,7 +90,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     return A, star_info, over_size, x_round, y_round
 
 
-def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0):
+def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0, e_psf=np.array([])):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -107,13 +107,24 @@ def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0):
     target star index
     :return: reduced A, matrix for least_square fix without the target star
     """
-    if star_info is None:
-        star_info = []
+    size = source.size  # TODO: must be even?
     star_position = int(x + source.size * y)
-    A_ = np.zeros(np.shape(A)[-1])
-    index = np.where(star_info[star_num][0] == star_position)
-    A_[star_info[star_num][1][index]] = star_info[star_num][2][index]
-    return A[star_position, :] - A_
+    left = np.maximum(0, x - 2)
+    right = np.minimum(size, x + 2) + 1
+    down = np.maximum(0, y - 2)
+    up = np.minimum(size, y + 2) + 1
+    coord = np.arange(size ** 2).reshape(size, size)
+    index = np.array(coord[down:up, left:right]).flatten()
+    A_cut = np.zeros((len(index), np.shape(A)[1]))
+    for i in range(len(index)):
+        A_ = np.zeros(np.shape(A)[-1])
+        star_pos = np.where(star_info[star_num][0] == index[i])[0]
+        A_[star_info[star_num][1][star_pos]] = star_info[star_num][2][star_pos]
+        A_cut[i] = A[index[i], :] - A_
+    aperture = np.zeros((len(index), len(source.time)))
+    for j in range(len(source.time)):
+        aperture[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
+    return aperture.reshape((up-down, right-left, len(source.time))),  y - down, x - left
 
 
 def fit_psf(A, source, over_size, power=0.8, time=0):

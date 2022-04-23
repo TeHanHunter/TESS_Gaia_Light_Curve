@@ -10,8 +10,8 @@ import pickle
 
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=[], time=[], wcs=[], quality=[], exposure=1800, sector=0, size=150, camera=1,
-                 ccd=1, cadence=[]):
+    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, exposure=1800, sector=0, size=150, camera=1,
+                 ccd=1, cadence=None):
         """
         Source object that includes all data from TESS and Gaia DR2
         :param x: int, required
@@ -36,6 +36,16 @@ class Source(object):
         list of cadences of TESS FFI
         """
         super(Source, self).__init__()
+        if cadence is None:
+            cadence = []
+        if quality is None:
+            quality = []
+        if wcs is None:
+            wcs = []
+        if time is None:
+            time = []
+        if flux is None:
+            flux = []
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
         self.size = size
         self.sector = sector
@@ -44,10 +54,10 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
-        catalogdata = Catalogs.query_object(coord, radius=(self.size + 4) * 21 * 0.707 / 3600,
+        catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 4) * 21 * 0.707 / 3600,
+        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
         # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']

@@ -18,7 +18,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 class Source_cut(object):
-    def __init__(self, name, size=15, cadence=[]):
+    def __init__(self, name, size=15, cadence=None):
         """
         Source_cut object that includes all data from TESS and Gaia DR2
         :param name: str, required
@@ -30,6 +30,8 @@ class Source_cut(object):
         list of cadences of TESS FFI
         """
         super(Source_cut, self).__init__()
+        if cadence is None:
+            cadence = []
         self.name = name
         self.size = size
         self.sector = 0
@@ -40,7 +42,7 @@ class Source_cut(object):
         self.gaia = []
         self.cadence = cadence
         self.quality = []
-        catalogdata = Catalogs.query_object(self.name, radius=(self.size + 2) * 21 * 0.707 / 3600,
+        catalogdata = Catalogs.query_object(self.name, radius=(self.size + 4) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         print(f'Target Gaia: {catalogdata[0]["designation"]}')
         # TODO: maybe increase search radius
@@ -48,7 +50,7 @@ class Source_cut(object):
         ra = catalogdata[0]['ra']
         dec = catalogdata[0]['dec']
         coord = SkyCoord(ra, dec, unit="deg")
-        catalogdata_tic = Catalogs.query_object(coord.to_string(), radius=(self.size + 2) * 21 * 0.707 / 3600,
+        catalogdata_tic = Catalogs.query_object(coord.to_string(), radius=(self.size + 4) * 21 * 0.707 / 3600,
                                             catalog="TIC")
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']

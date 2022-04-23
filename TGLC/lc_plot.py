@@ -8,7 +8,9 @@ from astropy.io import fits
 from matplotlib.patches import ConnectionPatch
 from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import cmasher as cmr
+from tqdm import trange
+import os
+from glob import glob
 
 
 def figure_1():
@@ -339,9 +341,6 @@ def figure_2():
 
 
 def figure_3():
-    from tqdm import trange
-    import os
-    from glob import glob
     local_directory = f'/mnt/d/TESS_Sector_17/'
     input_files = glob(f'/mnt/d/TESS_Sector_17/mastDownload/HLSP/*/*.fits')
     input_files1 = glob('/mnt/d/TESS_Sector_17/source/1-1/pca/*')
@@ -353,31 +352,36 @@ def figure_3():
             quality = hdul[1].data['QUALITY']
             lc = hdul[1].data['KSPSAP_FLUX']
             mag_ = hdul[0].header['TESSMAG']
-            scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
+            # scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
             index = np.where(quality == 0)
             mag.append(mag_)
-            mean_diff.append(scale * np.mean(np.abs(np.diff(lc[index] / np.nanmedian(lc[index])))))
+            mean_diff.append(np.mean(np.abs(np.diff(lc[index] / np.nanmedian(lc[index])))))
     mag1 = []
     mean_diff1 = []
     for i in trange(len(input_files1)):
         lc = np.load(input_files1[i])
-        mag1.append(float(os.path.basename(input_files1[i])[:-4]))
-        mean_diff1.append(np.mean(np.abs(np.diff(lc))))
+        mag_ = float(os.path.basename(input_files1[i])[:-4])
+        mag1.append(mag_)
+        scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
+        mean_diff1.append(np.mean(np.abs(np.diff(lc))) / scale)
     mag2 = []
     mean_diff2 = []
     for i in trange(len(input_files2)):
         lc = np.load(input_files2[i])
-        mag2.append(float(os.path.basename(input_files2[i])[:-4]))
-        mean_diff2.append(np.mean(np.abs(np.diff(lc))))
+        mag_ = float(os.path.basename(input_files2[i])[:-4])
+        mag2.append(mag_)
+        scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
+        mean_diff2.append(np.mean(np.abs(np.diff(lc))) / scale)
     mean_diff3 = np.load(local_directory + f'mean_diff2_07_07.npy')
-    fig = plt.figure(figsize=(5, 5))
-    plt.plot(mag, mean_diff, '.', c='C0', ms=3, label='QLP')
-    plt.plot(mag2, mean_diff2, '^', c='C2', ms=2, label='eleanor PSF')
-    plt.plot(mag1, mean_diff1, '^', c='C1', ms=2, label='eleanor PCA')
-    plt.plot(mean_diff3[0], mean_diff3[1], 'D', c='r', ms=1.5, label='TGLC')
+    mean_diff3[1] = mean_diff3[1] / (1.5e4 * 10 ** ((10 - mean_diff3[0]) / 2.5))
+    fig = plt.figure(figsize=(5, 4))
+    plt.plot(mag1, mean_diff1, '.', c='C1', ms=3, label='eleanor PCA')
+    plt.plot(mag, mean_diff, '^', c='C0', ms=2, label='QLP')
+    # plt.plot(mag2, mean_diff2  / np.median(mean_diff2), '.', c='C2', ms=2, label='eleanor PSF')
+    plt.plot(mean_diff3[0], mean_diff3[1], 'D', c='r', ms=1.4, label='TGLC')
     plt.legend(loc=2)
     plt.xlabel('TESS magnitude')
-    plt.ylabel(r'Mean Adjacent Difference ($\mathrm{e^-}$/ s)')
+    plt.ylabel(r'Normalized Mean Adjacent Difference')
     plt.yscale('log')
     plt.savefig('/mnt/c/users/tehan/desktop/MAD.png', bbox_inches='tight', dpi=300)
     plt.show()
@@ -480,4 +484,4 @@ def figure_5():
 
 
 if __name__ == '__main__':
-    figure_5()
+    figure_3()
