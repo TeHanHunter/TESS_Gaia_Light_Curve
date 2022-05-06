@@ -1,8 +1,9 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import trange
 
 
-def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, star_num=0):
+def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
     """
     background modification
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -15,26 +16,19 @@ def bg_mod(source, lightcurve=np.array([]), sector=1, num_stars=0, star_num=0):
     number of stars
     :return: modified light curve
     """
-    x = source.gaia[f'sector_{sector}_x']
-    y = source.gaia[f'sector_{sector}_y']
-    inner_stars = []
-    for i in range(num_stars):
-        if 0.5 <= x[i] <= source.size - 1.5 and 0.5 <= y[i] <= source.size - 1.5:
-            inner_stars.append(i)
-        if len(inner_stars) == 5:
-            break
-    # x_ = []
-    # y_ = []
-    # local_bg = []
-    # for j in trange(np.array(source.gaia['tess_mag']).searchsorted(mag_lim, 'right'), num_stars,
-    #                 desc='Adjusting background'):
-    bg = np.zeros(5)
-    for i, index in enumerate(inner_stars):
-        bg[i] = source.gaia['tess_flux_ratio'][star_num] * np.nanmedian(source.flux[:, int(y[index]), int(x[index])]) / \
-                source.gaia['tess_flux_ratio'][index] - np.nanmedian(lightcurve)
-    mod_lightcurve = lightcurve + np.nanmedian(bg)
-    # x_.append(x)
-    # y_.append(y)
-    # local_bg.append(np.nanmedian(bg))
-    # np.save(f'/mnt/c/users/tehan/desktop/local_bg{target}.npy', np.array([x_, y_, local_bg]))
-    return mod_lightcurve
+    bar = 15000 * 10 ** ((source.gaia['tess_mag'][star_num] - 10) / -2.5)
+    # med_epsf = np.nanmedian(e_psf[:, :23 ** 2].reshape(len(source.time), 23, 23), axis=0)
+    # centroid_to_aper_ratio = 4/9 * np.sum(med_epsf[10:13, 10:13]) / np.sum(med_epsf)
+    # centroid_to_aper_ratio = np.nanmedian(ratio)
+    # flux_bar = aperture_bar * centroid_to_aper_ratio
+    # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
+    aperture_bar = bar * portion
+    local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
+    aper_lc = aper_lc - local_bg
+    if near_edge:
+        return local_bg, aper_lc, psf_lc
+    # print(local_bg / aperture_bar)
+    psf_bar = bar
+    local_bg = np.nanmedian(psf_lc[q]) - psf_bar
+    psf_lc = psf_lc - local_bg
+    return local_bg, aper_lc, psf_lc

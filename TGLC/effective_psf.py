@@ -1,7 +1,8 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-def bilinear(x, y, repeat=45):
+def bilinear(x, y, repeat=23):
     """
     A bilinear formula
     np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
@@ -60,37 +61,35 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     x_p = np.arange(size)
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
-    A = np.zeros((size ** 2, over_size ** 2 + 1))
+    A = np.zeros((size ** 2, over_size ** 2 + 3))
+    xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
     A[:, -1] = np.ones(size ** 2)
+    A[:, -2] = yy.flatten()
+    A[:, -3] = xx.flatten()
     star_info = []
     for i in range(len(source.gaia)):
-        # if i == 8:
-        #     pass
-        # else:
         x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
         y_psf = factor * (y_p[down[i]:up[i]] - y_round[i] + half_size) + (y_shift[i] % 1) // (1 / factor)
         x_psf, y_psf = np.meshgrid(x_psf, y_psf)  # super slow here
-        a = np.array(x_psf + y_psf * over_size, dtype=np.int64)
-        a = a.flatten()
+        a = np.array(x_psf + y_psf * over_size, dtype=np.int64).flatten()
         index = coord[down[i]:up[i], left[i]:right[i]]
-        # print(len(np.repeat(index, 4)))
         A[np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F')] += \
             flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))
         star_info.append(
             (np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
              flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))))
 
-    coord = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
-    x_coord, y_coord = np.meshgrid(coord, coord)
+    coord_ = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
+    x_coord, y_coord = np.meshgrid(coord_, coord_)
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
     A_mod = np.diag(dist.flatten())
-    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 1)))), axis=-1)
+    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 3)))), axis=-1)
     A = np.append(A, A_mod, axis=0)
     return A, star_info, over_size, x_round, y_round
 
 
-def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0, e_psf=np.array([])):
+def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size=11, e_psf=None, near_edge=False):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -108,7 +107,8 @@ def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0, e_psf=np.array(
     :return: reduced A, matrix for least_square fix without the target star
     """
     size = source.size  # TODO: must be even?
-    star_position = int(x + source.size * y)
+    star_position = int(x + source.size * y - 5 * size - 5)
+    # aper_lc
     left = np.maximum(0, x - 2)
     right = np.minimum(size, x + 2) + 1
     down = np.maximum(0, y - 2)
@@ -121,10 +121,48 @@ def reduced_A(A, source, star_info=None, x=0., y=0., star_num=0, e_psf=np.array(
         star_pos = np.where(star_info[star_num][0] == index[i])[0]
         A_[star_info[star_num][1][star_pos]] = star_info[star_num][2][star_pos]
         A_cut[i] = A[index[i], :] - A_
-    aperture = np.zeros((len(index), len(source.time)))
+    aperture_lc = np.zeros((len(index), len(source.time)))
     for j in range(len(source.time)):
-        aperture[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
-    return aperture.reshape((up-down, right-left, len(source.time))),  y - down, x - left
+        aperture_lc[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
+    aperture_lc = aperture_lc.reshape((up - down, right - left, len(source.time)))
+
+    # psf_lc
+    over_size = psf_size * factor + 1
+    if near_edge:
+        psf_lc = np.zeros(len(source.time))
+        psf_lc[:] = np.NaN
+        e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
+        portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
+        return aperture_lc, psf_lc, y - down, x - left, portion
+    left_ = left - x + 5
+    right_ = right - x + 5
+    down_ = down - y + 5
+    up_ = up - y + 5
+
+    left_11 = np.maximum(- x + 5, 0)
+    right_11 = np.minimum(size - x + 5, 11)
+    down_11 = np.maximum(- y + 5, 0)
+    up_11 = np.minimum(size - y + 5, 11)
+    coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
+    index = coord[down_11:up_11, left_11:right_11]
+
+    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
+    A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
+    psf_shape = np.dot(A, e_psf.T).reshape(psf_size, psf_size, len(source.time))
+    psf_sim = psf_shape[down_:up_, left_: right_, :]
+    # f, (ax1, ax2) = plt.subplots(1, 2)
+    # ax1.imshow(aperture_lc[:, :, 0])
+    # ax2.imshow(psf_shape[:, :, 0])
+    # plt.show()
+    psf_lc = np.zeros(len(source.time))
+    for j in range(len(source.time)):
+        if np.isnan(psf_sim[:, :, j]).any():
+            psf_lc[j] = np.nan
+        else:
+            psf_lc[j] = np.linalg.lstsq(np.reshape(psf_sim[:, :, j].flatten(), (25, 1)) / np.nansum(psf_sim[:, :, j]),
+                                        aperture_lc[:, :, j].flatten())[0]
+    portion = np.nansum(psf_shape[4:7, 4:7, :]) / np.nansum(psf_shape)
+    return aperture_lc, psf_lc, y - down, x - left, portion
 
 
 def fit_psf(A, source, over_size, power=0.8, time=0):
@@ -155,3 +193,10 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     beta = np.dot(a.T, b)
     fit = np.linalg.solve(alpha, beta)
     return fit
+
+
+def psf_lc(source=None, factor=2, psf_size=11, e_psf=None, star_info=None, star_num=0):
+    over_size = psf_size * factor + 1
+    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
+    A[np.repeat(np.arange(psf_size ** 2), 4), star_info[star_num][1]] = star_info[star_num][2]
+    np.dot(A, e_psf.T)

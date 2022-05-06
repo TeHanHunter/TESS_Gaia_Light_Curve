@@ -62,6 +62,10 @@ class Source_cut(object):
         self.camera = int(sector_table[0]['camera'])
         self.ccd = int(sector_table[0]['ccd'])
         self.hdulist = hdulist
+        sector_list = []
+        for i in range(len(hdulist)):
+            sector_list.append(hdulist[i][0].header['SECTOR'])
+        self.sector_list = sector_list
         self.select_sector(sector=sector_table['sector'][0])
 
     def select_sector(self, sector=1):
@@ -77,11 +81,12 @@ class Source_cut(object):
         elif sector not in self.sector_table['sector']:
             print(f'Sector {sector} does not cover this region. Please refer to sector table.')
             return
-        index = list(self.sector_table['sector']).index(sector)
+
+        index = self.sector_list.index(sector)
         self.sector = sector
-        self.camera = int(self.sector_table[index]['camera'])
-        self.ccd = int(self.sector_table[index]['ccd'])
         hdu = self.hdulist[index]
+        self.camera = int(hdu[0].header['CAMERA'])
+        self.ccd = int(hdu[0].header['CCD'])
         wcs = WCS(hdu[2].header)
         data_time = hdu[1].data['TIME']
         data_flux = hdu[1].data['FLUX']

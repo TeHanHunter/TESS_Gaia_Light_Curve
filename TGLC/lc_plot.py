@@ -11,6 +11,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm import trange
 import os
 from glob import glob
+from os.path import exists
+from TGLC.target_lightcurve import *
+from TGLC.ffi_cut import *
 
 
 def figure_1():
@@ -341,6 +344,7 @@ def figure_2():
 
 
 def figure_3():
+    # 1-1/07_07
     local_directory = f'/mnt/d/TESS_Sector_17/'
     input_files = glob(f'/mnt/d/TESS_Sector_17/mastDownload/HLSP/*/*.fits')
     input_files1 = glob('/mnt/d/TESS_Sector_17/source/1-1/pca/*')
@@ -372,19 +376,21 @@ def figure_3():
         mag2.append(mag_)
         scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
         mean_diff2.append(np.mean(np.abs(np.diff(lc))) / scale)
-    mean_diff3 = np.load(local_directory + f'mean_diff2_07_07.npy')
+    mean_diff3 = np.load(local_directory + f'mean_diff2_07_07_aperture.npy')
     mean_diff3[1] = mean_diff3[1] / (1.5e4 * 10 ** ((10 - mean_diff3[0]) / 2.5))
-    fig = plt.figure(figsize=(5, 4))
-    plt.plot(mag1, mean_diff1, '.', c='C1', ms=3, label='eleanor PCA')
-    plt.plot(mag, mean_diff, '^', c='C0', ms=2, label='QLP')
+    plt.figure(figsize=(5, 4))
+    plt.plot(mag1, np.array(mean_diff1) / np.sqrt(2), '.', c='C1', ms=3, label='eleanor PCA')
+    plt.plot(mag, np.array(mean_diff) / np.sqrt(2), '^', c='C0', ms=2, label='QLP')
     # plt.plot(mag2, mean_diff2  / np.median(mean_diff2), '.', c='C2', ms=2, label='eleanor PSF')
-    plt.plot(mean_diff3[0], mean_diff3[1], 'D', c='r', ms=1.4, label='TGLC')
+    plt.plot(mean_diff3[0], np.array(mean_diff3[1]) / np.sqrt(2), 'D', c='r', ms=1.4, label='TGLC')
     plt.legend(loc=2)
     plt.xlabel('TESS magnitude')
-    plt.ylabel(r'Normalized Mean Adjacent Difference')
+    plt.ylabel(r'Estimated Photometric Precision')
     plt.yscale('log')
-    plt.savefig('/mnt/c/users/tehan/desktop/MAD.png', bbox_inches='tight', dpi=300)
+    plt.ylim(1e-4, 1)
+    # plt.savefig('/mnt/c/users/tehan/desktop/MAD_aperture.png', bbox_inches='tight', dpi=300)
     plt.show()
+    # point-to-point scatter
 
 
 def figure_4():
@@ -427,44 +433,44 @@ def figure_5():
 
     # cmap = plt.get_cmap('cmr.fusion')  # MPL
     cmap = 'RdBu'
-    ax1 = fig.add_subplot(gs[0, 0:10], projection=source.wcs)
+    ax1 = fig.add_subplot(gs[0, 0:10], projection=source.wcs, slices=('y', 'x'))
     ax1.set_title('TESS FFI', pad=10)
-    im1 = ax1.imshow(source.flux[0], origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
-    ax1.scatter(source.gaia['sector_17_x'][:100], source.gaia['sector_17_y'][:100], s=5, c='r')
-    ax1.scatter(source.gaia['sector_17_x'][8], source.gaia['sector_17_y'][8], s=30, c='r', marker='*')
-    ax1.coords['pos.eq.ra'].set_axislabel('Right Ascension', minpad=-1)
-    ax1.coords['pos.eq.ra'].set_axislabel_position('l')
+    im1 = ax1.imshow(source.flux[0].transpose(), origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
+    ax1.scatter(source.gaia['sector_17_y'][:100], source.gaia['sector_17_x'][:100], s=5, c='r',
+                label='background stars')
+    ax1.scatter(source.gaia['sector_17_y'][8], source.gaia['sector_17_x'][8], s=30, c='r', marker='*',
+                label='target star')
+    ax1.coords['pos.eq.ra'].set_axislabel('Right Ascension')
+    ax1.coords['pos.eq.ra'].set_axislabel_position('b')
     ax1.coords['pos.eq.dec'].set_axislabel('Declination')
-    ax1.coords['pos.eq.dec'].set_axislabel_position('b')
+    ax1.coords['pos.eq.dec'].set_axislabel_position('l')
     ax1.coords.grid(color='k', ls='dotted')
     ax1.tick_params(axis='x', labelbottom=True)
     ax1.tick_params(axis='y', labelleft=True)
 
-    ax2 = fig.add_subplot(gs[0, 10:20], projection=source.wcs)
+    ax2 = fig.add_subplot(gs[0, 10:20], projection=source.wcs, slices=('y', 'x'))
     ax2.set_title('Simulated background stars', pad=10)
-    im2 = ax2.imshow(contamination_8, origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
-    ax2.scatter(source.gaia['sector_17_x'][:8], source.gaia['sector_17_y'][:8], s=5, c='r')
-    ax2.scatter(source.gaia['sector_17_x'][9:100], source.gaia['sector_17_y'][9:100], s=5, c='r')
+    im2 = ax2.imshow(contamination_8.transpose(), origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
+    ax2.scatter(source.gaia['sector_17_y'][:8], source.gaia['sector_17_x'][:8], s=5, c='r')
+    ax2.scatter(source.gaia['sector_17_y'][9:100], source.gaia['sector_17_x'][9:100], s=5, c='r')
     # ax2.set_xticks([20, 25, 30, 35, 40])
     # ax2.set_yticks([20, 25, 30, 35, 40])
 
-    ax2.coords['pos.eq.ra'].set_ticklabel_visible(False)
-    ax2.coords['pos.eq.dec'].set_axislabel('Declination')
-    ax2.coords['pos.eq.dec'].set_axislabel_position('b')
+    ax2.coords['pos.eq.dec'].set_ticklabel_visible(False)
+    ax2.coords['pos.eq.ra'].set_axislabel('Right Ascension')
+    ax2.coords['pos.eq.ra'].set_axislabel_position('b')
     ax2.coords.grid(color='k', ls='dotted')
     ax2.tick_params(axis='x', labelbottom=True)
     ax2.tick_params(axis='y', labelleft=True)
 
-    ax3 = fig.add_subplot(gs[0, 20:30], projection=source.wcs)
+    ax3 = fig.add_subplot(gs[0, 20:30], projection=source.wcs, slices=('y', 'x'))
     ax3.set_title('Decontaminated target star', pad=10)
-    im3 = ax3.imshow(source.flux[0] - contamination_8, origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
-    ax3.scatter(source.gaia['sector_17_x'][0], source.gaia['sector_17_y'][0], s=5, c='r',
-                label='background stars')
-    ax3.scatter(source.gaia['sector_17_x'][8], source.gaia['sector_17_y'][8], s=30, c='r', marker='*',
-                label='target star')
-    ax3.coords['pos.eq.ra'].set_ticklabel_visible(False)
-    ax3.coords['pos.eq.dec'].set_axislabel('Declination')
-    ax3.coords['pos.eq.dec'].set_axislabel_position('b')
+    im3 = ax3.imshow(source.flux[0].transpose() - contamination_8.transpose(), origin='lower', cmap=cmap, vmin=-5000,
+                     vmax=5000)
+    ax3.scatter(source.gaia['sector_17_y'][8], source.gaia['sector_17_x'][8], s=30, c='r', marker='*')
+    ax3.coords['pos.eq.dec'].set_ticklabel_visible(False)
+    ax3.coords['pos.eq.ra'].set_axislabel('Right Ascension')
+    ax3.coords['pos.eq.ra'].set_axislabel_position('b')
     ax3.coords.grid(color='k', ls='dotted')
     ax3.tick_params(axis='x', labelbottom=True)
     ax3.tick_params(axis='y', labelleft=True)
@@ -476,12 +482,432 @@ def figure_5():
                          ticks=[-1000, 0, 1000, 2000, 3000, 4000, 5000], aspect=50, shrink=0.7)
     ax_cb.ax.set_yticklabels(['-1', '0', '1', '2', '3', '4', '5'])
     ax_cb.ax.set_ylabel(r'TESS Flux ($\times 1000$ $\mathrm{e^-}$/ s) ')
-    ax3.legend(loc=4, prop={'size': 8})
-    plt.setp([ax1, ax2, ax3], xlim=(21.5, 36.5), ylim=(18.5, 33.5))
-    plt.savefig('/mnt/c/users/tehan/desktop/remove_contamination.png', bbox_inches='tight', dpi=300)
+    ax1.legend(loc=2, prop={'size': 8})
+    plt.setp([ax1, ax2, ax3], xlim=(18.5, 33.5), ylim=(21.5, 36.5))
+    # plt.savefig('/mnt/c/users/tehan/desktop/remove_contamination.png', bbox_inches='tight', dpi=300)
     plt.show()
     plt.close()
 
 
+def figure_6(type='cal_aper_flux'):
+    # local_directory = '/home/tehan/data/exoplanets/'
+    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
+    os.makedirs(local_directory + f'transits/', exist_ok=True)
+    os.makedirs(local_directory + f'lc/', exist_ok=True)
+    os.makedirs(local_directory + f'epsf/', exist_ok=True)
+    os.makedirs(local_directory + f'source/', exist_ok=True)
+    data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
+    hosts = list(data['hostname'])
+    for i in range(len(hosts)):
+        target = hosts[i]  # Target identifier or coordinates TOI-3714
+        print(target)
+        size = 90  # int, suggests big cuts
+        source = ffi(target=target, size=size, local_directory=local_directory)
+        for j in range(len(source.sector_table)):
+            # try:
+            if target == 'TOI-674' and source.sector_table['sector'][j] == 10:
+                source = ffi(target='TOI-674_50', size=50, local_directory=local_directory)
+            if target == 'TOI-674' and source.sector_table['sector'][j] == 36:
+                source = ffi(target=target, size=size, local_directory=local_directory)
+            source.select_sector(sector=source.sector_table['sector'][j])
+            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                 name=data['gaia_id'][i])
+            # plt.imshow(source.flux[0])
+            # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
+            #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
+            # plt.xlim(-0.5, 89.5)
+            # plt.ylim(-0.5, 89.5)
+            # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
+            # plt.show()
+        # except:
+        #     pass
+    fig = plt.figure(constrained_layout=False, figsize=(10, 10))
+    gs = fig.add_gridspec(5, 12)
+    gs.update(wspace=0.3, hspace=0.5)
+
+    ###########################################
+    index = np.where(data['pl_name'] == 'TOI-674 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_09 = hdul[1].data['time'][q]
+        f_09 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0010_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_10 = hdul[1].data['time'][q]
+        f_10 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0036_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_36 = hdul[1].data['time'][q]
+        f_36 = hdul[1].data[type][q]
+    ax1_1 = fig.add_subplot(gs[0, :3])
+    ax1_2 = fig.add_subplot(gs[0, 3:6])
+    ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax1_4 = fig.add_subplot(gs[0, 9:12])
+
+    ax1_1.plot(t_09, f_09, '.', c='k', markersize=1)
+    ax1_2.plot(t_10, f_10, '.', c='k', markersize=1)
+    ax1_3.plot(t_36, f_36, '.', c='k', markersize=1)
+
+    ax1_4.plot(t_09 % period / period - phase_fold_mid, f_09, '.', c='C0', markersize=2)
+    ax1_4.plot(t_10 % period / period - phase_fold_mid, f_10, '.', c='C1', markersize=2)
+    ax1_4.plot(t_36 % period / period - phase_fold_mid, f_36, '.', c='C3', markersize=2)
+
+    # split
+    ax1_1.spines['right'].set_visible(False)
+    ax1_2.spines['left'].set_visible(False)
+    ax1_2.spines['right'].set_visible(False)
+    ax1_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax1_1.plot([1, 1], [0, 1], transform=ax1_1.transAxes, **kwargs)
+    ax1_2.plot([0, 0], [0, 1], transform=ax1_2.transAxes, **kwargs)
+    ax1_2.plot([1, 1], [0, 1], transform=ax1_2.transAxes, **kwargs)
+    ax1_3.plot([0, 0], [0, 1], transform=ax1_3.transAxes, **kwargs)
+    ax1_2.set_yticklabels([])
+    ax1_2.tick_params(axis='y', left=False)
+    ax1_3.set_yticklabels([])
+    ax1_3.tick_params(axis='y', left=False)
+    ax1_4.set_yticklabels([])
+    # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
+    ax1_1.set_ylim(0.975, 1.01)
+    ax1_2.set_ylim(0.975, 1.01)
+    ax1_3.set_ylim(0.975, 1.01)
+    ax1_4.set_ylim(0.975, 1.01)
+    ax1_4.set_xlim(- 0.03, 0.03)
+
+    ax1_1.set_title('Sector 9')
+    ax1_2.set_title('Sector 10')
+    ax1_3.set_title('Sector 36')
+    ax1_4.set_title('TOI-674 b')
+
+    ###########################################
+    index = np.where(data['pl_name'] == 'LHS 3844 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0027_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_27 = hdul[1].data['time'][q]
+        f_27 = hdul[1].data[type][q]
+
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0028_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_28 = hdul[1].data['time'][q]
+        f_28 = hdul[1].data[type][q]
+
+    ax2_1 = fig.add_subplot(gs[1, :3])
+    ax2_2 = fig.add_subplot(gs[1, 3:6])
+    ax2_4 = fig.add_subplot(gs[1, 9:12])
+
+    ax2_1.plot(t_27, f_27, '.', c='k', markersize=1)
+    ax2_2.plot(t_28, f_28, '.', c='k', markersize=1)
+    ax2_4.plot(t_27 % period / period - phase_fold_mid, f_27, '.', c='C0', markersize=2)
+    ax2_4.plot(t_28 % period / period - phase_fold_mid, f_28, '.', c='C1', markersize=2)
+
+    # split
+    ax2_1.spines['right'].set_visible(False)
+    ax2_2.spines['left'].set_visible(False)
+
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax2_1.plot([1, 1], [0, 1], transform=ax2_1.transAxes, **kwargs)
+    ax2_2.plot([0, 0], [0, 1], transform=ax2_2.transAxes, **kwargs)
+    ax2_2.set_yticklabels([])
+    ax2_2.tick_params(axis='y', left=False)
+    ax2_4.set_yticklabels([])
+    # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
+    ax2_1.set_ylim(0.988, 1.007)
+    ax2_2.set_ylim(0.988, 1.007)
+    ax2_4.set_ylim(0.988, 1.007)
+    ax2_4.set_xlim(- 0.07, 0.07)
+
+    ax2_1.set_title('Sector 27')
+    ax2_2.set_title('Sector 28')
+    ax2_4.set_title('LHS 3844 b')
+
+    ###########################################
+    index = np.where(data['pl_name'] == 'TOI-530 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0006_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_06 = hdul[1].data['time'][q]
+        f_06 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0044_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_44 = hdul[1].data['time'][q]
+        f_44 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0045_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_45 = hdul[1].data['time'][q]
+        f_45 = hdul[1].data[type][q]
+    ax3_1 = fig.add_subplot(gs[2, :3])
+    ax3_2 = fig.add_subplot(gs[2, 3:6])
+    ax3_3 = fig.add_subplot(gs[2, 6:9])
+    ax3_4 = fig.add_subplot(gs[2, 9:12])
+
+    ax3_1.plot(t_06, f_06, '.', c='k', markersize=1)
+    ax3_2.plot(t_44, f_44, '.', c='k', markersize=1)
+    ax3_3.plot(t_45, f_45, '.', c='k', markersize=1)
+
+    ax3_4.plot(t_06 % period / period - phase_fold_mid, f_06, '.', c='C0', markersize=2)
+    ax3_4.plot(t_44 % period / period - phase_fold_mid, f_44, '.', c='C1', markersize=2)
+    ax3_4.plot(t_45 % period / period - phase_fold_mid, f_45, '.', c='C3', markersize=2)
+
+    # split
+    ax3_1.spines['right'].set_visible(False)
+    ax3_2.spines['left'].set_visible(False)
+    ax3_2.spines['right'].set_visible(False)
+    ax3_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax3_1.plot([1, 1], [0, 1], transform=ax3_1.transAxes, **kwargs)
+    ax3_2.plot([0, 0], [0, 1], transform=ax3_2.transAxes, **kwargs)
+    ax3_2.plot([1, 1], [0, 1], transform=ax3_2.transAxes, **kwargs)
+    ax3_3.plot([0, 0], [0, 1], transform=ax3_3.transAxes, **kwargs)
+    ax3_2.set_yticklabels([])
+    ax3_2.tick_params(axis='y', left=False)
+    ax3_3.set_yticklabels([])
+    ax3_3.tick_params(axis='y', left=False)
+    ax3_4.set_yticklabels([])
+    # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
+    ax3_1.set_ylim(0.95, 1.04)
+    ax3_2.set_ylim(0.95, 1.04)
+    ax3_3.set_ylim(0.95, 1.04)
+    ax3_4.set_ylim(0.95, 1.04)
+    ax3_4.set_xlim(- 0.03, 0.03)
+
+    ax3_1.set_title('Sector 6')
+    ax3_2.set_title('Sector 44')
+    ax3_3.set_title('Sector 45')
+    ax3_4.set_title('TOI-530 b')
+
+    ###########################################
+    index = np.where(data['pl_name'] == 'TOI-2406 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0003_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_03 = hdul[1].data['time'][q]
+        f_03 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0042_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_42 = hdul[1].data['time'][q]
+        f_42 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0043_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_43 = hdul[1].data['time'][q]
+        f_43 = hdul[1].data[type][q]
+    ax4_1 = fig.add_subplot(gs[3, :3])
+    ax4_2 = fig.add_subplot(gs[3, 3:6])
+    ax4_3 = fig.add_subplot(gs[3, 6:9])
+    ax4_4 = fig.add_subplot(gs[3, 9:12])
+
+    ax4_1.plot(t_03, f_03, '.', c='k', markersize=1)
+    ax4_2.plot(t_42, f_42, '.', c='k', markersize=1)
+    ax4_3.plot(t_43, f_43, '.', c='k', markersize=1)
+
+    ax4_4.plot(t_03 % period / period - phase_fold_mid, f_03, '.', c='C0', markersize=2)
+    ax4_4.plot(t_42 % period / period - phase_fold_mid, f_42, '.', c='C1', markersize=2)
+    ax4_4.plot(t_43 % period / period - phase_fold_mid, f_43, '.', c='C3', markersize=2)
+
+    # split
+    ax4_1.spines['right'].set_visible(False)
+    ax4_2.spines['left'].set_visible(False)
+    ax4_2.spines['right'].set_visible(False)
+    ax4_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax4_1.plot([1, 1], [0, 1], transform=ax4_1.transAxes, **kwargs)
+    ax4_2.plot([0, 0], [0, 1], transform=ax4_2.transAxes, **kwargs)
+    ax4_2.plot([1, 1], [0, 1], transform=ax4_2.transAxes, **kwargs)
+    ax4_3.plot([0, 0], [0, 1], transform=ax4_3.transAxes, **kwargs)
+    ax4_2.set_yticklabels([])
+    ax4_2.tick_params(axis='y', left=False)
+    ax4_3.set_yticklabels([])
+    ax4_3.tick_params(axis='y', left=False)
+    ax4_4.set_yticklabels([])
+    # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
+    ax4_1.set_ylim(0.945, 1.04)
+    ax4_2.set_ylim(0.945, 1.04)
+    ax4_3.set_ylim(0.945, 1.04)
+    ax4_4.set_ylim(0.945, 1.04)
+    ax4_4.set_xlim(- 0.04, 0.04)
+
+    ax4_1.set_title('Sector 3')
+    ax4_2.set_title('Sector 42')
+    ax4_3.set_title('Sector 43')
+    ax4_4.set_title('TOI-2406 b')
+
+    ###########################################
+    index = np.where(data['pl_name'] == 'TOI-519 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0007_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_07 = hdul[1].data['time'][q]
+        f_07 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0008_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_08 = hdul[1].data['time'][q]
+        f_08 = hdul[1].data[type][q]
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0034_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t_34 = hdul[1].data['time'][q]
+        f_34 = hdul[1].data[type][q]
+    ax5_1 = fig.add_subplot(gs[4, :3])
+    ax5_2 = fig.add_subplot(gs[4, 3:6])
+    ax5_3 = fig.add_subplot(gs[4, 6:9])
+    ax5_4 = fig.add_subplot(gs[4, 9:12])
+
+    ax5_1.plot(t_07, f_07, '.', c='k', markersize=1)
+    ax5_2.plot(t_08, f_08, '.', c='k', markersize=1)
+    ax5_3.plot(t_34, f_34, '.', c='k', markersize=1)
+
+    ax5_4.plot(t_07 % period / period - phase_fold_mid, f_07, '.', c='C0', markersize=2)
+    ax5_4.plot(t_08 % period / period - phase_fold_mid, f_08, '.', c='C1', markersize=2)
+    ax5_4.plot(t_34 % period / period - phase_fold_mid, f_34, '.', c='C3', markersize=2)
+
+    # split
+    ax5_1.spines['right'].set_visible(False)
+    ax5_2.spines['left'].set_visible(False)
+    ax5_2.spines['right'].set_visible(False)
+    ax5_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax5_1.plot([1, 1], [0, 1], transform=ax5_1.transAxes, **kwargs)
+    ax5_2.plot([0, 0], [0, 1], transform=ax5_2.transAxes, **kwargs)
+    ax5_2.plot([1, 1], [0, 1], transform=ax5_2.transAxes, **kwargs)
+    ax5_3.plot([0, 0], [0, 1], transform=ax5_3.transAxes, **kwargs)
+    ax5_2.set_yticklabels([])
+    ax5_2.tick_params(axis='y', left=False)
+    ax5_3.set_yticklabels([])
+    ax5_3.tick_params(axis='y', left=False)
+    ax5_4.set_yticklabels([])
+    # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
+    ax5_1.set_ylim(0.85, 1.05)
+    ax5_2.set_ylim(0.85, 1.05)
+    ax5_3.set_ylim(0.85, 1.05)
+    ax5_4.set_ylim(0.85, 1.05)
+    ax5_4.set_xlim(- 0.05, 0.05)
+
+    ax5_1.set_title('Sector 7')
+    ax5_2.set_title('Sector 8')
+    ax5_3.set_title('Sector 34')
+    ax5_4.set_title('TOI-519 b')
+    # plt.savefig('/mnt/c/users/tehan/desktop/known_exoplanets_psf.png', bbox_inches='tight', dpi=300)
+    plt.show()
+
+
+def figure_7():
+    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
+    data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
+    fig = plt.figure(constrained_layout=False, figsize=(10, 10))
+    gs = fig.add_gridspec(5, 12)
+    gs.update(wspace=0.3, hspace=0.5)
+
+    # TOI-674
+    files = glob(local_directory + 'SPOC/TOI-674/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-674 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax1_4 = fig.add_subplot(gs[0, 8:])
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            ax1_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
+                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
+    ax1_4.set_ylim(0.975, 1.01)
+    ax1_4.set_xlim(- 0.03, 0.03)
+
+    # LHS 3844
+    files = glob(local_directory + 'SPOC/LHS 3844/*.fits')
+    index = np.where(data['pl_name'] == 'LHS 3844 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax2_4 = fig.add_subplot(gs[1, 8:])
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            ax2_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
+                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
+    ax2_4.set_ylim(0.988, 1.007)
+    ax2_4.set_xlim(- 0.07, 0.07)
+
+    # TOI-530
+    files = glob(local_directory + 'SPOC/TOI-530/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-530 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax3_4 = fig.add_subplot(gs[2, 8:])
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            ax3_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
+                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
+    ax3_4.set_ylim(0.95, 1.04)
+    ax3_4.set_xlim(- 0.03, 0.03)
+
+    # TOI-2406
+    files = glob(local_directory + 'SPOC/TOI-2406/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-2406 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax4_4 = fig.add_subplot(gs[3, 8:])
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            ax4_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
+                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
+    ax4_4.set_ylim(0.945, 1.04)
+    ax4_4.set_xlim(- 0.04, 0.04)
+
+    # TOI-519
+    files = glob(local_directory + 'SPOC/TOI-519/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-519 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax5_4 = fig.add_subplot(gs[4, 8:])
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            ax5_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
+                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
+    ax5_4.set_ylim(0.85, 1.05)
+    ax5_4.set_xlim(- 0.05, 0.05)
+
+    plt.show()
+
+
 if __name__ == '__main__':
-    figure_3()
+    figure_6()
