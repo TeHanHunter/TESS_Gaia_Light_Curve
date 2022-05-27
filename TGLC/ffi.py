@@ -137,6 +137,3 @@ def cut_ffi(sector=1, camera=1, ccd=1, size=150, path=''):
                                 exposure=exposure, cadence=cadence)  # 93
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
-
-if __name__ == '__main__':
-    cut_ffi(sector=17, camera=2, ccd=3, path='/mnt/d/TESS_Sector_17/')

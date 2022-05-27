@@ -14,6 +14,56 @@ from glob import glob
 from os.path import exists
 from TGLC.target_lightcurve import *
 from TGLC.ffi_cut import *
+import scipy as sp
+
+def load_eleanor(ld='', tic=1, sector=1):
+    eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_pca.npy')
+    eleanor_psf = np.load(ld + f'eleanor/TIC {tic}_{sector}_psf.npy')
+    eleanor_t = eleanor_pca[0]
+    eleanor_pca_f = flatten(eleanor_t, eleanor_pca[1] / np.nanmedian(eleanor_pca[1]), window_length=1,
+                            method='biweight', return_trend=False)
+    try:
+        eleanor_psf_f = flatten(eleanor_t, eleanor_psf[1] / np.nanmedian(eleanor_psf[1]), window_length=1,
+                                method='biweight', return_trend=False)
+    except:
+        eleanor_psf_f = np.zeros(len(eleanor_t))
+    if sector > 26:
+        eleanor_t = np.mean(eleanor_t[:len(eleanor_t) // 3 * 3].reshape(-1, 3), axis=1)
+        eleanor_pca_f = np.mean(eleanor_pca_f[:len(eleanor_pca_f) // 3 * 3].reshape(-1, 3), axis=1)
+        eleanor_psf_f = np.mean(eleanor_psf_f[:len(eleanor_psf_f) // 3 * 3].reshape(-1, 3), axis=1)
+    return eleanor_t, eleanor_pca_f, eleanor_psf_f
+
+
+def load_qlp(ld='', tic=1, sector=1):
+    qlp = fits.open(ld + f'HLSP/hlsp_qlp_tess_ffi_s{sector:04d}-{tic:016d}_tess_v01_llc/' +
+                    f'hlsp_qlp_tess_ffi_s{sector:04d}-{tic:016d}_tess_v01_llc.fits', mode='denywrite')
+    quality = qlp[1].data['QUALITY']
+    index = np.where(quality == 0)
+    qlp_t = qlp[1].data['TIME'][index]
+    lc = qlp[1].data['KSPSAP_FLUX']
+    qlp_f = flatten(qlp_t, lc[index] / np.nanmedian(lc[index]), window_length=1, method='biweight',
+                    return_trend=False)
+    if sector > 26:
+        qlp_t = np.mean(qlp_t[:len(qlp_t) // 3 * 3].reshape(-1, 3), axis=1)
+        qlp_f = np.mean(qlp_f[:len(qlp_f) // 3 * 3].reshape(-1, 3), axis=1)
+    return qlp_t, qlp_f
+
+
+def load_ztf(ld='', index=1):
+    data = ascii.read(ld + f'ZTF/{index}_g.csv')
+    data.remove_rows(np.where(data['catflags'] != 0))
+    ztf_g_t = data['hjd'] - 2457000
+    mag = data['mag']
+    ztf_g_flux = 10 ** (- mag / 2.5)
+    try:
+        data = ascii.read(ld + f'ZTF/{index}_r.csv')
+        data.remove_rows(np.where(data['catflags'] != 0))
+        ztf_r_t = data['hjd'] - 2457000
+        mag = data['mag']
+        ztf_r_flux = 10 ** (- mag / 2.5)
+    except:
+        return ztf_g_t, ztf_g_flux
+    return ztf_g_t, ztf_g_flux, ztf_r_t, ztf_r_flux
 
 
 def figure_1():
@@ -61,93 +111,93 @@ def figure_1():
     #                                    method='biweight',
     #                                    return_trend=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(10, 8))
-    gs = fig.add_gridspec(5, 15)
-    gs.update(wspace=0.1, hspace=0.4)
+    fig = plt.figure(constrained_layout=False, figsize=(10, 6))
+    gs = fig.add_gridspec(4, 14)
+    gs.update(wspace=0.2, hspace=0.4)
     ax1 = fig.add_subplot(gs[0, 0:5])
     ax2 = fig.add_subplot(gs[1, 0:5])
-    ax3 = fig.add_subplot(gs[2, 0:5])
-    ax4 = fig.add_subplot(gs[3, 0:5])
-    ax5 = fig.add_subplot(gs[4, 0:5])
+    # ax3 = fig.add_subplot(gs[2, 0:5])
+    ax4 = fig.add_subplot(gs[2, 0:5])
+    ax5 = fig.add_subplot(gs[3, 0:5])
 
-    ax6 = fig.add_subplot(gs[0, 5:11])
-    ax7 = fig.add_subplot(gs[1, 5:11])
-    ax8 = fig.add_subplot(gs[2, 5:11])
-    ax9 = fig.add_subplot(gs[3, 5:11])
-    ax10 = fig.add_subplot(gs[4, 5:11])
+    ax6 = fig.add_subplot(gs[0, 5:10])
+    ax7 = fig.add_subplot(gs[1, 5:10])
+    # ax8 = fig.add_subplot(gs[2, 5:10])
+    ax9 = fig.add_subplot(gs[2, 5:10])
+    ax10 = fig.add_subplot(gs[3, 5:10])
 
-    ax11 = fig.add_subplot(gs[0, 12:])
-    ax12 = fig.add_subplot(gs[1, 12:])
-    ax13 = fig.add_subplot(gs[2, 12:])
+    ax11 = fig.add_subplot(gs[0, 11:])
+    ax12 = fig.add_subplot(gs[1, 11:])
+    # ax13 = fig.add_subplot(gs[2, 12:])
 
     ax1.plot(time, flatten_lc___ / np.median(flatten_lc___), '.k', ms=1)
     ax2.plot(time, flatten_lc__, '.k', ms=1)
-    ax3.plot(qlp_data['TIME'], qlp_data['KSPSAP_FLUX'], '.k', ms=1)
+    # ax3.plot(qlp_data['TIME'], qlp_data['KSPSAP_FLUX'], '.k', ms=1)
     ax4.plot(source.time, flatten_lc_, '.k', ms=1)
     ax5.plot(source.time, flatten_lc, '.k', ms=1)
 
-    ax6.plot(time[0:t1_] % period, flatten_lc___[0:t1_] / np.median(flatten_lc___), '.k', ms=1)
-    ax6.plot(time[t2_:t3_] % period, flatten_lc___[t2_:t3_] / np.median(flatten_lc___), '.k', ms=1)
-    ax7.plot(time[0:t1_] % period, flatten_lc__[0:t1_], '.k', ms=1)
-    ax7.plot(time[t2_:t3_] % period, flatten_lc__[t2_:t3_], '.k', ms=1)
-    ax8.plot(qlp_data['TIME'] % period, qlp_data['KSPSAP_FLUX'], '.k', ms=1)
-    ax9.plot(source.time[0:t1] % period, flatten_lc_[0:t1], '.k', ms=1)
-    ax9.plot(source.time[t2:t3] % period, flatten_lc_[t2:t3], '.k', ms=1)
-    ax10.plot(source.time[0:t1] % period, flatten_lc[0:t1], '.k', ms=1)
-    ax10.plot(source.time[t2:t3] % period, flatten_lc[t2:t3], '.k', ms=1)
-    ax11.plot(time[0:t1_] % period, flatten_lc___[0:t1_] / np.median(flatten_lc___), '.k', ms=0.6, zorder=3)
-    ax11.plot(time[t2_:t3_] % period, flatten_lc___[t2_:t3_] / np.median(flatten_lc___), '.k', ms=0.6, zorder=3)
-    ax12.plot(time[0:t1_] % period, flatten_lc__[0:t1_], '.k', ms=0.6, zorder=3)
-    ax12.plot(time[t2_:t3_] % period, flatten_lc__[t2_:t3_], '.k', ms=0.6, zorder=3)
-    ax13.plot(qlp_data['TIME'] % period, qlp_data['KSPSAP_FLUX'], '.k', ms=0.6, label='TESS', zorder=3)
+    ax6.plot(time[0:t1_] % period / period, flatten_lc___[0:t1_] / np.median(flatten_lc___), '.k', ms=1)
+    ax6.plot(time[t2_:t3_] % period / period, flatten_lc___[t2_:t3_] / np.median(flatten_lc___), '.k', ms=1)
+    ax7.plot(time[0:t1_] % period / period, flatten_lc__[0:t1_], '.k', ms=1)
+    ax7.plot(time[t2_:t3_] % period / period, flatten_lc__[t2_:t3_], '.k', ms=1)
+    # ax8.plot(qlp_data['TIME'] % period, qlp_data['KSPSAP_FLUX'], '.k', ms=1)
+    ax9.plot(source.time[0:t1] % period / period, flatten_lc_[0:t1], '.k', ms=1)
+    ax9.plot(source.time[t2:t3] % period / period, flatten_lc_[t2:t3], '.k', ms=1)
+    ax10.plot(source.time[0:t1] % period / period, flatten_lc[0:t1], '.k', ms=1)
+    ax10.plot(source.time[t2:t3] % period / period, flatten_lc[t2:t3], '.k', ms=1)
+    ax11.plot(time[0:t1_] % period / period, flatten_lc___[0:t1_] / np.median(flatten_lc___), '.k', ms=1, zorder=3)
+    ax11.plot(time[t2_:t3_] % period / period, flatten_lc___[t2_:t3_] / np.median(flatten_lc___), '.k', ms=1, zorder=3)
+    ax12.plot(time[0:t1_] % period / period, flatten_lc__[0:t1_], '.k', ms=1, zorder=3)
+    ax12.plot(time[t2_:t3_] % period / period, flatten_lc__[t2_:t3_], '.k', ms=1, zorder=3, label='TESS')
+    # ax13.plot(qlp_data['TIME'] % period/period, qlp_data['KSPSAP_FLUX'], '.k', ms=1, label='TESS', zorder=3)
 
-    data = ascii.read(f'/mnt/c/users/tehan/desktop/eb_candidate_new/ZTF/1251_g.csv')
+    data = ascii.read(f'/mnt/c/users/tehan/desktop/Output of SEBIT/eb_candidate_new/ZTF/1251_g.csv')
     data.remove_rows(np.where(data['catflags'] != 0))
     tbjd = data['hjd'] - 2457000
     mag = data['mag']
     flux = 10 ** (- mag / 2.5)  # 3.208e-10 *
-    ax6.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax7.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax8.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax9.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax10.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax11.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax12.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
-    ax13.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    ax6.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    ax7.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    # ax8.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    ax9.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    ax10.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    ax11.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    ax12.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
+    # ax13.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
 
-    data = ascii.read(f'/mnt/c/users/tehan/desktop/eb_candidate_new/ZTF/1251_r.csv')
+    data = ascii.read(f'/mnt/c/users/tehan/desktop/Output of SEBIT/eb_candidate_new/ZTF/1251_r.csv')
     data.remove_rows(np.where(data['catflags'] != 0))
     tbjd = data['hjd'] - 2457000
     mag = data['mag']
     flux = 10 ** (- mag / 2.5)
-    ax6.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    ax6.scatter(tbjd % period / period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
                 label='ZTF r-band')
-    ax7.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    ax7.scatter(tbjd % period / period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
                 label='ZTF r-band')
-    ax8.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    # ax8.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    #             label='ZTF r-band')
+    ax9.scatter(tbjd % period / period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
                 label='ZTF r-band')
-    ax9.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
-                label='ZTF r-band')
-    ax10.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    ax10.scatter(tbjd % period / period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
                  label='ZTF r-band')
-    ax11.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    ax11.scatter(tbjd % period / period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
                  label='ZTF r-band')
-    ax12.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    ax12.scatter(tbjd % period / period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
                  label='ZTF r-band')
-    ax13.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
-                 label='ZTF r-band')
+    # ax13.scatter(tbjd % period, flux / np.median(flux), facecolors='none', edgecolors='orangered', s=5,
+    #              label='ZTF r-band')
 
     ax1.set_title('eleanor PCA', loc='left')
     ax2.set_title('eleanor PSF', loc='left')
-    ax3.set_title('QLP KSPSAP', loc='left')
+    # ax3.set_title('QLP KSPSAP', loc='left')
     ax4.set_title('Moffat PSF', loc='left')
-    ax5.set_title('ePSF', loc='left')
+    ax5.set_title('effective PSF', loc='left')
     ax1.set_xticklabels([])
     ax1.tick_params(axis="both", direction="in")
     ax2.set_xticklabels([])
     ax2.tick_params(axis="both", direction="in")
-    ax3.set_xticklabels([])
-    ax3.tick_params(axis="both", direction="in")
+    # ax3.set_xticklabels([])
+    # ax3.tick_params(axis="both", direction="in")
     ax4.set_xticklabels([])
     ax4.tick_params(axis="both", direction="in")
     ax6.set_xticklabels([])
@@ -156,9 +206,9 @@ def figure_1():
     ax7.set_xticklabels([])
     ax7.set_yticklabels([])
     ax7.tick_params(axis="both", direction="in")
-    ax8.set_xticklabels([])
-    ax8.set_yticklabels([])
-    ax8.tick_params(axis="both", direction="in")
+    # ax8.set_xticklabels([])
+    # ax8.set_yticklabels([])
+    # ax8.tick_params(axis="both", direction="in")
     ax9.set_xticklabels([])
     ax9.set_yticklabels([])
     ax9.tick_params(axis="both", direction="in")
@@ -175,15 +225,15 @@ def figure_1():
     ax12.tick_params(axis="both", direction="in")
     ax12.yaxis.set_label_position("right")
     ax12.yaxis.tick_right()
-    ax12.set_xticklabels([])
-    ax13.set_ylabel('Normalized Flux')
-    ax13.tick_params(axis="both", direction="in")
-    ax13.yaxis.set_label_position("right")
-    ax13.yaxis.tick_right()
+    # ax12.set_xticklabels([])
+    # ax13.set_ylabel('Normalized Flux')
+    # ax13.tick_params(axis="both", direction="in")
+    # ax13.yaxis.set_label_position("right")
+    # ax13.yaxis.tick_right()
 
     ax1.set_ylabel('Normalized Flux')
     ax2.set_ylabel('Normalized Flux')
-    ax3.set_ylabel('Normalized Flux')
+    # ax3.set_ylabel('Normalized Flux')
     ax4.set_ylabel('Normalized Flux')
     ax5.set_ylabel('Normalized Flux')
     # ax1.set_xlabel('TBJD')
@@ -195,22 +245,22 @@ def figure_1():
     # ax7.set_xlabel('Phase (days)')
     # ax8.set_xlabel('Phase (days)')
     # ax9.set_xlabel('Phase (days)')
-    ax10.set_xlabel('Phase (days)')
-    ax13.set_xlabel('Phase (days)')
+    ax10.set_xlabel('Phase')
+    ax12.set_xlabel('Phase')
 
     ax1.set_ylim(0.65, 1.1)
     ax6.set_ylim(0.65, 1.1)
     ax2.set_ylim(0.65, 1.1)
     ax7.set_ylim(0.65, 1.1)
-    ax3.set_ylim(0.65, 1.1)
-    ax8.set_ylim(0.65, 1.1)
+    # ax3.set_ylim(0.65, 1.1)
+    # ax8.set_ylim(0.65, 1.1)
     ax4.set_ylim(0.65, 1.1)
     ax9.set_ylim(0.65, 1.1)
     ax5.set_ylim(0.65, 1.1)
     ax10.set_ylim(0.65, 1.1)
     ax11.set_ylim(0.993, 1.006)
     ax12.set_ylim(0.993, 1.006)
-    ax13.set_ylim(0.993, 1.006)
+    # ax13.set_ylim(0.993, 1.006)
 
     ax1.plot(time[t3_:], flatten_lc___[t3_:] / np.median(flatten_lc___), '.', c='silver', ms=2)
     ax1.plot(time[t1_:t2_], flatten_lc___[t1_:t2_] / np.median(flatten_lc___), '.', c='silver', ms=1)
@@ -236,16 +286,16 @@ def figure_1():
                            axesB=ax12, color="k")
     ax7.add_artist(con1)
     ax7.add_artist(con2)
-    con1 = ConnectionPatch(xyA=(ax8.get_xlim()[1], 1.006), xyB=(ax13.get_xlim()[0], 1.006), coordsA="data",
-                           coordsB="data", axesA=ax8,
-                           axesB=ax13, color="k")
-    con2 = ConnectionPatch(xyA=(ax8.get_xlim()[1], 0.993), xyB=(ax13.get_xlim()[0], 0.993), coordsA="data",
-                           coordsB="data", axesA=ax8,
-                           axesB=ax13, color="k")
-    ax8.add_artist(con1)
-    ax8.add_artist(con2)
-    ax13.legend(bbox_to_anchor=(1, -1.7), loc=1)
-    # plt.savefig('/mnt/c/users/tehan/desktop/light_curve_comparison_1251.png', bbox_inches='tight', dpi=300)
+    # con1 = ConnectionPatch(xyA=(ax8.get_xlim()[1], 1.006), xyB=(ax13.get_xlim()[0], 1.006), coordsA="data",
+    #                        coordsB="data", axesA=ax8,
+    #                        axesB=ax13, color="k")
+    # con2 = ConnectionPatch(xyA=(ax8.get_xlim()[1], 0.993), xyB=(ax13.get_xlim()[0], 0.993), coordsA="data",
+    #                        coordsB="data", axesA=ax8,
+    #                        axesB=ax13, color="k")
+    # ax8.add_artist(con1)
+    # ax8.add_artist(con2)
+    ax12.legend(bbox_to_anchor=(1, -1.7), loc=1)
+    plt.savefig('/mnt/c/users/tehan/desktop/light_curve_comparison_1251.png', bbox_inches='tight', dpi=300)
     plt.show()
     plt.close()
 
@@ -345,6 +395,7 @@ def figure_2():
 
 def figure_3():
     # 1-1/07_07
+    noise_2015 = ascii.read('/mnt/c/users/tehan/downloads/noisemodel.dat')
     local_directory = f'/mnt/d/TESS_Sector_17/'
     input_files = glob(f'/mnt/d/TESS_Sector_17/mastDownload/HLSP/*/*.fits')
     input_files1 = glob('/mnt/d/TESS_Sector_17/source/1-1/pca/*')
@@ -376,19 +427,47 @@ def figure_3():
         mag2.append(mag_)
         scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
         mean_diff2.append(np.mean(np.abs(np.diff(lc))) / scale)
-    mean_diff3 = np.load(local_directory + f'mean_diff2_07_07_aperture.npy')
-    mean_diff3[1] = mean_diff3[1] / (1.5e4 * 10 ** ((10 - mean_diff3[0]) / 2.5))
-    plt.figure(figsize=(5, 4))
-    plt.plot(mag1, np.array(mean_diff1) / np.sqrt(2), '.', c='C1', ms=3, label='eleanor PCA')
-    plt.plot(mag, np.array(mean_diff) / np.sqrt(2), '^', c='C0', ms=2, label='QLP')
-    # plt.plot(mag2, mean_diff2  / np.median(mean_diff2), '.', c='C2', ms=2, label='eleanor PSF')
-    plt.plot(mean_diff3[0], np.array(mean_diff3[1]) / np.sqrt(2), 'D', c='r', ms=1.4, label='TGLC')
-    plt.legend(loc=2)
-    plt.xlabel('TESS magnitude')
-    plt.ylabel(r'Estimated Photometric Precision')
-    plt.yscale('log')
-    plt.ylim(1e-4, 1)
-    # plt.savefig('/mnt/c/users/tehan/desktop/MAD_aperture.png', bbox_inches='tight', dpi=300)
+    mean_diff_aper = np.load(local_directory + f'mean_diff_aper_07_07.npy')
+    aper_precision = mean_diff_aper[1] / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - mean_diff_aper[0]) / 2.5))
+    mean_diff_psf = np.load(local_directory + f'mean_diff_psf_07_07.npy')
+    psf_precision = mean_diff_psf[1] / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - mean_diff_psf[0]) / 2.5))
+
+    fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 1], hspace=0.1), figsize=(5, 6))
+    ax[0].plot(mag1, np.array(mean_diff1) / np.sqrt(2), '.', c='C2', ms=2, label='eleanor PCA', alpha=0.8)
+    ax[0].plot(mag, np.array(mean_diff) / np.sqrt(2), '^', c='C0', ms=1.5, label='QLP', alpha=0.8)
+    # ax[0].plot(mag2, mean_diff2  / np.median(mean_diff2), '.', c='C2', ms=2, label='eleanor PSF')
+    ax[0].plot(mean_diff_psf[0], psf_precision, 'D', c='r', ms=1, label='TGLC PSF', alpha=0.8)
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
+    # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
+    ax[0].hlines(y=.1, xmin=np.min(mean_diff_aper[0]), xmax=np.max(mean_diff_aper[0]), colors='k', linestyles='dotted')
+    ax[0].hlines(y=.01, xmin=np.min(mean_diff_aper[0]), xmax=np.max(mean_diff_aper[0]), colors='k', linestyles='dotted')
+
+    leg = ax[0].legend(loc=4, markerscale=4)
+    for lh in leg.legendHandles:
+        lh._legmarker.set_alpha(1)
+    # ax[0].xlabel('TESS magnitude')
+    ax[0].set_ylabel(r'Estimated Photometric Precision')
+    ax[0].set_yscale('log')
+    ax[0].set_ylim(1e-4, 1)
+
+    ratio = aper_precision / psf_precision
+    runningmed = sp.ndimage.median_filter(ratio, size=151, mode='nearest')
+
+    ax[1].plot(mean_diff_aper[0][:4254], ratio[:4254], '.', c='C1', ms=6, alpha=0.15, label='TGLC Aperture / PSF')
+    ax[1].plot(mean_diff_aper[0][:4254], runningmed[:4254], c='k', label='Median Filter')
+    ax[1].hlines(y=1, xmin=np.min(mean_diff_aper[0]), xmax=np.max(mean_diff_aper[0]), colors='k', linestyles='dotted')
+    ax[1].set_yscale('log')
+    ax[1].set_ylim(0.5, 2)
+    ax[1].tick_params(axis='y', which='minor', labelleft=False)
+    plt.yticks(ticks=[0.5, 1, 2], labels=['0.5', '1', '2'])
+    # ax[1].set_title('Photometric Precision Ratio')
+    ax[1].set_xlabel('TESS magnitude')
+    ax[1].set_ylabel('Aperture / PSF')
+    leg = ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1)
+    for lh in leg.legendHandles:
+        lh._legmarker.set_alpha(1)
+    plt.xlim(5, 20.5)
+    plt.savefig('/mnt/c/users/tehan/desktop/MAD.png', bbox_inches='tight', dpi=300)
     plt.show()
     # point-to-point scatter
 
@@ -489,7 +568,8 @@ def figure_5():
     plt.close()
 
 
-def figure_6(type='cal_aper_flux'):
+def figure_6(mode='psf'):
+    type = f'cal_{mode}_flux'
     # local_directory = '/home/tehan/data/exoplanets/'
     local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
     os.makedirs(local_directory + f'transits/', exist_ok=True)
@@ -497,40 +577,38 @@ def figure_6(type='cal_aper_flux'):
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
-    hosts = list(data['hostname'])
-    for i in range(len(hosts)):
-        target = hosts[i]  # Target identifier or coordinates TOI-3714
-        print(target)
-        size = 90  # int, suggests big cuts
-        source = ffi(target=target, size=size, local_directory=local_directory)
-        for j in range(len(source.sector_table)):
-            # try:
-            if target == 'TOI-674' and source.sector_table['sector'][j] == 10:
-                source = ffi(target='TOI-674_50', size=50, local_directory=local_directory)
-            if target == 'TOI-674' and source.sector_table['sector'][j] == 36:
-                source = ffi(target=target, size=size, local_directory=local_directory)
-            source.select_sector(sector=source.sector_table['sector'][j])
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=data['gaia_id'][i])
-            # plt.imshow(source.flux[0])
-            # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
-            #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
-            # plt.xlim(-0.5, 89.5)
-            # plt.ylim(-0.5, 89.5)
-            # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
-            # plt.show()
-        # except:
-        #     pass
+    # hosts = list(data['hostname'])
+    # for i in range(len(hosts)):
+    #     target = hosts[i]  # Target identifier or coordinates TOI-3714
+    #     print(target)
+    #     size = 90  # int, suggests big cuts
+    #     source = ffi(target=target, size=size, local_directory=local_directory)
+    #     for j in range(len(source.sector_table)):
+    #         # try:
+    #         if target == 'TOI-674' and source.sector_table['sector'][j] == 10:
+    #             continue
+    #         source.select_sector(sector=source.sector_table['sector'][j])
+    #         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+    #              name=data['gaia_id'][i])
+    # plt.imshow(source.flux[0])
+    # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
+    #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
+    # plt.xlim(-0.5, 89.5)
+    # plt.ylim(-0.5, 89.5)
+    # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
+    # plt.show()
+    # except:
+    #     pass
+
     fig = plt.figure(constrained_layout=False, figsize=(10, 10))
     gs = fig.add_gridspec(5, 12)
-    gs.update(wspace=0.3, hspace=0.5)
-
+    gs.update(wspace=0.2, hspace=0.4)
     ###########################################
     index = np.where(data['pl_name'] == 'TOI-674 b')
-    period = float(data['pl_orbper'][index])
+    # period = float(data['pl_orbper'][index])
+    period = 1.977165
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
@@ -546,6 +624,8 @@ def figure_6(type='cal_aper_flux'):
         q = hdul[1].data['TGLC_flags'] == 0
         t_36 = hdul[1].data['time'][q]
         f_36 = hdul[1].data[type][q]
+        t_36 = np.mean(t_36[:len(t_36) // 3 * 3].reshape(-1, 3), axis=1)
+        f_36 = np.mean(f_36[:len(f_36) // 3 * 3].reshape(-1, 3), axis=1)
     ax1_1 = fig.add_subplot(gs[0, :3])
     ax1_2 = fig.add_subplot(gs[0, 3:6])
     ax1_3 = fig.add_subplot(gs[0, 6:9])
@@ -555,10 +635,10 @@ def figure_6(type='cal_aper_flux'):
     ax1_2.plot(t_10, f_10, '.', c='k', markersize=1)
     ax1_3.plot(t_36, f_36, '.', c='k', markersize=1)
 
-    ax1_4.plot(t_09 % period / period - phase_fold_mid, f_09, '.', c='C0', markersize=2)
-    ax1_4.plot(t_10 % period / period - phase_fold_mid, f_10, '.', c='C1', markersize=2)
-    ax1_4.plot(t_36 % period / period - phase_fold_mid, f_36, '.', c='C3', markersize=2)
-
+    ax1_4.plot(t_09 % period / period - phase_fold_mid, f_09, '.', c='C0', markersize=2, label='9')
+    ax1_4.plot(t_10 % period / period - phase_fold_mid, f_10, '.', c='C1', markersize=2, label='10')
+    ax1_4.plot(t_36 % period / period - phase_fold_mid, f_36, '.', c='C3', markersize=2, label='36')
+    ax1_4.legend(loc=3, fontsize=6, markerscale=1)
     # split
     ax1_1.spines['right'].set_visible(False)
     ax1_2.spines['left'].set_visible(False)
@@ -586,35 +666,42 @@ def figure_6(type='cal_aper_flux'):
     ax1_1.set_title('Sector 9')
     ax1_2.set_title('Sector 10')
     ax1_3.set_title('Sector 36')
-    ax1_4.set_title('TOI-674 b')
+    ax1_4.set_title('TOI-674 b', {'fontweight': 'semibold'})
+    ax1_1.set_ylabel('Normalized Flux')
+    # ax1_1.set_xlabel('Time (TBJD)')
+    # ax1_2.set_xlabel('Time (TBJD)')
+    # ax1_3.set_xlabel('Time (TBJD)')
+    # ax1_4.set_xlabel('Phase')
+    # ax1_4.text(0.98, 0.1, 'Aper', horizontalalignment='right', transform=ax1_4.transAxes)
 
     ###########################################
     index = np.where(data['pl_name'] == 'LHS 3844 b')
     period = float(data['pl_orbper'][index])
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0027_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
         t_27 = hdul[1].data['time'][q]
         f_27 = hdul[1].data[type][q]
-
+        t_27 = np.mean(t_27[:len(t_27) // 3 * 3].reshape(-1, 3), axis=1)
+        f_27 = np.mean(f_27[:len(f_27) // 3 * 3].reshape(-1, 3), axis=1)
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0028_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
         t_28 = hdul[1].data['time'][q]
         f_28 = hdul[1].data[type][q]
-
+        t_28 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_28 = np.mean(f_28[:len(f_28) // 3 * 3].reshape(-1, 3), axis=1)
     ax2_1 = fig.add_subplot(gs[1, :3])
     ax2_2 = fig.add_subplot(gs[1, 3:6])
     ax2_4 = fig.add_subplot(gs[1, 9:12])
 
     ax2_1.plot(t_27, f_27, '.', c='k', markersize=1)
     ax2_2.plot(t_28, f_28, '.', c='k', markersize=1)
-    ax2_4.plot(t_27 % period / period - phase_fold_mid, f_27, '.', c='C0', markersize=2)
-    ax2_4.plot(t_28 % period / period - phase_fold_mid, f_28, '.', c='C1', markersize=2)
-
+    ax2_4.plot(t_27 % period / period - phase_fold_mid, f_27, '.', c='C0', markersize=2, label='27')
+    ax2_4.plot(t_28 % period / period - phase_fold_mid, f_28, '.', c='C1', markersize=2, label='28')
+    ax2_4.legend(loc=3, fontsize=6, markerscale=1)
     # split
     ax2_1.spines['right'].set_visible(False)
     ax2_2.spines['left'].set_visible(False)
@@ -631,18 +718,22 @@ def figure_6(type='cal_aper_flux'):
     ax2_1.set_ylim(0.988, 1.007)
     ax2_2.set_ylim(0.988, 1.007)
     ax2_4.set_ylim(0.988, 1.007)
-    ax2_4.set_xlim(- 0.07, 0.07)
+    ax2_4.set_xlim(- 0.1, 0.1)
 
     ax2_1.set_title('Sector 27')
     ax2_2.set_title('Sector 28')
-    ax2_4.set_title('LHS 3844 b')
+    ax2_4.set_title('LHS 3844 b', {'fontweight': 'semibold'})
+    ax2_1.set_ylabel('Normalized Flux')
+    # ax2_1.set_xlabel('Time (TBJD)')
+    # ax2_2.set_xlabel('Time (TBJD)')
+    # ax2_4.set_xlabel('Phase')
+    # ax2_4.text(0.98, 0.1, 'PSF', horizontalalignment='right', transform=ax2_4.transAxes)
 
     ###########################################
     index = np.where(data['pl_name'] == 'TOI-530 b')
-    period = float(data['pl_orbper'][index])
+    period = 6.387583
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0006_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
@@ -653,11 +744,15 @@ def figure_6(type='cal_aper_flux'):
         q = hdul[1].data['TGLC_flags'] == 0
         t_44 = hdul[1].data['time'][q]
         f_44 = hdul[1].data[type][q]
+        t_44 = np.mean(t_44[:len(t_44) // 3 * 3].reshape(-1, 3), axis=1)
+        f_44 = np.mean(f_44[:len(f_44) // 3 * 3].reshape(-1, 3), axis=1)
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0045_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
         t_45 = hdul[1].data['time'][q]
         f_45 = hdul[1].data[type][q]
+        t_45 = np.mean(t_45[:len(t_45) // 3 * 3].reshape(-1, 3), axis=1)
+        f_45 = np.mean(f_45[:len(f_45) // 3 * 3].reshape(-1, 3), axis=1)
     ax3_1 = fig.add_subplot(gs[2, :3])
     ax3_2 = fig.add_subplot(gs[2, 3:6])
     ax3_3 = fig.add_subplot(gs[2, 6:9])
@@ -667,10 +762,10 @@ def figure_6(type='cal_aper_flux'):
     ax3_2.plot(t_44, f_44, '.', c='k', markersize=1)
     ax3_3.plot(t_45, f_45, '.', c='k', markersize=1)
 
-    ax3_4.plot(t_06 % period / period - phase_fold_mid, f_06, '.', c='C0', markersize=2)
-    ax3_4.plot(t_44 % period / period - phase_fold_mid, f_44, '.', c='C1', markersize=2)
-    ax3_4.plot(t_45 % period / period - phase_fold_mid, f_45, '.', c='C3', markersize=2)
-
+    ax3_4.plot(t_06 % period / period - phase_fold_mid, f_06, '.', c='C0', markersize=2, label='6')
+    ax3_4.plot(t_44 % period / period - phase_fold_mid, f_44, '.', c='C1', markersize=2, label='44')
+    ax3_4.plot(t_45 % period / period - phase_fold_mid, f_45, '.', c='C3', markersize=2, label='45')
+    ax3_4.legend(loc=3, fontsize=6, markerscale=1)
     # split
     ax3_1.spines['right'].set_visible(False)
     ax3_2.spines['left'].set_visible(False)
@@ -688,24 +783,31 @@ def figure_6(type='cal_aper_flux'):
     ax3_3.set_yticklabels([])
     ax3_3.tick_params(axis='y', left=False)
     ax3_4.set_yticklabels([])
+    ax3_1.set_xticks([1470, 1480, 1490])
+    ax3_1.set_xticklabels([1470, 1480, None])
     # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
-    ax3_1.set_ylim(0.95, 1.04)
-    ax3_2.set_ylim(0.95, 1.04)
-    ax3_3.set_ylim(0.95, 1.04)
-    ax3_4.set_ylim(0.95, 1.04)
+    ax3_1.set_ylim(0.95, 1.03)
+    ax3_2.set_ylim(0.95, 1.03)
+    ax3_3.set_ylim(0.95, 1.03)
+    ax3_4.set_ylim(0.95, 1.03)
     ax3_4.set_xlim(- 0.03, 0.03)
 
     ax3_1.set_title('Sector 6')
     ax3_2.set_title('Sector 44')
     ax3_3.set_title('Sector 45')
-    ax3_4.set_title('TOI-530 b')
+    ax3_4.set_title('TOI-530 b', {'fontweight': 'semibold'})
+    ax3_1.set_ylabel('Normalized Flux')
+    # ax3_1.set_xlabel('Time (TBJD)')
+    # ax3_2.set_xlabel('Time (TBJD)')
+    # ax3_3.set_xlabel('Time (TBJD)')
+    # ax3_4.set_xlabel('Phase')
+    # ax3_4.text(0.98, 0.1, 'Aper', horizontalalignment='right', transform=ax3_4.transAxes)
 
     ###########################################
     index = np.where(data['pl_name'] == 'TOI-2406 b')
-    period = float(data['pl_orbper'][index])
+    period = 3.076676
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0003_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
@@ -716,11 +818,15 @@ def figure_6(type='cal_aper_flux'):
         q = hdul[1].data['TGLC_flags'] == 0
         t_42 = hdul[1].data['time'][q]
         f_42 = hdul[1].data[type][q]
+        t_42 = np.mean(t_42[:len(t_42) // 3 * 3].reshape(-1, 3), axis=1)
+        f_42 = np.mean(f_42[:len(f_42) // 3 * 3].reshape(-1, 3), axis=1)
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0043_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
         t_43 = hdul[1].data['time'][q]
         f_43 = hdul[1].data[type][q]
+        t_43 = np.mean(t_43[:len(t_43) // 3 * 3].reshape(-1, 3), axis=1)
+        f_43 = np.mean(f_43[:len(f_43) // 3 * 3].reshape(-1, 3), axis=1)
     ax4_1 = fig.add_subplot(gs[3, :3])
     ax4_2 = fig.add_subplot(gs[3, 3:6])
     ax4_3 = fig.add_subplot(gs[3, 6:9])
@@ -730,10 +836,10 @@ def figure_6(type='cal_aper_flux'):
     ax4_2.plot(t_42, f_42, '.', c='k', markersize=1)
     ax4_3.plot(t_43, f_43, '.', c='k', markersize=1)
 
-    ax4_4.plot(t_03 % period / period - phase_fold_mid, f_03, '.', c='C0', markersize=2)
-    ax4_4.plot(t_42 % period / period - phase_fold_mid, f_42, '.', c='C1', markersize=2)
-    ax4_4.plot(t_43 % period / period - phase_fold_mid, f_43, '.', c='C3', markersize=2)
-
+    ax4_4.plot(t_03 % period / period - phase_fold_mid, f_03, '.', c='C0', markersize=2, label='3')
+    ax4_4.plot(t_42 % period / period - phase_fold_mid, f_42, '.', c='C1', markersize=2, label='42')
+    ax4_4.plot(t_43 % period / period - phase_fold_mid, f_43, '.', c='C3', markersize=2, label='43')
+    ax4_4.legend(loc=3, fontsize=6, markerscale=1)
     # split
     ax4_1.spines['right'].set_visible(False)
     ax4_2.spines['left'].set_visible(False)
@@ -761,14 +867,19 @@ def figure_6(type='cal_aper_flux'):
     ax4_1.set_title('Sector 3')
     ax4_2.set_title('Sector 42')
     ax4_3.set_title('Sector 43')
-    ax4_4.set_title('TOI-2406 b')
+    ax4_4.set_title('TOI-2406 b', {'fontweight': 'semibold'})
+    ax4_1.set_ylabel('Normalized Flux')
+    # ax4_1.set_xlabel('Time (TBJD)')
+    # ax4_2.set_xlabel('Time (TBJD)')
+    # ax4_3.set_xlabel('Time (TBJD)')
+    # ax4_4.set_xlabel('Phase')
+    # ax4_4.text(0.98, 0.1, 'PSF', horizontalalignment='right', transform=ax4_4.transAxes)
 
     ###########################################
     index = np.where(data['pl_name'] == 'TOI-519 b')
-    period = float(data['pl_orbper'][index])
+    period = 1.265232
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-
     with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0007_tess_v1_llc.fits',
                    mode='denywrite') as hdul:
         q = hdul[1].data['TGLC_flags'] == 0
@@ -784,6 +895,8 @@ def figure_6(type='cal_aper_flux'):
         q = hdul[1].data['TGLC_flags'] == 0
         t_34 = hdul[1].data['time'][q]
         f_34 = hdul[1].data[type][q]
+        t_34 = np.mean(t_34[:len(t_34) // 3 * 3].reshape(-1, 3), axis=1)
+        f_34 = np.mean(f_34[:len(f_34) // 3 * 3].reshape(-1, 3), axis=1)
     ax5_1 = fig.add_subplot(gs[4, :3])
     ax5_2 = fig.add_subplot(gs[4, 3:6])
     ax5_3 = fig.add_subplot(gs[4, 6:9])
@@ -793,10 +906,10 @@ def figure_6(type='cal_aper_flux'):
     ax5_2.plot(t_08, f_08, '.', c='k', markersize=1)
     ax5_3.plot(t_34, f_34, '.', c='k', markersize=1)
 
-    ax5_4.plot(t_07 % period / period - phase_fold_mid, f_07, '.', c='C0', markersize=2)
-    ax5_4.plot(t_08 % period / period - phase_fold_mid, f_08, '.', c='C1', markersize=2)
-    ax5_4.plot(t_34 % period / period - phase_fold_mid, f_34, '.', c='C3', markersize=2)
-
+    ax5_4.plot(t_07 % period / period - phase_fold_mid, f_07, '.', c='C0', markersize=2, label='7')
+    ax5_4.plot(t_08 % period / period - phase_fold_mid, f_08, '.', c='C1', markersize=2, label='8')
+    ax5_4.plot(t_34 % period / period - phase_fold_mid, f_34, '.', c='C3', markersize=2, label='34')
+    ax5_4.legend(loc=3, fontsize=6, markerscale=1)
     # split
     ax5_1.spines['right'].set_visible(False)
     ax5_2.spines['left'].set_visible(False)
@@ -814,100 +927,587 @@ def figure_6(type='cal_aper_flux'):
     ax5_3.set_yticklabels([])
     ax5_3.tick_params(axis='y', left=False)
     ax5_4.set_yticklabels([])
+    ax5_4.set_xticks([-0.04, 0, 0.04])
+    ax5_4.set_xticklabels([f'\N{MINUS SIGN}0.04', '0.00', '0.04'])
     # ax2.plot([0, 0], [0, 1], transform=ax2.transAxes, **kwargs)
-    ax5_1.set_ylim(0.85, 1.05)
-    ax5_2.set_ylim(0.85, 1.05)
-    ax5_3.set_ylim(0.85, 1.05)
-    ax5_4.set_ylim(0.85, 1.05)
+    ax5_1.set_ylim(0.83, 1.05)
+    ax5_2.set_ylim(0.83, 1.05)
+    ax5_3.set_ylim(0.83, 1.05)
+    ax5_4.set_ylim(0.83, 1.05)
     ax5_4.set_xlim(- 0.05, 0.05)
 
     ax5_1.set_title('Sector 7')
     ax5_2.set_title('Sector 8')
     ax5_3.set_title('Sector 34')
-    ax5_4.set_title('TOI-519 b')
-    # plt.savefig('/mnt/c/users/tehan/desktop/known_exoplanets_psf.png', bbox_inches='tight', dpi=300)
+    ax5_4.set_title('TOI-519 b', {'fontweight': 'semibold'})
+    ax5_1.set_ylabel('Normalized Flux')
+    ax5_1.set_xlabel('Time (TBJD)')
+    ax5_2.set_xlabel('Time (TBJD)')
+    ax5_3.set_xlabel('Time (TBJD)')
+    ax5_4.set_xlabel('Phase')
+    # ax5_4.text(0.98, 0.1, 'Aper', horizontalalignment='right', transform=ax5_4.transAxes)
+
+    # plt.savefig(f'/mnt/c/users/tehan/desktop/known_exoplanets_{mode}.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
 def figure_7():
     local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
-    fig = plt.figure(constrained_layout=False, figsize=(10, 10))
+    fig = plt.figure(constrained_layout=False, figsize=(10, 8))
     gs = fig.add_gridspec(5, 12)
-    gs.update(wspace=0.3, hspace=0.5)
+    gs.update(wspace=0.3, hspace=0.3)
+    color = ['C0', 'C1', 'C3']
 
+    #########################################################################
     # TOI-674
+    tic = 158588995
+
+    # load QLP
+    qlp_9_t, qlp_9_f = load_qlp(ld=local_directory, tic=tic, sector=9)
+    qlp_10_t, qlp_10_f = load_qlp(ld=local_directory, tic=tic, sector=10)
+    qlp_36_t, qlp_36_f = load_qlp(ld=local_directory, tic=tic, sector=36)
+
+    # load eleanor
+    eleanor_9_t, eleanor_9_f_pca, eleanor_9_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=9)
+    eleanor_10_t, eleanor_10_f_pca, eleanor_10_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=10)
+    eleanor_36_t, eleanor_36_f_pca, eleanor_36_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=36)
+
     files = glob(local_directory + 'SPOC/TOI-674/*.fits')
     index = np.where(data['pl_name'] == 'TOI-674 b')
-    period = float(data['pl_orbper'][index])
+    period = 1.977165
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-    ax1_4 = fig.add_subplot(gs[0, 8:])
+    ax1_1 = fig.add_subplot(gs[0, :3])
+    ax1_2 = fig.add_subplot(gs[0, 3:6])
+    ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax1_4 = fig.add_subplot(gs[0, 9:])
+
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
-            ax1_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
-                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
-    ax1_4.set_ylim(0.975, 1.01)
-    ax1_4.set_xlim(- 0.03, 0.03)
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax1_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i], ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax1_2.plot(eleanor_9_t % period / period - phase_fold_mid, eleanor_9_f_pca, '.', c=color[0], markersize=2,
+               label='9')
+    ax1_2.plot(eleanor_10_t % period / period - phase_fold_mid, eleanor_10_f_pca, '.', c=color[1], markersize=2,
+               label='10')
+    ax1_2.plot(eleanor_36_t % period / period - phase_fold_mid, eleanor_36_f_pca, '.', c=color[2], markersize=2,
+               label='36')
+    ax1_3.plot(eleanor_9_t % period / period - phase_fold_mid, eleanor_9_f_psf, '.', c=color[0], markersize=2,
+               label='9')
+    ax1_3.plot(eleanor_10_t % period / period - phase_fold_mid, eleanor_10_f_psf, '.', c=color[1], markersize=2,
+               label='10')
+    ax1_3.plot(eleanor_36_t % period / period - phase_fold_mid, eleanor_36_f_psf, '.', c=color[2], markersize=2,
+               label='36')
+    ax1_4.plot(qlp_9_t % period / period - phase_fold_mid, qlp_9_f, '.', c=color[0], markersize=2, label='9')
+    ax1_4.plot(qlp_10_t % period / period - phase_fold_mid, qlp_10_f, '.', c=color[1], markersize=2, label='10')
+    ax1_4.plot(qlp_36_t % period / period - phase_fold_mid, qlp_36_f, '.', c=color[2], markersize=2, label='36')
 
+    ax1_1.legend(loc=3, fontsize=6)
+    ax1_2.legend(loc=3, fontsize=6)
+    ax1_3.legend(loc=3, fontsize=6)
+    ax1_4.legend(loc=3, fontsize=6)
+    ax1_1.set_ylim(0.975, 1.01)
+    ax1_2.set_ylim(0.975, 1.01)
+    ax1_3.set_ylim(0.975, 1.01)
+    ax1_4.set_ylim(0.975, 1.01)
+    ax1_1.set_xlim(- 0.03, 0.03)
+    ax1_2.set_xlim(- 0.03, 0.03)
+    ax1_3.set_xlim(- 0.03, 0.03)
+    ax1_4.set_xlim(- 0.03, 0.03)
+    ax1_2.set_yticklabels([])
+    ax1_3.set_yticklabels([])
+    ax1_4.set_yticklabels([])
+
+    ax1_1.set_title('SPOC 2-min')
+    ax1_2.set_title('eleanor PCA')
+    ax1_3.set_title('eleanor PSF')
+    ax1_4.set_title('QLP')
+    ax1_1.set_ylabel('Normalized Flux')
+    ax1_3.text(2.25, 0.5, f'TOI-674 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_3.transAxes, rotation=270, fontweight='semibold')
+    ax1_3.text(2.15, 0.5, 'mag=11.88', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_3.transAxes, rotation=270)
+    #########################################################################
     # LHS 3844
+    tic = 410153553
+
+    # load QLP
+    qlp_27_t, qlp_27_f = load_qlp(ld=local_directory, tic=tic, sector=27)
+    qlp_28_t, qlp_28_f = load_qlp(ld=local_directory, tic=tic, sector=28)
+
+    # load eleanor
+    eleanor_27_t, eleanor_27_f_pca, eleanor_27_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=27)
+    eleanor_28_t, eleanor_28_f_pca, eleanor_28_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=28)
+
     files = glob(local_directory + 'SPOC/LHS 3844/*.fits')
     index = np.where(data['pl_name'] == 'LHS 3844 b')
     period = float(data['pl_orbper'][index])
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-    ax2_4 = fig.add_subplot(gs[1, 8:])
+    ax2_1 = fig.add_subplot(gs[1, :3])
+    ax2_2 = fig.add_subplot(gs[1, 3:6])
+    ax2_3 = fig.add_subplot(gs[1, 6:9])
+    ax2_4 = fig.add_subplot(gs[1, 9:])
+
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
-            ax2_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
-                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
-    ax2_4.set_ylim(0.988, 1.007)
-    ax2_4.set_xlim(- 0.07, 0.07)
+            if hdul[0].header['sector'] == 1:
+                continue
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax2_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i - 1],
+                       ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax2_2.plot(eleanor_27_t % period / period - phase_fold_mid, eleanor_27_f_pca, '.', c=color[0], markersize=2,
+               label='27')
+    ax2_2.plot(eleanor_28_t % period / period - phase_fold_mid, eleanor_28_f_pca, '.', c=color[1], markersize=2,
+               label='28')
+    ax2_3.plot(eleanor_27_t % period / period - phase_fold_mid, eleanor_27_f_psf, '.', c=color[0], markersize=2,
+               label='27')
+    ax2_3.plot(eleanor_28_t % period / period - phase_fold_mid, eleanor_28_f_psf, '.', c=color[1], markersize=2,
+               label='28')
+    ax2_4.plot(qlp_27_t % period / period - phase_fold_mid, qlp_27_f, '.', c=color[0], markersize=2, label='27')
+    ax2_4.plot(qlp_28_t % period / period - phase_fold_mid, qlp_28_f, '.', c=color[1], markersize=2, label='28')
 
+    ax2_1.legend(loc=3, fontsize=6)
+    ax2_2.legend(loc=3, fontsize=6)
+    ax2_3.legend(loc=3, fontsize=6)
+    ax2_4.legend(loc=3, fontsize=6)
+    ax2_1.set_ylim(0.988, 1.007)
+    ax2_2.set_ylim(0.988, 1.007)
+    ax2_3.set_ylim(0.988, 1.007)
+    ax2_4.set_ylim(0.988, 1.007)
+    ax2_1.set_xlim(- 0.07, 0.07)
+    ax2_2.set_xlim(- 0.07, 0.07)
+    ax2_3.set_xlim(- 0.07, 0.07)
+    ax2_4.set_xlim(- 0.07, 0.07)
+    ax2_2.set_yticklabels([])
+    ax2_3.set_yticklabels([])
+    ax2_4.set_yticklabels([])
+    ax2_1.set_ylabel('Normalized Flux')
+    ax2_3.text(2.25, 0.5, f'LHS 3844 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax2_3.transAxes, rotation=270, fontweight='semibold')
+    ax2_3.text(2.15, 0.5, 'mag=11.92', horizontalalignment='center',
+               verticalalignment='center', transform=ax2_3.transAxes, rotation=270)
+    #########################################################################
     # TOI-530
+    tic = 387690507
+
+    # load QLP
+    qlp_6_t, qlp_6_f = load_qlp(ld=local_directory, tic=tic, sector=6)
+
+    # load eleanor
+    eleanor_6_t, eleanor_6_f_pca, eleanor_6_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=6)
+    eleanor_44_t, eleanor_44_f_pca, eleanor_44_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=44)
+
     files = glob(local_directory + 'SPOC/TOI-530/*.fits')
     index = np.where(data['pl_name'] == 'TOI-530 b')
-    period = float(data['pl_orbper'][index])
+    period = 6.387583
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-    ax3_4 = fig.add_subplot(gs[2, 8:])
+    ax3_1 = fig.add_subplot(gs[2, :3])
+    ax3_2 = fig.add_subplot(gs[2, 3:6])
+    ax3_3 = fig.add_subplot(gs[2, 6:9])
+    ax3_4 = fig.add_subplot(gs[2, 9:])
+
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
-            ax3_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
-                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
-    ax3_4.set_ylim(0.95, 1.04)
-    ax3_4.set_xlim(- 0.03, 0.03)
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax3_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i], ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax3_2.plot(eleanor_6_t % period / period - phase_fold_mid, eleanor_6_f_pca, '.', c=color[0], markersize=2,
+               label='6')
+    ax3_2.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_pca, '.', c=color[1], markersize=2,
+               label='44')
+    ax3_3.plot(eleanor_6_t % period / period - phase_fold_mid, eleanor_6_f_psf, '.', c=color[0], markersize=2,
+               label='6')
+    ax3_3.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_psf, '.', c=color[1], markersize=2,
+               label='44')
+    ax3_4.plot(qlp_6_t % period / period - phase_fold_mid, qlp_6_f, '.', c=color[0], markersize=2, label='6')
 
+    ax3_1.legend(loc=3, fontsize=6)
+    ax3_2.legend(loc=3, fontsize=6)
+    ax3_3.legend(loc=3, fontsize=6)
+    ax3_4.legend(loc=3, fontsize=6)
+    ax3_1.set_ylim(0.95, 1.03)
+    ax3_2.set_ylim(0.95, 1.03)
+    ax3_3.set_ylim(0.95, 1.03)
+    ax3_4.set_ylim(0.95, 1.03)
+    ax3_1.set_xlim(- 0.03, 0.03)
+    ax3_2.set_xlim(- 0.03, 0.03)
+    ax3_3.set_xlim(- 0.03, 0.03)
+    ax3_4.set_xlim(- 0.03, 0.03)
+    ax3_2.set_yticklabels([])
+    ax3_3.set_yticklabels([])
+    ax3_4.set_yticklabels([])
+    ax3_1.set_ylabel('Normalized Flux')
+    ax3_3.text(2.25, 0.5, 'TOI-530 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_3.transAxes, rotation=270, fontweight='semibold')
+    ax3_3.text(2.15, 0.5, 'mag=13.53', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_3.transAxes, rotation=270)
+    #########################################################################
     # TOI-2406
+    tic = 212957629
+
+    # load QLP
+    qlp_30_t, qlp_30_f = load_qlp(ld=local_directory, tic=tic, sector=30)
+
+    # load eleanor
+    eleanor_3_t, eleanor_3_f_pca, eleanor_3_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=3)
+    eleanor_42_t, eleanor_42_f_pca, eleanor_42_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=42)
+    eleanor_43_t, eleanor_43_f_pca, eleanor_43_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=43)
+
     files = glob(local_directory + 'SPOC/TOI-2406/*.fits')
     index = np.where(data['pl_name'] == 'TOI-2406 b')
-    period = float(data['pl_orbper'][index])
+    period = 3.076676
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-    ax4_4 = fig.add_subplot(gs[3, 8:])
+    ax4_1 = fig.add_subplot(gs[3, :3])
+    ax4_2 = fig.add_subplot(gs[3, 3:6])
+    ax4_3 = fig.add_subplot(gs[3, 6:9])
+    ax4_4 = fig.add_subplot(gs[3, 9:])
+
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
-            ax4_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
-                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
-    ax4_4.set_ylim(0.945, 1.04)
-    ax4_4.set_xlim(- 0.04, 0.04)
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax4_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i + 1],
+                       ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax4_2.plot(eleanor_3_t % period / period - phase_fold_mid, eleanor_3_f_pca, '.', c=color[0], markersize=2,
+               label='3')
+    ax4_2.plot(eleanor_42_t % period / period - phase_fold_mid, eleanor_42_f_pca, '.', c=color[1], markersize=2,
+               label='42')
+    ax4_2.plot(eleanor_43_t % period / period - phase_fold_mid, eleanor_43_f_pca, '.', c=color[2], markersize=2,
+               label='43')
+    ax4_3.plot(eleanor_3_t % period / period - phase_fold_mid, eleanor_3_f_psf, '.', c=color[0], markersize=2,
+               label='3')
+    ax4_3.plot(eleanor_42_t % period / period - phase_fold_mid, eleanor_42_f_psf, '.', c=color[1], markersize=2,
+               label='42')
+    ax4_3.plot(eleanor_43_t % period / period - phase_fold_mid, eleanor_43_f_psf, '.', c=color[2], markersize=2,
+               label='43')
+    ax4_4.plot(qlp_30_t % period / period - phase_fold_mid, qlp_30_f, '.', c=color[0], markersize=2, label='30')
 
+    ax4_1.legend(loc=3, fontsize=6)
+    ax4_2.legend(loc=3, fontsize=6)
+    ax4_3.legend(loc=3, fontsize=6)
+    ax4_4.legend(loc=3, fontsize=6)
+    ax4_1.set_ylim(0.945, 1.04)
+    ax4_2.set_ylim(0.945, 1.04)
+    ax4_3.set_ylim(0.945, 1.04)
+    ax4_4.set_ylim(0.945, 1.04)
+    ax4_1.set_xlim(- 0.04, 0.04)
+    ax4_2.set_xlim(- 0.04, 0.04)
+    ax4_3.set_xlim(- 0.04, 0.04)
+    ax4_4.set_xlim(- 0.04, 0.04)
+    ax4_1.set_xticks([-0.03, 0, 0.03])
+    ax4_1.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_2.set_xticks([-0.03, 0, 0.03])
+    ax4_2.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_3.set_xticks([-0.03, 0, 0.03])
+    ax4_3.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_4.set_xticks([-0.03, 0, 0.03])
+    ax4_4.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_4.set_xlabel('Phase')
+    ax4_2.set_yticklabels([])
+    ax4_3.set_yticklabels([])
+    ax4_4.set_yticklabels([])
+    ax4_1.set_ylabel('Normalized Flux')
+    ax4_3.text(2.25, 0.5, 'TOI-2406 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_3.transAxes, rotation=270, fontweight='semibold')
+    ax4_3.text(2.15, 0.5, 'mag=14.31', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_3.transAxes, rotation=270)
+
+    #########################################################################
     # TOI-519
+    tic = 218795833
+
+    # load eleanor
+    eleanor_7_t, eleanor_7_f_aper, eleanor_7_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=7)
+    eleanor_8_t, eleanor_8_f_aper, eleanor_8_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=8)
+    eleanor_34_t, eleanor_34_f_aper, eleanor_34_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=34)
+
     files = glob(local_directory + 'SPOC/TOI-519/*.fits')
     index = np.where(data['pl_name'] == 'TOI-519 b')
-    period = float(data['pl_orbper'][index])
+    period = 1.265232
     t_0 = float(data['pl_tranmid'][index])
     phase_fold_mid = (t_0 - 2457000) % period / period
-    ax5_4 = fig.add_subplot(gs[4, 8:])
+    ax5_1 = fig.add_subplot(gs[4, :3])
+    ax5_2 = fig.add_subplot(gs[4, 3:6])
+    ax5_3 = fig.add_subplot(gs[4, 6:9])
+    # ax5_4 = fig.add_subplot(gs[4, 9:])
+
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
-            ax5_4.plot(hdul[1].data['TIME'] % period / period - phase_fold_mid,
-                       hdul[1].data['PDCSAP_FLUX'] / np.nanmedian(hdul[1].data['PDCSAP_FLUX']), '.k', ms=1)
-    ax5_4.set_ylim(0.85, 1.05)
-    ax5_4.set_xlim(- 0.05, 0.05)
+            if hdul[0].header['sector'] == 34:
+                i = i + 1
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax5_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i], ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax5_2.plot(eleanor_7_t % period / period - phase_fold_mid, eleanor_7_f_aper, '.', c=color[0], markersize=2,
+               label='7')
+    ax5_2.plot(eleanor_8_t % period / period - phase_fold_mid, eleanor_8_f_aper, '.', c=color[1], markersize=2,
+               label='8')
+    ax5_2.plot(eleanor_34_t % period / period - phase_fold_mid, eleanor_34_f_aper, '.', c=color[2], markersize=2,
+               label='34')
+    # ax5_3.plot(eleanor_7_t % period / period - phase_fold_mid, eleanor_7_f_psf, '.', c=color[0], markersize=2,
+    #            label='7')
+    # ax5_3.plot(eleanor_8_t % period / period - phase_fold_mid, eleanor_8_f_psf, '.', c=color[1], markersize=2,
+    #            label='8')
+    ax5_3.plot(eleanor_34_t % period / period - phase_fold_mid, eleanor_34_f_psf, '.', c=color[2], markersize=2,
+               label='34')
 
+    ax5_1.legend(loc=3, fontsize=6)
+    ax5_2.legend(loc=3, fontsize=6)
+    ax5_3.legend(loc=3, fontsize=6)
+    ax5_1.set_ylim(0.83, 1.05)
+    ax5_2.set_ylim(0.83, 1.05)
+    ax5_3.set_ylim(0.83, 1.05)
+    ax5_1.set_xlim(- 0.05, 0.05)
+    ax5_2.set_xlim(- 0.05, 0.05)
+    ax5_3.set_xlim(- 0.05, 0.05)
+    ax5_1.set_yticks([0.9, 1.0])
+    ax5_1.set_yticklabels(['0.90', '1.00'])
+    ax5_1.set_xticks([-0.03, 0, 0.03])
+    ax5_1.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_2.set_xticks([-0.03, 0, 0.03])
+    ax5_2.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_3.set_xticks([-0.03, 0, 0.03])
+    ax5_3.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_2.set_yticklabels([])
+    ax5_3.set_yticklabels([])
+    ax5_1.set_xlabel('Phase')
+    ax5_2.set_xlabel('Phase')
+    ax5_3.set_xlabel('Phase')
+    ax5_1.set_ylabel('Normalized Flux')
+    ax5_3.text(2.25, 0.5, 'TOI-519 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax5_3.transAxes, rotation=270, fontweight='semibold')
+    ax5_3.text(2.15, 0.5, 'mag=14.43', horizontalalignment='center',
+               verticalalignment='center', transform=ax5_3.transAxes, rotation=270)
+    # ax5_1.set_yticklabels([])
+
+    # plt.savefig('/mnt/c/users/tehan/desktop/known_exoplanets_other.png', bbox_inches='tight', dpi=300)
+    plt.show()
+
+
+def figure_8():
+    local_directory = '/mnt/c/users/tehan/desktop/NGC 7654/'
+    fig = plt.figure(constrained_layout=False, figsize=(10, 7))
+    gs = fig.add_gridspec(5, 12)
+    gs.update(wspace=0.2, hspace=0.2)
+    index = [77, 469, 699, 1251, 1585]
+    # TIC 270022476
+    tic = 270022476
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2015669349341459328-s0017_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t = hdul[1].data['time'][q]
+        f = hdul[1].data['cal_psf_flux'][q]
+
+    eleanor_t, eleanor_f_pca, eleanor_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=17)
+    qlp_t, qlp_f = load_qlp(ld=local_directory, tic=tic, sector=17)
+    ztf_g_t, ztf_g_flux = load_ztf(ld=local_directory, index=index[0])
+
+    period = 1.9221
+    ax1_1 = fig.add_subplot(gs[0, :3])
+    ax1_2 = fig.add_subplot(gs[0, 3:6])
+    ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax1_4 = fig.add_subplot(gs[0, 9:])
+    ax1_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
+    ax1_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2,
+               label='ZTF g-band')
+    ax1_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
+    ax1_3.plot(eleanor_t % period / period, eleanor_f_psf, '.', c='k', markersize=1)
+    ax1_4.plot(qlp_t % period / period, qlp_f, '.', c='k', markersize=1)
+
+    ax1_1.set_xticklabels([])
+    ax1_2.set_xticklabels([])
+    ax1_3.set_xticklabels([])
+    ax1_4.set_xticklabels([])
+    ax1_2.set_yticklabels([])
+    ax1_3.set_yticklabels([])
+    ax1_4.set_yticklabels([])
+    ax1_1.set_ylim(0.88, 1.03)
+    ax1_2.set_ylim(0.88, 1.03)
+    ax1_3.set_ylim(0.88, 1.03)
+    ax1_4.set_ylim(0.88, 1.03)
+    ax1_1.set_title('TGLC PSF')
+    ax1_2.set_title('eleanor PCA')
+    ax1_3.set_title('eleanor PSF')
+    ax1_4.set_title('QLP')
+    ax1_1.set_ylabel('Norm Flux')
+    ax1_3.text(2.25, 0.5, f'TIC \n{tic}', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_3.transAxes, rotation=270, fontweight='semibold')
+    ax1_3.text(2.12, 0.5, 'mag=11.52', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_3.transAxes, rotation=270)
+
+    # TIC 270140796
+    tic = 270140796
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2015671415229352192-s0017_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t = hdul[1].data['time'][q]
+        f = hdul[1].data['cal_psf_flux'][q]
+    eleanor_t, eleanor_f_pca, eleanor_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=17)
+    qlp_t, qlp_f = load_qlp(ld=local_directory, tic=tic, sector=17)
+    ztf_g_t, ztf_g_flux, ztf_r_t, ztf_r_flux = load_ztf(ld=local_directory, index=index[1])
+
+    period = 6.126
+    ax2_1 = fig.add_subplot(gs[1, :3])
+    ax2_2 = fig.add_subplot(gs[1, 3:6])
+    ax2_3 = fig.add_subplot(gs[1, 6:9])
+    ax2_4 = fig.add_subplot(gs[1, 9:])
+    ax2_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
+    ax2_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax2_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
+                  edgecolors='orangered', s=3, label='ZTF r-band')
+    ax2_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
+    ax2_3.plot(eleanor_t % period / period, eleanor_f_psf, '.', c='k', markersize=1)
+    ax2_4.plot(qlp_t % period / period, qlp_f, '.', c='k', markersize=1)
+
+    ax2_1.set_xticklabels([])
+    ax2_2.set_xticklabels([])
+    ax2_3.set_xticklabels([])
+    ax2_2.set_yticklabels([])
+    ax2_3.set_yticklabels([])
+    ax2_4.set_yticklabels([])
+    ax2_1.set_ylim(0.80, 1.05)
+    ax2_2.set_ylim(0.80, 1.05)
+    ax2_3.set_ylim(0.80, 1.05)
+    ax2_4.set_ylim(0.80, 1.05)
+    ax2_4.set_xlabel('Phase')
+    ax2_1.set_ylabel('Norm Flux')
+    ax2_3.text(2.25, 0.5, f'TIC \n{tic}', horizontalalignment='center',
+               verticalalignment='center', transform=ax2_3.transAxes, rotation=270, fontweight='semibold')
+    ax2_3.text(2.12, 0.5, 'mag=13.44', horizontalalignment='center',
+               verticalalignment='center', transform=ax2_3.transAxes, rotation=270)
+
+    # TIC 269820902
+    tic = 269820902
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0017_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t = hdul[1].data['time'][q]
+        f = hdul[1].data['cal_psf_flux'][q]
+    eleanor_t, eleanor_f_pca, eleanor_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=17)
+    ztf_g_t, ztf_g_flux, ztf_r_t, ztf_r_flux = load_ztf(ld=local_directory, index=index[2])
+    period = 1.01968
+    ax3_1 = fig.add_subplot(gs[2, :3])
+    ax3_2 = fig.add_subplot(gs[2, 3:6])
+    ax3_3 = fig.add_subplot(gs[2, 6:9])
+    # ax3_4 = fig.add_subplot(gs[2, 9:])
+    ax3_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
+    ax3_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax3_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
+                  edgecolors='orangered', s=3, label='ZTF r-band')
+    ax3_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
+    ax3_3.plot(eleanor_t % period / period, eleanor_f_psf, '.', c='k', markersize=1)
+
+    ax3_1.set_xticklabels([])
+    ax3_2.set_xticklabels([])
+    ax3_3.set_xticklabels([])
+    ax3_2.set_yticklabels([])
+    ax3_3.set_yticklabels([])
+    # ax3_4.set_yticklabels([])
+    ax3_1.set_ylim(0.85, 1.05)
+    ax3_2.set_ylim(0.85, 1.05)
+    ax3_3.set_ylim(0.85, 1.05)
+    ax3_1.set_ylabel('Norm Flux')
+    ax3_3.text(2.25, 0.5, f'TIC \n{tic}', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_3.transAxes, rotation=270, fontweight='semibold')
+    ax3_3.text(2.12, 0.5, 'mag=13.90', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_3.transAxes, rotation=270)
+
+    # TIC 270023061
+    tic = 270023061
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2015656743621212928-s0017_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t = hdul[1].data['time'][q]
+        f = hdul[1].data['cal_psf_flux'][q]
+    eleanor_t, eleanor_f_pca, eleanor_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=17)
+    ztf_g_t, ztf_g_flux, ztf_r_t, ztf_r_flux = load_ztf(ld=local_directory, index=index[3])
+    period = 2.2895
+    ax4_1 = fig.add_subplot(gs[3, :3])
+    ax4_2 = fig.add_subplot(gs[3, 3:6])
+    ax4_3 = fig.add_subplot(gs[3, 6:9])
+    # ax4_4 = fig.add_subplot(gs[3, 9:])
+    ax4_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
+    ax4_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax4_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
+                  edgecolors='orangered', s=3, label='ZTF r-band')
+    ax4_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
+    ax4_3.plot(eleanor_t % period / period, eleanor_f_psf, '.', c='k', markersize=1)
+
+    ax4_1.set_xticklabels([])
+    ax4_2.set_xticklabels([])
+    ax4_3.set_xticklabels([])
+    ax4_2.set_yticklabels([])
+    ax4_3.set_yticklabels([])
+    # ax4_4.set_yticklabels([])
+    ax4_1.set_ylim(0.6, 1.12)
+    ax4_2.set_ylim(0.6, 1.12)
+    ax4_3.set_ylim(0.6, 1.12)
+    ax4_1.set_ylabel('Norm Flux')
+    ax4_3.text(2.25, 0.5, f'TIC \n{tic}', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_3.transAxes, rotation=270, fontweight='semibold')
+    ax4_3.text(2.12, 0.5, 'mag=14.71', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_3.transAxes, rotation=270)
+
+    # TIC 269820513
+    tic = 269820513
+    with fits.open(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2015457010457210752-s0017_tess_v1_llc.fits',
+                   mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t = hdul[1].data['time'][q]
+        f = hdul[1].data['cal_psf_flux'][q]
+    eleanor_t, eleanor_f_pca, eleanor_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=17)
+    ztf_g_t, ztf_g_flux, ztf_r_t, ztf_r_flux = load_ztf(ld=local_directory, index=index[4])
+    period = 6.558
+    ax5_1 = fig.add_subplot(gs[4, :3])
+    ax5_2 = fig.add_subplot(gs[4, 3:6])
+    ax5_3 = fig.add_subplot(gs[4, 6:9])
+    # ax5_4 = fig.add_subplot(gs[4, 9:])
+    ax5_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3, label='TESS FFI')
+    ax5_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax5_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
+                  edgecolors='orangered', s=3, label='ZTF r-band')
+    ax5_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
+    ax5_3.plot(eleanor_t % period / period, eleanor_f_psf, '.', c='k', markersize=1)
+
+    ax5_2.set_yticklabels([])
+    ax5_3.set_yticklabels([])
+    # ax5_4.set_yticklabels([])
+    ax5_1.set_ylim(0.72, 1.06)
+    ax5_2.set_ylim(0.72, 1.06)
+    ax5_3.set_ylim(0.72, 1.06)
+    ax5_1.set_xlabel('Phase')
+    ax5_2.set_xlabel('Phase')
+    ax5_3.set_xlabel('Phase')
+    ax5_1.set_ylabel('Norm Flux')
+    ax5_3.text(2.25, 0.5, f'TIC \n{tic}', horizontalalignment='center',
+               verticalalignment='center', transform=ax5_3.transAxes, rotation=270, fontweight='semibold')
+    ax5_3.text(2.12, 0.5, 'mag=15.03', horizontalalignment='center',
+               verticalalignment='center', transform=ax5_3.transAxes, rotation=270)
+    ax5_1.legend(bbox_to_anchor=(3.3, 0), loc=3, markerscale=2)
+    # plt.savefig('/mnt/c/users/tehan/desktop/EB_comparison.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
 if __name__ == '__main__':
-    figure_6()
+    figure_7()

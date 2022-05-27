@@ -18,7 +18,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 class Source_cut(object):
-    def __init__(self, name, size=15, cadence=None):
+    def __init__(self, name, size=15, sector=None, cadence=None):
         """
         Source_cut object that includes all data from TESS and Gaia DR2
         :param name: str, required
@@ -56,7 +56,10 @@ class Source_cut(object):
         self.tic = catalogdata_tic['ID', 'GAIA']
         sector_table = Tesscut.get_sectors(coord)
         print(sector_table)
-        hdulist = Tesscut.get_cutouts(coord, self.size)
+        if sector is None:
+            hdulist = Tesscut.get_cutouts(coord, self.size)
+        else:
+            hdulist = Tesscut.get_cutouts(coord, self.size, sector=sector)
         self.catalogdata = catalogdata
         self.sector_table = sector_table
         self.camera = int(sector_table[0]['camera'])
@@ -66,7 +69,11 @@ class Source_cut(object):
         for i in range(len(hdulist)):
             sector_list.append(hdulist[i][0].header['SECTOR'])
         self.sector_list = sector_list
-        self.select_sector(sector=sector_table['sector'][0])
+        if sector is None:
+            self.select_sector(sector=sector_table['sector'][0])
+        else:
+            self.select_sector(sector=sector)
+
 
     def select_sector(self, sector=1):
         """
@@ -132,7 +139,7 @@ class Source_cut(object):
         self.gaia = gaia_targets
 
 
-def ffi(target='', local_directory='', size=90):
+def ffi(target='', local_directory='', size=90, sector=None):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -147,14 +154,10 @@ def ffi(target='', local_directory='', size=90):
     if source_exists:
         with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
             source = pickle.load(input_)
+        print(source.sector_table)
         print('Loaded ffi from directory. ')
     else:
         with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size)
+            source = Source_cut(target, size=size, sector=sector)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
-
-
-if __name__ == '__main__':
-    target = 'NGC 7654'  # Target identifier or coordinates TOI-3714
-    # TODO: power?

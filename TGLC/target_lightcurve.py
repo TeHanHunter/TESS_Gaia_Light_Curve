@@ -12,9 +12,11 @@ import matplotlib.pyplot as plt
 
 from TGLC.effective_psf import *
 from TGLC.ffi_cut import *
-from TGLC.local_background import *
 from matplotlib import colors
 import pickle
+import warnings
+
+warnings.simplefilter('always', UserWarning)
 
 
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
@@ -205,43 +207,64 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         for i in trange(len(source.time), desc='Fitting ePSF'):
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
-        np.save(epsf_loc, e_psf)
+        if np.isnan(e_psf).any():
+            warnings.warn(
+                "TESS FFI cut includes Nan values. Please shift the center of the cut to remove Nan near edge. ")
+            fig = plt.figure()
+            ax1 = fig.add_subplot(1, 1, 1, projection=source.wcs)
+            ax1.imshow(np.log10(source.flux[0]))
+            ax1.coords['pos.eq.ra'].set_axislabel('Right Ascension')
+            ax1.coords['pos.eq.ra'].set_axislabel_position('b')
+            ax1.coords['pos.eq.dec'].set_axislabel('Declination')
+            ax1.coords['pos.eq.dec'].set_axislabel_position('l')
+            ax1.coords.grid(color='k', ls='dotted')
+            ax1.tick_params(axis='x', labelbottom=True)
+            ax1.tick_params(axis='y', labelleft=True)
+            plt.title(f'{source.name}, sector {source.sector}')
+            plt.savefig(local_directory + f'{source.name}_{source.sector}.png')
+            plt.show()
+        else:
+            np.save(epsf_loc, e_psf)
 
     background = np.dot(A[:source.size ** 2, -3:], e_psf[:, -3:].T)
-    quality = np.zeros(len(source.time), dtype=np.int16)
+    quality_raw = np.zeros(len(source.time), dtype=np.int16)
     sigma = 1.4826 * np.nanmedian(np.abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])))
-    quality[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= 2.5 * sigma] += 1
-
+    quality_raw[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= 3 * sigma] += 1
     index_1 = np.where(np.array(source.quality) == 0)[0]
-    index_2 = np.where(quality == 0)[0]
+    index_2 = np.where(quality_raw == 0)[0]
     index = np.intersect1d(index_1, index_2)
     x_left = 1.5 if cut_x != 0 else -0.5
     x_right = 2.5 if cut_x != 13 else 0.5
     y_left = 1.5 if cut_y != 0 else -0.5
     y_right = 2.5 if cut_y != 13 else 0.5
     num_stars = np.array(source.gaia['tess_mag']).searchsorted(limit_mag, 'right')
-    # i = int(np.where(source.gaia['designation'] == name)[0][0])
     x_aperture = source.gaia[f'sector_{source.sector}_x'] - np.maximum(0, x_round - 2)
     y_aperture = source.gaia[f'sector_{source.sector}_y'] - np.maximum(0, y_round - 2)
 
-    mag = []
-    mean_diff_aper = []
-    mean_diff_psf = []
-    for i in trange(0, num_stars, desc='Fitting lc'):
+    # mag = []
+    # mean_diff_aper = []
+    # mean_diff_psf = []
+    start = 0
+    end = num_stars
+    if name is not None:
+        start = int(np.where(source.gaia['designation'] == name)[0][0])
+        end = start + 1
+    for i in trange(start, end, desc='Fitting lc'):
         if x_left <= x_round[i] <= source.size - x_right and y_left <= y_round[i] <= source.size - y_right:
             if 1.5 <= x_round[i] <= source.size - 2.5 and 1.5 <= y_round[i] <= source.size - 2.5:
                 near_edge = False
             else:
                 near_edge = True
             aperture, psf_lc, star_y, star_x, portion = fit_lc(A, source, star_info=star_info, x=x_round[i],
-                                                               y=y_round[i], star_num=i, e_psf=e_psf, near_edge=near_edge)
+                                                               y=y_round[i], star_num=i, e_psf=e_psf,
+                                                               near_edge=near_edge)
             aper_lc = np.sum(aperture[max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2), :],
                              axis=(0, 1))
             local_bg, aper_lc, psf_lc = bg_mod(source, q=index, portion=portion, psf_lc=psf_lc, aper_lc=aper_lc,
                                                near_edge=near_edge, star_num=i)
-            mag.append(source.gaia['tess_mag'][i])
-            mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index]))))
-            mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))
+            # mag.append(source.gaia['tess_mag'][i])
+            # mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index])) / portion))
+            # mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))
             cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
                                   return_trend=False)
             if near_edge:
@@ -250,15 +273,17 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
                                      return_trend=False)
             background_ = background[x_round[i] + source.size * y_round[i], :]
+            quality = np.zeros(len(source.time), dtype=np.int16)
+            sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
+            quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
             lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality, cut_x=cut_x,
                       cut_y=cut_y, cadence=source.cadence,
                       aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
                       bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                       cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i], y_aperture=y_aperture[i],
                       near_edge=near_edge)
-    # np.save(f'{local_directory}lc_{target}_sector_{sector}.npy', lightcurve)
-    np.save(local_directory + f'mean_diff_aper_{target}.npy', np.array([mag, mean_diff_aper]))
-    np.save(local_directory + f'mean_diff_psf_{target}.npy', np.array([mag, mean_diff_psf]))
+    # np.save(local_directory + f'mean_diff_aper_{target}.npy', np.array([mag, mean_diff_aper]))
+    # np.save(local_directory + f'mean_diff_psf_{target}.npy', np.array([mag, mean_diff_psf]))
 
 
 if __name__ == '__main__':

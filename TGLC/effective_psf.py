@@ -89,6 +89,35 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     return A, star_info, over_size, x_round, y_round
 
 
+def fit_psf(A, source, over_size, power=0.8, time=0):
+    """
+    fit_psf using least_square (improved performance by changing to np.linalg.solve)
+    :param A: np.ndarray, required
+    2d matrix for least_square
+    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    Source or Source_cut object
+    :param over_size: int, required
+    size of oversampled grid of ePSF
+    :param power: float, optional
+    power for weighting bright stars' contribution to the fit. 1 means same contribution from all stars,
+    <1 means emphasizing dimmer stars
+    :param time: int, required
+    time index of this ePSF fit
+    :return: fit result
+    """
+    b = source.flux[time].flatten()
+    b = np.append(b, np.zeros(over_size ** 2))
+    scaler = (source.flux[time].flatten()) ** power  # source.flux_err[time].flatten() ** 2 +
+    scaler = np.append(scaler, np.ones(over_size ** 2))
+
+    # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
+    a = A / scaler[:, np.newaxis]
+    b = b / scaler
+    alpha = np.dot(a.T, a)
+    beta = np.dot(a.T, b)
+    fit = np.linalg.solve(alpha, beta)
+    return fit
+
 def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size=11, e_psf=None, near_edge=False):
     """
     Produce matrix for least_square fitting without a certain target
@@ -165,38 +194,32 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     return aperture_lc, psf_lc, y - down, x - left, portion
 
 
-def fit_psf(A, source, over_size, power=0.8, time=0):
+def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
     """
-    fit_psf using least_square (improved performance by changing to np.linalg.solve)
-    :param A: np.ndarray, required
-    2d matrix for least_square
+    background modification
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
     Source or Source_cut object
-    :param over_size: int, required
-    size of oversampled grid of ePSF
-    :param power: float, optional
-    power for weighting bright stars' contribution to the fit. 1 means same contribution from all stars,
-    <1 means emphasizing dimmer stars
-    :param time: int, required
-    time index of this ePSF fit
-    :return: fit result
+    :param lightcurve: np.ndarray, required
+    ePSF lightcurve
+    :param sector: int, required
+    TESS sector number
+    :param num_stars: int, required
+    number of stars
+    :return: modified light curve
     """
-    b = source.flux[time].flatten()
-    b = np.append(b, np.zeros(over_size ** 2))
-    scaler = (source.flux[time].flatten()) ** power  # source.flux_err[time].flatten() ** 2 +
-    scaler = np.append(scaler, np.ones(over_size ** 2))
-
-    # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
-    a = A / scaler[:, np.newaxis]
-    b = b / scaler
-    alpha = np.dot(a.T, a)
-    beta = np.dot(a.T, b)
-    fit = np.linalg.solve(alpha, beta)
-    return fit
-
-
-def psf_lc(source=None, factor=2, psf_size=11, e_psf=None, star_info=None, star_num=0):
-    over_size = psf_size * factor + 1
-    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
-    A[np.repeat(np.arange(psf_size ** 2), 4), star_info[star_num][1]] = star_info[star_num][2]
-    np.dot(A, e_psf.T)
+    bar = 15000 * 10 ** ((source.gaia['tess_mag'][star_num] - 10) / -2.5)
+    # med_epsf = np.nanmedian(e_psf[:, :23 ** 2].reshape(len(source.time), 23, 23), axis=0)
+    # centroid_to_aper_ratio = 4/9 * np.sum(med_epsf[10:13, 10:13]) / np.sum(med_epsf)
+    # centroid_to_aper_ratio = np.nanmedian(ratio)
+    # flux_bar = aperture_bar * centroid_to_aper_ratio
+    # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
+    aperture_bar = bar * portion
+    local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
+    aper_lc = aper_lc - local_bg
+    if near_edge:
+        return local_bg, aper_lc, psf_lc
+    # print(local_bg / aperture_bar)
+    psf_bar = bar
+    local_bg = np.nanmedian(psf_lc[q]) - psf_bar
+    psf_lc = psf_lc - local_bg
+    return local_bg, aper_lc, psf_lc
