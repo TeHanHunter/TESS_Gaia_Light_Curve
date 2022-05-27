@@ -1,8 +1,15 @@
-from TGLC.ffi import *
+import os
+from tglc.ffi import *
 
-if __name__ == '__main__':
-    sector = 40
-    local_directory = f'/home/tehan/data/sector{sector:02d}/'
+
+def ffi_to_source(sector=1, local_directory=''):
+    '''
+    Cut calibrated FFI to source.pkl
+    :param sector: int, required
+    TESS sector number
+    :param local_directory: string, required
+    output directory
+    '''
     # local_directory = f'/mnt/d/TESS_Sector_17/'
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
@@ -10,6 +17,11 @@ if __name__ == '__main__':
     os.makedirs(local_directory + f'source/', exist_ok=True)
     for i in range(16):
         cut_ffi(sector=sector, camera=1 + i // 4, ccd=1 + i % 4, path=local_directory)
+
+
+if __name__ == '__main__':
+    sector = 1
+    ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:02d}/', )
     # input_files = glob(f'/mnt/d/TESS_Sector_17/*2-3-????-?_ffic.fits')
     # with fits.open(input_files[0], mode='denywrite') as hdul:
     #     wcs = WCS(hdul[1].header)

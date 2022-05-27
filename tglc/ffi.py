@@ -1,17 +1,16 @@
-from glob import glob
-
+import os
+import pickle
 import numpy as np
+from glob import glob
 from astropy.table import Table, hstack
 from astroquery.mast import Catalogs
-from tqdm import tqdm
-
-from TGLC.target_lightcurve import *
-import pickle
-
+from tqdm import tqdm, trange
+from astropy.io import fits
+from astropy.wcs import WCS
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, exposure=1800, sector=0, size=150, camera=1,
-                 ccd=1, cadence=None):
+    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, exposure=1800, sector=0, size=150,
+                 camera=1, ccd=1, cadence=None):
         """
         Source object that includes all data from TESS and Gaia DR2
         :param x: int, required
@@ -106,6 +105,8 @@ def cut_ffi(sector=1, camera=1, ccd=1, size=150, path=''):
     camera number
     :param ccd: int, required
     ccd number
+    :param size: int, optional
+    size of the FFI cut, default size is 150. Recommend large number for better quality.
     :param path: string, required
     path to the FFI folder
     :return:

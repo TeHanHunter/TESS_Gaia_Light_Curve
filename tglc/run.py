@@ -1,7 +1,6 @@
 # export OPENBLAS_NUM_THREADS=1
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
-import pickle
-from TGLC.target_lightcurve import *
+from tglc.target_lightcurve import *
 
 if __name__ == '__main__':
     sector = 17

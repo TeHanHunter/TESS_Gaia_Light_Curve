@@ -10,8 +10,8 @@ from tqdm import trange
 from wotan import flatten
 import matplotlib.pyplot as plt
 
-from TGLC.effective_psf import *
-from TGLC.ffi_cut import *
+from tglc.effective_psf import *
+from tglc.ffi_cut import *
 from matplotlib import colors
 import pickle
 import warnings

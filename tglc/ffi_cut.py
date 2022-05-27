@@ -10,7 +10,6 @@ from astroquery.mast import Catalogs
 from astroquery.mast import Tesscut
 import pickle
 from os.path import exists
-from TGLC.target_lightcurve import *
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -80,7 +79,6 @@ class Source_cut(object):
         select sector to use if target is in multi-sectors
         :param sector: int, required
         TESS sector number
-        :return:
         """
         if self.sector == sector:
             print(f'Already in sector {sector}.')
@@ -148,7 +146,9 @@ def ffi(target='', local_directory='', size=90, sector=None):
     output directory
     :param size: int, required
     FFI cut side length
-    :return: TGLC.ffi_cut.Source_cut
+    :param sector: int, required
+    TESS sector number
+    :return: tglc.ffi_cut.Source_cut
     """
     source_exists = exists(f'{local_directory}source/source_{target}.pkl')
     if source_exists:

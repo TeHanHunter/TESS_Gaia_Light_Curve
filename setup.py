@@ -1,12 +1,12 @@
 import sys
 import setuptools
-from TGLC.__init__ import __version__
+from tglc.__init__ import __version__
 
-sys.path.insert(0, "TGLC")
+sys.path.insert(0, "tglc")
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
-    name="TGLC",
+    name="tglc",
     version=__version__,
     author="Te Han",
     author_email="tehanhunter@gmail.com",
@@ -19,7 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires= ['numpy', 'astropy', 'astroquery', 'matplotlib', 'tqdm', 'wotan'],
-    packages=setuptools.find_packages(include=['TGLC', 'TGLC.*']),
+    install_requires=['numpy', 'astropy', 'astroquery', 'matplotlib', 'tqdm', 'wotan'],
+    packages=setuptools.find_packages(include=['tglc', 'tglc.*']),
     python_requires=">=3.6",
 )

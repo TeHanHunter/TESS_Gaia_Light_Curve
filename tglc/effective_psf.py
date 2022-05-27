@@ -1,24 +1,29 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def bilinear(x, y, repeat=23):
-    """
+    '''
     A bilinear formula
     np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
     b, d = array[1]
     a, c = array[0]
-    """
+    :param x: x
+    :param y: y
+    :param repeat: side length of epsf
+    :return: bilinear interpolation
+    '''
     return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 
 
 def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0])):
     """
     Generate matrix for PSF fitting
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param factor: int, optional
     effective PSF oversampling factor
+    :param psf_size: int, optional
+    effective PSF side length
     :param edge_compression: float, optional
     parameter for edge compression
     :param c: np.ndarray, optional
@@ -94,7 +99,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     fit_psf using least_square (improved performance by changing to np.linalg.solve)
     :param A: np.ndarray, required
     2d matrix for least_square
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param over_size: int, required
     size of oversampled grid of ePSF
@@ -118,12 +123,13 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     fit = np.linalg.solve(alpha, beta)
     return fit
 
+
 def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size=11, e_psf=None, near_edge=False):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
     2d matrix for least_square
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param star_info: np.ndarray, required
     star parameters
@@ -133,7 +139,15 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     target vertical pixel coordinate
     :param star_num: int, required
     target star index
-    :return: reduced A, matrix for least_square fix without the target star
+    :param factor: int, optional
+    effective PSF oversampling factor
+    :param psf_size: int, optional
+    effective PSF side length
+    :param e_psf: np.ndarray, required
+    effective PSF as a 3d array as a timeseries
+    :param near_edge: boolean, required
+    whether the star is 2 pixels or closer to the edge of a CCD
+    :return: aperture lightcurve, PSF lightcurve, vertical pixel coord, horizontal pixel coord, portion of light in aperture
     """
     size = source.size  # TODO: must be even?
     star_position = int(x + source.size * y - 5 * size - 5)
@@ -195,18 +209,24 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 
 
 def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
-    """
+    '''
     background modification
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
-    :param lightcurve: np.ndarray, required
-    ePSF lightcurve
-    :param sector: int, required
-    TESS sector number
-    :param num_stars: int, required
-    number of stars
-    :return: modified light curve
-    """
+    :param q: list, optional
+    list of booleans that filter the data points
+    :param aper_lc: np.ndarray, required
+    aperture light curve
+    :param psf_lc: np.ndarray, required
+    PSF light curve
+    :param portion: float, required
+    portion of light in aperture
+    :param star_num: int, required,
+    star index
+    :param near_edge: boolean, required
+    whether the star is 2 pixels or closer to the edge of a CCD
+    :return: local background, modified aperture light curve, modified PSF light curve
+    '''
     bar = 15000 * 10 ** ((source.gaia['tess_mag'][star_num] - 10) / -2.5)
     # med_epsf = np.nanmedian(e_psf[:, :23 ** 2].reshape(len(source.time), 23, 23), axis=0)
     # centroid_to_aper_ratio = 4/9 * np.sum(med_epsf[10:13, 10:13]) / np.sum(med_epsf)

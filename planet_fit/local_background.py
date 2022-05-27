@@ -6,7 +6,7 @@ from tqdm import trange
 def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
     """
     background modification
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param lightcurve: np.ndarray, required
     ePSF lightcurve
