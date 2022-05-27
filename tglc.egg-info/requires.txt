@@ -1,0 +1,6 @@
+astropy
+astroquery
+matplotlib
+numpy
+tqdm
+wotan

@@ -1,0 +1,28 @@
+Metadata-Version: 2.1
+Name: tglc
+Version: 0.1.0
+Summary: TESS-Gaia Light Curve
+Home-page: https://github.com/TeHanHunter/TESS_Gaia_Light_Curve
+Author: Te Han
+Author-email: tehanhunter@gmail.com
+License: UNKNOWN
+Description: ![TGLC_Title](https://user-images.githubusercontent.com/49893001/139602713-7b49ea93-4795-45f6-a2b0-ca662f84eb68.png)
+        
+        TESS FFI light curves fitted with effective PSF and decontaminated with Gaia DR2 
+        
+        Light curves are being fitted and will be available through MAST HLSP. 
+        
+        ![light_curve_comparison_1251](https://user-images.githubusercontent.com/49893001/164130093-879c9275-7168-4fb4-bf4f-975747a55b76.png)
+        Example of performence in a crowded area of NGC 7654
+        
+        | Bit  | Flag Number | Description                                  |
+        | ---- | ----------- | -------------------------------------------- |
+        | 0    | 1           | Scattered Light from the Earth and Moon      |
+        | 1    | 2           | 2 pixels or closer to the edge of CCD        |
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
