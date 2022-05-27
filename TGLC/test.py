@@ -32,6 +32,7 @@ if __name__ == '__main__':
     # print(name)
     epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory)
 
+
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
     # os.makedirs(local_directory + f'logs/', exist_ok=True)

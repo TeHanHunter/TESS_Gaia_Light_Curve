@@ -161,3 +161,4 @@ def ffi(target='', local_directory='', size=90, sector=None):
             source = Source_cut(target, size=size, sector=sector)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
+

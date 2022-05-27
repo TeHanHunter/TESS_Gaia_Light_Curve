@@ -136,4 +136,3 @@ def cut_ffi(sector=1, camera=1, ccd=1, size=150, path=''):
                                 quality=quality, wcs=wcs,
                                 exposure=exposure, cadence=cadence)  # 93
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
-

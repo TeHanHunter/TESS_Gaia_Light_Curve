@@ -20,3 +20,4 @@ if __name__ == '__main__':
     #     with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
     #         source = pickle.load(input_)
     #     epsf(source, factor=2, target=target, ccd=ccd, sector=source.sector, local_directory=local_directory)  # TODO: power?
+
