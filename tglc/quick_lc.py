@@ -5,12 +5,13 @@ warnings.simplefilter('always', UserWarning)
 def tglc_lc(target='NGC 7654', local_directory='', size=90):
     '''
     Generate light curve for a single target.
-    :param target: str, required
-    target identifier
-    :param local_directory: string, required
-    output directory
-    :param size: int, optional
-    size of the FFI cut, default size is 90. Recommend large number for better quality. Cannot exceed 100.
+
+    :param target: target identifier
+    :type target: str, required
+    :param local_directory: output directory
+    :type local_directory: str, required
+    :param size: size of the FFI cut, default size is 90. Recommend large number for better quality. Cannot exceed 100.
+    :type size: int, optional
     '''
     os.makedirs(local_directory + f'logs/', exist_ok=True)
     os.makedirs(local_directory + f'lc/', exist_ok=True)
@@ -31,7 +32,6 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90):
 
 if __name__ == '__main__':
     tglc_lc(target='NGC 7654', local_directory='', size=90)
-
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'

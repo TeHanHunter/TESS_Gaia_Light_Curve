@@ -53,12 +53,12 @@ class Source_cut(object):
                                             catalog="TIC")
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
-        sector_table = Tesscut.get_sectors(coord)
+        sector_table = Tesscut.get_sectors(coordinates=coord)
         print(sector_table)
         if sector is None:
-            hdulist = Tesscut.get_cutouts(coord, self.size)
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size)
         else:
-            hdulist = Tesscut.get_cutouts(coord, self.size, sector=sector)
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector)
         self.catalogdata = catalogdata
         self.sector_table = sector_table
         self.camera = int(sector_table[0]['camera'])

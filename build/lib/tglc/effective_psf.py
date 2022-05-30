@@ -7,10 +7,15 @@ def bilinear(x, y, repeat=23):
     np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
     b, d = array[1]
     a, c = array[0]
-    :param x: x
-    :param y: y
-    :param repeat: side length of epsf
-    :return: bilinear interpolation
+    Parameters
+    ----------
+    x: x
+    y: y
+    repeat: side length of epsf
+
+    Returns
+    ----------
+    bilinear interpolation
     '''
     return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 

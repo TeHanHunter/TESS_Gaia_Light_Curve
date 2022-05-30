@@ -19,7 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['numpy', 'astropy', 'astroquery', 'matplotlib', 'tqdm', 'wotan'],
+    install_requires=['numpy', 'astropy', 'astroquery==0.4.5', 'matplotlib', 'tqdm', 'wotan'],
     packages=setuptools.find_packages(include=['tglc', 'tglc.*']),
     python_requires=">=3.6",
 )
