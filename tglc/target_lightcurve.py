@@ -161,7 +161,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
 
     hdul = fits.HDUList([primary_hdu, table_hdu])
-    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s00{source.sector:02d}_tess_v1_llc.fits',
+    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}_tess_v1_llc.fits',
                  overwrite=True)
     return
 
