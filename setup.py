@@ -3,7 +3,7 @@ import setuptools
 from tglc.__init__ import __version__
 
 sys.path.insert(0, "tglc")
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name="tglc",
