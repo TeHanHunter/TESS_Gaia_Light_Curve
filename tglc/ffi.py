@@ -111,6 +111,8 @@ def cut_ffi(ccd=1, camera=1, sector=1, size=150, path=''):
     path to the FFI folder
     :return:
     """
+    print(camera)
+    print(ccd)
     input_files = glob(f'{path}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     print(len(input_files))
     time = []
