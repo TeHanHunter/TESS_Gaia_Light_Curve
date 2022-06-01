@@ -20,7 +20,7 @@ def ffi_to_source(sector=1, ccd=1, local_directory=''):
     os.makedirs(local_directory + f'source/', exist_ok=True)
 
     with Pool() as p:
-      p.map(partial(cut_ffi(), sector, 150, local_directory, ccd), [1, 2, 3, 4])
+      p.map(partial(cut_ffi, sector, 150, local_directory, ccd), [1, 2, 3, 4])
 
 
 if __name__ == '__main__':
