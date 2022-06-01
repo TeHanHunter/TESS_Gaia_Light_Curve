@@ -96,7 +96,7 @@ class Source(object):
         self.gaia = gaia_targets
 
 
-def cut_ffi(ccd, camera=1, sector=1, size=150, path=''):
+def cut_ffi(ccd=1, camera=1, sector=1, size=150, path=''):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
