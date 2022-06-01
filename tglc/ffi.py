@@ -122,7 +122,7 @@ def cut_ffi(sector=1, camera=1, ccd=1, size=150, path=''):
             cadence.append(hdul[0].header['FFIINDEX'])
             time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
             flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
-    np.save(path + f'source/sector{sector}_time.npy', time)
+    # np.save(path + f'source/sector{sector}_time.npy', time)
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
