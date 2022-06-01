@@ -19,10 +19,10 @@ def ffi_to_source(sector=1, camera=1, local_directory=''):
     os.makedirs(local_directory + f'ffi/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
 
-    with Pool() as p:
-        p.map(partial(cut_ffi, camera, sector, 150, local_directory), [1, 2, 3, 4])
-    # for i in range(4):
-    #     cut_ffi(ccd=i, camera=camera, sector=sector, size=150, path=local_directory)
+    # with Pool() as p:
+    #     p.map(partial(cut_ffi, camera, sector, 150, local_directory), [1, 2, 3, 4])
+    for i in range(4):
+        cut_ffi(ccd=i, camera=camera, sector=sector, size=150, path=local_directory)
 
 
 if __name__ == '__main__':
