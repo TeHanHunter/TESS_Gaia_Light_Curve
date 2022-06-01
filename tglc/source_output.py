@@ -1,6 +1,7 @@
 import os
 from tglc.ffi import *
-
+import multiprocessing
+from multiprocessing import Process
 
 def ffi_to_source(sector=1, local_directory=''):
     '''
@@ -15,8 +16,19 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'ffi/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
+
+    procs = []
+    # instantiating process with arguments
     for i in range(16):
-        cut_ffi(sector=sector, camera=1 + i // 4, ccd=1 + i % 4, path=local_directory)
+        # print(name)
+        proc = Process(target=cut_ffi, args=(sector, 1 + i // 4, 1 + i % 4, local_directory))
+        procs.append(proc)
+        proc.start()
+
+    # complete the processes
+    for proc in procs:
+        proc.join()
+
 
 
 if __name__ == '__main__':
