@@ -2,8 +2,13 @@
 # export MKL_NUM_THREADS=1
 # export NUMEXPR_NUM_THREADS=1
 # export OMP_NUM_THREADS=1
-
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
+
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 from tglc.target_lightcurve import *
 import multiprocessing
 from multiprocessing import Process
