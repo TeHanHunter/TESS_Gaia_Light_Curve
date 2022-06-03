@@ -1,13 +1,12 @@
 import sys
 import setuptools
-from tglc.__init__ import __version__
 
 sys.path.insert(0, "tglc")
 with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name="tglc",
-    version=__version__,
+    version='0.1.0',
     author="Te Han",
     author_email="tehanhunter@gmail.com",
     description="TESS-Gaia Light Curve",
