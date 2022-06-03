@@ -72,7 +72,7 @@ class Source(object):
         in_frame = [True] * len(gaia_targets)
         for i, designation in enumerate(gaia_targets['designation']):
             pixel = self.wcs.all_world2pix(
-                np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
+                np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
             if -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
