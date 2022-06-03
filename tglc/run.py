@@ -6,7 +6,7 @@ from multiprocessing import Process
 from multiprocessing import Pool
 from functools import partial
 
-def lc_per_cut(i=0, ccd='1-1', local_directory=''):
+def lc_per_cut(i, ccd='1-1', local_directory=''):
     cut_x = i // 14
     cut_y = i % 14
     with open(local_directory + f'source/{ccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
@@ -18,17 +18,17 @@ def lc_per_cut(i=0, ccd='1-1', local_directory=''):
 def lc_per_ccd(sector = 1, ccd = '1-1'):
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
     os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
-#     with Pool() as p:
-#         r = list(tqdm.tqdm(p.imap(_foo, range(30)), total=30))
-#         tqdm(pool.imap(func=func, iterable=argument_list), total=len(argument_list))
-    for i in range(484):
-        lc_per_cut(i=i, ccd=ccd, local_directory=local_directory)
+    with Pool(3) as p:
+        p.map(partial(lc_per_cut, ccd=ccd, local_directory=local_directory), range(484))
+ 
+#     for i in range(484):
+#         lc_per_cut(i, ccd=ccd, local_directory=local_directory)
         
 if __name__ == '__main__':
     # lc_per_ccd(sector=1, ccd='1-1')
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 1
-    names = ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '2-4',
-             '3-1', '3-2', '3-3', '3-4', '4-1', '4-2', '4-3', '4-4']
+    names = ['1-1', '1-2', '1-3', '1-4'] #, '2-1', '2-2', '2-3', '2-4',
+             #'3-1', '3-2', '3-3', '3-4', '4-1', '4-2', '4-3', '4-4']
     for name in names:
         lc_per_ccd(sector=sector, ccd = name)
