@@ -6,7 +6,7 @@ from multiprocessing import Process
 from multiprocessing import Pool
 from functools import partial
 
-def lc_per_cut(i=0, ccd=ccd, local_directory=local_directory):
+def lc_per_cut(i=0, ccd='1-1', local_directory=''):
     cut_x = i // 14
     cut_y = i % 14
     with open(local_directory + f'source/{ccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
