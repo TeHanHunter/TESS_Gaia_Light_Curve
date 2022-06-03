@@ -6,7 +6,7 @@ from multiprocessing import Process
 from multiprocessing import Pool
 from functools import partial
 
-def lc_per_cut(i=0):
+def lc_per_cut(i=0, ccd=ccd, local_directory=local_directory):
     cut_x = i // 14
     cut_y = i % 14
     with open(local_directory + f'source/{ccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
@@ -22,7 +22,7 @@ def lc_per_ccd(sector = 1, ccd = '1-1'):
 #         r = list(tqdm.tqdm(p.imap(_foo, range(30)), total=30))
 #         tqdm(pool.imap(func=func, iterable=argument_list), total=len(argument_list))
     for i in range(484):
-        lc_per_cut(i=i)
+        lc_per_cut(i=i, ccd=ccd, local_directory=local_directory)
         
 if __name__ == '__main__':
     # lc_per_ccd(sector=1, ccd='1-1')
