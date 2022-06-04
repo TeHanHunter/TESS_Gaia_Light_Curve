@@ -16,7 +16,6 @@ import multiprocessing
 from multiprocessing import Pool
 from functools import partial
 from glob import glob
-from matplotlib.colors import LogNorm
 
 def lc_per_cut(i, ccd='1-1', local_directory=''):
     cut_x = i // 14
