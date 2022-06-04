@@ -152,9 +152,9 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
     left = np.maximum(0, x - 2)
-    right = np.minimum(size, x + 2) + 1
+    right = np.minimum(size, x + 3)
     down = np.maximum(0, y - 2)
-    up = np.minimum(size, y + 2) + 1
+    up = np.minimum(size, y + 3)
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
@@ -166,9 +166,6 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     aperture_lc = np.zeros((len(index), len(source.time)))
     for j in range(len(source.time)):
         aperture_lc[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
-    if len(index) != 25:
-        print(len(index))
-        print(str(up - down) + str(right - left))
     aperture_lc = aperture_lc.reshape((up - down, right - left, len(source.time)))
 
     # psf_lc

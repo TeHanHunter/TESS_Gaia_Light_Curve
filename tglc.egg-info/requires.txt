@@ -1,6 +1,7 @@
-astropy
-astroquery
+astropy==5.1
+astroquery==0.4.5
 matplotlib
 numpy
 tqdm
+wheel
 wotan

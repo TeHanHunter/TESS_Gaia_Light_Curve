@@ -1,4 +1,4 @@
-README.md
+README.rst
 setup.py
 tglc/__init__.py
 tglc/effective_psf.py
