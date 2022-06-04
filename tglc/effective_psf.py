@@ -112,9 +112,8 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     """
     b = source.flux[time].flatten()
     b = np.append(b, np.zeros(over_size ** 2))
-    scaler = (source.flux[time].flatten()) ** power  # source.flux_err[time].flatten() ** 2 +
+    scaler = np.abs(source.flux[time].flatten()) ** power
     scaler = np.append(scaler, np.ones(over_size ** 2))
-
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
     a = A / scaler[:, np.newaxis]
     b = b / scaler
