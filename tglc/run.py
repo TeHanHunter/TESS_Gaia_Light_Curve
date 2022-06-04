@@ -48,7 +48,7 @@ def plot_epsf(sector=1, ccd='', local_directory=''):
         ax.set_xticklabels([])
         ax.tick_params(axis='x', bottom=False)
         ax.tick_params(axis='y', left=False)
-    plt.savefig(local_directory + f'epsf/{ccd}/epsf_sector_{sector}_{ccd}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(local_directory + f'epsf/{ccd}/epsf_sector_{sector}_{ccd}.png', dpi=300)
 
 
 if __name__ == '__main__':
