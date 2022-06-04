@@ -99,10 +99,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('GAIA_rp', gaia_rp, 'Gaia DR2 rp band magnitude'),
         fits.Card('RAWFLUX', raw_flux, 'median flux of raw FFI'),
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
-
-    primary_hdu.header.comments['NAXIS1'] = "Time (hdul[1].data['time'])"
-    primary_hdu.header.comments['NAXIS2'] = 'x size of cut'
-    primary_hdu.header.comments['NAXIS3'] = 'y size of cut'
+    if save_aper:
+        primary_hdu.header.comments['NAXIS1'] = "Time (hdul[1].data['time'])"
+        primary_hdu.header.comments['NAXIS2'] = 'x size of cut'
+        primary_hdu.header.comments['NAXIS3'] = 'y size of cut'
 
     t_start = source.time[0]
     t_stop = source.time[-1]
