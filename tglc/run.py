@@ -5,14 +5,13 @@
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
 
 import os
-
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 from tglc.target_lightcurve import *
+import matplotlib.pyplot as plt
 import multiprocessing
-from multiprocessing import Process
 from multiprocessing import Pool
 from functools import partial
 
@@ -35,13 +34,20 @@ def lc_per_ccd(ccd='1-1', local_directory=''):
 def plot_epsf(sector=1, ccd='', local_directory=''):
     fig = plt.figure(constrained_layout=False, figsize=(10, 10))
     gs = fig.add_gridspec(14, 14)
-    gs.update(wspace=0.1, hspace=0.1)
-    for i in range(14 ** 2):
+    gs.update(wspace=0.05, hspace=0.05)
+    for i in range(196):
         cut_x = i // 14
         cut_y = i % 14
         psf = np.load(local_directory + f'epsf/{ccd}/epsf_{cut_x:02d}_{cut_y:02d}_sector_{sector}.npy')
-        ax = fig.add_subplot(gs[cut_x, cut_y])
-        ax.imshow(psf[0, :23 ** 2].reshape(23, 23))
+        cmap = 'bone'
+        if np.isnan(psf).any():
+            cmap = 'inferno'
+        ax = fig.add_subplot(gs[13 - cut_y, cut_x])
+        ax.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap=cmap, origin='lower')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.tick_params(axis='x', bottom=False)
+        ax.tick_params(axis='y', left=False)
     plt.savefig(local_directory + f'epsf/{ccd}/epsf_sector_{sector}.png', bbox_inches='tight', dpi=300)
 
 

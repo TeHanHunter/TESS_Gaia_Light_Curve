@@ -8,11 +8,9 @@ import numpy as np
 from astropy.io import fits
 from tqdm import trange
 from wotan import flatten
-import matplotlib.pyplot as plt
 
 from tglc.effective_psf import *
 from tglc.ffi_cut import *
-from matplotlib import colors
 import pickle
 import warnings
 
@@ -51,7 +49,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     if np.isnan(source.gaia[index]['phot_rp_mean_mag']):
         gaia_rp = 'NaN'
     else:
-        gaia_rp = source.gaia[index]['phot_bp_mean_mag']
+        gaia_rp = source.gaia[index]['phot_rp_mean_mag']
     try:
         ticid = source.tic['ID'][np.where(source.tic['GAIA'] == str(objid))][0]
     except:
