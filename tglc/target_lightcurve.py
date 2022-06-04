@@ -224,11 +224,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             ax1.coords.grid(color='k', ls='dotted')
             ax1.tick_params(axis='x', labelbottom=True)
             ax1.tick_params(axis='y', labelleft=True)
-            plt.title(f'{source.name}, sector {source.sector}')
+            plt.title(f'sector {source.sector}, camera {source.camera}, ccd {source.ccd}, target {target}')
             plt.savefig(local_directory + f'{source.name}_{source.sector}.png')
             plt.show()
-        else:
-            np.save(epsf_loc, e_psf)
+        # else:
+        np.save(epsf_loc, e_psf)
 
     background = np.dot(A[:source.size ** 2, -3:], e_psf[:, -3:].T)
     quality_raw = np.zeros(len(source.time), dtype=np.int16)
