@@ -22,7 +22,7 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None):
+              local_bg=None, save_aper=False):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -60,7 +60,11 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         raw_flux = np.nanmedian(source.flux[:, star_y, star_x])
     except:
         raw_flux = None
-    primary_hdu = fits.PrimaryHDU(aperture)
+
+    if save_aper:
+        primary_hdu = fits.PrimaryHDU(aperture)
+    else:
+        primary_hdu = fits.PrimaryHDU()
     primary_hdu.header = fits.Header(cards=[
         fits.Card('SIMPLE', True, 'conforms to FITS standard'),
         fits.Card('EXTEND', True),
@@ -173,7 +177,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, ccd='', sector=0,
-         limit_mag=16, edge_compression=1e-4, power=0.8, name=None):
+         limit_mag=16, edge_compression=1e-4, power=0.8, name=None, save_aper=False):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -209,7 +213,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             e_psf[i] = fit
         if np.isnan(e_psf).any():
             warnings.warn(
-                "TESS FFI cut includes Nan values. Please shift the center of the cut to remove Nan near edge. ")
+                f"TESS FFI cut includes Nan values. Please shift the center of the cutout to remove Nan near edge. Target: {target}")
             fig = plt.figure()
             ax1 = fig.add_subplot(1, 1, 1, projection=source.wcs)
             ax1.imshow(np.log10(source.flux[0]))
@@ -250,8 +254,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
     for i in trange(start, end, desc='Fitting lc'):
-        if x_left <= x_round[i] <= source.size - x_right and y_left <= y_round[i] <= source.size - y_right:
-            if 1.5 <= x_round[i] <= source.size - 2.5 and 1.5 <= y_round[i] <= source.size - 2.5:
+        if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
+            if 1.5 <= x_round[i] < source.size - 2.5 and 1.5 <= y_round[i] < source.size - 2.5:
                 near_edge = False
             else:
                 near_edge = True
@@ -276,12 +280,12 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
             quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
-            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality, cut_x=cut_x,
-                      cut_y=cut_y, cadence=source.cadence,
-                      aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
-                      bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
-                      cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i], y_aperture=y_aperture[i],
-                      near_edge=near_edge)
+            # lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality, cut_x=cut_x,
+            #           cut_y=cut_y, cadence=source.cadence,
+            #           aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
+            #           bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
+            #           cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i], y_aperture=y_aperture[i],
+            #           near_edge=near_edge, save_aper=False)
     # np.save(local_directory + f'mean_diff_aper_{target}.npy', np.array([mag, mean_diff_aper]))
     # np.save(local_directory + f'mean_diff_psf_{target}.npy', np.array([mag, mean_diff_psf]))
 
@@ -296,4 +300,3 @@ if __name__ == '__main__':
         with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
             source = pickle.load(input_)
         epsf(source, factor=2, ccd=ccd, sector=source.sector, local_directory=local_directory)
-

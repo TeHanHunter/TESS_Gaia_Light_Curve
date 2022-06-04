@@ -2,7 +2,7 @@ from tglc.target_lightcurve import *
 warnings.simplefilter('always', UserWarning)
 
 
-def tglc_lc(target='NGC 7654', local_directory='', size=90):
+def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True):
     '''
     Generate light curve for a single target.
 
@@ -25,7 +25,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90):
         try:
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name)
+                 name=name, save_aper=save_aper)
         except:
             warnings.warn(f'Skipping sector {source.sector_table["sector"][j]}. (Target not in cut)')
 
