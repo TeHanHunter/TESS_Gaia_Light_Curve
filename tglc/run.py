@@ -24,7 +24,7 @@ def lc_per_cut(i, ccd='1-1', local_directory=''):
     with open(local_directory + f'source/{ccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, ccd=ccd, sector=source.sector,
-         local_directory=local_directory, limit_mag=16, save_aper=False)  # TODO: power?
+         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)  # TODO: power?
 
 
 def lc_per_ccd(ccd='1-1', local_directory=''):
