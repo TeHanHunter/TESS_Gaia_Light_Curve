@@ -32,7 +32,6 @@ def lc_per_ccd(sector=1, ccd='1-1'):
     with Pool() as p:
         p.map(partial(lc_per_cut, ccd=ccd, local_directory=local_directory), range(484))
 
-
 #     for i in range(484):
 #         lc_per_cut(i, ccd=ccd, local_directory=local_directory)
 
