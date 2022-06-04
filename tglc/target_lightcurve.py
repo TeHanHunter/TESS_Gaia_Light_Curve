@@ -175,7 +175,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, ccd='', sector=0,
-         limit_mag=16, edge_compression=1e-4, power=0.8, name=None, save_aper=False):
+         limit_mag=16, edge_compression=1e-4, power=0.8, name=None, save_aper=False, no_progress_bar=False):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
@@ -206,7 +206,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         print('Loaded ePSF from directory. ')
     else:
         e_psf = np.zeros((len(source.time), over_size ** 2 + 3))
-        for i in trange(len(source.time), desc='Fitting ePSF'):
+        for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
         if np.isnan(e_psf).any():
@@ -251,7 +251,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     if name is not None:
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
-    for i in trange(start, end, desc='Fitting lc'):
+    for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
             if 1.5 <= x_round[i] < source.size - 2.5 and 1.5 <= y_round[i] < source.size - 2.5:
                 near_edge = False
