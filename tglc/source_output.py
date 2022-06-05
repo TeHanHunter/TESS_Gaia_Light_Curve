@@ -25,6 +25,7 @@ def ffi_to_source(sector=1, local_directory=''):
 
     with Pool() as p:
         p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
+
     # for i in range(16):
     #     cut_ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
 

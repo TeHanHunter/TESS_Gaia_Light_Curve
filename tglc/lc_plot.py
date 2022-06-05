@@ -48,7 +48,6 @@ def load_qlp(ld='', tic=1, sector=1):
         qlp_f = np.mean(qlp_f[:len(qlp_f) // 3 * 3].reshape(-1, 3), axis=1)
     return qlp_t, qlp_f
 
-
 def load_ztf(ld='', index=1):
     data = ascii.read(ld + f'ZTF/{index}_g.csv')
     data.remove_rows(np.where(data['catflags'] != 0))
