@@ -5,6 +5,10 @@ from multiprocessing import Pool
 from functools import partial
 
 
+def cut_ffi_(i, sector=1, size=150, local_directory=''):
+    cut_ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory)
+
+
 def ffi_to_source(sector=1, local_directory=''):
     '''
     Cut calibrated FFI to source.pkl
@@ -19,10 +23,10 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(local_directory + f'ffi/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
 
-#     with Pool() as p:
-#         p.map(partial(cut_ffi, camera, sector, 150, local_directory), [1, 2, 3, 4])
-    for i in range(16):
-        cut_ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, path=local_directory)
+    with Pool() as p:
+        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
+    # for i in range(16):
+    #     cut_ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
 
 
 if __name__ == '__main__':

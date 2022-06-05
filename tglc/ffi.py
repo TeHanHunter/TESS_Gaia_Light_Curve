@@ -54,13 +54,12 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
-        with astroquery.mast.conf.set_temp('timeout', 1800):
-            catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
-            # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-            catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
-            # print(f'Found {len(catalogdata_tic)} TIC objects.')
+        # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + size, x:x + size]
@@ -98,7 +97,7 @@ class Source(object):
         self.gaia = gaia_targets
 
 
-def cut_ffi(ccd=1, camera=1, sector=1, size=150, path=''):
+def cut_ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
@@ -109,11 +108,11 @@ def cut_ffi(ccd=1, camera=1, sector=1, size=150, path=''):
     ccd number
     :param size: int, optional
     size of the FFI cut, default size is 150. Recommend large number for better quality.
-    :param path: string, required
+    :param local_directory: string, required
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'{path}ffi/*{camera}-{ccd}-????-?_ffic.fits')
+    input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []
     quality = []
@@ -136,10 +135,10 @@ def cut_ffi(ccd=1, camera=1, sector=1, size=150, path=''):
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
-    os.makedirs(path + f'source/{camera}-{ccd}/', exist_ok=True)
+    os.makedirs(local_directory + f'source/{camera}-{ccd}/', exist_ok=True)
     for i in trange(14):  # 22
         for j in range(14):  # 22
-            with open(path + f'source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
+            with open(local_directory + f'source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
                 source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, sector=sector, time=time, size=size,
                                 quality=quality, wcs=wcs,
                                 exposure=exposure, cadence=cadence)  # 93
