@@ -54,11 +54,18 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
-        catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+
+        catalogdata = Catalogs.query_region(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        catalogdata_tic = Catalogs.query_region(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
+
+        # catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        #                                     catalog="Gaia", version=2)
+        # # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        # catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        #                                         catalog="TIC")
         # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
