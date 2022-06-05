@@ -55,7 +55,7 @@ def plot_epsf(sector=1, ccd='', local_directory=''):
         ax_1 = fig.add_subplot(gs[:, 16:])
         ax_1.imshow(np.log10(flux), origin='lower')
     fig.text(0.25, 0.08, 'CUT X (0-14)', ha='center')
-    fig.text(0.08, 0.5, 'CUT Y (0-14)', va='center', rotation='vertical')
+    fig.text(0.09, 0.5, 'CUT Y (0-14)', va='center', rotation='vertical')
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{ccd}', x=0.5, y=0.92, size=20)
     plt.savefig(local_directory + f'epsf/{ccd}/epsf_sector_{sector}.png', bbox_inches='tight', dpi=300)
 
