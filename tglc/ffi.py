@@ -124,8 +124,8 @@ def cut_ffi(ccd=1, camera=1, sector=1, size=150, path=''):
             cadence.append(hdul[0].header['FFIINDEX'])
             time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
             flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
-    time_order = np.argsort(time)
-    time = time[time_order]
+    time_order = np.argsort(np.array(time))
+    time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
 
     # np.save(path + f'source/sector{sector}_time.npy', time)
