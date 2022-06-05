@@ -1,13 +1,13 @@
 import os
 import pickle
 import numpy as np
+import astroquery.mast
 from glob import glob
 from astropy.table import Table, hstack
 from astroquery.mast import Catalogs
 from tqdm import tqdm, trange
 from astropy.io import fits
 from astropy.wcs import WCS
-
 
 class Source(object):
     def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, exposure=1800, sector=0, size=150,
@@ -54,19 +54,13 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
-
-        catalogdata = Catalogs.query_region(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        with astroquery.mast.conf.set_temp('timeout', 1800):
+            catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
-        # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        catalogdata_tic = Catalogs.query_region(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+            # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+            catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
-
-        # catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-        #                                     catalog="Gaia", version=2)
-        # # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        # catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-        #                                         catalog="TIC")
-        # print(f'Found {len(catalogdata_tic)} TIC objects.')
+            # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + size, x:x + size]
