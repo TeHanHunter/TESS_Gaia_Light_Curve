@@ -73,7 +73,8 @@ class Source(object):
                                                 catalog="TIC")
         # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
-        self.catalogdata = catalogdata
+        self.catalogdata = catalogdata[
+            'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
         self.flux = flux[:len(time), y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
