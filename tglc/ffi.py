@@ -11,8 +11,7 @@ from astropy.wcs import WCS
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
-
-Gaia.ROW_LIMIT = 150 ** 2
+Gaia.ROW_LIMIT = -1
 
 
 class Source(object):
@@ -52,10 +51,7 @@ class Source(object):
             time = []
         if flux is None:
             flux = []
-        coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
-        coord_ = SkyCoord(ra=float(coord.split()[0]), dec=float(coord.split()[1]), unit=(u.degree, u.degree),
-                          frame='icrs')
-        radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
+
         self.size = size
         self.sector = sector
         self.camera = camera
@@ -63,7 +59,10 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
-
+        coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
+        coord_ = SkyCoord(ra=float(coord.split()[0]), dec=float(coord.split()[1]), unit=(u.degree, u.degree),
+                          frame='icrs')
+        radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         catalogdata = Gaia.cone_search_async(coord_, radius,
                                              columns=['designation', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec']).get_results()
