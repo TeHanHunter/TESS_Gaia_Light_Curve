@@ -64,8 +64,8 @@ if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 1
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    names = ['1-1', '1-2', '1-3', '1-4']  # , '2-1', '2-2', '2-3', '2-4',
-    # '3-1', '3-2', '3-3', '3-4', '4-1', '4-2', '4-3', '4-4']
+    names = ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '2-4',
+             '3-1', '3-2', '3-3', '3-4', '4-1', '4-2', '4-3', '4-4']
     for name in names:
         lc_per_ccd(ccd=name, local_directory=local_directory)
         plot_epsf(sector=sector, ccd=name, local_directory=local_directory)
