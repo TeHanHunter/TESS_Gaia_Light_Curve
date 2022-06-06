@@ -50,10 +50,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         gaia_rp = 'NaN'
     else:
         gaia_rp = source.gaia[index]['phot_rp_mean_mag']
-    # try:
-    #     ticid = source.tic['ID'][np.where(source.tic['GAIA'] == str(objid))][0]
-    # except:
-    #     ticid = ''
+    try:
+        ticid = source.tic['ID'][np.where(source.tic['GAIA'] == str(objid))][0]
+    except:
+        ticid = ''
     try:
         raw_flux = np.nanmedian(source.flux[:, star_y, star_x])
     except:
@@ -81,7 +81,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('FILTER', 'TESS', 'the filter used for the observations'),
         fits.Card('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR2 ID'),
         fits.Card('GAIADR2', objid, 'integer version of Gaia DR2 ID'),
-        # fits.Card('TICID', ticid, 'TESS Input Catalog ID'),
+        fits.Card('TICID', ticid, 'TESS Input Catalog ID'),
         fits.Card('SECTOR', source.sector, 'observation sector'),
         fits.Card('CAMERA', source.camera, 'camera No.'),
         fits.Card('CCD', source.ccd, 'CCD No.'),

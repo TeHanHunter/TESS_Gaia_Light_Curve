@@ -60,19 +60,19 @@ class Source(object):
         self.quality = quality
         self.exposure = exposure
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
-        coord_ = SkyCoord(ra=float(coord.split()[0]), dec=float(coord.split()[1]), unit=(u.degree, u.degree),
-                          frame='icrs')
-        radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
-        catalogdata = Gaia.cone_search_async(coord_, radius,
-                                             columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                                      'phot_rp_mean_mag', 'ra', 'dec']).get_results()
-        # catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-        #                                     catalog="Gaia", version=2)
-        # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        # catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-        #                                         catalog="TIC")
-        # # print(f'Found {len(catalogdata_tic)} TIC objects.')
-        # self.tic = catalogdata_tic['ID', 'GAIA']
+        # coord_ = SkyCoord(ra=float(coord.split()[0]), dec=float(coord.split()[1]), unit=(u.degree, u.degree),
+        #                   frame='icrs')
+        # radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
+        # catalogdata = Gaia.cone_search_async(coord_, radius,
+        #                                      columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+        #                                               'phot_rp_mean_mag', 'ra', 'dec']).get_results()
+        catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+                                            catalog="Gaia", version=2)
+        print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+                                                catalog="TIC")
+        # print(f'Found {len(catalogdata_tic)} TIC objects.')
+        self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + size, x:x + size]
         self.time = np.array(time)
