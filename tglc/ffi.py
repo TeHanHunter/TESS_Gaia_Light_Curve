@@ -77,11 +77,12 @@ class Source(object):
         self.flux = flux[:len(time), y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
-        x_gaia = np.zeros(len(catalogdata))
-        y_gaia = np.zeros(len(catalogdata))
-        tess_mag = np.zeros(len(catalogdata))
-        in_frame = [True] * len(catalogdata)
-        for i, designation in enumerate(catalogdata['DESIGNATION']):
+        num_gaia = len(catalogdata)
+        x_gaia = np.zeros(num_gaia)
+        y_gaia = np.zeros(num_gaia)
+        tess_mag = np.zeros(num_gaia)
+        in_frame = [True] * num_gaia
+        for i in range(num_gaia):
             pixel = self.wcs.all_world2pix(
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
