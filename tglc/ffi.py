@@ -64,7 +64,7 @@ class Source(object):
                           frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         catalogdata = Gaia.cone_search_async(coord_, radius,
-                                             columns=['designation', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                                             columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec']).get_results()
         # catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
         #                                     catalog="Gaia", version=2)
@@ -81,7 +81,7 @@ class Source(object):
         y_gaia = np.zeros(len(catalogdata))
         tess_mag = np.zeros(len(catalogdata))
         in_frame = [True] * len(catalogdata)
-        for i, designation in enumerate(catalogdata['designation']):
+        for i, designation in enumerate(catalogdata['DESIGNATION']):
             pixel = self.wcs.all_world2pix(
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
