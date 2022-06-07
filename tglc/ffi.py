@@ -11,7 +11,76 @@ from astropy.wcs import WCS
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
+
 Gaia.ROW_LIMIT = -1
+import sys
+import os
+import time
+import re
+import json
+import requests
+from urllib.parse import quote as urlencode
+
+
+def mast_query(request):
+    """Perform a MAST query.
+
+        Parameters
+        ----------
+        request (dictionary): The MAST request json object
+
+        Returns head,content where head is the response HTTP headers, and content is the returned data"""
+
+    # Base API url
+    request_url = 'https://mast.stsci.edu/api/v0/invoke'
+
+    # Grab Python Version
+    version = ".".join(map(str, sys.version_info[:3]))
+
+    # Create Http Header Variables
+    headers = {"Content-type": "application/x-www-form-urlencoded",
+               "Accept": "text/plain",
+               "User-agent": "python-requests/" + version}
+
+    # Encoding the request as a json string
+    req_string = json.dumps(request)
+    req_string = urlencode(req_string)
+
+    # Perform the HTTP request
+    resp = requests.post(request_url, data="request=" + req_string, headers=headers)
+
+    # Pull out the headers and response content
+    head = resp.headers
+    content = resp.content.decode('utf-8')
+
+    return head, content
+
+
+def mast_json2table(json_obj):
+    data_table = Table()
+
+    for col, atype in [(x['name'], x['type']) for x in json_obj['fields']]:
+        if atype == "string":
+            atype = "str"
+        if atype == "boolean":
+            atype = "bool"
+        data_table[col] = np.array([x.get(col, None) for x in json_obj['data']], dtype=atype)
+
+    return data_table
+
+
+def gaiaDR2_cone_search(ra=10, dec=10, radius=0.6):
+    request = {'service': 'Mast.Catalogs.GaiaDR2.Cone',
+               'params': {'ra': ra,
+                          'dec': dec,
+                          'radius': radius},
+               'format': 'json',
+               'pagesize': 10000000,
+               'page': 1}
+    headers, out_string = mast_query(request)
+    out_data = json.loads(out_string)
+    out_table = mast_json2table(out_data)
+    return out_table
 
 
 class Source(object):
@@ -60,15 +129,17 @@ class Source(object):
         self.quality = quality
         self.exposure = exposure
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
+        gaiaDR2_cone_search(ra=float(coord.split()[0]), dec=float(coord.split()[1]),
+                            radius=(self.size + 6) * 21 * 0.707 / 3600)
         # coord_ = SkyCoord(ra=float(coord.split()[0]), dec=float(coord.split()[1]), unit=(u.degree, u.degree),
         #                   frame='icrs')
         # radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         # catalogdata = Gaia.cone_search_async(coord_, radius,
         #                                      columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
         #                                               'phot_rp_mean_mag', 'ra', 'dec']).get_results()
-        catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-                                            catalog="Gaia", version=2)
-        print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        # catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
+        #                                     catalog="Gaia", version=2)
+        # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
         catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
                                                 catalog="TIC")
         # print(f'Found {len(catalogdata_tic)} TIC objects.')
