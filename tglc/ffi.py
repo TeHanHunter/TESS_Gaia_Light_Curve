@@ -129,7 +129,7 @@ class Source(object):
         self.quality = quality
         self.exposure = exposure
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
-        gaiaDR2_cone_search(ra=float(coord.split()[0]), dec=float(coord.split()[1]),
+        catalogdata = gaiaDR2_cone_search(ra=float(coord.split()[0]), dec=float(coord.split()[1]),
                             radius=(self.size + 6) * 21 * 0.707 / 3600)
         # coord_ = SkyCoord(ra=float(coord.split()[0]), dec=float(coord.split()[1]), unit=(u.degree, u.degree),
         #                   frame='icrs')
