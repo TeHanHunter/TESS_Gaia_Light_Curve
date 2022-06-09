@@ -2,7 +2,7 @@ from tglc.target_lightcurve import *
 warnings.simplefilter('always', UserWarning)
 
 
-def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True):
+def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_all_lc=False):
     '''
     Generate light curve for a single target.
 
@@ -20,6 +20,8 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True):
     source = ffi_cut(target=target, size=size, local_directory=local_directory)  # sector
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
+    if get_all_lc:
+        name=None
     # print(name)
     for j in range(len(source.sector_table)):
         try:
@@ -27,11 +29,12 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True):
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, save_aper=save_aper)
         except:
-            warnings.warn(f'Skipping sector {source.sector_table["sector"][j]}. (Target not in cut)')
+            sector_num = source.sector_table["sector"][j]
+            warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
 
 
 if __name__ == '__main__':
-    tglc_lc(target='NGC 7654', local_directory='/mnt/c/users/tehan/desktop/', size=90)
+    tglc_lc(target='NGC 7654', local_directory='/mnt/c/users/tehan/desktop/', size=50, save_aper=True, get_all_lc=True)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
