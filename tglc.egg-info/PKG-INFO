@@ -6,17 +6,24 @@ Home-page: https://github.com/TeHanHunter/TESS_Gaia_Light_Curve
 Author: Te Han
 Author-email: tehanhunter@gmail.com
 License: UNKNOWN
-Description: .. image:: Logo/TGLC_Title.png
-          :width: 800
-          :alt: TESS-Gaia Light Curve
-        
-        TESS FFI light curves fitted with effective PSF and decontaminated with Gaia DR2 
-        
-        Light curves are being fitted and will be available through MAST HLSP. 
-        
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.6
 Description-Content-Type: text/markdown
+License-File: LICENSE
+
+.. image:: logo/TGLC_Title.png
+  :width: 800
+  :alt: TESS-Gaia Light Curve
+
+TESS FFI light curves fitted with effective PSF and decontaminated with Gaia DR2 
+
+Light curves are being fitted and will be available through MAST HLSP. 
+
+.. image:: logo/EB_comparison_git.png
+  :width: 800
+  :alt: EB light curve comparison to other pipeline
+
+

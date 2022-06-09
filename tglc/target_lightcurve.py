@@ -9,6 +9,7 @@ from astropy.io import fits
 from tqdm import trange
 from wotan import flatten
 
+import tglc
 from tglc.effective_psf import *
 from tglc.ffi_cut import *
 import pickle
@@ -25,7 +26,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
     TGLC quality flags
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param local_directory: string, required
     output directory
@@ -58,11 +59,11 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         raw_flux = np.nanmedian(source.flux[:, star_y, star_x])
     except:
         raw_flux = None
-
     if save_aper:
         primary_hdu = fits.PrimaryHDU(aperture)
     else:
         primary_hdu = fits.PrimaryHDU()
+
     primary_hdu.header = fits.Header(cards=[
         fits.Card('SIMPLE', True, 'conforms to FITS standard'),
         fits.Card('EXTEND', True),
@@ -163,22 +164,17 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
 
     hdul = fits.HDUList([primary_hdu, table_hdu])
-    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}_tess_v1_llc.fits',
+    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits',
                  overwrite=True)
     return
 
-    #  1. background fixed (brightest star selected out of frame) use 10 brightest and take the median
-    #  2. single core is fast
-    #  3. output fits. Check headers
-    #  4. do we need to include errors? quality flag
-    #  5. for 10-min cadence targets, do we need bigger RAM?
 
 
-def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, ccd='', sector=0,
+def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
          limit_mag=16, edge_compression=1e-4, power=0.8, name=None, save_aper=False, no_progress_bar=False):
     """
     User function that unites all necessary steps
-    :param source: TGLC.ffi.Source or TGLC.ffi_cut.Source_cut, required
+    :param source: TGLC.ffi_cut.Source or TGLC.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param factor: int, optional
     effective PSF oversampling factor
@@ -197,9 +193,12 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     """
     if target is None:
         target = f'{cut_x:02d}_{cut_y:02d}'
+
+    lc_directory = local_directory + f'lc/{source.camera}-{source.ccd}'
+    os.makedirs(lc_directory, exist_ok=True)
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
-    epsf_loc = f'{local_directory}epsf/{ccd}/epsf_{target}_sector_{sector}.npy'
+    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}.npy'
     epsf_exists = exists(epsf_loc)
     if epsf_exists:
         e_psf = np.load(epsf_loc)
@@ -278,8 +277,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
             quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
-            lc_output(source, local_directory=local_directory + 'lc/', index=i, tess_flag=source.quality, cut_x=cut_x,
-                      cut_y=cut_y, cadence=source.cadence,
+            lc_output(source, local_directory=lc_directory, index=i,
+                      tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
                       aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
                       bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                       cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i], y_aperture=y_aperture[i],

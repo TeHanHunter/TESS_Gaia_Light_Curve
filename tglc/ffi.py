@@ -11,17 +11,15 @@ from astropy.wcs import WCS
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
-# Gaia.ROW_LIMIT = -1
+Gaia.ROW_LIMIT = -1
 
 import sys
 import os
-import time
-import re
 import json
 import requests
 from urllib.parse import quote as urlencode
 
-
+# adopted from astroquery MAST API https://mast.stsci.edu/api/v0/pyex.html#incPy
 def mast_query(request):
     """Perform a MAST query.
 
@@ -122,9 +120,9 @@ class Source(object):
         self.quality = quality
         self.exposure = exposure
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
-        ra=float(coord.split()[0])
-        dec=float(coord.split()[1])
-        coord_ = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree),frame='icrs')
+        ra = float(coord.split()[0])
+        dec = float(coord.split()[1])
+        coord_ = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         catalogdata = Gaia.cone_search_async(coord_, radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
@@ -174,7 +172,7 @@ class Source(object):
         self.gaia = catalogdata
 
 
-def cut_ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
+def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
@@ -189,7 +187,7 @@ def cut_ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
+    input_files = glob(f'{local_directory}ffi_cut/*{camera}-{ccd}-????-?_ffic.fits')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []
     quality = []

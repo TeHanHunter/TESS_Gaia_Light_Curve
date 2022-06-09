@@ -18,7 +18,7 @@ def bilinear(x, y, repeat=23):
 def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0])):
     """
     Generate matrix for PSF fitting
-    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
+    :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param factor: int, optional
     effective PSF oversampling factor
@@ -99,7 +99,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     fit_psf using least_square (improved performance by changing to np.linalg.solve)
     :param A: np.ndarray, required
     2d matrix for least_square
-    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
+    :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param over_size: int, required
     size of oversampled grid of ePSF
@@ -128,7 +128,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
     2d matrix for least_square
-    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
+    :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param star_info: np.ndarray, required
     star parameters
@@ -210,7 +210,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
     '''
     background modification
-    :param source: tglc.ffi.Source or tglc.ffi_cut.Source_cut, required
+    :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
     Source or Source_cut object
     :param q: list, optional
     list of booleans that filter the data points

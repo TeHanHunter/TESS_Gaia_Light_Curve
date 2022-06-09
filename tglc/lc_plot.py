@@ -581,7 +581,7 @@ def figure_6(mode='psf'):
     #     target = hosts[i]  # Target identifier or coordinates TOI-3714
     #     print(target)
     #     size = 90  # int, suggests big cuts
-    #     source = ffi(target=target, size=size, local_directory=local_directory)
+    #     source = ffi_cut(target=target, size=size, local_directory=local_directory)
     #     for j in range(len(source.sector_table)):
     #         # try:
     #         if target == 'TOI-674' and source.sector_table['sector'][j] == 10:

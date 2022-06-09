@@ -137,7 +137,7 @@ class Source_cut(object):
         self.gaia = gaia_targets
 
 
-def ffi(target='', local_directory='', size=90, sector=None):
+def ffi_cut(target='', local_directory='', size=90, sector=None):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -155,7 +155,7 @@ def ffi(target='', local_directory='', size=90, sector=None):
         with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
             source = pickle.load(input_)
         print(source.sector_table)
-        print('Loaded ffi from directory. ')
+        print('Loaded ffi_cut from directory. ')
     else:
         with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
             source = Source_cut(target, size=size, sector=sector)

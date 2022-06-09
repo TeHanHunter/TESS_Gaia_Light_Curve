@@ -17,7 +17,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True):
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
-    source = ffi(target=target, size=size, local_directory=local_directory)  # sector
+    source = ffi_cut(target=target, size=size, local_directory=local_directory)  # sector
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
     # print(name)
@@ -31,7 +31,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True):
 
 
 if __name__ == '__main__':
-    tglc_lc(target='NGC 7654', local_directory='', size=90)
+    tglc_lc(target='NGC 7654', local_directory='/mnt/c/users/tehan/desktop/', size=90)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     #     gaia_name.append(name)
     #     print('TIC ' + str(target), name)
     #     size = 90  # int, suggests big cuts
-    #     source = ffi(target='TIC ' + str(target), size=size, local_directory=local_directory)
+    #     source = ffi_cut(target='TIC ' + str(target), size=size, local_directory=local_directory)
     #     for j in range(len(source.sector_table)):
     #         try:
     #             source.select_sector(sector=source.sector_table['sector'][j])
