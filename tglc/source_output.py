@@ -19,7 +19,7 @@ def ffi_to_source(sector=1, local_directory=''):
     """
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
-    os.makedirs(local_directory + f'ffi_cut/', exist_ok=True)
+    os.makedirs(local_directory + f'ffi/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
 
     with Pool(8) as p:

@@ -1,4 +1,9 @@
 import os
+import sys
+import os
+import json
+import requests
+from urllib.parse import quote as urlencode
 import pickle
 import numpy as np
 import astroquery.mast
@@ -12,12 +17,8 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
 Gaia.ROW_LIMIT = -1
+Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
 
-import sys
-import os
-import json
-import requests
-from urllib.parse import quote as urlencode
 
 # adopted from astroquery MAST API https://mast.stsci.edu/api/v0/pyex.html#incPy
 def mast_query(request):
@@ -187,7 +188,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'{local_directory}ffi_cut/*{camera}-{ccd}-????-?_ffic.fits')
+    input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []
     quality = []
