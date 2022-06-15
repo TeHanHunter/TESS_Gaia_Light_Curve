@@ -110,12 +110,15 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     time index of this ePSF fit
     :return: fit result
     """
-    b = source.flux[time].flatten()
+    flux = source.flux[time].flatten()
+    saturated_index = np.where(flux > np.percentile(flux, 99.99))
+
+    b = np.delete(flux, saturated_index)
+    scaler = np.abs(np.delete(flux, saturated_index)) ** power
     b = np.append(b, np.zeros(over_size ** 2))
-    scaler = np.abs(source.flux[time].flatten()) ** power
     scaler = np.append(scaler, np.ones(over_size ** 2))
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
-    a = A / scaler[:, np.newaxis]
+    a = np.delete(A, saturated_index, 0) / scaler[:, np.newaxis]
     b = b / scaler
     alpha = np.dot(a.T, a)
     beta = np.dot(a.T, b)

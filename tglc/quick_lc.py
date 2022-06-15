@@ -34,7 +34,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
 
 
 if __name__ == '__main__':
-    tglc_lc(target='NGC 7654', local_directory='/mnt/c/users/tehan/desktop/', size=50, save_aper=True, get_all_lc=True)
+    tglc_lc(target='313.261 -26.8551', local_directory='/mnt/c/users/tehan/desktop/', size=50, save_aper=True, get_all_lc=True)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
