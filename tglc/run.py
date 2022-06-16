@@ -29,10 +29,8 @@ def lc_per_cut(i, camccd='', local_directory=''):
 
 def lc_per_ccd(camccd='1-1', local_directory=''):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
-    for i in range(196):
-        lc_per_cut(i, camccd=camccd, local_directory=local_directory)
-    # with Pool() as p:
-    #     p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
+    with Pool() as p:
+        p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
 
 
 def plot_epsf(sector=1, camccd='', local_directory=''):
@@ -65,7 +63,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
-    sector = 1
+    sector = 3
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
     for i in range(16):
         name = f'{1 + i // 4}-{1 + i % 4}'
