@@ -576,28 +576,26 @@ def figure_6(mode='psf'):
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
-    # hosts = list(data['hostname'])
-    # for i in range(len(hosts)):
-    #     target = hosts[i]  # Target identifier or coordinates TOI-3714
-    #     print(target)
-    #     size = 90  # int, suggests big cuts
-    #     source = ffi_cut(target=target, size=size, local_directory=local_directory)
-    #     for j in range(len(source.sector_table)):
-    #         # try:
-    #         if target == 'TOI-674' and source.sector_table['sector'][j] == 10:
-    #             continue
-    #         source.select_sector(sector=source.sector_table['sector'][j])
-    #         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-    #              name=data['gaia_id'][i])
-    # plt.imshow(source.flux[0])
-    # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
-    #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
-    # plt.xlim(-0.5, 89.5)
-    # plt.ylim(-0.5, 89.5)
-    # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
-    # plt.show()
-    # except:
-    #     pass
+    hosts = list(data['hostname'])
+    for i in range(len(hosts)):
+        target = hosts[i]  # Target identifier or coordinates TOI-3714
+        print(target)
+        size = 90  # int, suggests big cuts
+        source = ffi_cut(target=target, size=size, local_directory=local_directory)
+        for j in range(len(source.sector_table)):
+            # try:
+            if target == 'TOI-674' and source.sector_table['sector'][j] == 10:
+                continue
+            source.select_sector(sector=source.sector_table['sector'][j])
+            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                 name=data['gaia_id'][i])
+        # plt.imshow(source.flux[0])
+        # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
+        #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
+        # plt.xlim(-0.5, 89.5)
+        # plt.ylim(-0.5, 89.5)
+        # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
+        # plt.show()
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 10))
     gs = fig.add_gridspec(5, 12)
@@ -1509,5 +1507,5 @@ def figure_8():
 
 
 if __name__ == '__main__':
-    figure_7()
+    figure_6()
 

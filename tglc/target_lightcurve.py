@@ -47,6 +47,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         gaia_bp = 'NaN'
     else:
         gaia_bp = source.gaia[index]['phot_bp_mean_mag']
+    print(gaia_bp)
     if np.isnan(source.gaia[index]['phot_rp_mean_mag']):
         gaia_rp = 'NaN'
     else:
@@ -195,7 +196,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         target = f'{cut_x:02d}_{cut_y:02d}'
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
-    lc_directory = local_directory + f'lc/{source.camera}-{source.ccd}'
+    lc_directory = local_directory + f'lc/{source.camera}-{source.ccd}/'
     epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}.npy'
     if type(source) == tglc.ffi_cut.Source_cut:
         lc_directory = local_directory + 'lc/'
@@ -204,7 +205,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     epsf_exists = exists(epsf_loc)
     if epsf_exists:
         e_psf = np.load(epsf_loc)
-        print('Loaded ePSF from directory. ')
+        print(f'Loaded ePSF {target} from directory. ')
     else:
         e_psf = np.zeros((len(source.time), over_size ** 2 + 3))
         for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):

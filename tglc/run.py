@@ -29,8 +29,10 @@ def lc_per_cut(i, camccd='', local_directory=''):
 
 def lc_per_ccd(camccd='1-1', local_directory=''):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
-    with Pool() as p:
-        p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
+    for i in range(196):
+        lc_per_cut(i, camccd=camccd, local_directory=local_directory)
+    # with Pool() as p:
+    #     p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
 
 
 def plot_epsf(sector=1, camccd='', local_directory=''):

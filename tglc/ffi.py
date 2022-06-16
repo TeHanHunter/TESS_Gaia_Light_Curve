@@ -152,7 +152,9 @@ class Source(object):
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
-            if -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
+            if np.isnan(catalogdata['phot_g_mean_mag'][i]):
+                in_frame[i] = False
+            elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
                 dif = catalogdata['phot_bp_mean_mag'][i] - catalogdata['phot_rp_mean_mag'][i]
                 tess_mag[i] = catalogdata['phot_g_mean_mag'][
                                   i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
