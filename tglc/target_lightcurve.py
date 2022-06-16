@@ -5,6 +5,7 @@ import os
 from os.path import exists
 
 import numpy as np
+import numpy.ma as ma
 from astropy.io import fits
 from tqdm import trange
 from wotan import flatten
@@ -43,12 +44,12 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     :return:
     """
     objid = [int(s) for s in (source.gaia[index]['designation']).split() if s.isdigit()][0]
-    if np.isnan(source.gaia[index]['phot_bp_mean_mag']):
+    if np.isnan(source.gaia[index]['phot_bp_mean_mag']) or ma.is_masked(source.gaia[index]['phot_bp_mean_mag']):
         gaia_bp = 'NaN'
     else:
         gaia_bp = source.gaia[index]['phot_bp_mean_mag']
     print(type(gaia_bp), gaia_bp)
-    if np.isnan(source.gaia[index]['phot_rp_mean_mag']):
+    if np.isnan(source.gaia[index]['phot_rp_mean_mag']) or ma.is_masked(source.gaia[index]['phot_rp_mean_mag']):
         gaia_rp = 'NaN'
     else:
         gaia_rp = source.gaia[index]['phot_rp_mean_mag']
