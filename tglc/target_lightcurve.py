@@ -47,7 +47,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         gaia_bp = 'NaN'
     else:
         gaia_bp = source.gaia[index]['phot_bp_mean_mag']
-    print(gaia_bp)
+    print(type(gaia_bp), gaia_bp)
     if np.isnan(source.gaia[index]['phot_rp_mean_mag']):
         gaia_rp = 'NaN'
     else:
