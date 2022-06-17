@@ -196,10 +196,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         target = f'{cut_x:02d}_{cut_y:02d}'
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
-    lc_directory = local_directory + f'lc/{source.camera}-{source.ccd}/'
+    lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
     epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
     if type(source) == tglc.ffi_cut.Source_cut:
-        lc_directory = local_directory + 'lc/'
+        lc_directory = f'{local_directory}lc/'
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
     os.makedirs(lc_directory, exist_ok=True)
     epsf_exists = exists(epsf_loc)

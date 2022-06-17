@@ -21,7 +21,7 @@ from glob import glob
 def lc_per_cut(i, camccd='', local_directory=''):
     cut_x = i // 14
     cut_y = i % 14
-    with open(local_directory + f'source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
+    with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector,
          local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)  # TODO: power?
@@ -58,7 +58,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig.text(0.25, 0.08, 'CUT X (0-13)', ha='center')
     fig.text(0.09, 0.5, 'CUT Y (0-13)', va='center', rotation='vertical')
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{camccd}', x=0.5, y=0.92, size=20)
-    plt.savefig(local_directory + f'epsf/{camccd}/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{local_directory}log/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
 
 
 if __name__ == '__main__':
