@@ -165,10 +165,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
 
     hdul = fits.HDUList([primary_hdu, table_hdu])
-    hdul.writeto(f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits',
-                 overwrite=True)
+    hdul.writeto(
+        f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits',
+        overwrite=True)
     return
-
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
@@ -197,7 +197,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
     lc_directory = local_directory + f'lc/{source.camera}-{source.ccd}/'
-    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}.npy'
+    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
     if type(source) == tglc.ffi_cut.Source_cut:
         lc_directory = local_directory + 'lc/'
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
@@ -299,4 +299,4 @@ if __name__ == '__main__':
         target = f'{(i // 22):02d}_{(i % 22):02d}'
         with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
             source = pickle.load(input_)
-        epsf(source, factor=2, ccd=ccd, sector=source.sector, local_directory=local_directory)
+        epsf(source, factor=2, sector=source.sector, local_directory=local_directory)

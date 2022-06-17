@@ -40,7 +40,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     for i in range(196):
         cut_x = i // 14
         cut_y = i % 14
-        psf = np.load(f'{local_directory}epsf/{camccd}/epsf_{cut_x:02d}_{cut_y:02d}_sector_{sector}.npy')
+        psf = np.load(f'{local_directory}epsf/{camccd}/epsf_{cut_x:02d}_{cut_y:02d}_sector_{sector}_{camccd}.npy')
         cmap = 'bone'
         if np.isnan(psf).any():
             cmap = 'inferno'
