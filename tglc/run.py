@@ -58,7 +58,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig.text(0.25, 0.08, 'CUT X (0-13)', ha='center')
     fig.text(0.09, 0.5, 'CUT Y (0-13)', va='center', rotation='vertical')
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{camccd}', x=0.5, y=0.92, size=20)
-    plt.savefig(local_directory + f'epsf/{camccd}/epsf_sector_{sector}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(local_directory + f'epsf/{camccd}/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
 
 
 if __name__ == '__main__':
