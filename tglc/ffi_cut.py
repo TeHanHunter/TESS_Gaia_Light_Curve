@@ -105,6 +105,9 @@ class Source_cut(object):
         self.flux = data_flux
         self.flux_err = data_flux_err
         self.quality = np.zeros(len(data_time))
+        mask = np.array([True] * self.size ** 2).reshape(self.size, self.size)
+        mask[np.where(self.flux[0] > np.percentile(self.flux[0], 99))] = False
+        self.mask = mask
 
         gaia_targets = self.catalogdata[
             'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
