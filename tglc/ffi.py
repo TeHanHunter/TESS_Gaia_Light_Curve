@@ -76,7 +76,7 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
 
 
 class Source(object):
-    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, exposure=1800, sector=0, size=150,
+    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, mask=None, exposure=1800, sector=0, size=150,
                  camera=1, ccd=1, cadence=None):
         """
         Source object that includes all data from TESS and Gaia DR2
@@ -140,8 +140,10 @@ class Source(object):
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + size, x:x + size]
+        self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
+
         num_gaia = len(catalogdata)
         x_gaia = np.zeros(num_gaia)
         y_gaia = np.zeros(num_gaia)
@@ -205,8 +207,9 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
+    mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
+    mask[np.where(flux[0] > np.percentile(flux[0], 99))] = False
 
-    # np.save(path + f'source/sector{sector}_time.npy', time)
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
@@ -217,7 +220,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     for i in trange(14):  # 22
         for j in range(14):  # 22
             with open(f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
-                source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, sector=sector, time=time, size=size,
+                source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time, size=size,
                                 quality=quality, wcs=wcs, camera=camera, ccd=ccd,
                                 exposure=exposure, cadence=cadence)  # 93
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
