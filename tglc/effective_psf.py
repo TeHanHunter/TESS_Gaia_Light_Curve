@@ -111,7 +111,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     :return: fit result
     """
     flux = source.flux[time].flatten()
-    saturated_index = np.where(flux > np.percentile(flux, 99.99))
+    saturated_index = np.where(flux > np.percentile(flux, 99))
 
     b = np.delete(flux, saturated_index)
     scaler = np.abs(np.delete(flux, saturated_index)) ** power
