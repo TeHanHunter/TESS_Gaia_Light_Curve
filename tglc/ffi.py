@@ -199,7 +199,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     cadence = []
     flux = np.empty((len(input_files), 2048, 2048), dtype=np.float32)
     for i, file in enumerate(tqdm(input_files)):
-        with fits.open(file, mode='denywrite') as hdul:
+        with fits.open(file, mode='denywrite', memmap=False) as hdul:
             quality.append(hdul[1].header['DQUALITY'])
             cadence.append(hdul[0].header['FFIINDEX'])
             time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
