@@ -34,5 +34,5 @@ def ffi_to_source(sector=1, local_directory=''):
 
 
 if __name__ == '__main__':
-    sector = 2
+    sector = 3
     ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:04d}/')
