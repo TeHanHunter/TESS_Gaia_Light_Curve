@@ -580,7 +580,7 @@ def figure_6(mode='psf'):
     for i in range(len(hosts)):
         target = hosts[i]  # Target identifier or coordinates TOI-3714
         print(target)
-        size = 50  # int, suggests big cuts
+        size = 90  # int, suggests big cuts
         source = ffi_cut(target=target, size=size, local_directory=local_directory)
         for j in range(len(source.sector_table)):
             # try:

@@ -6,6 +6,7 @@ import requests
 from urllib.parse import quote as urlencode
 import pickle
 import numpy as np
+from scipy import ndimage
 import astroquery.mast
 from glob import glob
 from astropy.table import Table, hstack
@@ -16,11 +17,12 @@ from astropy.wcs import WCS
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
+
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
 
 
-# adopted from astroquery MAST API https://mast.stsci.edu/api/v0/pyex.html#incPy
+# The next three functions are adopted from astroquery MAST API https://mast.stsci.edu/api/v0/pyex.html#incPy
 def mast_query(request):
     """Perform a MAST query.
 
@@ -75,8 +77,36 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
     return mast_json2table(out_data)
 
 
+# from Tim
+def background_mask(im=None):
+    imfilt = im * 1.
+    for i in range(im.shape[1]):
+        imfilt[:, i] = ndimage.percentile_filter(im[:, i], 50, size=51)
+
+    ok = im < imfilt
+    # Don't use saturated pixels!
+    satfactor = 0.4
+    ok *= im < satfactor * np.amax(im)
+    running_factor = 1
+    cal_factor = im * 1.
+
+    for i in range(im.shape[1] - 1):
+        _ok = ok[:, i] * ok[:, i + 1]
+        coef = np.median(im[:, i + 1][_ok] / im[:, i][_ok])
+        if 0.5 < coef < 1.5:
+            if cal_factor[0, i] == 0:
+                cal_factor[:, i] = running_factor
+            running_factor *= coef
+            cal_factor[:, i + 1] = running_factor
+        else:
+            cal_factor[:, i + 1] = 0
+    cal_factor[im > 0.4 * np.amax(im)] = 0
+    return cal_factor
+
+
 class Source(object):
-    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, mask=None, exposure=1800, sector=0, size=150,
+    def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, mask=None, exposure=1800, sector=0,
+                 size=150,
                  camera=1, ccd=1, cadence=None):
         """
         Source object that includes all data from TESS and Gaia DR2
@@ -140,7 +170,7 @@ class Source(object):
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
         self.flux = flux[:len(time), y:y + size, x:x + size]
-        self.mask = mask[y:y + size, x:x + size]
+        self.mask = mask[:, y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
 
@@ -199,19 +229,30 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     cadence = []
     flux = np.empty((len(input_files), 2048, 2048), dtype=np.float32)
     for i, file in enumerate(tqdm(input_files)):
-        with fits.open(file, mode='denywrite', memmap=False) as hdul:
-            quality.append(hdul[1].header['DQUALITY'])
-            cadence.append(hdul[0].header['FFIINDEX'])
-            time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
-            flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
+        try:
+            with fits.open(file, mode='denywrite', memmap=False) as hdul:
+                quality.append(hdul[1].header['DQUALITY'])
+                cadence.append(hdul[0].header['FFIINDEX'])
+                time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
+                flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
+        except:
+            response = requests.get(f'https://mast.stsci.edu/api/v0.1/Download/file/?uri=mast:TESS/product/{file}')
+            open(f'{local_directory}ffi/{file}', 'wb').write(response.content)
+            with fits.open(file, mode='denywrite', memmap=False) as hdul:
+                quality.append(hdul[1].header['DQUALITY'])
+                cadence.append(hdul[0].header['FFIINDEX'])
+                time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
+                flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
-    mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
+    # mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
+    # for i in range(len(time)):
+    #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
+    #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
+    mask = np.zeros(np.shape(flux))
     for i in range(len(time)):
-        mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
-        mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
-
+        mask[i] = background_mask(im=flux[i])
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
@@ -222,7 +263,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     for i in trange(14):  # 22
         for j in range(14):  # 22
             with open(f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
-                source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time, size=size,
+                source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
+                                size=size,
                                 quality=quality, wcs=wcs, camera=camera, ccd=ccd,
                                 exposure=exposure, cadence=cadence)  # 93
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)

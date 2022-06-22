@@ -41,6 +41,7 @@ class Source_cut(object):
         self.gaia = []
         self.cadence = cadence
         self.quality = []
+        self.mask = []
         catalogdata = Catalogs.query_object(self.name, radius=(self.size + 4) * 21 * 0.707 / 3600,
                                             catalog="Gaia", version=2)
         print(f'Target Gaia: {catalogdata[0]["designation"]}')
@@ -105,8 +106,10 @@ class Source_cut(object):
         self.flux = data_flux
         self.flux_err = data_flux_err
         self.quality = np.zeros(len(data_time))
-        mask = np.array([True] * self.size ** 2).reshape(self.size, self.size)
-        mask[np.where(self.flux[0] > np.percentile(self.flux[0], 99))] = False
+
+        mask = np.ones(np.shape(data_flux))
+        for i in len(data_time):
+            mask[i][data_flux[i] > 0.8 * np.amax(data_flux[i])] = 0
         self.mask = mask
 
         gaia_targets = self.catalogdata[

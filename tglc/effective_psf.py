@@ -68,7 +68,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     coord = np.arange(size ** 2).reshape(size, size)
     A = np.zeros((size ** 2, over_size ** 2 + 3))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    A[:, -1] = np.ones(size ** 2)
+    # A[:, -1] = np.ones(size ** 2)
     A[:, -2] = yy.flatten()
     A[:, -3] = xx.flatten()
     star_info = []
@@ -110,13 +110,16 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     time index of this ePSF fit
     :return: fit result
     """
+    cal_factor = source.mask[time].flatten()
+    A[:, -1] = cal_factor
     flux = source.flux[time].flatten()
-    saturated_index = np.where(source.mask.flatten() == False)
+    saturated_index = np.where(cal_factor == 0)
 
     b = np.delete(flux, saturated_index)
     scaler = np.abs(np.delete(flux, saturated_index)) ** power
     b = np.append(b, np.zeros(over_size ** 2))
     scaler = np.append(scaler, np.ones(over_size ** 2))
+
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
     a = np.delete(A, saturated_index, 0) / scaler[:, np.newaxis]
     b = b / scaler
@@ -166,10 +169,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         star_pos = np.where(star_info[star_num][0] == index[i])[0]
         A_[star_info[star_num][1][star_pos]] = star_info[star_num][2][star_pos]
         A_cut[i] = A[index[i], :] - A_
-    aperture_lc = np.zeros((len(index), len(source.time)))
+    aperture = np.zeros((len(index), len(source.time)))
     for j in range(len(source.time)):
-        aperture_lc[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
-    aperture_lc = aperture_lc.reshape((up - down, right - left, len(source.time)))
+        A_cut[:, -1] = source.mask[j, down:up, left:right]
+        aperture[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
+    aperture = aperture.reshape((up - down, right - left, len(source.time)))
 
     # psf_lc
     over_size = psf_size * factor + 1
@@ -178,7 +182,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
         portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
-        return aperture_lc, psf_lc, y - down, x - left, portion
+        return aperture, psf_lc, y - down, x - left, portion
     left_ = left - x + 5
     right_ = right - x + 5
     down_ = down - y + 5
@@ -200,14 +204,20 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # ax2.imshow(psf_shape[:, :, 0])
     # plt.show()
     psf_lc = np.zeros(len(source.time))
+    size = 5
+    A_ = np.zeros((size ** 2, 4))
+    xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
+    A_[:, -1] = np.ones(size ** 2)
+    A_[:, -2] = yy.flatten()
+    A_[:, -3] = xx.flatten()
     for j in range(len(source.time)):
         if np.isnan(psf_sim[:, :, j]).any():
             psf_lc[j] = np.nan
         else:
-            psf_lc[j] = np.linalg.lstsq(np.reshape(psf_sim[:, :, j].flatten(), (25, 1)) / np.nansum(psf_sim[:, :, j]),
-                                        aperture_lc[:, :, j].flatten())[0]
+            A_[:, 0] = psf_sim[:, :, j].flatten() / np.nansum(psf_sim[:, :, j])
+            psf_lc[j] = np.linalg.lstsq(A_, aperture[:, :, j].flatten())[0]
     portion = np.nansum(psf_shape[4:7, 4:7, :]) / np.nansum(psf_shape)
-    return aperture_lc, psf_lc, y - down, x - left, portion
+    return aperture, psf_lc, y - down, x - left, portion
 
 
 def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
