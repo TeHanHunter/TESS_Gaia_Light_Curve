@@ -236,8 +236,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
                 time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
                 flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
         except:
-            response = requests.get(f'https://mast.stsci.edu/api/v0.1/Download/file/?uri=mast:TESS/product/{file}')
-            open(f'{local_directory}ffi/{file}', 'wb').write(response.content)
+            print(f'Corrupted file {file}, download again ...')
+            response = requests.get(
+                f'https://mast.stsci.edu/api/v0.1/Download/file/?uri=mast:TESS/product/{os.path.basename(file)}')
+            open(file, 'wb').write(response.content)
             with fits.open(file, mode='denywrite', memmap=False) as hdul:
                 quality.append(hdul[1].header['DQUALITY'])
                 cadence.append(hdul[0].header['FFIINDEX'])
