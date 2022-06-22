@@ -169,8 +169,9 @@ class Source(object):
         # # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.catalogdata = catalogdata
-        self.flux = flux[:len(time), y:y + size, x:x + size]
+        self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[:, y:y + size, x:x + size]
+        print(np.shape(mask))
         self.time = np.array(time)
         self.wcs = wcs
 
@@ -253,6 +254,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     mask = np.zeros(np.shape(flux))
     for i in range(len(time)):
         mask[i] = background_mask(im=flux[i])
+    print(np.shape(mask))
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
@@ -264,7 +266,6 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
         for j in range(14):  # 22
             with open(f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
                 source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
-                                size=size,
-                                quality=quality, wcs=wcs, camera=camera, ccd=ccd,
+                                size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
                                 exposure=exposure, cadence=cadence)  # 93
                 pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
