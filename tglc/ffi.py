@@ -88,18 +88,24 @@ def background_mask(im=None):
     satfactor = 0.4
     ok *= im < satfactor * np.amax(im)
     running_factor = 1
-    cal_factor = im * 1.
+    cal_factor = np.zeros(im.shape)
+    cal_factor[:, 0] = 1
 
-    for i in range(im.shape[1] - 1):
-        _ok = ok[:, i] * ok[:, i + 1]
-        coef = np.median(im[:, i + 1][_ok] / im[:, i][_ok])
-        if 0.5 < coef < 1.5:
-            if cal_factor[0, i] == 0:
-                cal_factor[:, i] = running_factor
+    di = 1
+    i = 0
+    while i < im.shape[1] - 1:
+        _ok = ok[:, i] * ok[:, i + di]
+        coef = np.median(im[:, i + di][_ok] / im[:, i][_ok])
+        if 0.5 < coef < 2:
             running_factor *= coef
-            cal_factor[:, i + 1] = running_factor
+            cal_factor[:, i + di] = running_factor
+            i += di
+            di = 1  # Reset the stepsize to one.
         else:
-            cal_factor[:, i + 1] = 0
+            # Label the column as bad, then skip it.
+            cal_factor[:, i + di] = 0
+            di += 1
+
     cal_factor[im > 0.4 * np.amax(im)] = 0
     return cal_factor
 
