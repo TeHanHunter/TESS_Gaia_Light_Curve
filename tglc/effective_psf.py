@@ -111,7 +111,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     :return: fit result
     """
     cal_factor = source.mask[time].flatten()
-    A[:, -1] = cal_factor
+    A[:len(cal_factor), -1] = cal_factor
     flux = source.flux[time].flatten()
     saturated_index = np.where(cal_factor == 0)
 
