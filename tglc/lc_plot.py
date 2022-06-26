@@ -568,10 +568,10 @@ def figure_5():
     plt.close()
 
 
-def figure_6(mode='psf'):
+def figure_6(mode='aper'):
     type = f'cal_{mode}_flux'
     # local_directory = '/home/tehan/data/exoplanets/'
-    local_directory = '~/data/known_exoplanet/'
+    local_directory = '/home/tehan/data/known_exoplanet/'
     os.makedirs(local_directory + f'transits/', exist_ok=True)
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
