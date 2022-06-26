@@ -571,13 +571,13 @@ def figure_5():
 def figure_6(mode='psf'):
     type = f'cal_{mode}_flux'
     # local_directory = '/home/tehan/data/exoplanets/'
-    local_directory = ''
+    local_directory = '~/data/known_exoplanet/'
     os.makedirs(local_directory + f'transits/', exist_ok=True)
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
-    hosts = list(data['hostname'])
+    hosts = list(data['tic_id'])
     for i in range(len(hosts)):
         target = hosts[i]  # Target identifier or coordinates TOI-3714
         print(target)
@@ -945,7 +945,7 @@ def figure_6(mode='psf'):
     ax5_4.set_xlabel('Phase')
     # ax5_4.text(0.98, 0.1, 'Aper', horizontalalignment='right', transform=ax5_4.transAxes)
 
-    # plt.savefig(f'/mnt/c/users/tehan/desktop/known_exoplanets_{mode}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'known_exoplanets_{mode}.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
