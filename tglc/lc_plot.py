@@ -945,7 +945,7 @@ def figure_6(mode='aper'):
     ax5_4.set_xlabel('Phase')
     # ax5_4.text(0.98, 0.1, 'Aper', horizontalalignment='right', transform=ax5_4.transAxes)
 
-    plt.savefig(f'known_exoplanets_{mode}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{local_directory}known_exoplanets_{mode}.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
