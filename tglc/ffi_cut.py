@@ -108,7 +108,7 @@ class Source_cut(object):
         self.quality = np.zeros(len(data_time))
 
         mask = np.ones(np.shape(data_flux))
-        for i in len(data_time):
+        for i in range(len(data_time)):
             mask[i][data_flux[i] > 0.8 * np.amax(data_flux[i])] = 0
         self.mask = mask
 
