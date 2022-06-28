@@ -108,18 +108,21 @@ class Source_cut(object):
 
         gaia_targets = self.catalogdata[
             'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
-        x = np.zeros(len(gaia_targets))
-        y = np.zeros(len(gaia_targets))
-        tess_mag = np.zeros(len(gaia_targets))
-        in_frame = [True] * len(gaia_targets)
+        num_gaia = len(gaia_targets)
+        tic_id = np.zeros(num_gaia)
+        x_gaia = np.zeros(num_gaia)
+        y_gaia = np.zeros(num_gaia)
+        tess_mag = np.zeros(num_gaia)
+        in_frame = [True] * num_gaia
         for i, designation in enumerate(gaia_targets['designation']):
             pixel = self.wcs.all_world2pix(
                 np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
-            x[i] = pixel[0][0]
-            y[i] = pixel[0][1]
+            x_gaia[i] = pixel[0][0]
+            y_gaia[i] = pixel[0][1]
+            tic_id[i] = self.tic['ID'][np.where(self.tic['GAIA'] == designation)[0]]
             if np.isnan(gaia_targets['phot_g_mean_mag'][i]):
                 in_frame[i] = False
-            elif -4 < x[i] < self.size + 3 and -4 < y[i] < self.size + 3:
+            elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
                 dif = gaia_targets['phot_bp_mean_mag'][i] - gaia_targets['phot_rp_mean_mag'][i]
                 tess_mag[i] = gaia_targets['phot_g_mean_mag'][
                                   i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
@@ -129,12 +132,14 @@ class Source_cut(object):
                 in_frame[i] = False
         tess_flux = 10 ** (- tess_mag / 2.5)
         t = Table()
+        t[f'designation'] = gaia_targets['designation'][in_frame]
+        t[f'tic'] = tess_mag[in_frame]
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
-        t[f'sector_{self.sector}_x'] = x[in_frame]
-        t[f'sector_{self.sector}_y'] = y[in_frame]
-        gaia_targets = hstack([gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
+        t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
+        t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
+        # gaia_targets = hstack([gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
         gaia_targets.sort('tess_mag')
         self.gaia = gaia_targets
 

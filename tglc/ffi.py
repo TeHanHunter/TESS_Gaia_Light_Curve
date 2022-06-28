@@ -174,22 +174,23 @@ class Source(object):
         #                                         catalog="TIC")
         # # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
-        self.catalogdata = catalogdata
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[:, y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
 
         num_gaia = len(catalogdata)
+        tic_id = np.zeros(num_gaia)
         x_gaia = np.zeros(num_gaia)
         y_gaia = np.zeros(num_gaia)
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
-        for i in range(num_gaia):
+        for i, designation in enumerate(catalogdata['designation']):
             pixel = self.wcs.all_world2pix(
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
+            tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation)[0]]
             if np.isnan(catalogdata['phot_g_mean_mag'][i]):
                 in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
