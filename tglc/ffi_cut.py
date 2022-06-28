@@ -153,15 +153,14 @@ def ffi_cut(target='', local_directory='', size=90, sector=None):
     :return: tglc.ffi_cut.Source_cut
     """
     source_exists = exists(f'{local_directory}source/source_{target}.pkl')
-    if source_exists:
-        try:
-            with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
-                source = pickle.load(input_)
-            print(source.sector_table)
-            print('Loaded ffi_cut from directory. ')
-        except:
-            with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
-                source = Source_cut(target, size=size, sector=sector)
-                pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+    if source_exists and os.path.getsize(f'{local_directory}source/source_{target}.pkl') > 0:
+        with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
+            source = pickle.load(input_)
+        print(source.sector_table)
+        print('Loaded ffi_cut from directory. ')
+    else:
+        with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
+            source = Source_cut(target, size=size, sector=sector)
+            pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
 
