@@ -1,4 +1,5 @@
 from tglc.target_lightcurve import *
+
 warnings.simplefilter('always', UserWarning)
 
 
@@ -21,7 +22,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
-        name=None
+        name = None
     # print(name)
     for j in range(len(source.sector_table)):
         try:
@@ -34,7 +35,11 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
 
 
 if __name__ == '__main__':
-    tglc_lc(target='AV 75', local_directory='/mnt/c/users/tehan/desktop/', size=50, save_aper=True, get_all_lc=True)
+    local_directory = '/home/tehan/data/ob_associations/'
+    data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
+    hosts = np.array(data['star ID'])
+    for i in range(len(hosts)):
+        tglc_lc(target=hosts[i], local_directory=local_directory, size=50, save_aper=True, get_all_lc=False)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
