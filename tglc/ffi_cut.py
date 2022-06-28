@@ -110,6 +110,7 @@ class Source_cut(object):
         mask = np.ones(np.shape(data_flux))
         for i in range(len(data_time)):
             mask[i][data_flux[i] > 0.8 * np.amax(data_flux[i])] = 0
+            mask[i][np.isnan(mask[i])] = 0
         self.mask = mask
 
         gaia_targets = self.catalogdata[
