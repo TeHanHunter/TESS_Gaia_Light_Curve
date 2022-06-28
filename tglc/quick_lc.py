@@ -1,5 +1,5 @@
 from tglc.target_lightcurve import *
-
+from astropy.io import ascii
 warnings.simplefilter('always', UserWarning)
 
 
