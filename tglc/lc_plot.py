@@ -589,7 +589,7 @@ def figure_6(mode='aper'):
                 continue
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=data['gaia_id'][i])
+                 name=data['gaia_id'][i], save_aper=True)
         # plt.imshow(source.flux[0])
         # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
         #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
