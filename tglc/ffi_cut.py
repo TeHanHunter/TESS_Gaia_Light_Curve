@@ -119,7 +119,7 @@ class Source_cut(object):
                 np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
             y_gaia[i] = pixel[0][1]
-            tic_id[i] = self.tic['ID'][np.where(self.tic['GAIA'] == designation)[0]]
+            tic_id[i] = self.tic['ID'][np.where(self.tic['GAIA'] == designation.split()[2])[0][0]]
             if np.isnan(gaia_targets['phot_g_mean_mag'][i]):
                 in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
@@ -133,7 +133,8 @@ class Source_cut(object):
         tess_flux = 10 ** (- tess_mag / 2.5)
         t = Table()
         t[f'designation'] = gaia_targets['designation'][in_frame]
-        t[f'tic'] = tess_mag[in_frame]
+        t[f'tic'] = tic_id[in_frame]
+        t[f'phot_g_mean_mag'] = gaia_targets['phot_g_mean_mag'][in_frame]
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
@@ -141,6 +142,7 @@ class Source_cut(object):
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
         # gaia_targets = hstack([gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
         gaia_targets.sort('tess_mag')
+        print(type(gaia_targets['phot_g_mean_mag']))
         self.gaia = gaia_targets
 
 
