@@ -117,13 +117,14 @@ class Source_cut(object):
                 np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
             x[i] = pixel[0][0]
             y[i] = pixel[0][1]
-            if -2 < x[i] < self.size + 1 and -2 < y[i] < self.size + 1:
+            if np.isnan(gaia_targets['phot_g_mean_mag'][i]):
+                in_frame[i] = False
+            elif -4 < x[i] < self.size + 3 and -4 < y[i] < self.size + 3:
                 dif = gaia_targets['phot_bp_mean_mag'][i] - gaia_targets['phot_rp_mean_mag'][i]
-                if np.isnan(dif):
+                tess_mag[i] = gaia_targets['phot_g_mean_mag'][
+                                  i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
+                if np.isnan(tess_mag[i]):
                     tess_mag[i] = gaia_targets['phot_g_mean_mag'][i] - 0.430
-                else:
-                    tess_mag[i] = gaia_targets['phot_g_mean_mag'][i] \
-                                  - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
             else:
                 in_frame[i] = False
         tess_flux = 10 ** (- tess_mag / 2.5)
