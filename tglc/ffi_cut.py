@@ -1,16 +1,7 @@
-import os
-import sys
 import warnings
-
-import numpy as np
-from astropy.coordinates import SkyCoord
-from astropy.table import Table, hstack
-from astropy.wcs import WCS
-from astroquery.mast import Catalogs
 from astroquery.mast import Tesscut
-import pickle
 from os.path import exists
-
+from tglc.ffi import *
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -42,16 +33,17 @@ class Source_cut(object):
         self.cadence = cadence
         self.quality = []
         self.mask = []
-        catalogdata = Catalogs.query_object(self.name, radius=(self.size + 4) * 21 * 0.707 / 3600,
-                                            catalog="Gaia", version=2)
+        target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+        ra = target[0]['ra']
+        dec = target[0]['dec']
+        coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+        radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
+        catalogdata = Gaia.cone_search_async(coord, radius,
+                                             columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                                                      'phot_rp_mean_mag', 'ra', 'dec']).get_results()
         print(f'Target Gaia: {catalogdata[0]["designation"]}')
-        # TODO: maybe increase search radius
+        catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
         print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        ra = catalogdata[0]['ra']
-        dec = catalogdata[0]['dec']
-        coord = SkyCoord(ra, dec, unit="deg")
-        catalogdata_tic = Catalogs.query_object(coord.to_string(), radius=(self.size + 4) * 21 * 0.707 / 3600,
-                                            catalog="TIC")
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         sector_table = Tesscut.get_sectors(coordinates=coord)
@@ -160,13 +152,14 @@ def ffi_cut(target='', local_directory='', size=90, sector=None):
     """
     source_exists = exists(f'{local_directory}source/source_{target}.pkl')
     if source_exists:
-        with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
-            source = pickle.load(input_)
-        print(source.sector_table)
-        print('Loaded ffi_cut from directory. ')
-    else:
-        with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size, sector=sector)
-            pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+        try:
+            with open(f'{local_directory}source/source_{target}.pkl', 'rb') as input_:
+                source = pickle.load(input_)
+            print(source.sector_table)
+            print('Loaded ffi_cut from directory. ')
+        except:
+            with open(f'{local_directory}source/source_{target}.pkl', 'wb') as output:
+                source = Source_cut(target, size=size, sector=sector)
+                pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
 
