@@ -170,13 +170,10 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         A_[star_info[star_num][1][star_pos]] = star_info[star_num][2][star_pos]
         A_cut[i] = A[index[i], :] - A_
     aperture = np.zeros((len(index), len(source.time)))
-    bg_star = np.zeros((len(index), len(source.time)))
     for j in range(len(source.time)):
         A_cut[:, -1] = source.mask[j, down:up, left:right].flatten()
-        bg_star[:, j] = np.dot(A_cut, e_psf[j])
-        aperture[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() - bg_star[:, j]
+        aperture[:, j] = np.array(source.flux[j][down:up, left:right]).flatten() -  np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((up - down, right - left, len(source.time)))
-    bg_star = bg_star.reshape((up - down, right - left, len(source.time)))
 
     # psf_lc
     over_size = psf_size * factor + 1
@@ -208,7 +205,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # plt.show()
     psf_lc = np.zeros(len(source.time))
     size = 5
-    A_ = np.zeros((size ** 2, 5))
+    A_ = np.zeros((size ** 2, 4))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
     A_[:, -1] = np.ones(size ** 2)
     A_[:, -2] = yy.flatten()
@@ -218,9 +215,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             psf_lc[j] = np.nan
         else:
             A_[:, 0] = psf_sim[:, :, j].flatten() / np.nansum(psf_sim[:, :, j])
-            A_[:, 1] = bg_star[:, :, j].flatten() / np.nansum(bg_star[:, :, j])
             psf_lc[j] = np.linalg.lstsq(A_, aperture[:, :, j].flatten())[0][0]
-            print(np.linalg.lstsq(A_, aperture[:, :, j].flatten())[0])
     portion = np.nansum(psf_shape[4:7, 4:7, :]) / np.nansum(psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
 
