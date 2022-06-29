@@ -39,7 +39,7 @@ if __name__ == '__main__':
     data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
     hosts = np.array(data['star ID'])
     for i in range(len(hosts)):
-        tglc_lc(target=hosts[i], local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
+        tglc_lc(target=hosts[i], local_directory=local_directory, size=50, save_aper=True, get_all_lc=False)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
