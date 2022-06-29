@@ -204,7 +204,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # ax2.imshow(psf_shape[:, :, 0])
     # plt.show()
     psf_lc = np.zeros(len(source.time))
-    size = 5
+    size = 3
     A_ = np.zeros((size ** 2, 4))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
     A_[:, -1] = np.ones(size ** 2)
@@ -215,7 +215,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             psf_lc[j] = np.nan
         else:
             A_[:, 0] = psf_sim[:, :, j].flatten() / np.nansum(psf_sim[:, :, j])
-            psf_lc[j] = np.linalg.lstsq(A_, aperture[:, :, j].flatten())[0][0]
+            psf_lc[j] = np.linalg.lstsq(A_, aperture[1:4, 1:4, j].flatten())[0][0]
     portion = np.nansum(psf_shape[4:7, 4:7, :]) / np.nansum(psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
 
