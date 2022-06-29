@@ -157,10 +157,10 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
-    left = np.maximum(0, x - 2)
-    right = np.minimum(size, x + 3)
-    down = np.maximum(0, y - 2)
-    up = np.minimum(size, y + 3)
+    left = np.maximum(0, x - 3)
+    right = np.minimum(size, x + 4)
+    down = np.maximum(0, y - 3)
+    up = np.minimum(size, y + 4)
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
@@ -183,10 +183,10 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
         portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
         return aperture, psf_lc, y - down, x - left, portion
-    left_ = left - x + 5
-    right_ = right - x + 5
-    down_ = down - y + 5
-    up_ = up - y + 5
+    left_ = left - x + 7
+    right_ = right - x + 7
+    down_ = down - y + 7
+    up_ = up - y + 7
 
     left_11 = np.maximum(- x + 5, 0)
     right_11 = np.minimum(size - x + 5, 11)
@@ -198,24 +198,24 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(A, e_psf.T).reshape(psf_size, psf_size, len(source.time))
-    psf_sim = psf_shape[1:4, 1:4, :]
+    psf_sim = psf_shape[down_:up_, left_: right_, :]
     # f, (ax1, ax2) = plt.subplots(1, 2)
     # ax1.imshow(aperture_lc[:, :, 0])
     # ax2.imshow(psf_shape[:, :, 0])
     # plt.show()
     psf_lc = np.zeros(len(source.time))
-    size = 3
-    A_ = np.zeros((size ** 2, 1))
+    size = 7
+    A_ = np.zeros((size ** 2, 4))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    # A_[:, -1] = np.ones(size ** 2)
-    # A_[:, -2] = yy.flatten()
-    # A_[:, -3] = xx.flatten()
+    A_[:, -1] = np.ones(size ** 2)
+    A_[:, -2] = yy.flatten()
+    A_[:, -3] = xx.flatten()
     for j in range(len(source.time)):
         if np.isnan(psf_sim[:, :, j]).any():
             psf_lc[j] = np.nan
         else:
             A_[:, 0] = psf_sim[:, :, j].flatten() / np.nansum(psf_sim[:, :, j])
-            psf_lc[j] = np.linalg.lstsq(A_, aperture[1:4, 1:4, j].flatten())[0][0]
+            psf_lc[j] = np.linalg.lstsq(A_, aperture[:, :, j].flatten())[0][0]
     portion = np.nansum(psf_shape[4:7, 4:7, :]) / np.nansum(psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
 
