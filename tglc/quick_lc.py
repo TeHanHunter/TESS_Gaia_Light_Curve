@@ -1,3 +1,9 @@
+import os
+
+os.environ["OPENBLAS_NUM_THREADS"] = "8"
+os.environ["MKL_NUM_THREADS"] = "8"
+os.environ["NUMEXPR_NUM_THREADS"] = "8"
+os.environ["OMP_NUM_THREADS"] = "8"
 from tglc.target_lightcurve import *
 from astropy.io import ascii
 warnings.simplefilter('ignore', UserWarning)
@@ -39,7 +45,7 @@ if __name__ == '__main__':
     data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
     hosts = np.array(data['star ID'])
     for i in range(len(hosts)):
-        tglc_lc(target=hosts[i], local_directory=local_directory, size=50, save_aper=True, get_all_lc=False)
+        tglc_lc(target=hosts[i], local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
