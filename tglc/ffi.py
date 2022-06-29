@@ -265,7 +265,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
     #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
     mask = np.zeros(np.shape(flux))
-    for i in range(len(time)):
+    for i in trange(len(time)):
         mask[i] = background_mask(im=flux[i])
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
