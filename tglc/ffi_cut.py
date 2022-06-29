@@ -6,6 +6,8 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+Gaia.ROW_LIMIT = -1
+Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
 
 class Source_cut(object):
     def __init__(self, name, size=15, sector=None, cadence=None):
@@ -38,12 +40,12 @@ class Source_cut(object):
         dec = target[0]['dec']
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
+        print(f'Target Gaia: {target[0]["designation"]}')
         catalogdata = Gaia.cone_search_async(coord, radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec']).get_results()
-        print(f'Target Gaia: {catalogdata[0]["designation"]}')
-        catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
         print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+        catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         sector_table = Tesscut.get_sectors(coordinates=coord)

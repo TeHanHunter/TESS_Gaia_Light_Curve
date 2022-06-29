@@ -190,7 +190,10 @@ class Source(object):
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
-            tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation)[0]]
+            try:
+                tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation.split()[2])[0][0]]
+            except:
+                tic_id[i] = np.nan
             if np.isnan(catalogdata['phot_g_mean_mag'][i]):
                 in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
@@ -203,13 +206,15 @@ class Source(object):
                 in_frame[i] = False
 
         tess_flux = 10 ** (- tess_mag / 2.5)
+        t_tic = Table()
+        t_tic[f'tic'] = tic_id[in_frame]
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
-        catalogdata = hstack([catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
+        catalogdata = hstack([t_tic, catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
         catalogdata.sort('tess_mag')
         self.gaia = catalogdata
 
