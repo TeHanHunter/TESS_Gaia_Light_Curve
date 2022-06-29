@@ -144,7 +144,6 @@ class Source_cut(object):
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
         gaia_targets = hstack([t_tic, gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
         gaia_targets.sort('tess_mag')
-        print(type(gaia_targets['phot_g_mean_mag']))
         self.gaia = gaia_targets
 
 

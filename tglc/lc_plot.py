@@ -584,9 +584,6 @@ def figure_6(mode='psf'):
         size = 90  # int, suggests big cuts
         source = ffi_cut(target=target, size=size, local_directory=local_directory)
         for j in range(len(source.sector_table)):
-            # try:
-            if target == 'TOI-674' and source.sector_table['sector'][j] == 10:
-                continue
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=data['gaia_id'][i], save_aper=True)
