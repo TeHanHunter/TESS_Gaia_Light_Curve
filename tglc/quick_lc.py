@@ -24,7 +24,6 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
         name = None
-    print(name)
     for j in range(len(source.sector_table)):
         try:
             source.select_sector(sector=source.sector_table['sector'][j])

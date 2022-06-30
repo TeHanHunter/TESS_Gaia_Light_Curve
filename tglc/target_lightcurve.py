@@ -4,6 +4,7 @@
 import os
 from os.path import exists
 
+import time
 import numpy as np
 import numpy.ma as ma
 from astropy.io import fits
@@ -191,10 +192,12 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     <1 means emphasizing dimmer stars
     :return:
     """
+    st = time.time()
     if target is None:
         target = f'{cut_x:02d}_{cut_y:02d}'
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
+    print(time.time() - st)
     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
     epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
     if type(source) == tglc.ffi_cut.Source_cut:
@@ -202,6 +205,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
     os.makedirs(lc_directory, exist_ok=True)
     epsf_exists = exists(epsf_loc)
+    print(time.time() - st)
     if epsf_exists:
         e_psf = np.load(epsf_loc)
         print(f'Loaded ePSF {target} from directory. ')
