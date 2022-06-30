@@ -17,7 +17,7 @@ from astropy.wcs import WCS
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
-from multiprocessing import Pool
+import multiprocessing as mp
 from functools import partial
 
 Gaia.ROW_LIMIT = -1
@@ -112,6 +112,32 @@ def background_mask(im=None):
     return cal_factor
 
 
+def gaia_info(i, source=None, catalogdata=None, x=None, y=None):
+    global x_gaia, y_gaia, tess_mag, in_frame
+    pixel = source.wcs.all_world2pix(
+        np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
+    x_gaia[i] = pixel[0][0] - x - 44
+    y_gaia[i] = pixel[0][1] - y
+    # try:
+    #     tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation.split()[2])[0][0]]
+    # except:
+    #     tic_id[i] = np.nan
+    if np.isnan(catalogdata['phot_g_mean_mag'][i]):
+        in_frame[i] = 0
+    elif -4 < x_gaia[i] < source.size + 3 and -4 < y_gaia[i] < source.size + 3:
+        dif = catalogdata['phot_bp_mean_mag'][i] - catalogdata['phot_rp_mean_mag'][i]
+        tess_mag[i] = catalogdata['phot_g_mean_mag'][
+                          i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
+        if np.isnan(tess_mag[i]):
+            tess_mag[i] = catalogdata['phot_g_mean_mag'][i] - 0.430
+    else:
+        in_frame[i] = 0
+
+
+def init_arr(arr):
+    globals()['arr'] = arr
+
+
 class Source(object):
     def __init__(self, x=0, y=0, flux=None, time=None, wcs=None, quality=None, mask=None, exposure=1800, sector=0,
                  size=150,
@@ -182,35 +208,15 @@ class Source(object):
         self.wcs = wcs
 
         num_gaia = len(catalogdata)
-        # tic_id = np.zeros(num_gaia)
-        x_gaia = np.zeros(num_gaia)
-        y_gaia = np.zeros(num_gaia)
-        tess_mag = np.zeros(num_gaia)
-        in_frame = [True] * num_gaia
+        x_gaia = mp.Array('f', np.zeros(num_gaia), lock=False)
+        y_gaia = mp.Array('f', np.zeros(num_gaia), lock=False)
+        tess_mag = mp.Array('f', np.zeros(num_gaia), lock=False)
+        in_frame = mp.Array('i', np.ones(num_gaia), lock=False)
 
-        with Pool(16) as p:
-            p.map(partial(gaia_info, ), range(num_gaia))
+        mp.Pool(16, initializer=init_arr, initargs=(x_gaia, y_gaia, tess_mag, in_frame))\
+            .map(partial(gaia_info, source=self, catalogdata=catalogdata, x=x, y=y), range(num_gaia))
 
-        for i in range(num_gaia):
-            pixel = self.wcs.all_world2pix(
-                np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
-            x_gaia[i] = pixel[0][0] - x - 44
-            y_gaia[i] = pixel[0][1] - y
-            # try:
-            #     tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation.split()[2])[0][0]]
-            # except:
-            #     tic_id[i] = np.nan
-            if np.isnan(catalogdata['phot_g_mean_mag'][i]):
-                in_frame[i] = False
-            elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
-                dif = catalogdata['phot_bp_mean_mag'][i] - catalogdata['phot_rp_mean_mag'][i]
-                tess_mag[i] = catalogdata['phot_g_mean_mag'][
-                                  i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
-                if np.isnan(tess_mag[i]):
-                    tess_mag[i] = catalogdata['phot_g_mean_mag'][i] - 0.430
-            else:
-                in_frame[i] = False
-
+        in_frame = in_frame.astype(bool)
         tess_flux = 10 ** (- tess_mag / 2.5)
         # t_tic = Table()
         # t_tic[f'tic'] = tic_id[in_frame]
