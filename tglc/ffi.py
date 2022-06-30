@@ -178,6 +178,8 @@ class Source(object):
         # # print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
         self.flux = flux[:, y:y + size, x:x + size]
+        print(y, type(y), type(y + size))
+        print(x, type(x), type(x + size))
         self.mask = mask[:, y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
