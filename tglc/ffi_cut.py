@@ -111,20 +111,21 @@ class Source_cut(object):
         gaia_targets = self.catalogdata[
             'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
         num_gaia = len(gaia_targets)
-        tic_id = np.zeros(num_gaia)
+        # tic_id = np.zeros(num_gaia)
         x_gaia = np.zeros(num_gaia)
         y_gaia = np.zeros(num_gaia)
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
+        # TODO: multiprocess below
         for i, designation in enumerate(gaia_targets['designation']):
             pixel = self.wcs.all_world2pix(
                 np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
             y_gaia[i] = pixel[0][1]
-            try:
-                tic_id[i] = self.tic['ID'][np.where(self.tic['GAIA'] == designation.split()[2])[0][0]]
-            except:
-                tic_id[i] = np.nan
+            # try:
+            #     tic_id[i] = self.tic['ID'][np.where(self.tic['GAIA'] == designation.split()[2])[0][0]]
+            # except:
+            #     tic_id[i] = np.nan
             if np.isnan(gaia_targets['phot_g_mean_mag'][i]):
                 in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
@@ -136,15 +137,15 @@ class Source_cut(object):
             else:
                 in_frame[i] = False
         tess_flux = 10 ** (- tess_mag / 2.5)
-        t_tic = Table()
-        t_tic[f'tic'] = tic_id[in_frame]
+        # t_tic = Table()
+        # t_tic[f'tic'] = tic_id[in_frame]
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
-        gaia_targets = hstack([t_tic, gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
+        gaia_targets = hstack([gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
         gaia_targets.sort('tess_mag')
         self.gaia = gaia_targets
 
