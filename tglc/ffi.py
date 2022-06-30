@@ -264,7 +264,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
-    pool = mp.Pool(processes=8)
+    pool = mp.Pool(processes=4)
     mask = pool.map(partial(background_mask, image=flux), trange(len(time)))
     print(np.shape(mask))
     # mask = np.zeros(np.shape(flux))
