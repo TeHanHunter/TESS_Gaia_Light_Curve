@@ -102,7 +102,7 @@ class Source_cut(object):
         self.quality = np.zeros(len(data_time))
 
         mask = np.ones(np.shape(data_flux))
-        for i in range(len(data_time)):
+        for i in trange(len(data_time)):
             mask[i][data_flux[i] > 0.8 * np.nanmax(data_flux[i])] = 0
             mask[i][data_flux[i] < 0.2 * np.nanmedian(data_flux[i])] = 0
             mask[i][np.isnan(mask[i])] = 0
