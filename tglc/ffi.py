@@ -180,6 +180,8 @@ class Source(object):
         self.flux = flux[:, y:y + size, x:x + size]
         print(y, type(y), type(y + size))
         print(x, type(x), type(x + size))
+        print(np.shape(mask))
+        print(np.shape(mask[0]))
         self.mask = mask[:, y:y + size, x:x + size]
         self.time = np.array(time)
         self.wcs = wcs
