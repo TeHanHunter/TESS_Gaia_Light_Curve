@@ -20,7 +20,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     source = ffi_cut(target=target, size=size, local_directory=local_directory)  # sector
-    catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
+    catalogdata = Catalogs.query_object(str(target), radius=0.004, catalog="TIC")
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
         name = None
@@ -28,6 +28,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
     for j in range(len(source.sector_table)):
         try:
             source.select_sector(sector=source.sector_table['sector'][j])
+            print('selected')
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, save_aper=save_aper)
         except:
