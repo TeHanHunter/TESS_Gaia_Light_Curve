@@ -7,7 +7,6 @@ from os.path import exists
 import numpy as np
 import numpy.ma as ma
 from astropy.io import fits
-from tqdm import trange
 from wotan import flatten
 
 import tglc

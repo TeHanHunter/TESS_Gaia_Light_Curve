@@ -1,5 +1,5 @@
 import numpy as np
-
+from tqdm import trange
 
 def bilinear(x, y, repeat=23):
     '''
@@ -72,7 +72,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     A[:, -2] = yy.flatten()
     A[:, -3] = xx.flatten()
     star_info = []
-    for i in range(len(source.gaia)):
+    for i in trange(len(source.gaia)):
         x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
         y_psf = factor * (y_p[down[i]:up[i]] - y_round[i] + half_size) + (y_shift[i] % 1) // (1 / factor)
         x_psf, y_psf = np.meshgrid(x_psf, y_psf)  # super slow here
