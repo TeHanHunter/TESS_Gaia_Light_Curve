@@ -80,7 +80,8 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
 
 
 # from Tim
-def background_mask(im=None):
+def background_mask(i, image=None):
+    im = image[i]
     imfilt = im * 1.
     for i in range(im.shape[1]):
         imfilt[:, i] = ndimage.percentile_filter(im[:, i], 50, size=51)
@@ -213,7 +214,7 @@ class Source(object):
         tess_mag = mp.Array('f', np.zeros(num_gaia), lock=False)
         in_frame = mp.Array('i', np.ones(num_gaia), lock=False)
 
-        mp.Pool(16, initializer=init_arr, initargs=(x_gaia, y_gaia, tess_mag, in_frame))\
+        mp.Pool(8, initializer=init_arr, initargs=(x_gaia, y_gaia, tess_mag, in_frame))\
             .map(partial(gaia_info, source=self, catalogdata=catalogdata, x=x, y=y), trange(num_gaia))
 
         in_frame = in_frame.astype(bool)
@@ -272,13 +273,12 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
-    # mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
-    # for i in range(len(time)):
-    #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
-    #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
-    mask = np.zeros(np.shape(flux))
-    for i in range(len(time)):
-        mask[i] = background_mask(im=flux[i])
+
+    mask = mp.Array('f', np.zeros(np.shape(flux)), lock=False)
+    mp.Pool(8, initializer=init_arr, initargs=mask).map(partial(background_mask, image=flux), trange(len(time)))
+
+    # for i in trange(len(time)):
+    #     mask[i] = background_mask(im=flux[i])
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
