@@ -118,7 +118,6 @@ class Source_cut(object):
         in_frame = [True] * num_gaia
         # TODO: multiprocess below
         for i, designation in enumerate(gaia_targets['designation']):
-            print(i)
             pixel = self.wcs.all_world2pix(
                 np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
