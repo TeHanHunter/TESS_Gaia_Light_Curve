@@ -17,6 +17,8 @@ from astropy.wcs import WCS
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
+from multiprocessing import Pool
+from functools import partial
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
@@ -180,20 +182,24 @@ class Source(object):
         self.wcs = wcs
 
         num_gaia = len(catalogdata)
-        tic_id = np.zeros(num_gaia)
+        # tic_id = np.zeros(num_gaia)
         x_gaia = np.zeros(num_gaia)
         y_gaia = np.zeros(num_gaia)
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
-        for i, designation in enumerate(catalogdata['designation']):
+
+        with Pool(16) as p:
+            p.map(partial(gaia_info, ), range(num_gaia))
+
+        for i in range(num_gaia):
             pixel = self.wcs.all_world2pix(
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
-            try:
-                tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation.split()[2])[0][0]]
-            except:
-                tic_id[i] = np.nan
+            # try:
+            #     tic_id[i] = catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == designation.split()[2])[0][0]]
+            # except:
+            #     tic_id[i] = np.nan
             if np.isnan(catalogdata['phot_g_mean_mag'][i]):
                 in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
@@ -206,15 +212,15 @@ class Source(object):
                 in_frame[i] = False
 
         tess_flux = 10 ** (- tess_mag / 2.5)
-        t_tic = Table()
-        t_tic[f'tic'] = tic_id[in_frame]
+        # t_tic = Table()
+        # t_tic[f'tic'] = tic_id[in_frame]
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
-        catalogdata = hstack([t_tic, catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
+        catalogdata = hstack([catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
         catalogdata.sort('tess_mag')
         self.gaia = catalogdata
 
