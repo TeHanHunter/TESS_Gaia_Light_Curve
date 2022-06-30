@@ -26,7 +26,6 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
         name = None
     for j in range(len(source.sector_table)):
         try:
-            print('select')
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, save_aper=save_aper)
