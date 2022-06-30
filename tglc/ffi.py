@@ -214,7 +214,7 @@ class Source(object):
         in_frame = mp.Array('i', np.ones(num_gaia), lock=False)
 
         mp.Pool(16, initializer=init_arr, initargs=(x_gaia, y_gaia, tess_mag, in_frame))\
-            .map(partial(gaia_info, source=self, catalogdata=catalogdata, x=x, y=y), range(num_gaia))
+            .map(partial(gaia_info, source=self, catalogdata=catalogdata, x=x, y=y), trange(num_gaia))
 
         in_frame = in_frame.astype(bool)
         tess_flux = 10 ** (- tess_mag / 2.5)
