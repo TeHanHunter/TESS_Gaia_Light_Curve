@@ -214,7 +214,7 @@ class Source(object):
         tess_mag = mp.Array('f', np.zeros(num_gaia), lock=False)
         in_frame = mp.Array('i', np.ones(num_gaia), lock=False)
 
-        mp.Pool(8, initializer=init_arr, initargs=(x_gaia, y_gaia, tess_mag, in_frame))\
+        mp.Pool(16, initializer=init_arr, initargs=(x_gaia, y_gaia, tess_mag, in_frame))\
             .map(partial(gaia_info, source=self, catalogdata=catalogdata, x=x, y=y), trange(num_gaia))
 
         in_frame = in_frame.astype(bool)
@@ -273,10 +273,9 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
-
-    mask = mp.Array('f', np.zeros(np.shape(flux)), lock=False)
-    mp.Pool(8, initializer=init_arr, initargs=mask).map(partial(background_mask, image=flux), trange(len(time)))
-
+    pool = mp.Pool(processes=8)
+    mask = pool.map(partial(background_mask, image=flux), trange(len(time)))
+    # mask = np.zeros(np.shape(flux))
     # for i in trange(len(time)):
     #     mask[i] = background_mask(im=flux[i])
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
