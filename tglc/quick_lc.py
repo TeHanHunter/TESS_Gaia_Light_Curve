@@ -39,7 +39,7 @@ if __name__ == '__main__':
     data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
     hosts = np.array(data['Gaia EDR3'])
     for i in range(24, len(hosts)):
-        tglc_lc(target=hosts[i], local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
+        tglc_lc(target='Gaia EDR3 ' + str(hosts[i]), local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'
