@@ -182,7 +182,7 @@ class Source(object):
         print(x, type(x), type(x + size))
         print(np.shape(mask))
         print(np.shape(mask[0]))
-        self.mask = mask[:, y:y + size, x:x + size]
+        self.mask = mask[:, y:y + size, x:x + size] #TODO: weird bug
         self.time = np.array(time)
         self.wcs = wcs
 
