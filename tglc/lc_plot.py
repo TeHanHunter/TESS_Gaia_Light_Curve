@@ -568,7 +568,7 @@ def figure_5():
     plt.close()
 
 
-def figure_6(mode='psf'):
+def figure_6(mode='aper'):
     type = f'cal_{mode}_flux'
     # local_directory = '/home/tehan/data/exoplanets/'
     local_directory = '/home/tehan/data/known_exoplanet/'
