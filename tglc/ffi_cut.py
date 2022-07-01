@@ -2,12 +2,14 @@ import warnings
 from astroquery.mast import Tesscut
 from os.path import exists
 from tglc.ffi import *
+
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
+
 
 class Source_cut(object):
     def __init__(self, name, size=15, sector=None, cadence=None):
@@ -67,7 +69,6 @@ class Source_cut(object):
             self.select_sector(sector=sector_table['sector'][0])
         else:
             self.select_sector(sector=sector)
-
 
     def select_sector(self, sector=1):
         """
@@ -174,4 +175,3 @@ def ffi_cut(target='', local_directory='', size=90, sector=None):
             source = Source_cut(target, size=size, sector=sector)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
-
