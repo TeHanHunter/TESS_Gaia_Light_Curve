@@ -199,7 +199,6 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
     psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
-    np.save(f'psf_sim_{source.name}_{source.sector}.npy', psf_sim)
     # f, (ax1, ax2) = plt.subplots(1, 2)
     # ax1.imshow(aperture_lc[:, :, 0])
     # ax2.imshow(psf_shape[:, :, 0])
@@ -217,7 +216,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         else:
             A_[:, 0] = psf_sim[j, :, :].flatten() / np.nansum(psf_sim[j, :, :])
             psf_lc[j] = np.linalg.lstsq(A_, aperture[j, :, :].flatten())[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_sim)
     return aperture, psf_lc, y - down, x - left, portion
 
 
