@@ -37,8 +37,8 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
 if __name__ == '__main__':
     local_directory = '/home/tehan/data/ob_associations/'
     data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
-    hosts = np.array(data['star ID'])
-    for i in range(len(hosts)):
+    hosts = np.array(data['Gaia EDR3'])
+    for i in range(24, len(hosts)):
         tglc_lc(target=hosts[i], local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
 
     ####### list of targets
