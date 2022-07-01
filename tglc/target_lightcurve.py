@@ -216,6 +216,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 f"TESS FFI cut includes Nan values. Please shift the center of the cutout to remove Nan near edge. Target: {target}")
         np.save(epsf_loc, e_psf)
 
+    # TODO: might need to rewrite background because A changes everytime
     background = np.dot(A[:source.size ** 2, -3:], e_psf[:, -3:].T)
     quality_raw = np.zeros(len(source.time), dtype=np.int16)
     sigma = 1.4826 * np.nanmedian(np.abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])))
