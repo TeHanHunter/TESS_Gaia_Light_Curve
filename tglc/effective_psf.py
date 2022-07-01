@@ -199,7 +199,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(A, e_psf.T).reshape(psf_size, psf_size, len(source.time))
     psf_sim = psf_shape[down_:up_, left_: right_, :]
-    np.save(f'psf_sim_{source.target}_{source.sector}.npy', psf_sim)
+    np.save(f'psf_sim_{source.name}_{source.sector}.npy', psf_sim)
     # f, (ax1, ax2) = plt.subplots(1, 2)
     # ax1.imshow(aperture_lc[:, :, 0])
     # ax2.imshow(psf_shape[:, :, 0])
