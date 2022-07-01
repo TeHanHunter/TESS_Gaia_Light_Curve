@@ -249,7 +249,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                                y=y_round[i], star_num=i, e_psf=e_psf,
                                                                near_edge=near_edge)
             aper_lc = np.sum(aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
-                             axis=(0, 1))
+                             axis=(1, 2))
             local_bg, aper_lc, psf_lc = bg_mod(source, q=index, portion=portion, psf_lc=psf_lc, aper_lc=aper_lc,
                                                near_edge=near_edge, star_num=i)
             # mag.append(source.gaia['tess_mag'][i])
