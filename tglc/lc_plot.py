@@ -606,17 +606,17 @@ def figure_6(mode='aper'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_09 = hdul[1].data['time'][q]
         f_09 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0010*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_10 = hdul[1].data['time'][q]
         f_10 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0036*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_36 = hdul[1].data['time'][q]
         f_36 = hdul[1].data[type][q]
         t_36 = np.mean(t_36[:len(t_36) // 3 * 3].reshape(-1, 3), axis=1)
@@ -676,14 +676,14 @@ def figure_6(mode='aper'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0027*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_27 = hdul[1].data['time'][q]
         f_27 = hdul[1].data[type][q]
         t_27 = np.mean(t_27[:len(t_27) // 3 * 3].reshape(-1, 3), axis=1)
         f_27 = np.mean(f_27[:len(f_27) // 3 * 3].reshape(-1, 3), axis=1)
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0028*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_28 = hdul[1].data['time'][q]
         f_28 = hdul[1].data[type][q]
         t_28 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
@@ -731,19 +731,19 @@ def figure_6(mode='aper'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0006*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_06 = hdul[1].data['time'][q]
         f_06 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0044*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_44 = hdul[1].data['time'][q]
         f_44 = hdul[1].data[type][q]
         t_44 = np.mean(t_44[:len(t_44) // 3 * 3].reshape(-1, 3), axis=1)
         f_44 = np.mean(f_44[:len(f_44) // 3 * 3].reshape(-1, 3), axis=1)
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0045*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_45 = hdul[1].data['time'][q]
         f_45 = hdul[1].data[type][q]
         t_45 = np.mean(t_45[:len(t_45) // 3 * 3].reshape(-1, 3), axis=1)
@@ -805,19 +805,19 @@ def figure_6(mode='aper'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0003*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_03 = hdul[1].data['time'][q]
         f_03 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0042*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_42 = hdul[1].data['time'][q]
         f_42 = hdul[1].data[type][q]
         t_42 = np.mean(t_42[:len(t_42) // 3 * 3].reshape(-1, 3), axis=1)
         f_42 = np.mean(f_42[:len(f_42) // 3 * 3].reshape(-1, 3), axis=1)
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0043*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_43 = hdul[1].data['time'][q]
         f_43 = hdul[1].data[type][q]
         t_43 = np.mean(t_43[:len(t_43) // 3 * 3].reshape(-1, 3), axis=1)
@@ -877,17 +877,17 @@ def figure_6(mode='aper'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0007*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_07 = hdul[1].data['time'][q]
         f_07 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0008*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_08 = hdul[1].data['time'][q]
         f_08 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0034*.fits')[0],
                    mode='denywrite') as hdul:
-        q = hdul[1].data['TGLC_flags'] == 0
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_34 = hdul[1].data['time'][q]
         f_34 = hdul[1].data[type][q]
         t_34 = np.mean(t_34[:len(t_34) // 3 * 3].reshape(-1, 3), axis=1)
