@@ -265,8 +265,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
     #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
     mask = np.zeros(np.shape(flux))
+
+    image = flux / ndimage.median_filter(flux, size=(1, 51))
     for i in trange(len(time)):
-        mask[i] = background_mask(im=flux[i])
+        mask[i] = background_mask(im=image[i])
     np.save('mask.npy', mask)
     np.save('mean_mask.npy', background_mask(im=np.mean(flux, axis=0)))
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
