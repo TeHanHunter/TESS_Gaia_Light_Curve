@@ -9,9 +9,9 @@ from multiprocessing import Pool
 from functools import partial
 import logging
 import warnings
+import astroquery
 
-logger = logging.getLogger()
-logger.setLevel(logging.CRITICAL)
+logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
 warnings.simplefilter('ignore', UserWarning)
 
 

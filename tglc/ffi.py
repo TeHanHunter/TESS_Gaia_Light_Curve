@@ -93,7 +93,7 @@ def background_mask(im=None):
 
     di = 1
     i = 0
-    while i < im.shape[1] - 1:
+    while i < im.shape[1] - 1 and i + di < im.shape[1]:
         _ok = ok[:, i] * ok[:, i + di]
         coef = np.median(im[:, i + di][_ok] / im[:, i][_ok])
         if 0.5 < coef < 2:
