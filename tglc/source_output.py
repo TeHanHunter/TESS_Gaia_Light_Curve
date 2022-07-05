@@ -5,13 +5,15 @@ os.environ["MKL_NUM_THREADS"] = "8"
 os.environ["NUMEXPR_NUM_THREADS"] = "8"
 os.environ["OMP_NUM_THREADS"] = "8"
 from tglc.ffi import *
-import multiprocessing
 from multiprocessing import Pool
 from functools import partial
 import logging
+import warnings
 
 logger = logging.getLogger()
 logger.setLevel(logging.CRITICAL)
+warnings.simplefilter('ignore', UserWarning)
+
 
 def cut_ffi_(i, sector=1, size=150, local_directory=''):
     ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory)
