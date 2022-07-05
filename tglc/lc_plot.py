@@ -15,7 +15,7 @@ from glob import glob
 from os.path import exists
 from tglc.target_lightcurve import *
 from tglc.ffi_cut import *
-import scipy as sp
+from scipy import ndimage
 
 def load_eleanor(ld='', tic=1, sector=1):
     eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_pca.npy')
@@ -451,7 +451,7 @@ def figure_3():
     ax[0].set_ylim(1e-4, 1)
 
     ratio = aper_precision / psf_precision
-    runningmed = sp.ndimage.median_filter(ratio, size=151, mode='nearest')
+    runningmed = ndimage.median_filter(ratio, size=151, mode='nearest')
 
     ax[1].plot(mean_diff_aper[0][:4254], ratio[:4254], '.', c='C1', ms=6, alpha=0.15, label='TGLC Aperture / PSF')
     ax[1].plot(mean_diff_aper[0][:4254], runningmed[:4254], c='k', label='Median Filter')

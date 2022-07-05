@@ -110,9 +110,8 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     time index of this ePSF fit
     :return: fit result
     """
-    cal_factor = source.mask[time].flatten()
-    A[:len(cal_factor), -1] = cal_factor
-    flux = source.flux[time].flatten()
+    cal_factor = source.mask.flatten()
+    flux = source.flux[time].flatten() / cal_factor
     saturated_index = np.where(cal_factor == 0)
 
     b = np.delete(flux, saturated_index)
@@ -171,8 +170,8 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         A_cut[i] = A[index[i], :] - A_
     aperture = np.zeros((len(source.time), len(index)))
     for j in range(len(source.time)):
-        A_cut[:, -1] = source.mask[j, down:up, left:right].flatten()
-        aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
+        aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() / np.array(
+            source.mask[down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((len(source.time), up - down, right - left))
 
     # psf_lc
