@@ -947,7 +947,7 @@ def figure_6(mode='aper'):
 
 
 def figure_7():
-    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
+    local_directory = '/mnt/d/Astro/known_exoplanet/'
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
     fig = plt.figure(constrained_layout=False, figsize=(10, 8))
     gs = fig.add_gridspec(5, 12)
@@ -1504,5 +1504,620 @@ def figure_8():
     plt.show()
 
 
+def figure_9():
+    local_directory = '/mnt/d/Astro/known_exoplanet/'
+    data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
+    fig = plt.figure(constrained_layout=False, figsize=(10, 8))
+    gs = fig.add_gridspec(5, 10)
+    gs.update(wspace=0.1, hspace=0.3)
+    color = ['C0', 'C1', 'C3']
+
+    #########################################################################
+    # TOI-674
+    tic = 158588995
+
+    # load QLP
+    qlp_9_t, qlp_9_f = load_qlp(ld=local_directory, tic=tic, sector=9)
+    qlp_10_t, qlp_10_f = load_qlp(ld=local_directory, tic=tic, sector=10)
+    qlp_36_t, qlp_36_f = load_qlp(ld=local_directory, tic=tic, sector=36)
+
+    # load eleanor
+    eleanor_9_t, eleanor_9_f_pca, eleanor_9_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=9)
+    eleanor_10_t, eleanor_10_f_pca, eleanor_10_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=10)
+    eleanor_36_t, eleanor_36_f_pca, eleanor_36_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=36)
+
+    # load TGLC
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_09 = hdul[1].data['time'][q]
+        f_psf_09 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_09 = hdul[1].data['cal_aper_flux'][q]
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0010*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_10 = hdul[1].data['time'][q]
+        f_psf_10 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_10 = hdul[1].data['cal_aper_flux'][q]
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0036*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_36 = hdul[1].data['time'][q]
+        f_psf_36 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_36 = hdul[1].data['cal_aper_flux'][q]
+        t_36 = np.mean(t_36[:len(t_36) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_36 = np.mean(f_psf_36[:len(f_psf_36) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_36 = np.mean(f_aper_36[:len(f_aper_36) // 3 * 3].reshape(-1, 3), axis=1)
+
+    files = glob(local_directory + 'SPOC/TOI-674/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-674 b')
+    period = 1.977165
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax1_1 = fig.add_subplot(gs[0, :2])
+    ax1_2 = fig.add_subplot(gs[0, 2:4])
+    # ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax1_4 = fig.add_subplot(gs[0, 4:6])
+    ax1_5 = fig.add_subplot(gs[0, 6:8])
+    ax1_6 = fig.add_subplot(gs[0, 8:])
+
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax1_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i], ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax1_2.plot(eleanor_9_t % period / period - phase_fold_mid, eleanor_9_f_pca, '.', c=color[0], markersize=2,
+               label='9')
+    ax1_2.plot(eleanor_10_t % period / period - phase_fold_mid, eleanor_10_f_pca, '.', c=color[1], markersize=2,
+               label='10')
+    ax1_2.plot(eleanor_36_t % period / period - phase_fold_mid, eleanor_36_f_pca, '.', c=color[2], markersize=2,
+               label='36')
+    # ax1_3.plot(eleanor_9_t % period / period - phase_fold_mid, eleanor_9_f_psf, '.', c=color[0], markersize=2,
+    #            label='9')
+    # ax1_3.plot(eleanor_10_t % period / period - phase_fold_mid, eleanor_10_f_psf, '.', c=color[1], markersize=2,
+    #            label='10')
+    # ax1_3.plot(eleanor_36_t % period / period - phase_fold_mid, eleanor_36_f_psf, '.', c=color[2], markersize=2,
+    #            label='36')
+    ax1_4.plot(qlp_9_t % period / period - phase_fold_mid, qlp_9_f, '.', c=color[0], markersize=2, label='9')
+    ax1_4.plot(qlp_10_t % period / period - phase_fold_mid, qlp_10_f, '.', c=color[1], markersize=2, label='10')
+    ax1_4.plot(qlp_36_t % period / period - phase_fold_mid, qlp_36_f, '.', c=color[2], markersize=2, label='36')
+
+    ax1_5.plot(t_09 % period / period - phase_fold_mid, f_aper_09, '.', c=color[0], markersize=2, label='9')
+    ax1_5.plot(t_10 % period / period - phase_fold_mid, f_aper_10, '.', c=color[1], markersize=2, label='10')
+    ax1_5.plot(t_36 % period / period - phase_fold_mid, f_aper_36, '.', c=color[2], markersize=2, label='36')
+
+    ax1_6.plot(t_09 % period / period - phase_fold_mid, f_psf_09, '.', c=color[0], markersize=2, label='9')
+    ax1_6.plot(t_10 % period / period - phase_fold_mid, f_psf_10, '.', c=color[1], markersize=2, label='10')
+    ax1_6.plot(t_36 % period / period - phase_fold_mid, f_psf_36, '.', c=color[2], markersize=2, label='36')
+
+    ax1_1.legend(loc=3, fontsize=6)
+    ax1_2.legend(loc=3, fontsize=6)
+    # ax1_3.legend(loc=3, fontsize=6)
+    ax1_4.legend(loc=3, fontsize=6)
+    ax1_5.legend(loc=3, fontsize=6)
+    ax1_6.legend(loc=3, fontsize=6)
+    ax1_1.set_ylim(0.975, 1.01)
+    ax1_2.set_ylim(0.975, 1.01)
+    # ax1_3.set_ylim(0.975, 1.01)
+    ax1_4.set_ylim(0.975, 1.01)
+    ax1_5.set_ylim(0.975, 1.01)
+    ax1_6.set_ylim(0.975, 1.01)
+    ax1_1.set_xlim(- 0.03, 0.03)
+    ax1_2.set_xlim(- 0.03, 0.03)
+    # ax1_3.set_xlim(- 0.03, 0.03)
+    ax1_4.set_xlim(- 0.03, 0.03)
+    ax1_5.set_xlim(- 0.03, 0.03)
+    ax1_6.set_xlim(- 0.03, 0.03)
+    ax1_2.set_yticklabels([])
+    # ax1_3.set_yticklabels([])
+    ax1_4.set_yticklabels([])
+    ax1_5.set_yticklabels([])
+    ax1_6.set_yticklabels([])
+
+    ax1_1.set_title('SPOC 2-min')
+    ax1_2.set_title('eleanor PCA')
+    # ax1_3.set_title('eleanor PSF')
+    ax1_4.set_title('QLP')
+    ax1_5.set_title('TGLC aperture', weight='bold')
+    ax1_6.set_title('TGLC PSF', weight='bold')
+    ax1_1.set_ylabel('Normalized Flux')
+    ax1_5.text(2.25, 0.5, f'TOI-674 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_5.transAxes, rotation=270, fontweight='semibold')
+    ax1_5.text(2.15, 0.5, 'mag=11.88', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_5.transAxes, rotation=270)
+
+    #########################################################################
+    # LHS 3844
+    tic = 410153553
+
+    # load QLP
+    qlp_27_t, qlp_27_f = load_qlp(ld=local_directory, tic=tic, sector=27)
+    qlp_28_t, qlp_28_f = load_qlp(ld=local_directory, tic=tic, sector=28)
+
+    # load eleanor
+    eleanor_27_t, eleanor_27_f_pca, eleanor_27_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=27)
+    eleanor_28_t, eleanor_28_f_pca, eleanor_28_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=28)
+
+    # load TGLC
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0027*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_27 = hdul[1].data['time'][q]
+        f_aper_27 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_27 = hdul[1].data['cal_psf_flux'][q]
+        t_27 = np.mean(t_27[:len(t_27) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_27 = np.mean(f_aper_27[:len(f_aper_27) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_27 = np.mean(f_psf_27[:len(f_psf_27) // 3 * 3].reshape(-1, 3), axis=1)
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6385548541499112448-s0028*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_28 = hdul[1].data['time'][q]
+        f_aper_28 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_28 = hdul[1].data['cal_psf_flux'][q]
+        t_28 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_28 = np.mean(f_aper_28[:len(f_aper_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_28 = np.mean(f_psf_28[:len(f_psf_28) // 3 * 3].reshape(-1, 3), axis=1)
+
+    files = glob(local_directory + 'SPOC/LHS 3844/*.fits')
+    index = np.where(data['pl_name'] == 'LHS 3844 b')
+    period = float(data['pl_orbper'][index])
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax2_1 = fig.add_subplot(gs[1, :2])
+    ax2_2 = fig.add_subplot(gs[1, 2:4])
+    # ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax2_4 = fig.add_subplot(gs[1, 4:6])
+    ax2_5 = fig.add_subplot(gs[1, 6:8])
+    ax2_6 = fig.add_subplot(gs[1, 8:])
+
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            if hdul[0].header['sector'] == 1:
+                continue
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax2_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i - 1],
+                       ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax2_2.plot(eleanor_27_t % period / period - phase_fold_mid, eleanor_27_f_pca, '.', c=color[0], markersize=2,
+               label='27')
+    ax2_2.plot(eleanor_28_t % period / period - phase_fold_mid, eleanor_28_f_pca, '.', c=color[1], markersize=2,
+               label='28')
+    # ax2_3.plot(eleanor_27_t % period / period - phase_fold_mid, eleanor_27_f_psf, '.', c=color[0], markersize=2,
+    #            label='27')
+    # ax2_3.plot(eleanor_28_t % period / period - phase_fold_mid, eleanor_28_f_psf, '.', c=color[1], markersize=2,
+    #            label='28')
+    ax2_4.plot(qlp_27_t % period / period - phase_fold_mid, qlp_27_f, '.', c=color[0], markersize=2, label='27')
+    ax2_4.plot(qlp_28_t % period / period - phase_fold_mid, qlp_28_f, '.', c=color[1], markersize=2, label='28')
+
+    ax2_5.plot(t_27 % period / period - phase_fold_mid, f_aper_27, '.', c=color[0], markersize=2, label='27')
+    ax2_5.plot(t_28 % period / period - phase_fold_mid, f_aper_28, '.', c=color[1], markersize=2, label='28')
+
+    ax2_6.plot(t_27 % period / period - phase_fold_mid, f_psf_27, '.', c=color[0], markersize=2, label='27')
+    ax2_6.plot(t_28 % period / period - phase_fold_mid, f_psf_28, '.', c=color[1], markersize=2, label='28')
+    ax2_1.legend(loc=3, fontsize=6)
+    ax2_2.legend(loc=3, fontsize=6)
+    # ax2_3.legend(loc=3, fontsize=6)
+    ax2_4.legend(loc=3, fontsize=6)
+    ax2_5.legend(loc=3, fontsize=6)
+    ax2_6.legend(loc=3, fontsize=6)
+    ax2_1.set_ylim(0.988, 1.007)
+    ax2_2.set_ylim(0.988, 1.007)
+    # ax2_3.set_ylim(0.988, 1.007)
+    ax2_4.set_ylim(0.988, 1.007)
+    ax2_5.set_ylim(0.988, 1.007)
+    ax2_6.set_ylim(0.988, 1.007)
+    ax2_1.set_xlim(- 0.07, 0.07)
+    ax2_2.set_xlim(- 0.07, 0.07)
+    # ax2_3.set_xlim(- 0.07, 0.07)
+    ax2_4.set_xlim(- 0.07, 0.07)
+    ax2_5.set_xlim(- 0.07, 0.07)
+    ax2_6.set_xlim(- 0.07, 0.07)
+    ax2_2.set_yticklabels([])
+    # ax2_3.set_yticklabels([])
+    ax2_4.set_yticklabels([])
+    ax2_5.set_yticklabels([])
+    ax2_6.set_yticklabels([])
+    ax2_1.set_ylabel('Normalized Flux')
+    ax2_5.text(2.25, 0.5, f'LHS 3844 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax2_5.transAxes, rotation=270, fontweight='semibold')
+    ax2_5.text(2.15, 0.5, 'mag=11.92', horizontalalignment='center',
+               verticalalignment='center', transform=ax2_5.transAxes, rotation=270)
+    #########################################################################
+    # TOI-530
+    tic = 387690507
+
+    # load QLP
+    qlp_6_t, qlp_6_f = load_qlp(ld=local_directory, tic=tic, sector=6)
+
+    # load eleanor
+    eleanor_6_t, eleanor_6_f_pca, eleanor_6_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=6)
+    eleanor_44_t, eleanor_44_f_pca, eleanor_44_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=44)
+
+    # load TGLC
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0006*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_06 = hdul[1].data['time'][q]
+        f_aper_06 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_06 = hdul[1].data['cal_psf_flux'][q]
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0044*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_44 = hdul[1].data['time'][q]
+        f_aper_44 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_44 = hdul[1].data['cal_psf_flux'][q]
+        t_44 = np.mean(t_44[:len(t_44) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_44 = np.mean(f_aper_44[:len(f_aper_44) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_44 = np.mean(f_psf_44[:len(f_psf_44) // 3 * 3].reshape(-1, 3), axis=1)
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0045*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_45 = hdul[1].data['time'][q]
+        f_aper_45 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_45 = hdul[1].data['cal_psf_flux'][q]
+        t_45 = np.mean(t_45[:len(t_45) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_45 = np.mean(f_aper_45[:len(f_aper_45) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_45 = np.mean(f_psf_45[:len(f_psf_45) // 3 * 3].reshape(-1, 3), axis=1)
+
+    files = glob(local_directory + 'SPOC/TOI-530/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-530 b')
+    period = 6.387583
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax3_1 = fig.add_subplot(gs[2, :2])
+    ax3_2 = fig.add_subplot(gs[2, 2:4])
+    # ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax3_4 = fig.add_subplot(gs[2, 4:6])
+    ax3_5 = fig.add_subplot(gs[2, 6:8])
+    ax3_6 = fig.add_subplot(gs[2, 8:])
+
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax3_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i], ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax3_2.plot(eleanor_6_t % period / period - phase_fold_mid, eleanor_6_f_pca, '.', c=color[0], markersize=2,
+               label='6')
+    ax3_2.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_pca, '.', c=color[1], markersize=2,
+               label='44')
+    # ax3_3.plot(eleanor_6_t % period / period - phase_fold_mid, eleanor_6_f_psf, '.', c=color[0], markersize=2,
+    #            label='6')
+    # ax3_3.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_psf, '.', c=color[1], markersize=2,
+    #            label='44')
+    ax3_4.plot(qlp_6_t % period / period - phase_fold_mid, qlp_6_f, '.', c=color[0], markersize=2, label='6')
+
+    ax3_5.plot(t_06 % period / period - phase_fold_mid, f_aper_06, '.', c=color[0], markersize=2, label='6')
+    ax3_5.plot(t_44 % period / period - phase_fold_mid, f_aper_44, '.', c=color[1], markersize=2, label='44')
+    ax3_5.plot(t_45 % period / period - phase_fold_mid, f_aper_45, '.', c=color[2], markersize=2, label='45')
+
+    ax3_6.plot(t_06 % period / period - phase_fold_mid, f_psf_06, '.', c=color[0], markersize=2, label='6')
+    ax3_6.plot(t_44 % period / period - phase_fold_mid, f_psf_44, '.', c=color[1], markersize=2, label='44')
+    ax3_6.plot(t_45 % period / period - phase_fold_mid, f_psf_45, '.', c=color[2], markersize=2, label='45')
+
+    ax3_1.legend(loc=3, fontsize=6)
+    ax3_2.legend(loc=3, fontsize=6)
+    # ax3_3.legend(loc=3, fontsize=6)
+    ax3_4.legend(loc=3, fontsize=6)
+    ax3_5.legend(loc=3, fontsize=6)
+    ax3_6.legend(loc=3, fontsize=6)
+    ax3_1.set_ylim(0.95, 1.03)
+    ax3_2.set_ylim(0.95, 1.03)
+    # ax3_3.set_ylim(0.95, 1.03)
+    ax3_4.set_ylim(0.95, 1.03)
+    ax3_5.set_ylim(0.95, 1.03)
+    ax3_6.set_ylim(0.95, 1.03)
+    ax3_1.set_xlim(- 0.03, 0.03)
+    ax3_2.set_xlim(- 0.03, 0.03)
+    # ax3_3.set_xlim(- 0.03, 0.03)
+    ax3_4.set_xlim(- 0.03, 0.03)
+    ax3_5.set_xlim(- 0.03, 0.03)
+    ax3_6.set_xlim(- 0.03, 0.03)
+    ax3_2.set_yticklabels([])
+    # ax3_3.set_yticklabels([])
+    ax3_4.set_yticklabels([])
+    ax3_5.set_yticklabels([])
+    ax3_6.set_yticklabels([])
+    ax3_1.set_ylabel('Normalized Flux')
+    ax3_5.text(2.25, 0.5, 'TOI-530 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_5.transAxes, rotation=270, fontweight='semibold')
+    ax3_5.text(2.15, 0.5, 'mag=13.53', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_5.transAxes, rotation=270)
+    #########################################################################
+    # TOI-2406
+    tic = 212957629
+
+    # load QLP
+    qlp_30_t, qlp_30_f = load_qlp(ld=local_directory, tic=tic, sector=30)
+
+    # load eleanor
+    eleanor_3_t, eleanor_3_f_pca, eleanor_3_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=3)
+    eleanor_42_t, eleanor_42_f_pca, eleanor_42_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=42)
+    eleanor_43_t, eleanor_43_f_pca, eleanor_43_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=43)
+
+    # load TGLC
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0003*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_03 = hdul[1].data['time'][q]
+        f_aper_03 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_03 = hdul[1].data['cal_psf_flux'][q]
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0042*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_42 = hdul[1].data['time'][q]
+        f_aper_42 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_42 = hdul[1].data['cal_psf_flux'][q]
+        t_42 = np.mean(t_42[:len(t_42) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_42 = np.mean(f_aper_42[:len(f_aper_42) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_42 = np.mean(f_psf_42[:len(f_psf_42) // 3 * 3].reshape(-1, 3), axis=1)
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-2528453161326406016-s0043*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_43 = hdul[1].data['time'][q]
+        f_aper_43 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_43 = hdul[1].data['cal_psf_flux'][q]
+        t_43 = np.mean(t_43[:len(t_43) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_43 = np.mean(f_aper_43[:len(f_aper_43) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_43 = np.mean(f_psf_43[:len(f_psf_43) // 3 * 3].reshape(-1, 3), axis=1)
+
+    files = glob(local_directory + 'SPOC/TOI-2406/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-2406 b')
+    period = 3.076676
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax4_1 = fig.add_subplot(gs[3, :2])
+    ax4_2 = fig.add_subplot(gs[3, 2:4])
+    # ax4_3 = fig.add_subplot(gs[3, 6:9])
+    ax4_4 = fig.add_subplot(gs[3, 4:6])
+    ax4_5 = fig.add_subplot(gs[3, 6:8])
+    ax4_6 = fig.add_subplot(gs[3, 8:])
+
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax4_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i + 1],
+                       ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax4_2.plot(eleanor_3_t % period / period - phase_fold_mid, eleanor_3_f_pca, '.', c=color[0], markersize=2,
+               label='3')
+    ax4_2.plot(eleanor_42_t % period / period - phase_fold_mid, eleanor_42_f_pca, '.', c=color[1], markersize=2,
+               label='42')
+    ax4_2.plot(eleanor_43_t % period / period - phase_fold_mid, eleanor_43_f_pca, '.', c=color[2], markersize=2,
+               label='43')
+    # ax4_3.plot(eleanor_3_t % period / period - phase_fold_mid, eleanor_3_f_psf, '.', c=color[0], markersize=2,
+    #            label='3')
+    # ax4_3.plot(eleanor_42_t % period / period - phase_fold_mid, eleanor_42_f_psf, '.', c=color[1], markersize=2,
+    #            label='42')
+    # ax4_3.plot(eleanor_43_t % period / period - phase_fold_mid, eleanor_43_f_psf, '.', c=color[2], markersize=2,
+    #            label='43')
+    ax4_4.plot(qlp_30_t % period / period - phase_fold_mid, qlp_30_f, '.', c=color[0], markersize=2, label='30')
+
+    ax4_5.plot(t_03 % period / period - phase_fold_mid, f_aper_03, '.', c=color[0], markersize=2,
+               label='3')
+    ax4_5.plot(t_42 % period / period - phase_fold_mid, f_aper_42, '.', c=color[1], markersize=2,
+               label='42')
+    ax4_5.plot(t_43 % period / period - phase_fold_mid, f_aper_43, '.', c=color[2], markersize=2,
+               label='43')
+
+    ax4_6.plot(t_03 % period / period - phase_fold_mid, f_psf_03, '.', c=color[0], markersize=2,
+               label='3')
+    ax4_6.plot(t_42 % period / period - phase_fold_mid, f_psf_42, '.', c=color[1], markersize=2,
+               label='42')
+    ax4_6.plot(t_43 % period / period - phase_fold_mid, f_psf_43, '.', c=color[2], markersize=2,
+               label='43')
+
+    ax4_1.legend(loc=3, fontsize=6)
+    ax4_2.legend(loc=3, fontsize=6)
+    # ax4_3.legend(loc=3, fontsize=6)
+    ax4_4.legend(loc=3, fontsize=6)
+    ax4_5.legend(loc=3, fontsize=6)
+    ax4_6.legend(loc=3, fontsize=6)
+    ax4_1.set_ylim(0.945, 1.04)
+    ax4_2.set_ylim(0.945, 1.04)
+    # ax4_3.set_ylim(0.945, 1.04)
+    ax4_4.set_ylim(0.945, 1.04)
+    ax4_5.set_ylim(0.945, 1.04)
+    ax4_6.set_ylim(0.945, 1.04)
+    ax4_1.set_xlim(- 0.04, 0.04)
+    ax4_2.set_xlim(- 0.04, 0.04)
+    # ax4_3.set_xlim(- 0.04, 0.04)
+    ax4_4.set_xlim(- 0.04, 0.04)
+    ax4_5.set_xlim(- 0.04, 0.04)
+    ax4_6.set_xlim(- 0.04, 0.04)
+    ax4_1.set_xticks([-0.03, 0, 0.03])
+    ax4_1.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_2.set_xticks([-0.03, 0, 0.03])
+    ax4_2.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    # ax4_3.set_xticks([-0.03, 0, 0.03])
+    # ax4_3.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_4.set_xticks([-0.03, 0, 0.03])
+    ax4_4.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_4.set_xlabel('Phase')
+    ax4_5.set_xticks([-0.03, 0, 0.03])
+    ax4_5.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_6.set_xticks([-0.03, 0, 0.03])
+    ax4_6.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax4_2.set_yticklabels([])
+    # ax4_3.set_yticklabels([])
+    ax4_4.set_yticklabels([])
+    ax4_5.set_yticklabels([])
+    ax4_6.set_yticklabels([])
+    ax4_1.set_ylabel('Normalized Flux')
+    ax4_5.text(2.25, 0.5, 'TOI-2406 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_5.transAxes, rotation=270, fontweight='semibold')
+    ax4_5.text(2.15, 0.5, 'mag=14.31', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_5.transAxes, rotation=270)
+
+    #########################################################################
+    # TOI-519
+    tic = 218795833
+
+    # load eleanor
+    eleanor_7_t, eleanor_7_f_aper, eleanor_7_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=7)
+    eleanor_8_t, eleanor_8_f_aper, eleanor_8_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=8)
+    eleanor_34_t, eleanor_34_f_aper, eleanor_34_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=34)
+
+    # load TGLC
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0007*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_07 = hdul[1].data['time'][q]
+        f_aper_07 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_07 = hdul[1].data['cal_psf_flux'][q]
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0008*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_08 = hdul[1].data['time'][q]
+        f_aper_08 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_08 = hdul[1].data['cal_psf_flux'][q]
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5707485527450614656-s0034*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_34 = hdul[1].data['time'][q]
+        f_aper_34 = hdul[1].data['cal_aper_flux'][q]
+        f_psf_34 = hdul[1].data['cal_psf_flux'][q]
+        t_34 = np.mean(t_34[:len(t_34) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_34 = np.mean(f_aper_34[:len(f_aper_34) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_34 = np.mean(f_psf_34[:len(f_psf_34) // 3 * 3].reshape(-1, 3), axis=1)
+
+
+    files = glob(local_directory + 'SPOC/TOI-519/*.fits')
+    index = np.where(data['pl_name'] == 'TOI-519 b')
+    period = 1.265232
+    t_0 = float(data['pl_tranmid'][index])
+    phase_fold_mid = (t_0 - 2457000) % period / period
+    ax5_1 = fig.add_subplot(gs[4, :2])
+    ax5_2 = fig.add_subplot(gs[4, 2:4])
+    # ax5_3 = fig.add_subplot(gs[4, 6:9])
+    # ax5_4 = fig.add_subplot(gs[4, 9:])
+    ax5_5 = fig.add_subplot(gs[4, 6:8])
+    ax5_6 = fig.add_subplot(gs[4, 8:])
+
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            if hdul[0].header['sector'] == 34:
+                i = i + 1
+            spoc_t = hdul[1].data['TIME']
+            spoc_f = hdul[1].data['PDCSAP_FLUX']
+            spoc_t = np.mean(spoc_t[:len(spoc_t) // 15 * 15].reshape(-1, 15), axis=1)
+            spoc_f = np.mean(spoc_f[:len(spoc_f) // 15 * 15].reshape(-1, 15), axis=1)
+            ax5_1.plot(spoc_t % period / period - phase_fold_mid, spoc_f / np.nanmedian(spoc_f), '.', c=color[i], ms=2,
+                       label=str(hdul[0].header['sector']))
+    ax5_2.plot(eleanor_7_t % period / period - phase_fold_mid, eleanor_7_f_aper, '.', c=color[0], markersize=2,
+               label='7')
+    ax5_2.plot(eleanor_8_t % period / period - phase_fold_mid, eleanor_8_f_aper, '.', c=color[1], markersize=2,
+               label='8')
+    ax5_2.plot(eleanor_34_t % period / period - phase_fold_mid, eleanor_34_f_aper, '.', c=color[2], markersize=2,
+               label='34')
+    # ax5_3.plot(eleanor_7_t % period / period - phase_fold_mid, eleanor_7_f_psf, '.', c=color[0], markersize=2,
+    #            label='7')
+    # ax5_3.plot(eleanor_8_t % period / period - phase_fold_mid, eleanor_8_f_psf, '.', c=color[1], markersize=2,
+    #            label='8')
+    # ax5_3.plot(eleanor_34_t % period / period - phase_fold_mid, eleanor_34_f_psf, '.', c=color[2], markersize=2,
+    #            label='34')
+
+    ax5_5.plot(t_07 % period / period - phase_fold_mid, f_aper_07, '.', c=color[0], markersize=2,
+               label='7')
+    ax5_5.plot(t_08 % period / period - phase_fold_mid, f_aper_08, '.', c=color[1], markersize=2,
+               label='8')
+    ax5_5.plot(t_34 % period / period - phase_fold_mid, f_aper_34, '.', c=color[2], markersize=2,
+               label='34')
+
+    ax5_6.plot(t_07 % period / period - phase_fold_mid, f_psf_07, '.', c=color[0], markersize=2,
+               label='7')
+    ax5_6.plot(t_08 % period / period - phase_fold_mid, f_psf_08, '.', c=color[1], markersize=2,
+               label='8')
+    ax5_6.plot(t_34 % period / period - phase_fold_mid, f_psf_34, '.', c=color[2], markersize=2,
+               label='34')
+
+    ax5_1.legend(loc=3, fontsize=6)
+    ax5_2.legend(loc=3, fontsize=6)
+    # ax5_3.legend(loc=3, fontsize=6)
+    ax5_5.legend(loc=3, fontsize=6)
+    ax5_6.legend(loc=3, fontsize=6)
+    ax5_1.set_ylim(0.83, 1.05)
+    ax5_2.set_ylim(0.83, 1.05)
+    # ax5_3.set_ylim(0.83, 1.05)
+    ax5_5.set_ylim(0.83, 1.05)
+    ax5_6.set_ylim(0.83, 1.05)
+    ax5_1.set_xlim(- 0.05, 0.05)
+    ax5_2.set_xlim(- 0.05, 0.05)
+    # ax5_3.set_xlim(- 0.05, 0.05)
+    ax5_5.set_xlim(- 0.05, 0.05)
+    ax5_6.set_xlim(- 0.05, 0.05)
+    ax5_1.set_yticks([0.9, 1.0])
+    ax5_1.set_yticklabels(['0.90', '1.00'])
+    ax5_1.set_xticks([-0.03, 0, 0.03])
+    ax5_1.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_2.set_xticks([-0.03, 0, 0.03])
+    ax5_2.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    # ax5_3.set_xticks([-0.03, 0, 0.03])
+    # ax5_3.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_5.set_xticks([-0.03, 0, 0.03])
+    ax5_5.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_6.set_xticks([-0.03, 0, 0.03])
+    ax5_6.set_xticklabels(['\N{MINUS SIGN}0.03', '0', '0.03'])
+    ax5_2.set_yticklabels([])
+    # ax5_3.set_yticklabels([])
+    ax5_5.set_yticklabels([])
+    ax5_6.set_yticklabels([])
+    ax5_1.set_xlabel('Phase')
+    ax5_2.set_xlabel('Phase')
+    # ax5_3.set_xlabel('Phase')
+    ax5_5.set_xlabel('Phase')
+    ax5_6.set_xlabel('Phase')
+    ax5_1.set_ylabel('Normalized Flux')
+    ax5_5.text(2.25, 0.5, 'TOI-519 b', horizontalalignment='center',
+               verticalalignment='center', transform=ax5_5.transAxes, rotation=270, fontweight='semibold')
+    ax5_5.text(2.15, 0.5, 'mag=14.43', horizontalalignment='center',
+               verticalalignment='center', transform=ax5_5.transAxes, rotation=270)
+    # ax5_1.set_yticklabels([])
+
+    plt.savefig('/mnt/c/users/tehan/desktop/known_exoplanets_all.png', bbox_inches='tight', dpi=300)
+    plt.show()
+
+
+def figure_10(mode='psf'):
+    type = f'cal_{mode}_flux'
+    # local_directory = '/home/tehan/data/exoplanets/'
+    local_directory = '/home/tehan/data/variables/'
+    os.makedirs(local_directory + f'lc/', exist_ok=True)
+    os.makedirs(local_directory + f'epsf/', exist_ok=True)
+    os.makedirs(local_directory + f'source/', exist_ok=True)
+    hosts = [
+        ('SX Dor', 'Gaia DR2 4662259606266850944'),  # Molnar: RR Lyrae, hard to disdinguish for eleanor
+        ('AV Gru', 'Gaia DR2 6512192214932460416'),  # Plachy: Cepheid, dim and kind of noisy
+        ('TIC 177309964', 'Gaia DR2 5260885172921947008')  # Zhan: Faint rotator
+    ]
+    for i in range(len(hosts)):
+        target = hosts[i][0]  # Target identifier or coordinates TOI-3714
+        print(target)
+        size = 90  # int, suggests big cuts
+        source = ffi_cut(target=target, size=size, local_directory=local_directory)
+        for j in range(len(source.sector_table)):
+            source.select_sector(sector=source.sector_table['sector'][j])
+            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                 name=hosts[i][1], save_aper=True)
+        # plt.imshow(source.flux[0])
+        # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
+        #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
+        # plt.xlim(-0.5, 89.5)
+        # plt.ylim(-0.5, 89.5)
+        # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
+        # plt.show()
+
+
 if __name__ == '__main__':
-    figure_6()
+    figure_10()
