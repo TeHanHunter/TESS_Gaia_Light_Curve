@@ -16,7 +16,7 @@ warnings.simplefilter('ignore', UserWarning)
 
 
 def cut_ffi_(i, sector=1, size=150, local_directory=''):
-    ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory)
+    ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory, producing_mask=True)
 
 
 def ffi_to_source(sector=1, local_directory=''):
@@ -32,6 +32,7 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(f'{local_directory}ffi/', exist_ok=True)
     os.makedirs(f'{local_directory}source/', exist_ok=True)
     os.makedirs(f'{local_directory}log/', exist_ok=True)
+    os.makedirs(f'{local_directory}mask/', exist_ok=True)
 
     with Pool(4) as p:
         p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
@@ -41,5 +42,5 @@ def ffi_to_source(sector=1, local_directory=''):
 
 
 if __name__ == '__main__':
-    sector = 3
+    sector = 1
     ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:04d}/')

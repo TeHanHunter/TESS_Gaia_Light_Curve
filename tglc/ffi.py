@@ -219,7 +219,7 @@ class Source(object):
         self.gaia = catalogdata
 
 
-def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
+def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
@@ -264,7 +264,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory=''):
     # for i in range(len(time)):
     #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
     #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
-    mask = background_mask(im=np.mean(flux, axis=0))
+    if producing_mask:
+        mask = background_mask(im=np.median(flux, axis=0))
+        np.save(f'{local_directory}mask/mask_sector{sector}_cam{camera}_ccd{ccd}.npy', mask)
+        return
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
