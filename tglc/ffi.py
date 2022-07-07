@@ -266,7 +266,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
     if producing_mask:
         mask = background_mask(im=np.median(flux, axis=0))
-        np.save(f'{local_directory}mask/mask_sector{sector}_cam{camera}_ccd{ccd}.npy', mask)
+        np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
         return
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
