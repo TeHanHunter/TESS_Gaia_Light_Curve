@@ -2091,7 +2091,7 @@ def figure_9():
 
 def figure_10(mode='psf'):
     type = f'cal_{mode}_flux'
-    # local_directory = '/home/tehan/data/exoplanets/'
+    size = 90
     local_directory = '/home/tehan/data/variables/'
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
@@ -2101,23 +2101,33 @@ def figure_10(mode='psf'):
         ('AV Gru', 'Gaia DR2 6512192214932460416'),  # Plachy: Cepheid, dim and kind of noisy
         ('TIC 177309964', 'Gaia DR2 5260885172921947008')  # Zhan: Faint rotator
     ]
-    for i in range(len(hosts)):
-        target = hosts[i][0]  # Target identifier or coordinates TOI-3714
-        print(target)
-        size = 90  # int, suggests big cuts
-        source = ffi_cut(target=target, size=size, local_directory=local_directory)
-        for j in range(len(source.sector_table)):
-            source.select_sector(sector=source.sector_table['sector'][j])
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=hosts[i][1], save_aper=True)
-        # plt.imshow(source.flux[0])
-        # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
-        #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
-        # plt.xlim(-0.5, 89.5)
-        # plt.ylim(-0.5, 89.5)
-        # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
-        # plt.show()
+    #####################
+    sector = 1
+    source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+    epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[0][1], save_aper=True)
 
+    sector = 10
+    source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+    epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[0][1], save_aper=True)
+
+    sector = 32
+    source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+    epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[0][1], save_aper=True)
+
+    #####################
+    sector = 1
+    source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+    epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
+             name=hosts[1][1], save_aper=True)
+
+    #####################
+    sector = 1
+    source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+    epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
+             name=hosts[2][1], save_aper=True)
 
 if __name__ == '__main__':
     figure_10()
