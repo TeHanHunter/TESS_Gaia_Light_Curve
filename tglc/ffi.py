@@ -88,8 +88,8 @@ def background_mask(im=None):
     satfactor = 0.4
     ok *= im < satfactor * np.amax(im)
     running_factor = 1
-    cal_factor = np.zeros(im.shape)
-    cal_factor[:, 0] = 1
+    cal_factor = np.zeros(im.shape[1])
+    cal_factor[0] = 1
 
     di = 1
     i = 0
@@ -98,15 +98,15 @@ def background_mask(im=None):
         coef = np.median(im[:, i + di][_ok] / im[:, i][_ok])
         if 0.5 < coef < 2:
             running_factor *= coef
-            cal_factor[:, i + di] = running_factor
+            cal_factor[i + di] = running_factor
             i += di
             di = 1  # Reset the stepsize to one.
         else:
             # Label the column as bad, then skip it.
-            cal_factor[:, i + di] = 0
+            cal_factor[i + di] = 0
             di += 1
 
-    cal_factor[im > 0.4 * np.amax(im)] = 0
+    # cal_factor[im > 0.4 * np.amax(im)] = 0
     return cal_factor
 
 
@@ -265,7 +265,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
     #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
     if producing_mask:
-        mask = background_mask(im=np.median(flux, axis=0))
+        im = flux
+        for i in range(len(time)):
+            im[i] /= ndimage.median_filter(im[i], size=(1, 51))
+        mask = background_mask(im=np.median(im, axis=0))
         np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
         return
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
