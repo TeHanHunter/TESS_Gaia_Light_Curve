@@ -15,8 +15,20 @@ logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
 warnings.simplefilter('ignore', UserWarning)
 
 
+def median_mask():
+    sector_num = 8
+    mask = np.ones((sector_num, 16, 2048))
+    for i in range(sector_num):
+        for j in range(16):
+            mask[i, j] = np.load(
+                f'/home/tehan/data/sector{i + 1:04d}/mask/mask_sector{i + 1:04d}_cam{1 + j // 4}_ccd{1 + j % 4}.npy')
+    med_mask = np.median(mask, axis=0)
+    return med_mask
+
+
 def cut_ffi_(i, sector=1, size=150, local_directory=''):
-    ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory, producing_mask=True)
+    ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory,
+        producing_mask=True)
 
 
 def ffi_to_source(sector=1, local_directory=''):
