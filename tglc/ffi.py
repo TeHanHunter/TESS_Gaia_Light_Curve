@@ -267,9 +267,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
 
     if producing_mask:
         median_flux = np.median(flux, axis=0)
-        median_filt = ndimage.median_filter(median_flux, size=(1, 51))
-        median_flux /= median_filt
         mask = background_mask(im=median_flux)
+        mask /= ndimage.median_filter(mask, size=51)
         np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
         return
 
