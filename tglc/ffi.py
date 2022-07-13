@@ -260,8 +260,6 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
-    print(np.max(time_order))
-    print(len(input_files))
     flux = flux[time_order, :, :]
     # mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
     # for i in range(len(time)):
@@ -275,7 +273,9 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
         np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
         return
     # load mask
-    mask = pkg_resources.resource_stream(__name__, f'background_mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy')
+    mask = pkg_resources.resource_stream(__name__, f'background_mask/median_mask.fits')
+    mask = fits.open(mask)[0].data[(camera - 1) * 4 + (ccd - 1), :]
+    mask = np.repeat(mask.reshape(1, 2048), repeats=2048, axis=0)
     # TODO: finish this
     med_flux = np.median(flux, axis=0)
     mask[med_flux > 0.8 * np.nanmax(med_flux)] = 0
