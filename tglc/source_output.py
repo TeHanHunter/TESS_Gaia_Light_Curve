@@ -15,8 +15,7 @@ logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
 warnings.simplefilter('ignore', UserWarning)
 
 
-def median_mask():
-    sector_num = 8
+def median_mask(sector_num=10):
     mask = np.ones((sector_num, 16, 2048))
     for i in range(sector_num):
         for j in range(16):

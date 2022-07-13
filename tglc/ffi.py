@@ -5,6 +5,7 @@ import json
 import requests
 from urllib.parse import quote as urlencode
 import pickle
+import pkg_resources
 import numpy as np
 from scipy import ndimage
 import astroquery.mast
@@ -259,6 +260,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 flux[i] = hdul[1].data[0:2048, 44:2092]  # TODO: might be different for other CCD: seems the same
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
+    print(np.max(time_order))
+    print(len(input_files))
     flux = flux[time_order, :, :]
     # mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
     # for i in range(len(time)):
@@ -271,6 +274,13 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
         mask /= ndimage.median_filter(mask, size=51)
         np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
         return
+    # load mask
+    mask = pkg_resources.resource_stream(__name__, f'background_mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy')
+    # TODO: finish this
+    med_flux = np.median(flux, axis=0)
+    mask[med_flux > 0.8 * np.nanmax(med_flux)] = 0
+    mask[med_flux < 0.2 * np.nanmedian(med_flux)] = 0
+    mask[np.isnan(med_flux)] = 0
 
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)
