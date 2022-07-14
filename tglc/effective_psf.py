@@ -197,7 +197,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
     index = coord[down_11:up_11, left_11:right_11]
 
-    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
+    A = np.zeros((psf_size ** 2, over_size ** 2 + 6))
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
     psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
