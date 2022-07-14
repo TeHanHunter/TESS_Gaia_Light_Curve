@@ -2127,7 +2127,7 @@ def figure_10():
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[2][1], save_aper=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(5, 8))
+    fig = plt.figure(constrained_layout=False, figsize=(5, 5))
     gs = fig.add_gridspec(3, 2)
     gs.update(wspace=0.3, hspace=0.3)
     local_directory = '/home/tehan/data/variables/'
