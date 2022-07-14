@@ -66,14 +66,14 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     x_p = np.arange(size)
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
-    A = np.zeros((size ** 2, over_size ** 2 + 6))
+    A = np.zeros((size ** 2, over_size ** 2 + 4))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
     A[:, -1] = np.ones(size ** 2)
     A[:, -2] = yy.flatten()
     A[:, -3] = xx.flatten()
     A[:, -4] = source.mask.flatten()
-    A[:, -5] = (source.mask * xx).flatten()
-    A[:, -6] = (source.mask * yy).flatten()
+    # A[:, -5] = (source.mask * xx).flatten()
+    # A[:, -6] = (source.mask * yy).flatten()
     star_info = []
     for i in range(len(source.gaia)):
         x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
@@ -92,7 +92,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
     A_mod = np.diag(dist.flatten())
-    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 6)))), axis=-1)
+    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 4)))), axis=-1)
     A = np.append(A, A_mod, axis=0)
     return A, star_info, over_size, x_round, y_round
 

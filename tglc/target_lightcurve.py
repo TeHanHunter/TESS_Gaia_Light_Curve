@@ -207,7 +207,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         e_psf = np.load(epsf_loc)
         print(f'Loaded ePSF {target} from directory. ')
     else:
-        e_psf = np.zeros((len(source.time), over_size ** 2 + 6))
+        e_psf = np.zeros((len(source.time), over_size ** 2 + 4))
         for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
@@ -217,7 +217,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         np.save(epsf_loc, e_psf)
 
     # TODO: quality use which background?
-    background = np.dot(A[:source.size ** 2, -6:], e_psf[:, -6:].T)
+    background = np.dot(A[:source.size ** 2, -4:], e_psf[:, -4:].T)
     quality_raw = np.zeros(len(source.time), dtype=np.int16)
     sigma = 1.4826 * np.nanmedian(np.abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])))
     quality_raw[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= 3 * sigma] += 1

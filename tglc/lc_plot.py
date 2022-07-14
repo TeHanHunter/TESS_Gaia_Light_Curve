@@ -2138,8 +2138,8 @@ def figure_10():
                    mode='denywrite') as hdul:
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_02 = hdul[1].data['time'][q]
-        f_psf_02 = hdul[1].data['psf_flux'][q]
-        f_aper_02 = hdul[1].data['aperture_flux'][q]
+        f_psf_02 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_02 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
                    mode='denywrite') as hdul:
@@ -2157,11 +2157,11 @@ def figure_10():
 
     ax1_1 = fig.add_subplot(gs[0, 0])
     ax1_2 = fig.add_subplot(gs[0, 1])
-    ax1_1.plot(t_02, f_aper_02, '.', c=color[0], markersize=1, label='2')
+    ax1_1.plot(t_02 % period, f_aper_02, '.', c=color[0], markersize=1, label='2')
     # ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
     # ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
 
-    ax1_2.plot(t_02, f_psf_02, '.', c=color[0], markersize=1, label='2')
+    ax1_2.plot(t_02 % period, f_psf_02, '.', c=color[0], markersize=1, label='2')
     # ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
     # ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
     ax1_1.legend(loc=3, fontsize=6)
