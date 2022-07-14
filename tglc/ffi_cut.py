@@ -6,6 +6,7 @@ from tglc.ffi import *
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+warnings.simplefilter('ignore', UserWarning)
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
