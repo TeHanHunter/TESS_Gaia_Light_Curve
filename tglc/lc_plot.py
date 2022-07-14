@@ -2157,18 +2157,18 @@ def figure_10():
 
     ax1_1 = fig.add_subplot(gs[0, 0])
     ax1_2 = fig.add_subplot(gs[0, 1])
-    ax1_1.plot(t_02, f_aper_02, '.', c=color[0], markersize=1, label='2')
+    ax1_1.plot(t_02 % period, f_aper_02, '.', c=color[0], markersize=1, label='2')
     # ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
     # ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
 
-    ax1_2.plot(t_02, f_psf_02, '.', c=color[0], markersize=1, label='2')
+    ax1_2.plot(t_02 % period, f_psf_02, '.', c=color[0], markersize=1, label='2')
     # ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
     # ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
     ax1_1.legend(loc=3, fontsize=6)
     ax1_2.legend(loc=3, fontsize=6)
 
     ##########
-    period = 0.63150
+    period = 1.00581
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
                    mode='denywrite') as hdul:
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
@@ -2186,18 +2186,18 @@ def figure_10():
     ax2_1 = fig.add_subplot(gs[1, 0])
     ax2_2 = fig.add_subplot(gs[1, 1])
 
-    ax2_1.plot(t_01, f_aper_01, '.', c=color[0], markersize=1, label='1')
+    ax2_1.plot(t_01 % period, f_aper_01, '.', c=color[0], markersize=1, label='1')
     # ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
     # ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
 
-    ax2_2.plot(t_01, f_psf_01, '.', c=color[0], markersize=1, label='1')
+    ax2_2.plot(t_01 % period, f_psf_01, '.', c=color[0], markersize=1, label='1')
     # ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
     # ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
     ax2_1.legend(loc=3, fontsize=6)
     ax2_2.legend(loc=3, fontsize=6)
 
     ##########
-    period = 0.63150
+    period = 10.881 / 24
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0004*.fits')[0],
                    mode='denywrite') as hdul:
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
@@ -2221,11 +2221,11 @@ def figure_10():
     ax3_1 = fig.add_subplot(gs[2, 0])
     ax3_2 = fig.add_subplot(gs[2, 1])
 
-    ax3_1.plot(t_04, f_aper_04, '.', c=color[0], markersize=1, label='4')
+    ax3_1.plot(t_04 % period, f_aper_04, '.', c=color[0], markersize=1, label='4')
     # ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
     # ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
 
-    ax3_2.plot(t_04, f_psf_04, '.', c=color[0], markersize=1, label='4')
+    ax3_2.plot(t_04 % period, f_psf_04, '.', c=color[0], markersize=1, label='4')
     # ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
     # ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
     ax3_1.legend(loc=3, fontsize=6)
