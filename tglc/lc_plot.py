@@ -17,6 +17,7 @@ from tglc.target_lightcurve import *
 from tglc.ffi_cut import *
 from scipy import ndimage
 
+
 def load_eleanor(ld='', tic=1, sector=1):
     eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_pca.npy')
     eleanor_psf = np.load(ld + f'eleanor/TIC {tic}_{sector}_psf.npy')
@@ -48,6 +49,7 @@ def load_qlp(ld='', tic=1, sector=1):
         qlp_t = np.mean(qlp_t[:len(qlp_t) // 3 * 3].reshape(-1, 3), axis=1)
         qlp_f = np.mean(qlp_f[:len(qlp_f) // 3 * 3].reshape(-1, 3), axis=1)
     return qlp_t, qlp_f
+
 
 def load_ztf(ld='', index=1):
     data = ascii.read(ld + f'ZTF/{index}_g.csv')
@@ -1368,7 +1370,8 @@ def figure_8():
     ax2_3 = fig.add_subplot(gs[1, 6:9])
     ax2_4 = fig.add_subplot(gs[1, 9:])
     ax2_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
-    ax2_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax2_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2,
+               label='ZTF g-band')
     ax2_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
                   edgecolors='orangered', s=3, label='ZTF r-band')
     ax2_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
@@ -1407,7 +1410,8 @@ def figure_8():
     ax3_3 = fig.add_subplot(gs[2, 6:9])
     # ax3_4 = fig.add_subplot(gs[2, 9:])
     ax3_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
-    ax3_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax3_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2,
+               label='ZTF g-band')
     ax3_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
                   edgecolors='orangered', s=3, label='ZTF r-band')
     ax3_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
@@ -1443,7 +1447,8 @@ def figure_8():
     ax4_3 = fig.add_subplot(gs[3, 6:9])
     # ax4_4 = fig.add_subplot(gs[3, 9:])
     ax4_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3)
-    ax4_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax4_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2,
+               label='ZTF g-band')
     ax4_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
                   edgecolors='orangered', s=3, label='ZTF r-band')
     ax4_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
@@ -1479,7 +1484,8 @@ def figure_8():
     ax5_3 = fig.add_subplot(gs[4, 6:9])
     # ax5_4 = fig.add_subplot(gs[4, 9:])
     ax5_1.plot(t % period / period, f, '.', c='k', markersize=1, zorder=3, label='TESS FFI')
-    ax5_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2, label='ZTF g-band')
+    ax5_1.plot(ztf_g_t % period / period, ztf_g_flux / np.median(ztf_g_flux), 'x', color='green', ms=2,
+               label='ZTF g-band')
     ax5_1.scatter(ztf_r_t % period / period, ztf_r_flux / np.median(ztf_r_flux), facecolors='none',
                   edgecolors='orangered', s=3, label='ZTF r-band')
     ax5_2.plot(eleanor_t % period / period, eleanor_f_pca, '.', c='k', markersize=1)
@@ -1992,7 +1998,6 @@ def figure_9():
         f_aper_34 = np.mean(f_aper_34[:len(f_aper_34) // 3 * 3].reshape(-1, 3), axis=1)
         f_psf_34 = np.mean(f_psf_34[:len(f_psf_34) // 3 * 3].reshape(-1, 3), axis=1)
 
-
     files = glob(local_directory + 'SPOC/TOI-519/*.fits')
     index = np.where(data['pl_name'] == 'TOI-519 b')
     period = 1.265232
@@ -2103,25 +2108,26 @@ def figure_10(mode='psf'):
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
-    sectors = [2,11,38]
+    sectors = [2, 11, 38]
     for sector in sectors:
         source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-                 name=hosts[0][1], save_aper=True)
+             name=hosts[0][1], save_aper=True)
 
     #####################
     sectors = [1, 28]
     for sector in sectors:
         source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[0][1], save_aper=True)
+             name=hosts[1][1], save_aper=True)
 
     #####################
     sectors = [4, 12, 30]
     for sector in sectors:
-        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[0][1], save_aper=True)
+             name=hosts[2][1], save_aper=True)
+
 
 if __name__ == '__main__':
     figure_10()
