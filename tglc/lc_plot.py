@@ -2126,34 +2126,34 @@ def figure_10():
     #     source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[2][1], save_aper=True)
-    #
-    # fig = plt.figure(constrained_layout=False, figsize=(5, 5))
-    # gs = fig.add_gridspec(3, 2)
-    # gs.update(wspace=0.3, hspace=0.3)
-    # local_directory = '/home/tehan/data/variables/'
-    # color = ['C0', 'C1', 'C3']
-    # ##########
-    # period = 0.63150
-    # with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0002*.fits')[0],
-    #                mode='denywrite') as hdul:
-    #     q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-    #     t_02 = hdul[1].data['time'][q]
-    #     f_psf_02 = hdul[1].data['cal_psf_flux'][q]
-    #     f_aper_02 = hdul[1].data['cal_aper_flux'][q]
-    #
-    # with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
-    #                mode='denywrite') as hdul:
-    #     q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-    #     t_11 = hdul[1].data['time'][q]
-    #     f_psf_11 = hdul[1].data['cal_psf_flux'][q]
-    #     f_aper_11 = hdul[1].data['cal_aper_flux'][q]
-    #
-    # with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0038*.fits')[0],
-    #                mode='denywrite') as hdul:
-    #     q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-    #     t_38 = hdul[1].data['time'][q]
-    #     f_psf_38 = hdul[1].data['cal_psf_flux'][q]
-    #     f_aper_38 = hdul[1].data['cal_aper_flux'][q]
+
+    fig = plt.figure(constrained_layout=False, figsize=(5, 5))
+    gs = fig.add_gridspec(3, 2)
+    gs.update(wspace=0.3, hspace=0.3)
+    local_directory = '/home/tehan/data/variables/'
+    color = ['C0', 'C1', 'C3']
+    ##########
+    period = 0.63150
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0002*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_02 = hdul[1].data['time'][q]
+        f_psf_02 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_02 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_11 = hdul[1].data['time'][q]
+        f_psf_11 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_11 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0038*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_38 = hdul[1].data['time'][q]
+        f_psf_38 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_38 = hdul[1].data['cal_aper_flux'][q]
 
     ax1_1 = fig.add_subplot(gs[0, 0])
     ax1_2 = fig.add_subplot(gs[0, 1])
