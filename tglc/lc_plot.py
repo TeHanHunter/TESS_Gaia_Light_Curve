@@ -2233,4 +2233,4 @@ def figure_10():
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
-    figure_10()
+    figure_6()
