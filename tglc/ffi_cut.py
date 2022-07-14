@@ -102,11 +102,11 @@ class Source_cut(object):
         self.flux_err = data_flux_err
         self.quality = np.zeros(len(data_time))
 
-        mask = np.ones(np.shape(data_flux))
-        for i in trange(len(data_time)):
-            mask[i][data_flux[i] > 0.8 * np.nanmax(data_flux[i])] = 0
-            mask[i][data_flux[i] < 0.2 * np.nanmedian(data_flux[i])] = 0
-            mask[i][np.isnan(mask[i])] = 0
+        mask = np.ones(np.shape(data_flux[0]))
+        med_flux = np.median(data_flux, axis=0)
+        mask[med_flux > 0.8 * np.nanmax(med_flux)] = 0
+        mask[med_flux < 0.2 * np.nanmedian(med_flux)] = 0
+        mask[np.isnan(med_flux)] = 0
         self.mask = mask
 
         gaia_targets = self.catalogdata[
