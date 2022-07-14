@@ -6,7 +6,6 @@ from tglc.ffi import *
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-warnings.simplefilter('ignore', UserWarning)
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
@@ -112,6 +111,9 @@ class Source_cut(object):
 
         gaia_targets = self.catalogdata[
             'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
+        gaia_targets['phot_bp_mean_mag'].fill_value = np.nan
+        gaia_targets['phot_rp_mean_mag'].fill_value = np.nan
+        gaia_targets = gaia_targets.filled()
         num_gaia = len(gaia_targets)
         # tic_id = np.zeros(num_gaia)
         x_gaia = np.zeros(num_gaia)
