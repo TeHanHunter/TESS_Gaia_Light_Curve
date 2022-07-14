@@ -2094,8 +2094,7 @@ def figure_9():
     plt.show()
 
 
-def figure_10(mode='psf'):
-    type = f'cal_{mode}_flux'
+def figure_10():
     size = 90
     local_directory = '/home/tehan/data/variables/'
     os.makedirs(local_directory + f'lc/', exist_ok=True)
@@ -2128,6 +2127,47 @@ def figure_10(mode='psf'):
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
              name=hosts[2][1], save_aper=True)
 
+    fig = plt.figure(constrained_layout=False, figsize=(5, 8))
+    gs = fig.add_gridspec(2, 3)
+    gs.update(wspace=0.3, hspace=0.3)
+    local_directory = '/home/tehan/data/variables/'
+    color = ['C0', 'C1', 'C3']
+    ##########
+    period = 0.63150
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0002*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_02 = hdul[1].data['time'][q]
+        f_psf_02 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_02 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_11 = hdul[1].data['time'][q]
+        f_psf_11 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_11 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0038*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_38 = hdul[1].data['time'][q]
+        f_psf_38 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_38 = hdul[1].data['cal_aper_flux'][q]
+
+    ax1_1 = fig.add_subplot(gs[0, 0])
+    ax1_2 = fig.add_subplot(gs[0, 1])
+    ax1_1.plot(t_02 % period / period, f_aper_02, '.', c=color[0], markersize=2, label='2')
+    ax1_1.plot(t_11 % period / period, f_aper_11, '.', c=color[1], markersize=2, label='11')
+    ax1_1.plot(t_38 % period / period, f_aper_38, '.', c=color[2], markersize=2, label='38')
+
+    ax1_2.plot(t_02 % period / period, f_psf_02, '.', c=color[0], markersize=2, label='2')
+    ax1_2.plot(t_11 % period / period, f_psf_11, '.', c=color[1], markersize=2, label='11')
+    ax1_2.plot(t_38 % period / period, f_psf_38, '.', c=color[2], markersize=2, label='38')
+    ax1_1.legend(loc=3, fontsize=6)
+    ax1_2.legend(loc=3, fontsize=6)
+
+    plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
     figure_10()
