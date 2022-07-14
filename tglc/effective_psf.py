@@ -66,12 +66,12 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     x_p = np.arange(size)
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
-    A = np.zeros((size ** 2, over_size ** 2 + 4))
+    A = np.zeros((size ** 2, over_size ** 2 + 3))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    A[:, -1] = np.zeros(size ** 2)
+    A[:, -1] = source.mask.flatten()
     A[:, -2] = yy.flatten()
     A[:, -3] = xx.flatten()
-    A[:, -4] = source.mask.flatten()
+    # A[:, -4] = np.ones(size ** 2)
     # A[:, -5] = (source.mask * xx).flatten()
     # A[:, -6] = (source.mask * yy).flatten()
     star_info = []
@@ -92,7 +92,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
     A_mod = np.diag(dist.flatten())
-    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 4)))), axis=-1)
+    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 3)))), axis=-1)
     A = np.append(A, A_mod, axis=0)
     return A, star_info, over_size, x_round, y_round
 
@@ -197,7 +197,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
     index = coord[down_11:up_11, left_11:right_11]
 
-    A = np.zeros((psf_size ** 2, over_size ** 2 + 4))
+    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
     psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
@@ -207,7 +207,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # plt.show()
     psf_lc = np.zeros(len(source.time))
     size = 5
-    A_ = np.zeros((size ** 2, 4))
+    A_ = np.zeros((size ** 2, 3))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2),
                          (np.arange(size) - (size - 1) / 2))
     A_[:, -1] = np.ones(size ** 2)
