@@ -2167,10 +2167,69 @@ def figure_10():
     ax1_1.legend(loc=3, fontsize=6)
     ax1_2.legend(loc=3, fontsize=6)
 
+    ##########
+    period = 0.63150
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_01 = hdul[1].data['time'][q]
+        f_psf_01 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_01 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0028*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_28 = hdul[1].data['time'][q]
+        f_psf_28 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_28 = hdul[1].data['cal_aper_flux'][q]
+
     ax2_1 = fig.add_subplot(gs[1, 0])
     ax2_2 = fig.add_subplot(gs[1, 1])
+
+    ax2_1.plot(t_01, f_aper_01, '.', c=color[0], markersize=1, label='1')
+    # ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
+    # ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
+
+    ax2_2.plot(t_01, f_psf_01, '.', c=color[0], markersize=1, label='1')
+    # ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
+    # ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
+    ax2_1.legend(loc=3, fontsize=6)
+    ax2_2.legend(loc=3, fontsize=6)
+
+    ##########
+    period = 0.63150
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0004*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_04 = hdul[1].data['time'][q]
+        f_psf_04 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_04 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0012*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_12 = hdul[1].data['time'][q]
+        f_psf_12 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_12 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0030*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_30 = hdul[1].data['time'][q]
+        f_psf_30 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_30 = hdul[1].data['cal_aper_flux'][q]
     ax3_1 = fig.add_subplot(gs[2, 0])
     ax3_2 = fig.add_subplot(gs[2, 1])
+
+    ax3_1.plot(t_04, f_aper_04, '.', c=color[0], markersize=1, label='4')
+    # ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
+    # ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
+
+    ax3_2.plot(t_04, f_psf_04, '.', c=color[0], markersize=1, label='4')
+    # ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
+    # ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
+    ax3_1.legend(loc=3, fontsize=6)
+    ax3_2.legend(loc=3, fontsize=6)
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
