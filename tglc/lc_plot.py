@@ -2127,9 +2127,9 @@ def figure_10():
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[2][1], save_aper=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(5, 5))
+    fig = plt.figure(constrained_layout=False, figsize=(6, 5))
     gs = fig.add_gridspec(3, 2)
-    gs.update(wspace=0.3, hspace=0.3)
+    gs.update(wspace=0.2, hspace=0.2)
     local_directory = '/home/tehan/data/variables/'
     color = ['C0', 'C1', 'C3']
     ##########
@@ -2164,9 +2164,11 @@ def figure_10():
     ax1_2.plot(t_02 % period / period, f_psf_02, '.', c=color[0], markersize=1, label='2')
     ax1_2.plot(t_11 % period / period, f_psf_11, '.', c=color[1], markersize=1, label='11')
     ax1_2.plot(t_38 % period / period, f_psf_38, '.', c=color[2], markersize=1, label='38')
-    ax1_1.legend(loc=3, fontsize=6)
-    ax1_2.legend(loc=3, fontsize=6)
+    ax1_1.legend(loc=1, fontsize=6)
+    ax1_2.legend(loc=1, fontsize=6)
 
+    ax1_1.set_title('TGLC aperture')
+    ax1_1.set_title('TGLC PSF')
     ##########
     period = 1.00581
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
@@ -2191,8 +2193,8 @@ def figure_10():
 
     ax2_2.plot(t_01 % period / period, f_psf_01, '.', c=color[0], markersize=1, label='1')
     ax2_2.plot(t_28 % period / period, f_psf_28, '.', c=color[1], markersize=1, label='28')
-    ax2_1.legend(loc=3, fontsize=6)
-    ax2_2.legend(loc=3, fontsize=6)
+    ax2_1.legend(loc=1, fontsize=6)
+    ax2_2.legend(loc=1, fontsize=6)
 
     ##########
     period = 10.881 / 24
@@ -2226,8 +2228,8 @@ def figure_10():
     ax3_2.plot(t_04 % period / period, f_psf_04, '.', c=color[0], markersize=1, label='4')
     ax3_2.plot(t_12 % period / period, f_psf_12, '.', c=color[1], markersize=1, label='12')
     ax3_2.plot(t_30 % period / period, f_psf_30, '.', c=color[2], markersize=1, label='30')
-    ax3_1.legend(loc=3, fontsize=6)
-    ax3_2.legend(loc=3, fontsize=6)
+    ax3_1.legend(loc=1, fontsize=6)
+    ax3_2.legend(loc=1, fontsize=6)
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
