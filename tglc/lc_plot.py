@@ -2157,16 +2157,20 @@ def figure_10():
 
     ax1_1 = fig.add_subplot(gs[0, 0])
     ax1_2 = fig.add_subplot(gs[0, 1])
-    ax1_1.plot(t_02 % period / period, f_aper_02, '.', c=color[0], markersize=2, label='2')
-    ax1_1.plot(t_11 % period / period, f_aper_11, '.', c=color[1], markersize=2, label='11')
-    ax1_1.plot(t_38 % period / period, f_aper_38, '.', c=color[2], markersize=2, label='38')
+    ax1_1.plot(t_02, f_aper_02, '.', c=color[0], markersize=1, label='2')
+    ax1_1.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
+    ax1_1.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
 
-    ax1_2.plot(t_02 % period / period, f_psf_02, '.', c=color[0], markersize=2, label='2')
-    ax1_2.plot(t_11 % period / period, f_psf_11, '.', c=color[1], markersize=2, label='11')
-    ax1_2.plot(t_38 % period / period, f_psf_38, '.', c=color[2], markersize=2, label='38')
+    ax1_2.plot(t_02, f_psf_02, '.', c=color[0], markersize=1, label='2')
+    ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
+    ax1_2.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
     ax1_1.legend(loc=3, fontsize=6)
     ax1_2.legend(loc=3, fontsize=6)
 
+    ax2_1 = fig.add_subplot(gs[1, 0])
+    ax2_2 = fig.add_subplot(gs[1, 1])
+    ax3_1 = fig.add_subplot(gs[2, 0])
+    ax3_2 = fig.add_subplot(gs[2, 1])
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
