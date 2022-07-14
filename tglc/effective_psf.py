@@ -68,7 +68,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     coord = np.arange(size ** 2).reshape(size, size)
     A = np.zeros((size ** 2, over_size ** 2 + 4))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    A[:, -1] = np.ones(size ** 2)
+    A[:, -1] = np.zeros(size ** 2)
     A[:, -2] = yy.flatten()
     A[:, -3] = xx.flatten()
     A[:, -4] = source.mask.flatten()
