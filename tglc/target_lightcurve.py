@@ -207,7 +207,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         e_psf = np.load(epsf_loc)
         print(f'Loaded ePSF {target} from directory. ')
     else:
-        e_psf = np.zeros((len(source.time), over_size ** 2 + 3))
+        e_psf = np.zeros((len(source.time), over_size ** 2 + 6))
         for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
