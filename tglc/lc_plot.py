@@ -2138,8 +2138,10 @@ def figure_10():
                    mode='denywrite') as hdul:
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_02 = hdul[1].data['time'][q]
-        f_psf_02 = hdul[1].data['cal_psf_flux'][q]
+        f_psf_02 = hdul[1].data['psf_flux'][q]
+        f_psf_02 = f_psf_02 + hdul[1].header['LOC_BG']
         f_aper_02 = hdul[1].data['cal_aper_flux'][q]
+
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
                    mode='denywrite') as hdul:
