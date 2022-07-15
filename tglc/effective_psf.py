@@ -264,11 +264,11 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
     aperture_bar = bar * portion
     local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
-    aper_lc = aper_lc - local_bg
+    # aper_lc = aper_lc - local_bg
     if near_edge:
         return local_bg, aper_lc, psf_lc
     # print(local_bg / aperture_bar)
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
-    psf_lc = psf_lc - local_bg
+    # psf_lc = psf_lc - local_bg
     return local_bg, aper_lc, psf_lc
