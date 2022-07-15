@@ -220,12 +220,19 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A_[:, -1] = np.ones(size ** 2)
     A_[:, -2] = yy.flatten()
     A_[:, -3] = xx.flatten()
+    edge_pixel = [0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24]
+    med_aperture = np.median(aperture, axis=0).flatten()
+    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 2 * np.std(
+        med_aperture[edge_pixel])
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
             psf_lc[j] = np.nan
         else:
-            A_[:, 0] = psf_sim[j, :, :].flatten() / np.nansum(psf_sim[j, :, :])
-            psf_lc[j] = np.linalg.lstsq(A_, aperture[j, :, :].flatten())[0][0]
+            aper_flat = aperture[j, :, :].flatten()
+            A_[:, 0] = psf_sim[j, :, :].flatten() / np.nansum(psf_shape[j, :, :])
+            A_ = np.delete(A_, outliers, 0)
+            aper_flat = np.delete(aper_flat, outliers)
+            psf_lc[j] = np.linalg.lstsq(A_, aper_flat)[0][0]
     portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_sim)
     return aperture, psf_lc, y - down, x - left, portion
 
