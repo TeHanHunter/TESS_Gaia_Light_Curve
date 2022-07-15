@@ -2223,11 +2223,11 @@ def figure_10():
 
     ax3_1.plot(t_04 % period / period, f_aper_04, '.', c=color[0], markersize=1, label='4')
     ax3_1.plot(t_12 % period / period, f_aper_12, '.', c=color[1], markersize=1, label='12')
-    ax3_1.plot(t_31 % period / period, f_aper_31, '.', c=color[2], markersize=1, label='30')
+    ax3_1.plot(t_31 % period / period, f_aper_31, '.', c=color[2], markersize=1, label='31')
 
     ax3_2.plot(t_04 % period / period, f_psf_04, '.', c=color[0], markersize=1, label='4')
     ax3_2.plot(t_12 % period / period, f_psf_12, '.', c=color[1], markersize=1, label='12')
-    ax3_2.plot(t_31 % period / period, f_psf_31, '.', c=color[2], markersize=1, label='30')
+    ax3_2.plot(t_31 % period / period, f_psf_31, '.', c=color[2], markersize=1, label='31')
     ax3_1.legend(loc=1, fontsize=6)
     ax3_2.legend(loc=1, fontsize=6)
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
