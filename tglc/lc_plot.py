@@ -2196,7 +2196,7 @@ def figure_10():
         t_28 = hdul[1].data['time'][q]
         f_psf_28 = hdul[1].data['cal_psf_flux'][q]
         f_psf_28 = f_psf_28 + hdul[1].header['LOC_BG']
-        f_psf_28 = flatten(t_01, f_psf_28 / np.nanmedian(f_psf_28), window_length=1, method='biweight',
+        f_psf_28 = flatten(t_28, f_psf_28 / np.nanmedian(f_psf_28), window_length=1, method='biweight',
                            return_trend=False)
         f_aper_28 = hdul[1].data['cal_aper_flux'][q]
 
