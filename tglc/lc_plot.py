@@ -2138,7 +2138,7 @@ def figure_10():
                    mode='denywrite') as hdul:
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_02 = hdul[1].data['time'][q]
-        f_psf_02 = hdul[1].data['psf_flux'][q]
+        f_psf_02 = hdul[1].data['cal_psf_flux'][q]
         # f_psf_02 = f_psf_02 + hdul[1].header['LOC_BG']
         # f_psf_02 = flatten(t_02, f_psf_02 / np.nanmedian(f_psf_02), window_length=1, method='biweight',
         #                    return_trend=False)
