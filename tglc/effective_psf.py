@@ -201,11 +201,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
-    # psf_shape = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 1, 2))
-    psf_shape = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
-    plt.imshow(psf_shape[0], origin='lower')
+    # psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 1, 2))
+    psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
+    plt.imshow(psf_sim[0], origin='lower')
     plt.savefig(f'{source.name}_{source.sector}_psf.png')
-    np.save(f'{source.name}_{source.sector}_psf.npy', psf_shape)
+    np.save(f'{source.name}_{source.sector}_psf.npy', psf_sim)
     plt.imshow(aperture[0], origin='lower')
     plt.savefig(f'{source.name}_{source.sector}_aperture.png')
     # f, (ax1, ax2) = plt.subplots(1, 2)
@@ -213,29 +213,28 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # ax2.imshow(psf_shape[:, :, 0])
     # plt.show()
     psf_lc = np.zeros(len(source.time))
-    size = 3
-    A_ = np.zeros((size ** 2, 3))
+    size = 5
+    A_ = np.zeros((size ** 2, 4))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2),
                          (np.arange(size) - (size - 1) / 2))
     A_[:, -1] = np.ones(size ** 2)
     A_[:, -2] = yy.flatten()
     A_[:, -3] = xx.flatten()
-    # edge_pixel = np.array([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24])
-    # med_aperture = np.median(aperture, axis=0).flatten()
-    # outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 2 * np.std(
-    #     med_aperture[edge_pixel])
+    edge_pixel = np.array([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24])
+    med_aperture = np.median(aperture, axis=0).flatten()
+    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 2 * np.std(
+        med_aperture[edge_pixel])
     epsf_sum = np.sum(np.median(psf_shape, axis=0))
     for j in range(len(source.time)):
-        if np.isnan(psf_shape[j, :, :]).any():
+        if np.isnan(psf_sim[j, :, :]).any():
             psf_lc[j] = np.nan
         else:
-            aper_flat = aperture[j, 1:4, 1:4].flatten()
-            A_[:, 0] = psf_shape[j, 1:4, 1:4].flatten() / epsf_sum
-            a = A_
-            # a = np.delete(A_, edge_pixel[outliers], 0)
-            # aper_flat = np.delete(aper_flat, edge_pixel[outliers])
+            aper_flat = aperture[j, :, :].flatten()
+            A_[:, 0] = psf_sim[j, :, :].flatten() / epsf_sum
+            a = np.delete(A_, edge_pixel[outliers], 0)
+            aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 1:4, 1:4]) / np.nansum(psf_shape)
+    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_sim)
     return aperture, psf_lc, y - down, x - left, portion
 
 
