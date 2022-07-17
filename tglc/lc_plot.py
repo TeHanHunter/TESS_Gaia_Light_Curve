@@ -2095,7 +2095,7 @@ def figure_9():
 
 
 def figure_10():
-    size = 90
+    size = 50
     local_directory = '/home/tehan/data/variables/'
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)

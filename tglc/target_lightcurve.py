@@ -76,7 +76,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('BUNIT', 'e-/s', 'flux unit'),
         fits.Card('STAR_X', x_aperture, 'star x position in cut'),
         fits.Card('STAR_Y', y_aperture, 'star y position in cut'),
-        fits.Card('COMMENT', 'hdul[0].data[star_y,star_x,:]=lc'),
+        fits.Card('COMMENT', 'hdul[0].data[:,star_y,star_x]=lc'),
         fits.Card('ORIGIN', 'UCSB/TGLC', 'institution responsible for creating this file'),
         fits.Card('TELESCOP', 'TESS', 'telescope'),
         fits.Card('INSTRUME', 'TESS Photometer', 'detector type'),
