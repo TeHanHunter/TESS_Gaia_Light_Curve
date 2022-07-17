@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from wotan import flatten
 
 
 def bilinear(x, y, repeat=23):
@@ -272,9 +273,12 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
     psf_lc = psf_lc - local_bg
-
-    aper_mad = 1.4826 * np.nanmedian(np.abs(aper_lc/np.nanmedian(aper_lc) - 1))
-    psf_mad = 1.4826 * np.nanmedian(np.abs(psf_lc/np.nanmedian(psf_lc) - 1))
+    cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
+                          return_trend=False)
+    cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
+                          return_trend=False)
+    aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
+    psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
     print(f'aper mad = {aper_mad}')
     print(f'psf mad = {psf_mad}')
     return local_bg, aper_lc, psf_lc
