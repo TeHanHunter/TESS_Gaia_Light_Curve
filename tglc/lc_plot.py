@@ -2107,25 +2107,25 @@ def figure_10():
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
-    # sectors = [2, 11, 38]
-    # for sector in sectors:
-    #     source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
-    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-    #          name=hosts[0][1], save_aper=True)
-    #
-    # #####################
-    # sectors = [1, 28]
-    # for sector in sectors:
-    #     source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
-    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-    #          name=hosts[1][1], save_aper=True)
-    #
-    # #####################
-    # sectors = [4, 12, 31]
-    # for sector in sectors:
-    #     source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
-    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-    #          name=hosts[2][1], save_aper=True)
+    sectors = [2, 11, 38]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[0][1], save_aper=True)
+
+    #####################
+    sectors = [1, 28]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[1][1], save_aper=True)
+
+    #####################
+    sectors = [4, 12, 31]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[2][1], save_aper=True)
 
     fig = plt.figure(constrained_layout=False, figsize=(6, 5))
     gs = fig.add_gridspec(3, 2)
@@ -2139,9 +2139,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_02 = hdul[1].data['time'][q]
         f_psf_02 = hdul[1].data['psf_flux'][q]
-        f_psf_02 = f_psf_02 + hdul[1].header['LOC_BG']
-        f_psf_02 = flatten(t_02, f_psf_02 / np.nanmedian(f_psf_02), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_02 = f_psf_02 + hdul[1].header['LOC_BG']
+        # f_psf_02 = flatten(t_02, f_psf_02 / np.nanmedian(f_psf_02), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_02 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
@@ -2149,9 +2149,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_11 = hdul[1].data['time'][q]
         f_psf_11 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_11 = f_psf_11 + hdul[1].header['LOC_BG']
-        f_psf_11 = flatten(t_11, f_psf_11 / np.nanmedian(f_psf_11), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_11 = f_psf_11 + hdul[1].header['LOC_BG']
+        # f_psf_11 = flatten(t_11, f_psf_11 / np.nanmedian(f_psf_11), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_11 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0038*.fits')[0],
@@ -2159,9 +2159,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_38 = hdul[1].data['time'][q]
         f_psf_38 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_38 = f_psf_38 + hdul[1].header['LOC_BG']
-        f_psf_38 = flatten(t_38, f_psf_38 / np.nanmedian(f_psf_38), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_38 = f_psf_38 + hdul[1].header['LOC_BG']
+        # f_psf_38 = flatten(t_38, f_psf_38 / np.nanmedian(f_psf_38), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_38 = hdul[1].data['cal_aper_flux'][q]
 
     ax1_1 = fig.add_subplot(gs[0, 0])
@@ -2185,9 +2185,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_01 = hdul[1].data['time'][q]
         f_psf_01 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_01 = f_psf_01 + hdul[1].header['LOC_BG']
-        f_psf_01 = flatten(t_01, f_psf_01 / np.nanmedian(f_psf_01), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_01 = f_psf_01 + hdul[1].header['LOC_BG']
+        # f_psf_01 = flatten(t_01, f_psf_01 / np.nanmedian(f_psf_01), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_01 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0028*.fits')[0],
@@ -2195,9 +2195,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_28 = hdul[1].data['time'][q]
         f_psf_28 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_28 = f_psf_28 + hdul[1].header['LOC_BG']
-        f_psf_28 = flatten(t_28, f_psf_28 / np.nanmedian(f_psf_28), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_28 = f_psf_28 + hdul[1].header['LOC_BG']
+        # f_psf_28 = flatten(t_28, f_psf_28 / np.nanmedian(f_psf_28), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_28 = hdul[1].data['cal_aper_flux'][q]
 
     ax2_1 = fig.add_subplot(gs[1, 0])
@@ -2218,9 +2218,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_04 = hdul[1].data['time'][q]
         f_psf_04 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_04 = f_psf_04 + hdul[1].header['LOC_BG']
-        f_psf_04 = flatten(t_04, f_psf_04 / np.nanmedian(f_psf_04), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_04 = f_psf_04 + hdul[1].header['LOC_BG']
+        # f_psf_04 = flatten(t_04, f_psf_04 / np.nanmedian(f_psf_04), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_04 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0012*.fits')[0],
@@ -2228,9 +2228,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_12 = hdul[1].data['time'][q]
         f_psf_12 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_12 = f_psf_12 + hdul[1].header['LOC_BG']
-        f_psf_12 = flatten(t_12, f_psf_12 / np.nanmedian(f_psf_12), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_12 = f_psf_12 + hdul[1].header['LOC_BG']
+        # f_psf_12 = flatten(t_12, f_psf_12 / np.nanmedian(f_psf_12), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_12 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0031*.fits')[0],
@@ -2238,9 +2238,9 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_31 = hdul[1].data['time'][q]
         f_psf_31 = hdul[1].data['cal_psf_flux'][q]
-        f_psf_31 = f_psf_31 + hdul[1].header['LOC_BG']
-        f_psf_31 = flatten(t_31, f_psf_31 / np.nanmedian(f_psf_31), window_length=1, method='biweight',
-                           return_trend=False)
+        # f_psf_31 = f_psf_31 + hdul[1].header['LOC_BG']
+        # f_psf_31 = flatten(t_31, f_psf_31 / np.nanmedian(f_psf_31), window_length=1, method='biweight',
+        #                    return_trend=False)
         f_aper_31 = hdul[1].data['cal_aper_flux'][q]
 
     ax3_1 = fig.add_subplot(gs[2, 0])
