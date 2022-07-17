@@ -234,7 +234,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             a = np.delete(A_, edge_pixel[outliers], 0)
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_sim)
     return aperture, psf_lc, y - down, x - left, portion
 
 
@@ -268,6 +268,8 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     aper_lc = aper_lc - local_bg
     if near_edge:
         return local_bg, aper_lc, psf_lc
+    mad = 1.4826 * np.median(np.abs(aper_lc/np.median(aper_lc)))
+    print(f'mad = {mad}')
     # print(local_bg / aperture_bar)
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
