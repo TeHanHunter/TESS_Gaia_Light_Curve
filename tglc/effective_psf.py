@@ -268,10 +268,13 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     aper_lc = aper_lc - local_bg
     if near_edge:
         return local_bg, aper_lc, psf_lc
-    mad = 1.4826 * np.nanmedian(np.abs(aper_lc/np.nanmedian(aper_lc) - 1))
-    print(f'mad = {mad}')
     # print(local_bg / aperture_bar)
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
     psf_lc = psf_lc - local_bg
+
+    aper_mad = 1.4826 * np.nanmedian(np.abs(aper_lc/np.nanmedian(aper_lc) - 1))
+    psf_mad = 1.4826 * np.nanmedian(np.abs(psf_lc/np.nanmedian(psf_lc) - 1))
+    print(f'aper mad = {aper_mad}')
+    print(f'psf mad = {psf_mad}')
     return local_bg, aper_lc, psf_lc
