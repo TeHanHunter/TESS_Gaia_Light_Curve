@@ -214,15 +214,15 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # plt.show()
     psf_lc = np.zeros(len(source.time))
     size = 5
-    A_ = np.zeros((size ** 2, 4))
+    A_ = np.zeros((size ** 2, 2))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2),
                          (np.arange(size) - (size - 1) / 2))
     A_[:, -1] = np.ones(size ** 2)
-    A_[:, -2] = yy.flatten()
-    A_[:, -3] = xx.flatten()
+    # A_[:, -2] = yy.flatten()
+    # A_[:, -3] = xx.flatten()
     edge_pixel = np.array([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24])
     med_aperture = np.median(aperture, axis=0).flatten()
-    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 2 * np.std(
+    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
         med_aperture[edge_pixel])
     epsf_sum = np.sum(np.median(psf_shape, axis=0))
     for j in range(len(source.time)):
