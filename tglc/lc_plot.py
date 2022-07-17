@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import pickle
 from wotan import flatten
 from astropy.io import ascii
-from glob import glob
-import pickle
 from astropy.io import fits
 from matplotlib.patches import ConnectionPatch
 from matplotlib import colors
@@ -2095,7 +2093,7 @@ def figure_9():
 
 
 def figure_10():
-    size = 50
+    size = 90
     local_directory = '/home/tehan/data/variables/'
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
