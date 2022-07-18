@@ -2100,8 +2100,8 @@ def figure_10():
     os.makedirs(local_directory + f'source/', exist_ok=True)
     hosts = [
         ('SX Dor', 'Gaia DR2 4662259606266850944'),  # Molnar: RR Lyrae, hard to disdinguish for eleanor
-        ('AV Gru', 'Gaia DR2 6512192214932460416'),  # Plachy: Cepheid, dim and kind of noisy
-        ('TIC 177309964', 'Gaia DR2 5260885172921947008')  # Zhan: Faint rotator
+        ('TIC 177309964', 'Gaia DR2 5260885172921947008'),  # Zhan: Faint rotator
+        ('AV Gru', 'Gaia DR2 6512192214932460416')  # Plachy: Cepheid, dim and kind of noisy
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
@@ -2112,22 +2112,23 @@ def figure_10():
              name=hosts[0][1], save_aper=True)
 
     #####################
-    sectors = [1, 28]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[1][1], save_aper=True)
-
-    #####################
     sectors = [4, 12, 31]
     for sector in sectors:
         source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
              name=hosts[2][1], save_aper=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(6, 5))
-    gs = fig.add_gridspec(3, 2)
-    gs.update(wspace=0.2, hspace=0.2)
+    #####################
+    sectors = [1, 28]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[1][1], save_aper=True)
+
+
+    fig = plt.figure(constrained_layout=False, figsize=(10, 10))
+    gs = fig.add_gridspec(3, 9)
+    gs.update(wspace=0.2, hspace=0.4)
     local_directory = '/home/tehan/data/variables/'
     color = ['C0', 'C1', 'C3']
     ##########
@@ -2157,52 +2158,19 @@ def figure_10():
         f_aper_38 = np.mean(f_aper_38[:len(f_aper_38) // 3 * 3].reshape(-1, 3), axis=1)
 
 
-    ax1_1 = fig.add_subplot(gs[0, 0])
-    ax1_2 = fig.add_subplot(gs[0, 1])
-    ax1_1.plot(t_02 % period / period, f_aper_02, '.', c=color[0], markersize=1, label='2')
-    ax1_1.plot(t_11 % period / period, f_aper_11, '.', c=color[1], markersize=1, label='11')
-    ax1_1.plot(t_38 % period / period, f_aper_38, '.', c=color[2], markersize=1, label='38')
+    ax1_1 = fig.add_subplot(gs[0, :3])
+    ax1_2 = fig.add_subplot(gs[0, 3:6])
+    ax1_3 = fig.add_subplot(gs[0, 6:9])
+    ax1_1.plot(t_02, f_aper_02, '.', c=color[0], markersize=1, label='2')
+    ax1_2.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
+    ax1_3.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
 
-    ax1_2.plot(t_02 % period / period, f_psf_02, '.', c=color[0], markersize=1, label='2')
-    ax1_2.plot(t_11 % period / period, f_psf_11, '.', c=color[1], markersize=1, label='11')
-    ax1_2.plot(t_38 % period / period, f_psf_38, '.', c=color[2], markersize=1, label='38')
-    ax1_1.legend(loc=1, fontsize=6)
-    ax1_2.legend(loc=1, fontsize=6)
+    ax1_1.plot(t_02, f_psf_02, '.', c=color[0], markersize=1, label='2')
+    ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
+    ax1_3.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
 
-    ax1_1.set_title('TGLC aperture')
-    ax1_2.set_title('TGLC PSF')
-    ##########
-    period = 1.00581
-    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
-                   mode='denywrite') as hdul:
-        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-        t_01 = hdul[1].data['time'][q]
-        f_psf_01 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_01 = f_psf_01 + hdul[1].header['LOC_BG']
-        # f_psf_01 = flatten(t_01, f_psf_01 / np.nanmedian(f_psf_01), window_length=1, method='biweight',
-        #                    return_trend=False)
-        f_aper_01 = hdul[1].data['cal_aper_flux'][q]
-
-    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0028*.fits')[0],
-                   mode='denywrite') as hdul:
-        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-        t_28 = hdul[1].data['time'][q]
-        f_psf_28 = hdul[1].data['cal_psf_flux'][q]
-        f_aper_28 = hdul[1].data['cal_aper_flux'][q]
-        t_28 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
-        f_psf_28 = np.mean(f_psf_28[:len(f_psf_28) // 3 * 3].reshape(-1, 3), axis=1)
-        f_aper_28 = np.mean(f_aper_28[:len(f_aper_28) // 3 * 3].reshape(-1, 3), axis=1)
-
-    ax2_1 = fig.add_subplot(gs[1, 0])
-    ax2_2 = fig.add_subplot(gs[1, 1])
-
-    ax2_1.plot(t_01 % period / period, f_aper_01, '.', c=color[0], markersize=1, label='1')
-    ax2_1.plot(t_28 % period / period, f_aper_28, '.', c=color[1], markersize=1, label='28')
-
-    ax2_2.plot(t_01 % period / period, f_psf_01, '.', c=color[0], markersize=1, label='1')
-    ax2_2.plot(t_28 % period / period, f_psf_28, '.', c=color[1], markersize=1, label='28')
-    ax2_1.legend(loc=1, fontsize=6)
-    ax2_2.legend(loc=1, fontsize=6)
+    # ax1_1.set_title('TGLC aperture')
+    # ax1_2.set_title('TGLC PSF')
 
     ##########
     period = 10.881 / 24
@@ -2230,18 +2198,52 @@ def figure_10():
         f_psf_31 = np.mean(f_psf_31[:len(f_psf_31) // 3 * 3].reshape(-1, 3), axis=1)
         f_aper_31 = np.mean(f_aper_31[:len(f_aper_31) // 3 * 3].reshape(-1, 3), axis=1)
 
-    ax3_1 = fig.add_subplot(gs[2, 0])
-    ax3_2 = fig.add_subplot(gs[2, 1])
+    ax2_1 = fig.add_subplot(gs[1, :3])
+    ax2_2 = fig.add_subplot(gs[1, 3:6])
+    ax2_3 = fig.add_subplot(gs[1, 6:])
 
-    ax3_1.plot(t_04 % period / period, f_aper_04, '.', c=color[0], markersize=1, label='4')
-    ax3_1.plot(t_12 % period / period, f_aper_12, '.', c=color[1], markersize=1, label='12')
-    ax3_1.plot(t_31 % period / period, f_aper_31, '.', c=color[2], markersize=1, label='31')
+    ax2_1.plot(t_04, f_aper_04, '.', c=color[0], markersize=1, label='4')
+    ax2_2.plot(t_12, f_aper_12, '.', c=color[1], markersize=1, label='12')
+    ax2_3.plot(t_31, f_aper_31, '.', c=color[2], markersize=1, label='31')
 
-    ax3_2.plot(t_04 % period / period, f_psf_04, '.', c=color[0], markersize=1, label='4')
-    ax3_2.plot(t_12 % period / period, f_psf_12, '.', c=color[1], markersize=1, label='12')
-    ax3_2.plot(t_31 % period / period, f_psf_31, '.', c=color[2], markersize=1, label='31')
-    ax3_1.legend(loc=1, fontsize=6)
-    ax3_2.legend(loc=1, fontsize=6)
+    ax2_1.plot(t_04, f_psf_04, '.', c=color[0], markersize=1, label='4')
+    ax2_2.plot(t_12, f_psf_12, '.', c=color[1], markersize=1, label='12')
+    ax2_3.plot(t_31, f_psf_31, '.', c=color[2], markersize=1, label='31')
+
+
+    ##########
+    period = 1.00581
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_01 = hdul[1].data['time'][q]
+        f_psf_01 = hdul[1].data['cal_psf_flux'][q]
+        # f_psf_01 = f_psf_01 + hdul[1].header['LOC_BG']
+        # f_psf_01 = flatten(t_01, f_psf_01 / np.nanmedian(f_psf_01), window_length=1, method='biweight',
+        #                    return_trend=False)
+        f_aper_01 = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0028*.fits')[0],
+                   mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        t_28 = hdul[1].data['time'][q]
+        f_psf_28 = hdul[1].data['cal_psf_flux'][q]
+        f_aper_28 = hdul[1].data['cal_aper_flux'][q]
+        t_28 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_28 = np.mean(f_psf_28[:len(f_psf_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_28 = np.mean(f_aper_28[:len(f_aper_28) // 3 * 3].reshape(-1, 3), axis=1)
+
+    ax2_1 = fig.add_subplot(gs[2, :3])
+    ax2_2 = fig.add_subplot(gs[2, 3:6])
+
+    ax2_1.plot(t_01, f_aper_01, '.', c=color[0], markersize=1, label='1')
+    ax2_2.plot(t_28, f_aper_28, '.', c=color[1], markersize=1, label='28')
+
+    ax2_1.plot(t_01, f_psf_01, '.', c=color[0], markersize=1, label='1')
+    ax2_2.plot(t_28, f_psf_28, '.', c=color[1], markersize=1, label='28')
+    ax2_1.legend(loc=1, fontsize=6)
+    ax2_2.legend(loc=1, fontsize=6)
+
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 
