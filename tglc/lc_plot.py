@@ -2320,6 +2320,7 @@ def figure_10():
     ax4_1.set_ylim(low, high)
     ax4_2.set_ylim(low, high)
     ax4_3.set_ylim(low, high)
+    ax4_3.set_xlabel('TBJD')
     ax4_1.text(-0.2, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax4_1.transAxes, rotation=90)
 
@@ -2393,6 +2394,8 @@ def figure_10():
     ax7_2.tick_params(axis='y', left=False)
     ax7_1.set_ylim(low, high)
     ax7_2.set_ylim(low, high)
+    ax7_1.set_xlabel('TBJD')
+    ax7_2.set_xlabel('TBJD')
     ax7_1.text(-0.2, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax7_1.transAxes, rotation=90)
 
