@@ -2114,14 +2114,14 @@ def figure_10():
     #####################
     sectors = [4, 12, 31]
     for sector in sectors:
-        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
              name=hosts[2][1], save_aper=True)
 
     #####################
     sectors = [1, 28]
     for sector in sectors:
-        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
         epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
              name=hosts[1][1], save_aper=True)
 
