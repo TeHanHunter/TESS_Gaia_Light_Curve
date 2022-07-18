@@ -12,7 +12,7 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
 
 
 class Source_cut(object):
-    def __init__(self, name, size=15, sector=None, cadence=None):
+    def __init__(self, name, size=50, sector=None, cadence=None):
         """
         Source_cut object that includes all data from TESS and Gaia DR2
         :param name: str, required
@@ -26,6 +26,8 @@ class Source_cut(object):
         super(Source_cut, self).__init__()
         if cadence is None:
             cadence = []
+        if size < 25:
+            warnings.warn('FFI cut size too small, try at least 25*25')
         self.name = name
         self.size = size
         self.sector = 0
