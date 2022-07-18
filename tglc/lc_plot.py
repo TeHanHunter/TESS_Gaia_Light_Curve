@@ -2125,7 +2125,7 @@ def figure_10():
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[1][1], save_aper=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(10, 5))
+    fig = plt.figure(constrained_layout=False, figsize=(10, 7))
     gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0.4, height_ratios=[1, 1, 0.3, 1, 1, 0.3, 1, 1])
     local_directory = '/home/tehan/data/variables/'
     color = ['C0', 'C1', 'C3']
@@ -2171,6 +2171,8 @@ def figure_10():
     ax1_3.plot(t_38, f_psf_38, '.', c='k', markersize=1, label='38')
 
     # split
+    low = 0.5
+    high = 1.9
     ax0_1.spines['right'].set_visible(False)
     ax0_2.spines['left'].set_visible(False)
     ax0_2.spines['right'].set_visible(False)
@@ -2182,13 +2184,16 @@ def figure_10():
     ax0_2.plot([0, 0], [0, 1], transform=ax0_2.transAxes, **kwargs)
     ax0_2.plot([1, 1], [0, 1], transform=ax0_2.transAxes, **kwargs)
     ax0_3.plot([0, 0], [0, 1], transform=ax0_3.transAxes, **kwargs)
+    ax0_1.set_xticklabels([])
     ax0_2.set_yticklabels([])
+    ax0_2.set_xticklabels([])
     ax0_2.tick_params(axis='y', left=False)
     ax0_3.set_yticklabels([])
+    ax0_3.set_xticklabels([])
     ax0_3.tick_params(axis='y', left=False)
-    ax0_1.set_ylim(0.975, 1.01)
-    ax0_2.set_ylim(0.975, 1.01)
-    ax0_3.set_ylim(0.975, 1.01)
+    ax0_1.set_ylim(low, high)
+    ax0_2.set_ylim(low, high)
+    ax0_3.set_ylim(low, high)
 
     ax1_1.spines['right'].set_visible(False)
     ax1_2.spines['left'].set_visible(False)
@@ -2205,14 +2210,14 @@ def figure_10():
     ax1_2.tick_params(axis='y', left=False)
     ax1_3.set_yticklabels([])
     ax1_3.tick_params(axis='y', left=False)
-    ax1_1.set_ylim(0.975, 1.01)
-    ax1_2.set_ylim(0.975, 1.01)
-    ax1_3.set_ylim(0.975, 1.01)
+    ax1_1.set_ylim(low, high)
+    ax1_2.set_ylim(low, high)
+    ax1_3.set_ylim(low, high)
 
-    ax1_1.set_title('Sector 9')
-    ax1_2.set_title('Sector 10')
-    ax1_3.set_title('Sector 36')
-    ax1_1.set_ylabel('Normalized Flux')
+    ax0_1.set_title('Sector 2')
+    ax0_2.set_title('Sector 11')
+    ax0_3.set_title('Sector 38')
+    # ax1_1.set_ylabel('Normalized Flux')
 
     ##########
     period = 10.881 / 24
