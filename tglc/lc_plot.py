@@ -2125,8 +2125,8 @@ def figure_10():
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[1][1], save_aper=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(10, 7))
-    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0.4, height_ratios=[1, 1, 0.3, 1, 1, 0.3, 1, 1])
+    fig = plt.figure(constrained_layout=False, figsize=(10, 5))
+    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.3, 1, 1, 0.3, 1, 1])
     local_directory = '/home/tehan/data/variables/'
     color = ['C0', 'C1', 'C3']
     ##########
@@ -2197,11 +2197,11 @@ def figure_10():
     ax0_1.set_title('Sector 2')
     ax0_2.set_title('Sector 11')
     ax0_3.set_title('Sector 38')
-    ax0_1.text(-1.15, 0, 'TGLC aperture', horizontalalignment='center',
+    ax0_1.text(-0.15, 0, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax0_1.transAxes, rotation=90)
-    ax0_3.text(2.25, 0, f'{hosts[0][0]}', horizontalalignment='center',
+    ax0_3.text(1.25, 0, f'{hosts[0][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax0_3.transAxes, rotation=270, fontweight='semibold')
-    ax0_3.text(2.15, 0, 'RR Lyrae', horizontalalignment='center',
+    ax0_3.text(1.15, 0, 'RR Lyrae', horizontalalignment='center',
                verticalalignment='center', transform=ax0_3.transAxes, rotation=270)
 
 
@@ -2223,7 +2223,7 @@ def figure_10():
     ax1_1.set_ylim(low, high)
     ax1_2.set_ylim(low, high)
     ax1_3.set_ylim(low, high)
-    ax1_1.text(-1.15, 0, 'TGLC PSF', horizontalalignment='center',
+    ax1_1.text(-0.15, 0, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax1_1.transAxes, rotation=90)
     # ax1_1.set_ylabel('Normalized Flux')
 
