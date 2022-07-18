@@ -2126,9 +2126,8 @@ def figure_10():
     #          name=hosts[1][1], save_aper=True)
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 6))
-    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.5, 1, 1, 0.5, 1, 1])
+    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0)
     local_directory = '/home/tehan/data/variables/'
-    color = ['C0', 'C1', 'C3']
     ##########
     period = 0.63150
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0002*.fits')[0],
@@ -2201,7 +2200,7 @@ def figure_10():
                verticalalignment='center', transform=ax0_1.transAxes, rotation=90)
     ax0_2.text(2.15, 0, f'{hosts[0][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270, fontweight='semibold')
-    ax0_2.text(2.05, 0, 'RR Lyrae', horizontalalignment='center',
+    ax0_2.text(2.1, 0, 'RR Lyrae', horizontalalignment='center',
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270)
 
 
@@ -2269,8 +2268,8 @@ def figure_10():
     ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
     # split
-    low = 0.5
-    high = 1.9
+    low = 0.9
+    high = 1.1
     ax3_1.spines['right'].set_visible(False)
     ax3_2.spines['left'].set_visible(False)
     ax3_2.spines['right'].set_visible(False)
@@ -2292,14 +2291,14 @@ def figure_10():
     ax3_1.set_ylim(low, high)
     ax3_2.set_ylim(low, high)
     ax3_3.set_ylim(low, high)
-    ax3_1.set_title('Sector 2')
-    ax3_2.set_title('Sector 11')
-    ax3_3.set_title('Sector 38')
+    ax3_1.set_title('Sector 4')
+    ax3_2.set_title('Sector 12')
+    ax3_3.set_title('Sector 31')
     ax3_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax3_1.transAxes, rotation=90)
     ax3_2.text(2.15, 0, f'{hosts[1][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax3_2.transAxes, rotation=270, fontweight='semibold')
-    ax3_2.text(2.05, 0, 'Rotator', horizontalalignment='center',
+    ax3_2.text(2.1, 0, 'Rotator', horizontalalignment='center',
                verticalalignment='center', transform=ax3_2.transAxes, rotation=270)
 
 
@@ -2359,9 +2358,9 @@ def figure_10():
 
     # split
     low = 0.5
-    high = 1.9
-    ax0_1.spines['right'].set_visible(False)
-    ax0_2.spines['left'].set_visible(False)
+    high = 2.1
+    ax6_1.spines['right'].set_visible(False)
+    ax6_2.spines['left'].set_visible(False)
     d = .7  # proportion of vertical to horizontal extent of the slanted line
     kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
                   linestyle="none", color='k', mec='k', mew=1, clip_on=False)
@@ -2373,13 +2372,13 @@ def figure_10():
     ax6_2.tick_params(axis='y', left=False)
     ax6_1.set_ylim(low, high)
     ax6_2.set_ylim(low, high)
-    ax6_1.set_title('Sector 2')
-    ax6_2.set_title('Sector 11')
+    ax6_1.set_title('Sector 1')
+    ax6_2.set_title('Sector 28')
     ax6_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax6_1.transAxes, rotation=90)
     ax6_2.text(2.15, 0, f'{hosts[0][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270, fontweight='semibold')
-    ax6_2.text(2.05, 0, 'RR Lyrae', horizontalalignment='center',
+    ax6_2.text(2.1, 0, 'RR Lyrae', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270)
 
 
