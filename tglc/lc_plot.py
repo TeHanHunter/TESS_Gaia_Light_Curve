@@ -2162,16 +2162,57 @@ def figure_10():
     ax1_2 = fig.add_subplot(gs[1, 3:6])
     ax1_3 = fig.add_subplot(gs[1, 6:9])
 
-    ax0_1.plot(t_02, f_aper_02, '.', markersize=1, label='2')
-    ax0_2.plot(t_11, f_aper_11, '.', markersize=1, label='11')
-    ax0_3.plot(t_38, f_aper_38, '.', markersize=1, label='38')
+    ax0_1.plot(t_02, f_aper_02, '.', c='k', markersize=1, label='2')
+    ax0_2.plot(t_11, f_aper_11, '.', c='k', markersize=1, label='11')
+    ax0_3.plot(t_38, f_aper_38, '.', c='k', markersize=1, label='38')
 
-    ax1_1.plot(t_02, f_psf_02, '.', markersize=1, label='2')
-    ax1_2.plot(t_11, f_psf_11, '.', markersize=1, label='11')
-    ax1_3.plot(t_38, f_psf_38, '.', markersize=1, label='38')
+    ax1_1.plot(t_02, f_psf_02, '.', c='k', markersize=1, label='2')
+    ax1_2.plot(t_11, f_psf_11, '.', c='k', markersize=1, label='11')
+    ax1_3.plot(t_38, f_psf_38, '.', c='k', markersize=1, label='38')
 
-    # ax1_1.set_title('TGLC aperture')
-    # ax1_2.set_title('TGLC PSF')
+    # split
+    ax0_1.spines['right'].set_visible(False)
+    ax0_2.spines['left'].set_visible(False)
+    ax0_2.spines['right'].set_visible(False)
+    ax0_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax0_1.plot([1, 1], [0, 1], transform=ax0_1.transAxes, **kwargs)
+    ax0_2.plot([0, 0], [0, 1], transform=ax0_2.transAxes, **kwargs)
+    ax0_2.plot([1, 1], [0, 1], transform=ax0_2.transAxes, **kwargs)
+    ax0_3.plot([0, 0], [0, 1], transform=ax0_3.transAxes, **kwargs)
+    ax0_2.set_yticklabels([])
+    ax0_2.tick_params(axis='y', left=False)
+    ax0_3.set_yticklabels([])
+    ax0_3.tick_params(axis='y', left=False)
+    ax0_1.set_ylim(0.975, 1.01)
+    ax0_2.set_ylim(0.975, 1.01)
+    ax0_3.set_ylim(0.975, 1.01)
+
+    ax1_1.spines['right'].set_visible(False)
+    ax1_2.spines['left'].set_visible(False)
+    ax1_2.spines['right'].set_visible(False)
+    ax1_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax1_1.plot([1, 1], [0, 1], transform=ax1_1.transAxes, **kwargs)
+    ax1_2.plot([0, 0], [0, 1], transform=ax1_2.transAxes, **kwargs)
+    ax1_2.plot([1, 1], [0, 1], transform=ax1_2.transAxes, **kwargs)
+    ax1_3.plot([0, 0], [0, 1], transform=ax1_3.transAxes, **kwargs)
+    ax1_2.set_yticklabels([])
+    ax1_2.tick_params(axis='y', left=False)
+    ax1_3.set_yticklabels([])
+    ax1_3.tick_params(axis='y', left=False)
+    ax1_1.set_ylim(0.975, 1.01)
+    ax1_2.set_ylim(0.975, 1.01)
+    ax1_3.set_ylim(0.975, 1.01)
+
+    ax1_1.set_title('Sector 9')
+    ax1_2.set_title('Sector 10')
+    ax1_3.set_title('Sector 36')
+    ax1_1.set_ylabel('Normalized Flux')
 
     ##########
     period = 10.881 / 24
@@ -2207,13 +2248,13 @@ def figure_10():
     ax4_2 = fig.add_subplot(gs[4, 3:6])
     ax4_3 = fig.add_subplot(gs[4, 6:])
 
-    ax3_1.plot(t_04, f_aper_04, '.', c=color[0], markersize=1, label='4')
-    ax3_2.plot(t_12, f_aper_12, '.', c=color[1], markersize=1, label='12')
-    ax3_3.plot(t_31, f_aper_31, '.', c=color[2], markersize=1, label='31')
+    ax3_1.plot(t_04, f_aper_04, '.', c='k', markersize=1, label='4')
+    ax3_2.plot(t_12, f_aper_12, '.', c='k', markersize=1, label='12')
+    ax3_3.plot(t_31, f_aper_31, '.', c='k', markersize=1, label='31')
 
-    ax4_1.plot(t_04, f_psf_04, '.', c=color[0], markersize=1, label='4')
-    ax4_2.plot(t_12, f_psf_12, '.', c=color[1], markersize=1, label='12')
-    ax4_3.plot(t_31, f_psf_31, '.', c=color[2], markersize=1, label='31')
+    ax4_1.plot(t_04, f_psf_04, '.', c='k', markersize=1, label='4')
+    ax4_2.plot(t_12, f_psf_12, '.', c='k', markersize=1, label='12')
+    ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
     ##########
     period = 1.00581
@@ -2242,11 +2283,11 @@ def figure_10():
     ax7_1 = fig.add_subplot(gs[7, :3])
     ax7_2 = fig.add_subplot(gs[7, 3:6])
 
-    ax6_1.plot(t_01, f_aper_01, '.', c=color[0], markersize=1, label='1')
-    ax6_2.plot(t_28, f_aper_28, '.', c=color[1], markersize=1, label='28')
+    ax6_1.plot(t_01, f_aper_01, '.', c='k', markersize=1, label='1')
+    ax6_2.plot(t_28, f_aper_28, '.', c='k', markersize=1, label='28')
 
-    ax7_1.plot(t_01, f_psf_01, '.', c=color[0], markersize=1, label='1')
-    ax7_2.plot(t_28, f_psf_28, '.', c=color[1], markersize=1, label='28')
+    ax7_1.plot(t_01, f_psf_01, '.', c='k', markersize=1, label='1')
+    ax7_2.plot(t_28, f_psf_28, '.', c='k', markersize=1, label='28')
 
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
