@@ -2226,7 +2226,7 @@ def figure_10():
         t_31 = hdul[1].data['time'][q]
         f_psf_31 = hdul[1].data['cal_psf_flux'][q]
         f_aper_31 = hdul[1].data['cal_aper_flux'][q]
-        t_31 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
+        t_31 = np.mean(t_31[:len(t_31) // 3 * 3].reshape(-1, 3), axis=1)
         f_psf_31 = np.mean(f_psf_31[:len(f_psf_31) // 3 * 3].reshape(-1, 3), axis=1)
         f_aper_31 = np.mean(f_aper_31[:len(f_aper_31) // 3 * 3].reshape(-1, 3), axis=1)
 
