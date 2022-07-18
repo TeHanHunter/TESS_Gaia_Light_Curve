@@ -2125,8 +2125,8 @@ def figure_10():
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[1][1], save_aper=True)
 
-    fig = plt.figure(constrained_layout=False, figsize=(10, 5))
-    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.3, 1, 1, 0.3, 1, 1])
+    fig = plt.figure(constrained_layout=False, figsize=(10, 6))
+    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.5, 1, 1, 0.5, 1, 1])
     local_directory = '/home/tehan/data/variables/'
     color = ['C0', 'C1', 'C3']
     ##########
@@ -2197,12 +2197,12 @@ def figure_10():
     ax0_1.set_title('Sector 2')
     ax0_2.set_title('Sector 11')
     ax0_3.set_title('Sector 38')
-    ax0_1.text(-0.15, 0, 'aperture', horizontalalignment='center',
+    ax0_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax0_1.transAxes, rotation=90)
-    ax0_3.text(1.25, 0, f'{hosts[0][0]}', horizontalalignment='center',
-               verticalalignment='center', transform=ax0_3.transAxes, rotation=270, fontweight='semibold')
-    ax0_3.text(1.15, 0, 'RR Lyrae', horizontalalignment='center',
-               verticalalignment='center', transform=ax0_3.transAxes, rotation=270)
+    ax0_2.text(2.15, 0, f'{hosts[0][0]}', horizontalalignment='center',
+               verticalalignment='center', transform=ax0_2.transAxes, rotation=270, fontweight='semibold')
+    ax0_2.text(2.05, 0, 'RR Lyrae', horizontalalignment='center',
+               verticalalignment='center', transform=ax0_2.transAxes, rotation=270)
 
 
     ax1_1.spines['right'].set_visible(False)
@@ -2223,9 +2223,8 @@ def figure_10():
     ax1_1.set_ylim(low, high)
     ax1_2.set_ylim(low, high)
     ax1_3.set_ylim(low, high)
-    ax1_1.text(-0.15, 0, 'PSF', horizontalalignment='center',
+    ax1_1.text(-0.25, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax1_1.transAxes, rotation=90)
-    # ax1_1.set_ylabel('Normalized Flux')
 
     ##########
     period = 10.881 / 24
@@ -2269,6 +2268,62 @@ def figure_10():
     ax4_2.plot(t_12, f_psf_12, '.', c='k', markersize=1, label='12')
     ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
+    # split
+    low = 0.5
+    high = 1.9
+    ax3_1.spines['right'].set_visible(False)
+    ax3_2.spines['left'].set_visible(False)
+    ax3_2.spines['right'].set_visible(False)
+    ax3_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax3_1.plot([1, 1], [0, 1], transform=ax3_1.transAxes, **kwargs)
+    ax3_2.plot([0, 0], [0, 1], transform=ax3_2.transAxes, **kwargs)
+    ax3_2.plot([1, 1], [0, 1], transform=ax3_2.transAxes, **kwargs)
+    ax3_3.plot([0, 0], [0, 1], transform=ax3_3.transAxes, **kwargs)
+    ax3_1.set_xticklabels([])
+    ax3_2.set_yticklabels([])
+    ax3_2.set_xticklabels([])
+    ax3_2.tick_params(axis='y', left=False)
+    ax3_3.set_yticklabels([])
+    ax3_3.set_xticklabels([])
+    ax3_3.tick_params(axis='y', left=False)
+    ax3_1.set_ylim(low, high)
+    ax3_2.set_ylim(low, high)
+    ax3_3.set_ylim(low, high)
+    ax3_1.set_title('Sector 2')
+    ax3_2.set_title('Sector 11')
+    ax3_3.set_title('Sector 38')
+    ax3_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_1.transAxes, rotation=90)
+    ax3_2.text(2.15, 0, f'{hosts[1][0]}', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_2.transAxes, rotation=270, fontweight='semibold')
+    ax3_2.text(2.05, 0, 'Rotator', horizontalalignment='center',
+               verticalalignment='center', transform=ax3_2.transAxes, rotation=270)
+
+
+    ax4_1.spines['right'].set_visible(False)
+    ax4_2.spines['left'].set_visible(False)
+    ax4_2.spines['right'].set_visible(False)
+    ax4_3.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax4_1.plot([1, 1], [0, 1], transform=ax4_1.transAxes, **kwargs)
+    ax4_2.plot([0, 0], [0, 1], transform=ax4_2.transAxes, **kwargs)
+    ax4_2.plot([1, 1], [0, 1], transform=ax4_2.transAxes, **kwargs)
+    ax4_3.plot([0, 0], [0, 1], transform=ax4_3.transAxes, **kwargs)
+    ax4_2.set_yticklabels([])
+    ax4_2.tick_params(axis='y', left=False)
+    ax4_3.set_yticklabels([])
+    ax4_3.tick_params(axis='y', left=False)
+    ax4_1.set_ylim(low, high)
+    ax4_2.set_ylim(low, high)
+    ax4_3.set_ylim(low, high)
+    ax4_1.text(-0.25, 0.5, 'PSF', horizontalalignment='center',
+               verticalalignment='center', transform=ax4_1.transAxes, rotation=90)
+
     ##########
     period = 1.00581
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
@@ -2301,6 +2356,46 @@ def figure_10():
 
     ax7_1.plot(t_01, f_psf_01, '.', c='k', markersize=1, label='1')
     ax7_2.plot(t_28, f_psf_28, '.', c='k', markersize=1, label='28')
+
+    # split
+    low = 0.5
+    high = 1.9
+    ax0_1.spines['right'].set_visible(False)
+    ax0_2.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax6_1.plot([1, 1], [0, 1], transform=ax6_1.transAxes, **kwargs)
+    ax6_2.plot([0, 0], [0, 1], transform=ax6_2.transAxes, **kwargs)
+    ax6_1.set_xticklabels([])
+    ax6_2.set_yticklabels([])
+    ax6_2.set_xticklabels([])
+    ax6_2.tick_params(axis='y', left=False)
+    ax6_1.set_ylim(low, high)
+    ax6_2.set_ylim(low, high)
+    ax6_1.set_title('Sector 2')
+    ax6_2.set_title('Sector 11')
+    ax6_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
+               verticalalignment='center', transform=ax6_1.transAxes, rotation=90)
+    ax6_2.text(2.15, 0, f'{hosts[0][0]}', horizontalalignment='center',
+               verticalalignment='center', transform=ax6_2.transAxes, rotation=270, fontweight='semibold')
+    ax6_2.text(2.05, 0, 'RR Lyrae', horizontalalignment='center',
+               verticalalignment='center', transform=ax6_2.transAxes, rotation=270)
+
+
+    ax7_1.spines['right'].set_visible(False)
+    ax7_2.spines['left'].set_visible(False)
+    d = .7  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                  linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax7_1.plot([1, 1], [0, 1], transform=ax7_1.transAxes, **kwargs)
+    ax7_2.plot([0, 0], [0, 1], transform=ax7_2.transAxes, **kwargs)
+    ax7_2.set_yticklabels([])
+    ax7_2.tick_params(axis='y', left=False)
+    ax7_1.set_ylim(low, high)
+    ax7_2.set_ylim(low, high)
+    ax7_1.text(-0.25, 0.5, 'PSF', horizontalalignment='center',
+               verticalalignment='center', transform=ax7_1.transAxes, rotation=90)
 
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
