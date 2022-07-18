@@ -2105,25 +2105,25 @@ def figure_10():
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
-    sectors = [2, 11, 38]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[0][1], save_aper=True)
-
-    #####################
-    sectors = [4, 12, 31]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
-             name=hosts[1][1], save_aper=True)
-
-    #####################
-    sectors = [1, 28]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
-             name=hosts[2][1], save_aper=True)
+    # sectors = [2, 11, 38]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+    #          name=hosts[0][1], save_aper=True)
+    #
+    # #####################
+    # sectors = [4, 12, 31]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
+    #          name=hosts[1][1], save_aper=True)
+    #
+    # #####################
+    # sectors = [1, 28]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
+    #          name=hosts[2][1], save_aper=True)
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 6))
     gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.8, 1, 1, 0.8, 1, 1])
@@ -2268,7 +2268,7 @@ def figure_10():
     ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
     # split
-    low = 0.85
+    low = 0.9
     high = 1.09
     ax3_1.spines['right'].set_visible(False)
     ax3_2.spines['left'].set_visible(False)
@@ -2358,7 +2358,7 @@ def figure_10():
 
     # split
     low = 0.5
-    high = 2.1
+    high = 2.2
     ax6_1.spines['right'].set_visible(False)
     ax6_2.spines['left'].set_visible(False)
     d = .7  # proportion of vertical to horizontal extent of the slanted line
