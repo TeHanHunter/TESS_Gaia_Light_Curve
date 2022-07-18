@@ -2137,9 +2137,6 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_02 = hdul[1].data['time'][q]
         f_psf_02 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_02 = f_psf_02 + hdul[1].header['LOC_BG']
-        # f_psf_02 = flatten(t_02, f_psf_02 / np.nanmedian(f_psf_02), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_02 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0011*.fits')[0],
@@ -2147,9 +2144,6 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_11 = hdul[1].data['time'][q]
         f_psf_11 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_11 = f_psf_11 + hdul[1].header['LOC_BG']
-        # f_psf_11 = flatten(t_11, f_psf_11 / np.nanmedian(f_psf_11), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_11 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0038*.fits')[0],
@@ -2157,10 +2151,11 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_38 = hdul[1].data['time'][q]
         f_psf_38 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_38 = f_psf_38 + hdul[1].header['LOC_BG']
-        # f_psf_38 = flatten(t_38, f_psf_38 / np.nanmedian(f_psf_38), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_38 = hdul[1].data['cal_aper_flux'][q]
+        t_38 = np.mean(t_38[:len(t_38) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_38 = np.mean(f_psf_38[:len(f_psf_38) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_38 = np.mean(f_aper_38[:len(f_aper_38) // 3 * 3].reshape(-1, 3), axis=1)
+
 
     ax1_1 = fig.add_subplot(gs[0, 0])
     ax1_2 = fig.add_subplot(gs[0, 1])
@@ -2193,10 +2188,10 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_28 = hdul[1].data['time'][q]
         f_psf_28 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_28 = f_psf_28 + hdul[1].header['LOC_BG']
-        # f_psf_28 = flatten(t_28, f_psf_28 / np.nanmedian(f_psf_28), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_28 = hdul[1].data['cal_aper_flux'][q]
+        t_28 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_28 = np.mean(f_psf_28[:len(f_psf_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_28 = np.mean(f_aper_28[:len(f_aper_28) // 3 * 3].reshape(-1, 3), axis=1)
 
     ax2_1 = fig.add_subplot(gs[1, 0])
     ax2_2 = fig.add_subplot(gs[1, 1])
@@ -2216,9 +2211,6 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_04 = hdul[1].data['time'][q]
         f_psf_04 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_04 = f_psf_04 + hdul[1].header['LOC_BG']
-        # f_psf_04 = flatten(t_04, f_psf_04 / np.nanmedian(f_psf_04), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_04 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0012*.fits')[0],
@@ -2226,9 +2218,6 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_12 = hdul[1].data['time'][q]
         f_psf_12 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_12 = f_psf_12 + hdul[1].header['LOC_BG']
-        # f_psf_12 = flatten(t_12, f_psf_12 / np.nanmedian(f_psf_12), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_12 = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0031*.fits')[0],
@@ -2236,10 +2225,10 @@ def figure_10():
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_31 = hdul[1].data['time'][q]
         f_psf_31 = hdul[1].data['cal_psf_flux'][q]
-        # f_psf_31 = f_psf_31 + hdul[1].header['LOC_BG']
-        # f_psf_31 = flatten(t_31, f_psf_31 / np.nanmedian(f_psf_31), window_length=1, method='biweight',
-        #                    return_trend=False)
         f_aper_31 = hdul[1].data['cal_aper_flux'][q]
+        t_31 = np.mean(t_28[:len(t_28) // 3 * 3].reshape(-1, 3), axis=1)
+        f_psf_31 = np.mean(f_psf_31[:len(f_psf_31) // 3 * 3].reshape(-1, 3), axis=1)
+        f_aper_31 = np.mean(f_aper_31[:len(f_aper_31) // 3 * 3].reshape(-1, 3), axis=1)
 
     ax3_1 = fig.add_subplot(gs[2, 0])
     ax3_2 = fig.add_subplot(gs[2, 1])
