@@ -259,19 +259,20 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     aperture_bar = bar * portion
     local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
     aper_lc = aper_lc - local_bg
-    if near_edge:
-        return local_bg, aper_lc, psf_lc
-    # print(local_bg / aperture_bar)
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
     psf_lc = psf_lc - local_bg
     cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
                           return_trend=False)
-    cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
-                         return_trend=False)
+    if near_edge:
+        cal_psf_lc = psf_lc
+        return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
+    else:
+        cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
+                             return_trend=False)
     aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
     psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
-    psf_lc /= aper_mad / psf_mad
+    cal_psf_lc /= aper_mad / psf_mad
     print(f'aper mad = {aper_mad}')
     print(f'psf mad = {psf_mad}')
-    return local_bg, aper_lc, psf_lc
+    return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc

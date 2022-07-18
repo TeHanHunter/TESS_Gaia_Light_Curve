@@ -251,18 +251,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                                near_edge=near_edge)
             aper_lc = np.sum(aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
                              axis=(1, 2))
-            local_bg, aper_lc, psf_lc = bg_mod(source, q=index, portion=portion, psf_lc=psf_lc, aper_lc=aper_lc,
+            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion, psf_lc=psf_lc, aper_lc=aper_lc,
                                                near_edge=near_edge, star_num=i)
             # mag.append(source.gaia['tess_mag'][i])
             # mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index])) / portion))
             # mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))
-            cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
-                                  return_trend=False)
-            if near_edge:
-                cal_psf_lc = psf_lc
-            else:
-                cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
-                                     return_trend=False)
             background_ = background[x_round[i] + source.size * y_round[i], :]
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
