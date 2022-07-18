@@ -2194,6 +2194,16 @@ def figure_10():
     ax0_1.set_ylim(low, high)
     ax0_2.set_ylim(low, high)
     ax0_3.set_ylim(low, high)
+    ax0_1.set_title('Sector 2')
+    ax0_2.set_title('Sector 11')
+    ax0_3.set_title('Sector 38')
+    ax0_1.text(-1.15, 0, 'TGLC aperture', horizontalalignment='center',
+               verticalalignment='center', transform=ax0_1.transAxes, rotation=90)
+    ax0_3.text(2.25, 0, f'{hosts[0][0]}', horizontalalignment='center',
+               verticalalignment='center', transform=ax0_3.transAxes, rotation=270, fontweight='semibold')
+    ax0_3.text(2.15, 0, 'RR Lyrae', horizontalalignment='center',
+               verticalalignment='center', transform=ax0_3.transAxes, rotation=270)
+
 
     ax1_1.spines['right'].set_visible(False)
     ax1_2.spines['left'].set_visible(False)
@@ -2213,10 +2223,8 @@ def figure_10():
     ax1_1.set_ylim(low, high)
     ax1_2.set_ylim(low, high)
     ax1_3.set_ylim(low, high)
-
-    ax0_1.set_title('Sector 2')
-    ax0_2.set_title('Sector 11')
-    ax0_3.set_title('Sector 38')
+    ax1_1.text(-1.15, 0, 'TGLC PSF', horizontalalignment='center',
+               verticalalignment='center', transform=ax1_1.transAxes, rotation=90)
     # ax1_1.set_ylabel('Normalized Flux')
 
     ##########
