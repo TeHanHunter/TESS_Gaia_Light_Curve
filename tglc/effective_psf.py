@@ -272,7 +272,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
                              return_trend=False)
     aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
     psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
-    cal_psf_lc /= aper_mad / psf_mad
+    cal_psf_lc /= psf_mad / aper_mad
     print(f'aper mad = {aper_mad}')
     print(f'psf mad = {psf_mad}')
     return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
