@@ -23,7 +23,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
         name = None
-    # print(name)
+    print(name)
     for j in range(len(source.sector_table)):
         try:
             source.select_sector(sector=source.sector_table['sector'][j])
@@ -35,11 +35,15 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
 
 
 if __name__ == '__main__':
-    local_directory = '/home/tehan/data/ob_associations/'
-    data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
-    hosts = np.array(data['Gaia EDR3'])
-    for i in range(24, len(hosts)):
-        tglc_lc(target='Gaia EDR3 ' + str(hosts[i]), local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
+    local_directory = '/mnt/c/users/tehan/desktop/pseudo/'
+    tglc_lc(target='pseudo', local_directory=local_directory, size=50, save_aper=True, get_all_lc=False)
+
+    ####### list of targets example
+    # local_directory = '/home/tehan/data/ob_associations/'
+    # data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
+    # hosts = np.array(data['Gaia EDR3'])
+    # for i in range(24, len(hosts)):
+    #     tglc_lc(target='Gaia EDR3 ' + str(hosts[i]), local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
 
     ####### list of targets
     # local_directory = '/mnt/d/Astro/hpf/'

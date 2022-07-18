@@ -154,6 +154,60 @@ class Source_cut(object):
         self.gaia = gaia_targets
 
 
+class Source_cut_pseudo(object):
+    def __init__(self, name, size=50, sector=0, cadence=None):
+        """
+        Source_cut object that includes all data from TESS and Gaia DR2
+        :param name: str, required
+        Target identifier (e.g. "NGC 7654" or "M31"),
+        or coordinate in the format of ra dec (e.g. '351.40691 61.646657')
+        :param size: int, optional
+        The side length in pixel  of TESScut image
+        :param cadence: list, required
+        list of cadences of TESS FFI
+        """
+        super(Source_cut_pseudo, self).__init__()
+        if cadence is None:
+            cadence = []
+        self.name = name
+        self.size = size
+        self.sector = sector
+        self.camera = 0
+        self.ccd = 0
+        self.wcs = []
+        self.time = np.arange(10)
+        self.flux = 20 * np.ones((100, 50, 50)) + np.random.random(size=(100, 50, 50))
+        star_flux = np.random.random(100) * 1000 + 200
+        star_x = np.random.random(100) * 50 - 0.5
+        star_y = np.random.random(100) * 50 - 0.5
+        star_x_round = np.round(star_x)
+        star_y_round = np.round(star_y)
+        for j in range(100):
+            for i in range(100):
+                self.flux[j, int(star_y_round[i]), int(star_x_round[i])] += star_flux[i]
+                try:
+                    self.flux[j, int(star_y_round[i]), int(star_x_round[i]) + 1] += star_flux[i]
+                except:
+                    continue
+        self.flux_err = []
+        self.gaia = []
+        self.cadence = cadence
+        self.quality = []
+        self.mask = np.ones(np.shape(self.flux[0]))
+
+        # t_tic = Table()
+        # t_tic[f'tic'] = tic_id[in_frame]
+        t = Table()
+        t[f'tess_mag'] = - star_flux
+        t[f'tess_flux'] = star_flux
+        t[f'tess_flux_ratio'] = star_flux / np.max(star_flux)
+        t[f'sector_{self.sector}_x'] = star_x
+        t[f'sector_{self.sector}_y'] = star_y
+        gaia_targets = t  # TODO: sorting not sorting all columns
+        gaia_targets.sort('tess_mag')
+        self.gaia = gaia_targets
+
+
 def ffi_cut(target='', local_directory='', size=90, sector=None):
     """
     Function to generate Source_cut objects
