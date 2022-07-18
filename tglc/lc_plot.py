@@ -2229,7 +2229,6 @@ def figure_10():
     period = 10.881 / 24
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5260885172921947008-s0004*.fits')[0],
                    mode='denywrite') as hdul:
-        print(hdul[0].header['TESSMAG'])
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_04 = hdul[1].data['time'][q]
         f_psf_04 = hdul[1].data['cal_psf_flux'][q]
@@ -2329,6 +2328,7 @@ def figure_10():
     period = 1.00581
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
                    mode='denywrite') as hdul:
+        print(hdul[0].header['TESSMAG'])
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_01 = hdul[1].data['time'][q]
         f_psf_01 = hdul[1].data['cal_psf_flux'][q]
