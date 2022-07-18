@@ -2196,7 +2196,7 @@ def figure_10():
     ax0_1.set_title('Sector 2')
     ax0_2.set_title('Sector 11')
     ax0_3.set_title('Sector 38')
-    ax0_1.text(-0.15, 0.5, 'aperture', horizontalalignment='center',
+    ax0_1.text(-0.2, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax0_1.transAxes, rotation=90)
     ax0_2.text(2.18, 0, f'{hosts[0][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270, fontweight='semibold')
@@ -2222,7 +2222,7 @@ def figure_10():
     ax1_1.set_ylim(low, high)
     ax1_2.set_ylim(low, high)
     ax1_3.set_ylim(low, high)
-    ax1_1.text(-0.15, 0.5, 'PSF', horizontalalignment='center',
+    ax1_1.text(-0.2, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax1_1.transAxes, rotation=90)
 
     ##########
@@ -2294,7 +2294,7 @@ def figure_10():
     ax3_1.set_title('Sector 4')
     ax3_2.set_title('Sector 12')
     ax3_3.set_title('Sector 31')
-    ax3_1.text(-0.15, 0.5, 'aperture', horizontalalignment='center',
+    ax3_1.text(-0.2, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax3_1.transAxes, rotation=90)
     ax3_2.text(2.18, 0, f'{hosts[1][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax3_2.transAxes, rotation=270, fontweight='semibold')
@@ -2320,7 +2320,7 @@ def figure_10():
     ax4_1.set_ylim(low, high)
     ax4_2.set_ylim(low, high)
     ax4_3.set_ylim(low, high)
-    ax4_1.text(-0.15, 0.5, 'PSF', horizontalalignment='center',
+    ax4_1.text(-0.2, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax4_1.transAxes, rotation=90)
 
     ##########
@@ -2374,11 +2374,11 @@ def figure_10():
     ax6_2.set_ylim(low, high)
     ax6_1.set_title('Sector 1')
     ax6_2.set_title('Sector 28')
-    ax6_1.text(-0.15, 0.5, 'aperture', horizontalalignment='center',
+    ax6_1.text(-0.2, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax6_1.transAxes, rotation=90)
-    ax6_2.text(2.18, 0, f'{hosts[0][0]}', horizontalalignment='center',
+    ax6_2.text(2.18, 0, f'{hosts[2][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270, fontweight='semibold')
-    ax6_2.text(2.1, 0, 'RR Lyrae', horizontalalignment='center',
+    ax6_2.text(2.1, 0, 'Cepheid', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270)
 
 
@@ -2393,7 +2393,7 @@ def figure_10():
     ax7_2.tick_params(axis='y', left=False)
     ax7_1.set_ylim(low, high)
     ax7_2.set_ylim(low, high)
-    ax7_1.text(-0.15, 0.5, 'PSF', horizontalalignment='center',
+    ax7_1.text(-0.2, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax7_1.transAxes, rotation=90)
 
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
