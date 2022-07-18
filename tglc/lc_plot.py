@@ -2105,25 +2105,25 @@ def figure_10():
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
-    sectors = [2, 11, 38]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[0][1], save_aper=True)
-
-    #####################
-    sectors = [4, 12, 31]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[2][1], save_aper=True)
-
-    #####################
-    sectors = [1, 28]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[1][1], save_aper=True)
+    # sectors = [2, 11, 38]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+    #          name=hosts[0][1], save_aper=True)
+    #
+    # #####################
+    # sectors = [4, 12, 31]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+    #          name=hosts[2][1], save_aper=True)
+    #
+    # #####################
+    # sectors = [1, 28]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+    #          name=hosts[1][1], save_aper=True)
 
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 10))
@@ -2161,13 +2161,13 @@ def figure_10():
     ax1_1 = fig.add_subplot(gs[0, :3])
     ax1_2 = fig.add_subplot(gs[0, 3:6])
     ax1_3 = fig.add_subplot(gs[0, 6:9])
-    ax1_1.plot(t_02, f_aper_02, '.', c=color[0], markersize=1, label='2')
-    ax1_2.plot(t_11, f_aper_11, '.', c=color[1], markersize=1, label='11')
-    ax1_3.plot(t_38, f_aper_38, '.', c=color[2], markersize=1, label='38')
+    ax1_1.plot(t_02, f_aper_02, '.', markersize=1, label='2')
+    ax1_2.plot(t_11, f_aper_11, '.', markersize=1, label='11')
+    ax1_3.plot(t_38, f_aper_38, '.', markersize=1, label='38')
 
-    ax1_1.plot(t_02, f_psf_02, '.', c=color[0], markersize=1, label='2')
-    ax1_2.plot(t_11, f_psf_11, '.', c=color[1], markersize=1, label='11')
-    ax1_3.plot(t_38, f_psf_38, '.', c=color[2], markersize=1, label='38')
+    ax1_1.plot(t_02, f_psf_02, '.', markersize=1, label='2')
+    ax1_2.plot(t_11, f_psf_11, '.', markersize=1, label='11')
+    ax1_3.plot(t_38, f_psf_38, '.', markersize=1, label='38')
 
     # ax1_1.set_title('TGLC aperture')
     # ax1_2.set_title('TGLC PSF')
