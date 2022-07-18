@@ -2126,7 +2126,7 @@ def figure_10():
     #          name=hosts[1][1], save_aper=True)
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 6))
-    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0)
+    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.8, 1, 1, 0.8, 1, 1])
     local_directory = '/home/tehan/data/variables/'
     ##########
     period = 0.63150
@@ -2196,9 +2196,9 @@ def figure_10():
     ax0_1.set_title('Sector 2')
     ax0_2.set_title('Sector 11')
     ax0_3.set_title('Sector 38')
-    ax0_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
+    ax0_1.text(-0.15, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax0_1.transAxes, rotation=90)
-    ax0_2.text(2.15, 0, f'{hosts[0][0]}', horizontalalignment='center',
+    ax0_2.text(2.18, 0, f'{hosts[0][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270, fontweight='semibold')
     ax0_2.text(2.1, 0, 'RR Lyrae', horizontalalignment='center',
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270)
@@ -2222,7 +2222,7 @@ def figure_10():
     ax1_1.set_ylim(low, high)
     ax1_2.set_ylim(low, high)
     ax1_3.set_ylim(low, high)
-    ax1_1.text(-0.25, 0.5, 'PSF', horizontalalignment='center',
+    ax1_1.text(-0.15, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax1_1.transAxes, rotation=90)
 
     ##########
@@ -2268,8 +2268,8 @@ def figure_10():
     ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
     # split
-    low = 0.9
-    high = 1.1
+    low = 0.85
+    high = 1.09
     ax3_1.spines['right'].set_visible(False)
     ax3_2.spines['left'].set_visible(False)
     ax3_2.spines['right'].set_visible(False)
@@ -2294,9 +2294,9 @@ def figure_10():
     ax3_1.set_title('Sector 4')
     ax3_2.set_title('Sector 12')
     ax3_3.set_title('Sector 31')
-    ax3_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
+    ax3_1.text(-0.15, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax3_1.transAxes, rotation=90)
-    ax3_2.text(2.15, 0, f'{hosts[1][0]}', horizontalalignment='center',
+    ax3_2.text(2.18, 0, f'{hosts[1][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax3_2.transAxes, rotation=270, fontweight='semibold')
     ax3_2.text(2.1, 0, 'Rotator', horizontalalignment='center',
                verticalalignment='center', transform=ax3_2.transAxes, rotation=270)
@@ -2320,7 +2320,7 @@ def figure_10():
     ax4_1.set_ylim(low, high)
     ax4_2.set_ylim(low, high)
     ax4_3.set_ylim(low, high)
-    ax4_1.text(-0.25, 0.5, 'PSF', horizontalalignment='center',
+    ax4_1.text(-0.15, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax4_1.transAxes, rotation=90)
 
     ##########
@@ -2374,9 +2374,9 @@ def figure_10():
     ax6_2.set_ylim(low, high)
     ax6_1.set_title('Sector 1')
     ax6_2.set_title('Sector 28')
-    ax6_1.text(-0.25, 0.5, 'aperture', horizontalalignment='center',
+    ax6_1.text(-0.15, 0.5, 'aperture', horizontalalignment='center',
                verticalalignment='center', transform=ax6_1.transAxes, rotation=90)
-    ax6_2.text(2.15, 0, f'{hosts[0][0]}', horizontalalignment='center',
+    ax6_2.text(2.18, 0, f'{hosts[0][0]}', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270, fontweight='semibold')
     ax6_2.text(2.1, 0, 'RR Lyrae', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270)
@@ -2393,7 +2393,7 @@ def figure_10():
     ax7_2.tick_params(axis='y', left=False)
     ax7_1.set_ylim(low, high)
     ax7_2.set_ylim(low, high)
-    ax7_1.text(-0.25, 0.5, 'PSF', horizontalalignment='center',
+    ax7_1.text(-0.15, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax7_1.transAxes, rotation=90)
 
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
