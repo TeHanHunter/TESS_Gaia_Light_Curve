@@ -2125,10 +2125,8 @@ def figure_10():
     #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
     #          name=hosts[1][1], save_aper=True)
 
-
-    fig = plt.figure(constrained_layout=False, figsize=(10, 10))
-    gs = fig.add_gridspec(3, 9)
-    gs.update(wspace=0.2, hspace=0.4)
+    fig = plt.figure(constrained_layout=False, figsize=(10, 5))
+    gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0.4, height_ratios=[1, 1, 0.3, 1, 1, 0.3, 1, 1])
     local_directory = '/home/tehan/data/variables/'
     color = ['C0', 'C1', 'C3']
     ##########
@@ -2157,13 +2155,16 @@ def figure_10():
         f_psf_38 = np.mean(f_psf_38[:len(f_psf_38) // 3 * 3].reshape(-1, 3), axis=1)
         f_aper_38 = np.mean(f_aper_38[:len(f_aper_38) // 3 * 3].reshape(-1, 3), axis=1)
 
+    ax0_1 = fig.add_subplot(gs[0, :3])
+    ax0_2 = fig.add_subplot(gs[0, 3:6])
+    ax0_3 = fig.add_subplot(gs[0, 6:9])
+    ax1_1 = fig.add_subplot(gs[1, :3])
+    ax1_2 = fig.add_subplot(gs[1, 3:6])
+    ax1_3 = fig.add_subplot(gs[1, 6:9])
 
-    ax1_1 = fig.add_subplot(gs[0, :3])
-    ax1_2 = fig.add_subplot(gs[0, 3:6])
-    ax1_3 = fig.add_subplot(gs[0, 6:9])
-    ax1_1.plot(t_02, f_aper_02, '.', markersize=1, label='2')
-    ax1_2.plot(t_11, f_aper_11, '.', markersize=1, label='11')
-    ax1_3.plot(t_38, f_aper_38, '.', markersize=1, label='38')
+    ax0_1.plot(t_02, f_aper_02, '.', markersize=1, label='2')
+    ax0_2.plot(t_11, f_aper_11, '.', markersize=1, label='11')
+    ax0_3.plot(t_38, f_aper_38, '.', markersize=1, label='38')
 
     ax1_1.plot(t_02, f_psf_02, '.', markersize=1, label='2')
     ax1_2.plot(t_11, f_psf_11, '.', markersize=1, label='11')
@@ -2198,18 +2199,21 @@ def figure_10():
         f_psf_31 = np.mean(f_psf_31[:len(f_psf_31) // 3 * 3].reshape(-1, 3), axis=1)
         f_aper_31 = np.mean(f_aper_31[:len(f_aper_31) // 3 * 3].reshape(-1, 3), axis=1)
 
-    ax2_1 = fig.add_subplot(gs[1, :3])
-    ax2_2 = fig.add_subplot(gs[1, 3:6])
-    ax2_3 = fig.add_subplot(gs[1, 6:])
+    ax3_1 = fig.add_subplot(gs[3, :3])
+    ax3_2 = fig.add_subplot(gs[3, 3:6])
+    ax3_3 = fig.add_subplot(gs[3, 6:])
 
-    ax2_1.plot(t_04, f_aper_04, '.', c=color[0], markersize=1, label='4')
-    ax2_2.plot(t_12, f_aper_12, '.', c=color[1], markersize=1, label='12')
-    ax2_3.plot(t_31, f_aper_31, '.', c=color[2], markersize=1, label='31')
+    ax4_1 = fig.add_subplot(gs[4, :3])
+    ax4_2 = fig.add_subplot(gs[4, 3:6])
+    ax4_3 = fig.add_subplot(gs[4, 6:])
 
-    ax2_1.plot(t_04, f_psf_04, '.', c=color[0], markersize=1, label='4')
-    ax2_2.plot(t_12, f_psf_12, '.', c=color[1], markersize=1, label='12')
-    ax2_3.plot(t_31, f_psf_31, '.', c=color[2], markersize=1, label='31')
+    ax3_1.plot(t_04, f_aper_04, '.', c=color[0], markersize=1, label='4')
+    ax3_2.plot(t_12, f_aper_12, '.', c=color[1], markersize=1, label='12')
+    ax3_3.plot(t_31, f_aper_31, '.', c=color[2], markersize=1, label='31')
 
+    ax4_1.plot(t_04, f_psf_04, '.', c=color[0], markersize=1, label='4')
+    ax4_2.plot(t_12, f_psf_12, '.', c=color[1], markersize=1, label='12')
+    ax4_3.plot(t_31, f_psf_31, '.', c=color[2], markersize=1, label='31')
 
     ##########
     period = 1.00581
@@ -2233,16 +2237,16 @@ def figure_10():
         f_psf_28 = np.mean(f_psf_28[:len(f_psf_28) // 3 * 3].reshape(-1, 3), axis=1)
         f_aper_28 = np.mean(f_aper_28[:len(f_aper_28) // 3 * 3].reshape(-1, 3), axis=1)
 
-    ax2_1 = fig.add_subplot(gs[2, :3])
-    ax2_2 = fig.add_subplot(gs[2, 3:6])
+    ax6_1 = fig.add_subplot(gs[6, :3])
+    ax6_2 = fig.add_subplot(gs[6, 3:6])
+    ax7_1 = fig.add_subplot(gs[7, :3])
+    ax7_2 = fig.add_subplot(gs[7, 3:6])
 
-    ax2_1.plot(t_01, f_aper_01, '.', c=color[0], markersize=1, label='1')
-    ax2_2.plot(t_28, f_aper_28, '.', c=color[1], markersize=1, label='28')
+    ax6_1.plot(t_01, f_aper_01, '.', c=color[0], markersize=1, label='1')
+    ax6_2.plot(t_28, f_aper_28, '.', c=color[1], markersize=1, label='28')
 
-    ax2_1.plot(t_01, f_psf_01, '.', c=color[0], markersize=1, label='1')
-    ax2_2.plot(t_28, f_psf_28, '.', c=color[1], markersize=1, label='28')
-    ax2_1.legend(loc=1, fontsize=6)
-    ax2_2.legend(loc=1, fontsize=6)
+    ax7_1.plot(t_01, f_psf_01, '.', c=color[0], markersize=1, label='1')
+    ax7_2.plot(t_28, f_psf_28, '.', c=color[1], markersize=1, label='28')
 
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
