@@ -40,10 +40,15 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 
 if __name__ == '__main__':
-    target = input('Target ID or coordinates: ')
-    local_directory = '/home/tehan/data/cosmos/'
-    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=15,
-            get_all_lc=True, first_sector_only=True)
+    # target = input('Target ID or coordinates: ')
+    dec = [-60, 0, 60]
+    ra = [0, 90, 180, 270]
+    for d in dec:
+        for r in ra:
+            local_directory = f'/home/tehan/data/cosmos/{r}_{d}/'
+            target = f'{r} {d}'
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=15,
+                    get_all_lc=True, first_sector_only=True)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
