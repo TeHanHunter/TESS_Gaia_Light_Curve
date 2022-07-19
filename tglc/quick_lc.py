@@ -41,7 +41,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 if __name__ == '__main__':
     # target = input('Target ID or coordinates: ')
-    dec = [-30, 0, 60]
+    dec = [-60, 0, 60]
     ra = [0, 90, 180, 270]
     for d in dec:
         for r in ra:
