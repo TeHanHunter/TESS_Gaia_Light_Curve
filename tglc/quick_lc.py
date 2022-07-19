@@ -3,7 +3,7 @@ from astropy.io import ascii
 warnings.simplefilter('ignore', UserWarning)
 
 
-def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_all_lc=False):
+def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False):
     '''
     Generate light curve for a single target.
 
@@ -28,7 +28,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
         try:
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, save_aper=save_aper)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper)
         except:
             sector_num = source.sector_table["sector"][j]
             warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
