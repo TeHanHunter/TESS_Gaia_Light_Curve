@@ -262,6 +262,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
     psf_lc = psf_lc - local_bg
+    print(aper_lc)
     cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
                           return_trend=False)
     if near_edge:
