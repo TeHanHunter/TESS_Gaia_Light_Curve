@@ -6,7 +6,7 @@ from astropy.io import ascii
 
 
 def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False):
+            first_sector_only=False, sector=None):
     '''
     Generate light curve for a single target.
 
@@ -21,7 +21,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
-    source = ffi_cut(target=target, size=size, local_directory=local_directory)  # sector
+    source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector)  # sector
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
@@ -49,7 +49,7 @@ if __name__ == '__main__':
             os.makedirs(local_directory, exist_ok=True)
             target = f'{r} {d}'
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=15,
-                    get_all_lc=True, first_sector_only=True)
+                    get_all_lc=True, first_sector_only=True, sector=True)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'

@@ -40,6 +40,8 @@ class Source_cut(object):
         self.quality = []
         self.mask = []
         target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+        if len(target) == 0:
+            target = Catalogs.query_object(self.name, radius=5*21 * 0.707 / 3600, catalog="Gaia", version=2)
         ra = target[0]['ra']
         dec = target[0]['dec']
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
@@ -56,6 +58,8 @@ class Source_cut(object):
         print(sector_table)
         if sector is None:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size)
+        elif sector is True:
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector_table['sector'][0])
         else:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector)
         self.catalogdata = catalogdata
