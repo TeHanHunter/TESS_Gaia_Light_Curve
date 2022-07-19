@@ -1,9 +1,9 @@
 from tglc.target_lightcurve import *
 from astropy.io import ascii
-warnings.simplefilter('ignore', UserWarning)
+# warnings.simplefilter('ignore', UserWarning)
 
 
-def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_all_lc=False):
+def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False):
     '''
     Generate light curve for a single target.
 
@@ -25,18 +25,18 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, get_
         name = None
     print(name)
     for j in range(len(source.sector_table)):
-        try:
-            source.select_sector(sector=source.sector_table['sector'][j])
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, save_aper=save_aper)
-        except:
-            sector_num = source.sector_table["sector"][j]
-            warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
+        # try:
+        source.select_sector(sector=source.sector_table['sector'][j])
+        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                 name=name, limit_mag=limit_mag, save_aper=save_aper)
+        #except:
+        #    sector_num = source.sector_table["sector"][j]
+        #    warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
 
 
 if __name__ == '__main__':
-    local_directory = '/mnt/c/users/tehan/desktop/pseudo/'
-    tglc_lc(target='pseudo', local_directory=local_directory, size=50, save_aper=True, get_all_lc=False)
+    local_directory = '/home/tehan/data/cosmos/'
+    tglc_lc(target='TIC 269820902', local_directory=local_directory, size=50, save_aper=True, limit_mag=16, get_all_lc=True)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
