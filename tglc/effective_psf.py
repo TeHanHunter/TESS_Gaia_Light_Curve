@@ -257,13 +257,12 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
     aperture_bar = bar * portion
     local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
-    if local_bg == np.nan:
+    if np.isnan(local_bg):
         local_bg = 0
     aper_lc = aper_lc - local_bg
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
-    if local_bg == np.nan:
-        print('Nan local')
+    if np.isnan(local_bg):
         local_bg = 0
     psf_lc = psf_lc - local_bg
     cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
