@@ -242,6 +242,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         end = start + 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
+            print(1)
             if 1.5 <= x_round[i] < source.size - 2.5 and 1.5 <= y_round[i] < source.size - 2.5:
                 near_edge = False
             else:
