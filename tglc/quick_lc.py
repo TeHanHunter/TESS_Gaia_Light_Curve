@@ -1,6 +1,6 @@
 from tglc.target_lightcurve import *
 from astropy.io import ascii
-warnings.simplefilter('ignore', UserWarning)
+# warnings.simplefilter('ignore', UserWarning)
 
 
 def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False):
