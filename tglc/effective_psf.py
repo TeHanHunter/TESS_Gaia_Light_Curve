@@ -133,7 +133,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     scaler = np.append(scaler, np.ones(over_size ** 2))
 
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
-    a = np.delete(A, saturated_index, 0) / scaler[:, np.newaxis]
+    a = np.delete(A, np.where(saturated_index), 0) / scaler[:, np.newaxis]
     b = b / scaler
     alpha = np.dot(a.T, a)
     beta = np.dot(a.T, b)
