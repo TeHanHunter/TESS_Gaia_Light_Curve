@@ -68,14 +68,23 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     x_p = np.arange(size)
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
-    A = np.zeros((size ** 2, over_size ** 2 + 3))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    A[:, -1] = source.mask.flatten()
-    A[:, -2] = yy.flatten()
-    A[:, -3] = xx.flatten()
-    # A[:, -4] = np.ones(size ** 2)
-    # A[:, -5] = (source.mask * xx).flatten()
-    # A[:, -6] = (source.mask * yy).flatten()
+    
+    if type(source) == tglc.ffi.Source:
+        bg_dof = 6
+        A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
+        A[:, -1] = np.ones(size ** 2)
+        A[:, -2] = yy.flatten()
+        A[:, -3] = xx.flatten()
+        A[:, -4] = source.mask.flatten()
+        A[:, -5] = (source.mask * xx).flatten()
+        A[:, -6] = (source.mask * yy).flatten()
+    else:
+        bg_dof = 3
+        A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
+        A[:, -1] = np.ones(size ** 2)
+        A[:, -2] = yy.flatten()
+        A[:, -3] = xx.flatten()
     star_info = []
     for i in range(len(source.gaia)):
         x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
@@ -197,8 +206,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     up_11 = np.minimum(size - y + 5, 11)
     coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
     index = coord[down_11:up_11, left_11:right_11]
-
-    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
+    if type(source) == tglc.ffi.Source:
+        bg_dof = 6
+    else:
+        bg_dof = 3
+    A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
     psf_sim = psf_shape[:, down_:up_, left_: right_]
