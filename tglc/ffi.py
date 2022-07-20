@@ -277,10 +277,13 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     mask = pkg_resources.resource_stream(__name__, f'background_mask/median_mask.fits')
     mask = fits.open(mask)[0].data[(camera - 1) * 4 + (ccd - 1), :]
     mask = np.repeat(mask.reshape(1, 2048), repeats=2048, axis=0)
+    bad_pixels = np.zeros(np.shape(flux[0]))
     med_flux = np.median(flux, axis=0)
-    mask[med_flux > 0.8 * np.nanmax(med_flux)] = 0
-    mask[med_flux < 0.2 * np.nanmedian(med_flux)] = 0
-    mask[np.isnan(med_flux)] = 0
+    bad_pixels[med_flux > 0.8 * np.nanmax(med_flux)] = 1
+    bad_pixels[med_flux < 0.2 * np.nanmedian(med_flux)] = 1
+    bad_pixels[np.isnan(med_flux)] = 1
+    mask = np.ma.masked_array(mask, mask=bad_pixels)
+    mask = np.ma.masked_equal(mask, 0)
 
     hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
     wcs = WCS(hdul[1].header)

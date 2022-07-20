@@ -76,9 +76,9 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
         A[:, -1] = np.ones(size ** 2)
         A[:, -2] = yy.flatten()
         A[:, -3] = xx.flatten()
-        A[:, -4] = source.mask.flatten()
-        A[:, -5] = (source.mask * xx).flatten()
-        A[:, -6] = (source.mask * yy).flatten()
+        A[:, -4] = source.mask.data.flatten()
+        A[:, -5] = (source.mask.data * xx).flatten()
+        A[:, -6] = (source.mask.data * yy).flatten()
     else:
         bg_dof = 3
         A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
