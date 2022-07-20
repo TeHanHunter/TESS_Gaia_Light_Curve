@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from wotan import flatten
-
+import tglc
 
 def bilinear(x, y, repeat=23):
     '''
