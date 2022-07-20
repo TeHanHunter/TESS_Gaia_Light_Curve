@@ -63,7 +63,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
-    sector = 3
+    sector = 2
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
     for i in range(16):
         name = f'{1 + i // 4}-{1 + i % 4}'
