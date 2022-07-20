@@ -60,9 +60,7 @@ class Source_cut(object):
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size)
         elif sector is True:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector_table['sector'][0])
-            self.sector = sector_table['sector'][0]
             sector = sector_table['sector'][0]
-            print(f'sector is {sector}')
         else:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector)
         self.catalogdata = catalogdata
