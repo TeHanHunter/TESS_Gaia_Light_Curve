@@ -112,10 +112,12 @@ class Source_cut(object):
         self.quality = np.zeros(len(data_time))
 
         mask = np.ones(np.shape(data_flux[0]))
+        bad_pixels = np.zeros(np.shape(data_flux[0]))
         med_flux = np.median(data_flux, axis=0)
-        mask[med_flux > 0.8 * np.nanmax(med_flux)] = 0
-        mask[med_flux < 0.2 * np.nanmedian(med_flux)] = 0
-        mask[np.isnan(med_flux)] = 0
+        bad_pixels[med_flux > 0.8 * np.nanmax(med_flux)] = 1
+        bad_pixels[med_flux < 0.2 * np.nanmedian(med_flux)] = 1
+        bad_pixels[np.isnan(med_flux)] = 1
+        mask = np.ma.masked_array(mask, mask=bad_pixels)
         self.mask = mask
 
         gaia_targets = self.catalogdata[

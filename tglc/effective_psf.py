@@ -124,8 +124,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     time index of this ePSF fit
     :return: fit result
     """
-    cal_factor = source.mask.flatten()
-    saturated_index = np.where(cal_factor == 0)
+    saturated_index = source.mask.mask.flatten()
     flux = source.flux[time].flatten()
 
     b = np.delete(flux, saturated_index)
