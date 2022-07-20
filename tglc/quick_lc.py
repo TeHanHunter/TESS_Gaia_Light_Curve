@@ -31,8 +31,8 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
         source.select_sector(sector=source.sector_table['sector'][j])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper)
-if first_sector_only:
-    break
+        if first_sector_only:
+            break
 #         except:
 #             sector_num = source.sector_table["sector"][j]
 #             warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
