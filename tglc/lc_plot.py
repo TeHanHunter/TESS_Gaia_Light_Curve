@@ -2403,5 +2403,24 @@ def figure_10():
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
 
 
+def figure_11():
+    with open(f'/mnt/c/users/tehan/desktop/source_03_10.pkl', 'rb') as input_:
+        source = pickle.load(input_)
+    fig = plt.figure(constrained_layout=False, figsize=(11, 4))
+    gs = fig.add_gridspec(1, 31)
+    gs.update(wspace=1, hspace=0.1)
+    ax1 = fig.add_subplot(gs[0, 0:10])
+    ax1.imshow(np.log10(np.nanmedian(source.flux, axis=0)), origin='lower') #, vmin=2, vmax=2.15
+    # ax1.set_xlim(50,75)
+    # ax1.set_ylim(80,105)
+    mask = source.mask.data
+    mask[source.mask.mask] = 0
+    ax2 = fig.add_subplot(gs[0, 10:20])
+    ax2.imshow(np.log10(mask), origin='lower')
+    # ax2.set_xlim(50,75)
+    # ax2.set_ylim(80,105)
+    plt.show()
+
+
 if __name__ == '__main__':
-    figure_10()
+    figure_11()
