@@ -103,7 +103,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
     A_mod = np.diag(dist.flatten())
-    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 3)))), axis=-1)
+    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, bg_dof)))), axis=-1)
     A = np.append(A, A_mod, axis=0)
     return A, star_info, over_size, x_round, y_round
 
