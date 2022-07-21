@@ -2404,21 +2404,42 @@ def figure_10():
 
 
 def figure_11():
-    with open(f'/mnt/c/users/tehan/desktop/source_03_10.pkl', 'rb') as input_:
+    with open(f'/mnt/c/users/tehan/desktop/source_00_03.pkl', 'rb') as input_:
         source = pickle.load(input_)
     fig = plt.figure(constrained_layout=False, figsize=(11, 4))
     gs = fig.add_gridspec(1, 31)
     gs.update(wspace=1, hspace=0.1)
     ax1 = fig.add_subplot(gs[0, 0:10])
-    ax1.imshow(np.log10(np.nanmedian(source.flux, axis=0)), origin='lower') #, vmin=2, vmax=2.15
+    ax1.imshow(np.nanmedian(source.flux, axis=0), vmin=100, vmax=140, origin='lower', cmap='viridis')
+    ax1.set_title('TESS FFI cutout')
+    ax1.set_ylabel('Pixels')
+    ax1.set_xlabel('Pixels')
     # ax1.set_xlim(50,75)
     # ax1.set_ylim(80,105)
     mask = source.mask.data
     mask[source.mask.mask] = 0
     ax2 = fig.add_subplot(gs[0, 10:20])
     ax2.imshow(np.log10(mask), origin='lower')
+    ax2.set_yticklabels([])
+    ax2.set_title('Calibrated background')
+    ax2.set_xlabel('Pixels')
     # ax2.set_xlim(50,75)
     # ax2.set_ylim(80,105)
+
+    bg = np.load('/mnt/c/users/tehan/desktop/bg_00_03_sector_2.npy')
+    ax3 = fig.add_subplot(gs[0, 20:30])
+    im3 = ax3.imshow(bg[:150**2,0].reshape(150,150), vmin=100, vmax=140, origin='lower', cmap='viridis')
+    ax3.set_yticklabels([])
+    ax3.set_title('Simulated background')
+    ax3.set_xlabel('Pixels')
+
+    ax_cb = fig.colorbar(im3, cax=fig.add_subplot(gs[0, 30]), orientation='vertical',
+                         boundaries=np.linspace(100,140,1000),
+                         ticks=[100,110,120,130,140], aspect=50, shrink=0.7)
+    ax_cb.ax.set_yticklabels(['100','110','120','130',r'$\geq 140$'])
+    ax_cb.ax.set_ylabel(r'TESS Flux ($\mathrm{e^-}$/ s) ')
+    # plt.savefig('/mnt/c/users/tehan/desktop/cal_bg.png', bbox_inches='tight', dpi=300)
+
     plt.show()
 
 
