@@ -221,7 +221,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
 
     # TODO: quality use which background?
     background = np.dot(A[:source.size ** 2, -bg_dof:], e_psf[:, -bg_dof:].T)
-    np.save(f'{local_directory}epsf/bg_{target}_sector_{sector}.npy', background)
+    # np.save(f'{local_directory}epsf/bg_{target}_sector_{sector}.npy', background)
     quality_raw = np.zeros(len(source.time), dtype=np.int16)
     sigma = 1.4826 * np.nanmedian(np.abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])))
     quality_raw[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= 3 * sigma] += 1
