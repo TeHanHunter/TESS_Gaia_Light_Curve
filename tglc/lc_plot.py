@@ -2113,29 +2113,30 @@ def figure_10():
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
-    sectors = [2, 11, 38]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-             name=hosts[0][1], save_aper=True)
-
-    #####################
-    sectors = [4, 12, 31]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
-             name=hosts[1][1], save_aper=True)
-
-    #####################
-    sectors = [1, 28]
-    for sector in sectors:
-        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
-             name=hosts[2][1], save_aper=True)
+    # sectors = [2, 11, 38]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+    #          name=hosts[0][1], save_aper=True)
+    #
+    # #####################
+    # sectors = [4, 12, 31]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
+    #          name=hosts[1][1], save_aper=True)
+    #
+    # #####################
+    # sectors = [1, 28]
+    # for sector in sectors:
+    #     source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+    #     epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
+    #          name=hosts[2][1], save_aper=True)
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 6))
     gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.8, 1, 1, 0.8, 1, 1])
     local_directory = '/home/tehan/data/variables/'
+    # local_directory = '/mnt/c/users/tehan/desktop/variables/'
     ##########
     period = 0.63150
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0002*.fits')[0],
@@ -2334,7 +2335,6 @@ def figure_10():
     period = 1.00581
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
                    mode='denywrite') as hdul:
-        print(hdul[0].header['TESSMAG'])
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_01 = hdul[1].data['time'][q]
         f_psf_01 = hdul[1].data['cal_psf_flux'][q]
@@ -2405,8 +2405,8 @@ def figure_10():
     ax7_1.text(-0.2, 0.5, 'PSF', horizontalalignment='center',
                verticalalignment='center', transform=ax7_1.transAxes, rotation=90)
 
-    plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
-
+    # plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
+    plt.show()
 
 def figure_11():
     with open(f'/mnt/c/users/tehan/desktop/source_00_03.pkl', 'rb') as input_:
