@@ -3,6 +3,7 @@ import numpy as np
 from wotan import flatten
 import tglc
 
+
 def bilinear(x, y, repeat=23):
     '''
     A bilinear formula
@@ -69,7 +70,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    
+
     if type(source) == tglc.ffi.Source:
         bg_dof = 6
         A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
@@ -225,9 +226,10 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A_[:, -2] = yy.flatten()
     A_[:, -3] = xx.flatten()
     edge_pixel = np.array([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24])
-    med_aperture = np.median(aperture, axis=0).flatten()
-    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
-        med_aperture[edge_pixel])
+    # med_aperture = np.median(aperture, axis=0).flatten()
+    # outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
+    #     med_aperture[edge_pixel])
+    outliers = edge_pixel
     epsf_sum = np.sum(np.median(psf_shape, axis=0))
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
