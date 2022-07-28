@@ -170,7 +170,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
-    cut_size = 5
+    cut_size = 7
     left = np.maximum(0, x - cut_size // 2)
     right = np.minimum(size, x + cut_size // 2 + 1)
     down = np.maximum(0, y - cut_size // 2)
