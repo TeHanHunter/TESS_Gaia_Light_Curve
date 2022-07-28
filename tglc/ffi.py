@@ -293,7 +293,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
     os.makedirs(f'{local_directory}source/{camera}-{ccd}/', exist_ok=True)
-    for i in trange(14):  # 22
+    for i in trange(2, 14):  # 22
         for j in range(14):  # 22
             with open(f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
                 source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
