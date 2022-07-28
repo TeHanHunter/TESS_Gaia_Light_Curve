@@ -3,7 +3,6 @@ import numpy as np
 from wotan import flatten
 import tglc
 
-
 def bilinear(x, y, repeat=23):
     '''
     A bilinear formula
@@ -171,10 +170,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
-    left = np.maximum(0, x - 2)
-    right = np.minimum(size, x + 3)
-    down = np.maximum(0, y - 2)
-    up = np.minimum(size, y + 3)
+    cut_size = 5
+    left = np.maximum(0, x - cut_size // 2)
+    right = np.minimum(size, x + cut_size // 2 + 1)
+    down = np.maximum(0, y - cut_size // 2)
+    up = np.minimum(size, y + cut_size // 2 + 1)
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
@@ -190,7 +190,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 
     # psf_lc
     over_size = psf_size * factor + 1
-    if near_edge:
+    if near_edge: # TODO: near_edge
         psf_lc = np.zeros(len(source.time))
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
@@ -218,18 +218,16 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
 
     psf_lc = np.zeros(len(source.time))
-    size = 5
-    A_ = np.zeros((size ** 2, 1))
-    xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2),
-                         (np.arange(size) - (size - 1) / 2))
-    # A_[:, -1] = np.ones(size ** 2)
-    # A_[:, -2] = yy.flatten()
-    # A_[:, -3] = xx.flatten()
+    A_ = np.zeros((cut_size ** 2, 4))
+    xx, yy = np.meshgrid((np.arange(cut_size) - (cut_size - 1) / 2),
+                         (np.arange(cut_size) - (cut_size - 1) / 2))
+    A_[:, -1] = np.ones(cut_size ** 2)
+    A_[:, -2] = yy.flatten()
+    A_[:, -3] = xx.flatten()
     edge_pixel = np.array([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24])
-    # med_aperture = np.median(aperture, axis=0).flatten()
-    # outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
-    #     med_aperture[edge_pixel])
-    outliers = np.array([True] * len(edge_pixel))
+    med_aperture = np.median(aperture, axis=0).flatten()
+    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
+        med_aperture[edge_pixel])
     epsf_sum = np.sum(np.median(psf_shape, axis=0))
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
