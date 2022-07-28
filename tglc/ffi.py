@@ -19,7 +19,8 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
 
-Gaia.ROW_LIMIT = -1
+# Gaia.ROW_LIMIT = -1
+Gaia.ROW_LIMIT = 500000
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
 
 
