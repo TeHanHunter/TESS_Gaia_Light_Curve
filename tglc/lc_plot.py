@@ -2463,4 +2463,4 @@ def figure_11():
 
 
 if __name__ == '__main__':
-    figure_9()
+    figure_10()
