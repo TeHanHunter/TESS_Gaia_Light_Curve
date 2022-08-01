@@ -65,10 +65,7 @@ if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 1
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    # for i in range(16):
-
-    i = 3
-    name = f'{1 + i // 4}-{1 + i % 4}'
-    lc_per_cut(195, camccd=name, local_directory=local_directory)
-    # lc_per_ccd(camccd=name, local_directory=local_directory)
-    # plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
+    for i in range(16):
+        name = f'{1 + i // 4}-{1 + i % 4}'
+        lc_per_ccd(camccd=name, local_directory=local_directory)
+        plot_epsf(sector=sector, camccd=name, local_directory=local_directory)

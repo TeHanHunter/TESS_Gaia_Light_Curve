@@ -568,7 +568,7 @@ def figure_5():
     plt.close()
 
 
-def figure_6(mode='aper'):
+def figure_6(mode='psf'):
     type = f'cal_{mode}_flux'
     # local_directory = '/home/tehan/data/exoplanets/'
     local_directory = '/home/tehan/data/known_exoplanet/'
@@ -1514,7 +1514,8 @@ def figure_8():
 
 
 def figure_9():
-    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
+    # local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
+    local_directory = '/home/tehan/data/known_exoplanet/'
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
     fig = plt.figure(constrained_layout=False, figsize=(10, 8))
     gs = fig.add_gridspec(5, 10)
