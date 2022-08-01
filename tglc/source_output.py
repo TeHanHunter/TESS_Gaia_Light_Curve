@@ -47,7 +47,7 @@ def median_mask(sector_num=8):
 
 def cut_ffi_(i, sector=1, size=150, local_directory=''):
     ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=size, local_directory=local_directory,
-        producing_mask=False)
+        producing_mask=True)
 
 
 def ffi_to_source(sector=1, local_directory=''):
@@ -73,6 +73,6 @@ def ffi_to_source(sector=1, local_directory=''):
 
 
 if __name__ == '__main__':
-    sector = 1
+    sector = 18
     ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:04d}/')
     # med_mask = median_mask(sector_num=8)
