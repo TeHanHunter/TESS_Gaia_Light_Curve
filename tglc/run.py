@@ -37,19 +37,19 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig = plt.figure(constrained_layout=False, figsize=(20, 9))
     gs = fig.add_gridspec(14, 30)
     gs.update(wspace=0.05, hspace=0.05)
-#     for i in range(196):
-#         cut_x = i // 14
-#         cut_y = i % 14
-#         psf = np.load(f'{local_directory}epsf/{camccd}/epsf_{cut_x:02d}_{cut_y:02d}_sector_{sector}_{camccd}.npy')
-#         cmap = 'bone'
-#         if np.isnan(psf).any():
-#             cmap = 'inferno'
-#         ax = fig.add_subplot(gs[13 - cut_y, cut_x])
-#         ax.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap=cmap, origin='lower')
-#         ax.set_yticklabels([])
-#         ax.set_xticklabels([])
-#         ax.tick_params(axis='x', bottom=False)
-#         ax.tick_params(axis='y', left=False)
+    for i in range(196):
+        cut_x = i // 14
+        cut_y = i % 14
+        psf = np.load(f'{local_directory}epsf/{camccd}/epsf_{cut_x:02d}_{cut_y:02d}_sector_{sector}_{camccd}.npy')
+        cmap = 'bone'
+        if np.isnan(psf).any():
+            cmap = 'inferno'
+        ax = fig.add_subplot(gs[13 - cut_y, cut_x])
+        ax.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap=cmap, origin='lower')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.tick_params(axis='x', bottom=False)
+        ax.tick_params(axis='y', left=False)
     input_files = glob(f'{local_directory}ffi/*{camccd}-????-?_ffic.fits')
     with fits.open(input_files[0], mode='denywrite') as hdul:
         flux = hdul[1].data[0:2048, 44:2092]
@@ -65,8 +65,7 @@ if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 1
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
-#     for i in range(16):
-    i = 3
-    name = f'{1 + i // 4}-{1 + i % 4}'
-#         lc_per_ccd(camccd=name, local_directory=local_directory)
-    plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
+    for i in range(16):
+        name = f'{1 + i // 4}-{1 + i % 4}'
+        lc_per_ccd(camccd=name, local_directory=local_directory)
+        plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
