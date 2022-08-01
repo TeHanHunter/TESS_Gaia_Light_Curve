@@ -235,7 +235,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     med_aperture = np.median(aperture, axis=0).flatten()
     outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
         med_aperture[edge_pixel])
-    epsf_sum = np.sum(np.median(psf_shape, axis=0))
+    epsf_sum = np.sum(np.nanmedian(psf_shape, axis=0))
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
             psf_lc[j] = np.nan
