@@ -1514,8 +1514,7 @@ def figure_8():
 
 
 def figure_9():
-    # local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
-    local_directory = '/home/tehan/data/known_exoplanet/'
+    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
     fig = plt.figure(constrained_layout=False, figsize=(10, 8))
     gs = fig.add_gridspec(5, 10)
@@ -2097,7 +2096,7 @@ def figure_9():
                verticalalignment='center', transform=ax5_5.transAxes, rotation=270)
     # ax5_1.set_yticklabels([])
 
-    # plt.savefig('/mnt/c/users/tehan/desktop/known_exoplanets_all.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/mnt/c/users/tehan/desktop/known_exoplanets_all.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
@@ -2464,4 +2463,4 @@ def figure_11():
 
 
 if __name__ == '__main__':
-    figure_6()
+    figure_9()
