@@ -245,7 +245,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             a = np.delete(A_, edge_pixel[outliers], 0)
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_sim)
+    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
 
 

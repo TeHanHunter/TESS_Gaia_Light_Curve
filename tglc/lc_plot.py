@@ -568,7 +568,7 @@ def figure_5():
     plt.close()
 
 
-def figure_6(mode='psf'):
+def figure_6(mode='aper'):
     type = f'cal_{mode}_flux'
     # local_directory = '/home/tehan/data/exoplanets/'
     local_directory = '/home/tehan/data/known_exoplanet/'
@@ -2408,6 +2408,7 @@ def figure_10():
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
     plt.show()
 
+
 def figure_11():
     with open(f'/mnt/c/users/tehan/desktop/source_00_03.pkl', 'rb') as input_:
         source = pickle.load(input_)
@@ -2462,4 +2463,4 @@ def figure_11():
 
 
 if __name__ == '__main__':
-    figure_10()
+    figure_6()
