@@ -160,9 +160,9 @@ class Source(object):
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
-        coord_ = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+        # coord_ = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
-        catalogdata = Gaia.cone_search_async(coord_, radius,
+        catalogdata = Gaia.cone_search_async(coord, radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec']).get_results()
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)

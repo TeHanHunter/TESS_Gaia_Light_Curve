@@ -16,7 +16,7 @@ logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
 warnings.simplefilter('ignore', UserWarning)
 
 
-def median_mask(sector_num=8):
+def median_mask(sector_num=26):
     mask = np.ones((sector_num, 16, 2048))
     for i in range(sector_num):
         for j in range(16):
@@ -38,7 +38,7 @@ def median_mask(sector_num=8):
     plt.xlabel(f'column')
     plt.ylabel(f'camera-ccd')
     plt.title(f'median_mask_first_{sector_num}_sectors')
-    plt.savefig(f'/mnt/c/users/tehan/desktop/mask/fig/median_mask.png', dpi=300)
+    plt.savefig(f'/mnt/c/users/tehan/desktop/mask/fig/median_mask_primary.png', dpi=300)
     plt.close()
     hdu = fits.PrimaryHDU(med_mask)
     hdu.writeto('/mnt/c/users/tehan/desktop/mask/median_mask.fits')
@@ -75,4 +75,4 @@ def ffi_to_source(sector=1, local_directory=''):
 if __name__ == '__main__':
     sector = 18
     ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:04d}/')
-    # med_mask = median_mask(sector_num=8)
+    # med_mask = median_mask(sector_num=26)
