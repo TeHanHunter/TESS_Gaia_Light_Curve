@@ -2180,7 +2180,7 @@ def figure_10():
 
     # split
     low = 0.5
-    high = 1.9
+    high = 1.95
     ax0_1.spines['right'].set_visible(False)
     ax0_2.spines['left'].set_visible(False)
     ax0_2.spines['right'].set_visible(False)
@@ -2276,7 +2276,7 @@ def figure_10():
     ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
     # split
-    low = 0.9
+    low = 0.88
     high = 1.09
     ax3_1.spines['right'].set_visible(False)
     ax3_2.spines['left'].set_visible(False)
@@ -2365,8 +2365,8 @@ def figure_10():
     ax7_2.plot(t_28, f_psf_28, '.', c='k', markersize=1, label='28')
 
     # split
-    low = 0.5
-    high = 2.2
+    low = 0.45
+    high = 2.4
     ax6_1.spines['right'].set_visible(False)
     ax6_2.spines['left'].set_visible(False)
     d = .7  # proportion of vertical to horizontal extent of the slanted line
