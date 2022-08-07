@@ -275,12 +275,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
 
 
 if __name__ == '__main__':
-    sector = 17
-    ccd = '1-1'
-    local_directory = f'/mnt/d/TESS_Sector_17/'
+    sector = 1
+    ccd = '3-2'
+    target = '11_07'
+    local_directory = f'/mnt/c/users/tehan/desktop/mosaic/'
     os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
-    for i in range(484):
-        target = f'{(i // 22):02d}_{(i % 22):02d}'
-        with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
-            source = pickle.load(input_)
-        epsf(source, factor=2, sector=source.sector, local_directory=local_directory)
+    with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
+        source = pickle.load(input_)
+    epsf(source, factor=2, sector=source.sector, power=1.5, local_directory=local_directory)
