@@ -17,7 +17,7 @@ from scipy import ndimage
 
 
 def load_eleanor(ld='', tic=1, sector=1):
-    eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_pca.npy')
+    eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_corr.npy')
     eleanor_psf = np.load(ld + f'eleanor/TIC {tic}_{sector}_psf.npy')
     eleanor_t = eleanor_pca[0]
     eleanor_pca_f = flatten(eleanor_t, eleanor_pca[1] / np.nanmedian(eleanor_pca[1]), window_length=1,
@@ -151,7 +151,7 @@ def figure_1():
     ax12.plot(time[t2_:t3_] % period / period, flatten_lc__[t2_:t3_], '.k', ms=1, zorder=3, label='TESS')
     # ax13.plot(qlp_data['TIME'] % period/period, qlp_data['KSPSAP_FLUX'], '.k', ms=1, label='TESS', zorder=3)
 
-    data = ascii.read(f'/mnt/c/users/tehan/desktop/Output of SEBIT/eb_candidate_new/ZTF/1251_g.csv')
+    data = ascii.read(f'/mnt/d/Astro/Output of SEBIT/eb_candidate_new/ZTF/1251_g.csv')
     data.remove_rows(np.where(data['catflags'] != 0))
     tbjd = data['hjd'] - 2457000
     mag = data['mag']
@@ -165,7 +165,7 @@ def figure_1():
     ax12.plot(tbjd % period / period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
     # ax13.plot(tbjd % period, flux / np.median(flux), 'x', color='green', ms=3, label='ZTF g-band')
 
-    data = ascii.read(f'/mnt/c/users/tehan/desktop/Output of SEBIT/eb_candidate_new/ZTF/1251_r.csv')
+    data = ascii.read(f'/mnt/d/Astro/Output of SEBIT/eb_candidate_new/ZTF/1251_r.csv')
     data.remove_rows(np.where(data['catflags'] != 0))
     tbjd = data['hjd'] - 2457000
     mag = data['mag']
@@ -362,7 +362,7 @@ def figure_2():
         except:
             pass
         try:
-            data = ascii.read(f'/mnt/c/users/tehan/desktop/eb_candidate_new/ZTF/{index[i]}_r.csv')
+            data = ascii.read(f'/mnt/d/Astro/Output of SEBIT/eb_candidate_new/ZTF/{index[i]}_r.csv')
             data.remove_rows(np.where(data['catflags'] != 0))
             tbjd = data['hjd'] - 2457000
             mag = data['mag']
@@ -586,7 +586,7 @@ def figure_6(mode='psf'):
         for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=data['gaia_id'][i], save_aper=True)
+                 name=data['gaia_id'][i], power=1.5, save_aper=True)
         # plt.imshow(source.flux[0])
         # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
         #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
@@ -947,7 +947,7 @@ def figure_6(mode='psf'):
 
 
 def figure_7():
-    local_directory = '/mnt/d/Astro/known_exoplanet/'
+    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
     fig = plt.figure(constrained_layout=False, figsize=(10, 8))
     gs = fig.add_gridspec(5, 12)
@@ -1019,7 +1019,7 @@ def figure_7():
     ax1_4.set_yticklabels([])
 
     ax1_1.set_title('SPOC 2-min')
-    ax1_2.set_title('eleanor PCA')
+    ax1_2.set_title('eleanor CORR')
     ax1_3.set_title('eleanor PSF')
     ax1_4.set_title('QLP')
     ax1_1.set_ylabel('Normalized Flux')
@@ -1101,6 +1101,7 @@ def figure_7():
     # load eleanor
     eleanor_6_t, eleanor_6_f_pca, eleanor_6_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=6)
     eleanor_44_t, eleanor_44_f_pca, eleanor_44_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=44)
+    eleanor_45_t, eleanor_45_f_pca, eleanor_45_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=45)
 
     files = glob(local_directory + 'SPOC/TOI-530/*.fits')
     index = np.where(data['pl_name'] == 'TOI-530 b')
@@ -1124,10 +1125,14 @@ def figure_7():
                label='6')
     ax3_2.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_pca, '.', c=color[1], markersize=2,
                label='44')
+    ax3_2.plot(eleanor_45_t % period / period - phase_fold_mid, eleanor_45_f_pca, '.', c=color[2], markersize=2,
+               label='45')
     ax3_3.plot(eleanor_6_t % period / period - phase_fold_mid, eleanor_6_f_psf, '.', c=color[0], markersize=2,
                label='6')
     ax3_3.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_psf, '.', c=color[1], markersize=2,
                label='44')
+    ax3_3.plot(eleanor_45_t % period / period - phase_fold_mid, eleanor_45_f_psf, '.', c=color[2], markersize=2,
+               label='45')
     ax3_4.plot(qlp_6_t % period / period - phase_fold_mid, qlp_6_f, '.', c=color[0], markersize=2, label='6')
 
     ax3_1.legend(loc=3, fontsize=6)
@@ -1342,7 +1347,7 @@ def figure_8():
     ax1_3.set_ylim(0.88, 1.03)
     ax1_4.set_ylim(0.88, 1.03)
     ax1_1.set_title('TGLC PSF')
-    ax1_2.set_title('eleanor PCA')
+    ax1_2.set_title('eleanor CORR')
     ax1_3.set_title('eleanor PSF')
     ax1_4.set_title('QLP')
     ax1_1.set_ylabel('Norm Flux')
@@ -1504,12 +1509,12 @@ def figure_8():
     ax5_3.text(2.12, 0.5, 'mag=15.03', horizontalalignment='center',
                verticalalignment='center', transform=ax5_3.transAxes, rotation=270)
     ax5_1.legend(bbox_to_anchor=(3.3, 0), loc=3, markerscale=2)
-    # plt.savefig('/mnt/c/users/tehan/desktop/EB_comparison.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/mnt/c/users/tehan/desktop/EB_comparison.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
 def figure_9():
-    local_directory = '/mnt/d/Astro/known_exoplanet/'
+    local_directory = '/mnt/c/users/tehan/desktop/known_exoplanet/'
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
     fig = plt.figure(constrained_layout=False, figsize=(10, 8))
     gs = fig.add_gridspec(5, 10)
@@ -1622,7 +1627,7 @@ def figure_9():
     ax1_6.set_yticklabels([])
 
     ax1_1.set_title('SPOC 2-min')
-    ax1_2.set_title('eleanor PCA')
+    ax1_2.set_title('eleanor CORR')
     # ax1_3.set_title('eleanor PSF')
     ax1_4.set_title('QLP')
     ax1_5.set_title('TGLC aperture', weight='bold')
@@ -1742,6 +1747,7 @@ def figure_9():
     # load eleanor
     eleanor_6_t, eleanor_6_f_pca, eleanor_6_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=6)
     eleanor_44_t, eleanor_44_f_pca, eleanor_44_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=44)
+    eleanor_45_t, eleanor_45_f_pca, eleanor_45_f_psf = load_eleanor(ld=local_directory, tic=tic, sector=45)
 
     # load TGLC
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-3353218995355814656-s0006*.fits')[0],
@@ -1793,6 +1799,8 @@ def figure_9():
                label='6')
     ax3_2.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_pca, '.', c=color[1], markersize=2,
                label='44')
+    ax3_2.plot(eleanor_45_t % period / period - phase_fold_mid, eleanor_45_f_pca, '.', c=color[2], markersize=2,
+               label='45')
     # ax3_3.plot(eleanor_6_t % period / period - phase_fold_mid, eleanor_6_f_psf, '.', c=color[0], markersize=2,
     #            label='6')
     # ax3_3.plot(eleanor_44_t % period / period - phase_fold_mid, eleanor_44_f_psf, '.', c=color[1], markersize=2,
@@ -2105,29 +2113,30 @@ def figure_10():
     ]
     #####################
     # 3 6 7 8 9 10 17 27 28 34 36 42 43 44 45
-    # sectors = [2, 11, 38]
-    # for sector in sectors:
-    #     source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
-    #     epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
-    #          name=hosts[0][1], save_aper=True)
-    #
-    # #####################
-    # sectors = [4, 12, 31]
-    # for sector in sectors:
-    #     source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
-    #     epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
-    #          name=hosts[1][1], save_aper=True)
-    #
-    # #####################
-    # sectors = [1, 28]
-    # for sector in sectors:
-    #     source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
-    #     epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
-    #          name=hosts[2][1], save_aper=True)
+    sectors = [2, 11, 38]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[0][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[0][0], local_directory=local_directory,
+             name=hosts[0][1], save_aper=True)
+
+    #####################
+    sectors = [4, 12, 31]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[1][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[1][0], local_directory=local_directory,
+             name=hosts[1][1], save_aper=True)
+
+    #####################
+    sectors = [1, 28]
+    for sector in sectors:
+        source = ffi_cut(target=hosts[2][0], size=size, local_directory=local_directory, sector=sector)
+        epsf(source, factor=2, sector=source.sector, target=hosts[2][0], local_directory=local_directory,
+             name=hosts[2][1], save_aper=True)
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 6))
     gs = fig.add_gridspec(8, 9, wspace=0.2, hspace=0, height_ratios=[1, 1, 0.8, 1, 1, 0.8, 1, 1])
     local_directory = '/home/tehan/data/variables/'
+    # local_directory = '/mnt/c/users/tehan/desktop/variables/'
     ##########
     period = 0.63150
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-4662259606266850944-s0002*.fits')[0],
@@ -2171,7 +2180,7 @@ def figure_10():
 
     # split
     low = 0.5
-    high = 1.9
+    high = 1.95
     ax0_1.spines['right'].set_visible(False)
     ax0_2.spines['left'].set_visible(False)
     ax0_2.spines['right'].set_visible(False)
@@ -2202,7 +2211,6 @@ def figure_10():
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270, fontweight='semibold')
     ax0_2.text(2.1, 0, 'RR Lyrae', horizontalalignment='center',
                verticalalignment='center', transform=ax0_2.transAxes, rotation=270)
-
 
     ax1_1.spines['right'].set_visible(False)
     ax1_2.spines['left'].set_visible(False)
@@ -2268,7 +2276,7 @@ def figure_10():
     ax4_3.plot(t_31, f_psf_31, '.', c='k', markersize=1, label='31')
 
     # split
-    low = 0.9
+    low = 0.88
     high = 1.09
     ax3_1.spines['right'].set_visible(False)
     ax3_2.spines['left'].set_visible(False)
@@ -2301,7 +2309,6 @@ def figure_10():
     ax3_2.text(2.1, 0, 'Rotator', horizontalalignment='center',
                verticalalignment='center', transform=ax3_2.transAxes, rotation=270)
 
-
     ax4_1.spines['right'].set_visible(False)
     ax4_2.spines['left'].set_visible(False)
     ax4_2.spines['right'].set_visible(False)
@@ -2328,7 +2335,6 @@ def figure_10():
     period = 1.00581
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-6512192214932460416-s0001*.fits')[0],
                    mode='denywrite') as hdul:
-        print(hdul[0].header['TESSMAG'])
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_01 = hdul[1].data['time'][q]
         f_psf_01 = hdul[1].data['cal_psf_flux'][q]
@@ -2359,8 +2365,8 @@ def figure_10():
     ax7_2.plot(t_28, f_psf_28, '.', c='k', markersize=1, label='28')
 
     # split
-    low = 0.5
-    high = 2.2
+    low = 0.45
+    high = 2.4
     ax6_1.spines['right'].set_visible(False)
     ax6_2.spines['left'].set_visible(False)
     d = .7  # proportion of vertical to horizontal extent of the slanted line
@@ -2383,7 +2389,6 @@ def figure_10():
     ax6_2.text(2.1, 0, 'Cepheid', horizontalalignment='center',
                verticalalignment='center', transform=ax6_2.transAxes, rotation=270)
 
-
     ax7_1.spines['right'].set_visible(False)
     ax7_2.spines['left'].set_visible(False)
     d = .7  # proportion of vertical to horizontal extent of the slanted line
@@ -2401,6 +2406,60 @@ def figure_10():
                verticalalignment='center', transform=ax7_1.transAxes, rotation=90)
 
     plt.savefig(f'{local_directory}variables.png', bbox_inches='tight', dpi=300)
+    plt.show()
+
+
+def figure_11():
+    with open(f'/mnt/c/users/tehan/desktop/source_00_03.pkl', 'rb') as input_:
+        source = pickle.load(input_)
+    fig = plt.figure(constrained_layout=False, figsize=(11, 4))
+    gs = fig.add_gridspec(1, 35)
+    gs.update(wspace=1, hspace=0.1)
+    vmax = 140
+    vmin = 100
+
+    ax1 = fig.add_subplot(gs[0, 0:10])
+    ax1.imshow(np.nanmedian(source.flux, axis=0), vmin=vmin, vmax=vmax, origin='lower', cmap='viridis')
+    ax1.set_title('TESS FFI cutout')
+    ax1.set_ylabel('Pixels')
+    ax1.set_xlabel('Pixels')
+    # ax1.set_xlim(50,75)
+    # ax1.set_ylim(80,105)
+    mask = source.mask.data
+    mask[source.mask.mask] = 0
+    # ax2.set_xlim(50,75)
+    # ax2.set_ylim(80,105)
+
+    bg = np.load('/mnt/c/users/tehan/desktop/bg_00_03_sector_2.npy')
+    ax2 = fig.add_subplot(gs[0, 10:20])
+    im2 = ax2.imshow(bg[:150 ** 2, 0].reshape(150, 150), vmin=vmin, vmax=vmax, origin='lower', cmap='viridis')
+    ax2.set_yticklabels([])
+    ax2.set_title('Simulated background')
+    ax2.set_xlabel('Pixels')
+
+    ax_cb = fig.colorbar(im2, cax=fig.add_subplot(gs[0, 20]), orientation='vertical',
+                         boundaries=np.linspace(vmin, vmax, 1000),
+                         ticks=[100, 110, 120, 130, 140], aspect=50, shrink=0.7)
+    ax_cb.ax.set_yticklabels(['100', '110', '120', '130', r'$\geq 140$'])
+
+    # ax_cb.ax.set_ylabel(r'TESS Flux ($\mathrm{e^-}$/ s) ')
+    vmin = 0
+    vmax = 40
+    ax3 = fig.add_subplot(gs[0, 24:34])
+    im3 = ax3.imshow(np.nanmedian(source.flux, axis=0) - bg[:150 ** 2, 0].reshape(150, 150), vmin=vmin, vmax=vmax,
+                     origin='lower', cmap='viridis')
+    ax3.set_yticklabels([])
+    ax3.set_title('Background removed FFI')
+    ax3.set_xlabel('Pixels')
+
+    ax_cb = fig.colorbar(im3, cax=fig.add_subplot(gs[0, 34]), orientation='vertical',
+                         boundaries=np.linspace(vmin, vmax, 1000),
+                         ticks=[0, 10, 20, 30, 40], aspect=50, shrink=0.7)
+    ax_cb.ax.set_yticklabels(['0', '10', '20', '30', r'$\geq 40$'])
+    ax_cb.ax.set_ylabel(r'TESS Flux ($\mathrm{e^-}$/ s) ')
+    plt.savefig('/mnt/c/users/tehan/desktop/cal_bg.png', bbox_inches='tight', dpi=300)
+
+    plt.show()
 
 
 if __name__ == '__main__':

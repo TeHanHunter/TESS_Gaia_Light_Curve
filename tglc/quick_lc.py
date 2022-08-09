@@ -27,28 +27,23 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
     if get_all_lc:
         name = None
     for j in range(len(source.sector_table)):
-        try:
-            source.select_sector(sector=source.sector_table['sector'][j])
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+#         try:
+        source.select_sector(sector=source.sector_table['sector'][j])
+        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper)
-            if first_sector_only:
-                break
-        except:
-            sector_num = source.sector_table["sector"][j]
-            warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
+        if first_sector_only:
+            break
+#         except:
+#             sector_num = source.sector_table["sector"][j]
+#             warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
 
 
 if __name__ == '__main__':
-    # target = input('Target ID or coordinates: ')
-    dec = [60]
-    ra = [270]
-    for d in dec:
-        for r in ra:
-            local_directory = f'/home/tehan/data/cosmos/{r}_{d}/'
-            os.makedirs(local_directory, exist_ok=True)
-            target = f'{r} {d}'
-            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=15,
-                    get_all_lc=True, first_sector_only=True, sector=16)
+    target = input('Target ID or coordinates: ')
+    local_directory = f'/home/tehan/data/cosmos/{target}/'
+    os.makedirs(local_directory, exist_ok=True)
+    tglc_lc(target=target, local_directory=local_directory, size=50, save_aper=False, limit_mag=15,
+                    get_all_lc=True, first_sector_only=True, sector=True)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'

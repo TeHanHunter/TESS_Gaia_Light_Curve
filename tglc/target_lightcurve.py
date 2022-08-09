@@ -199,15 +199,18 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
     epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
     if type(source) == tglc.ffi_cut.Source_cut:
+        bg_dof = 3
         lc_directory = f'{local_directory}lc/'
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
+    else:
+        bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
     epsf_exists = exists(epsf_loc)
     if epsf_exists:
         e_psf = np.load(epsf_loc)
         print(f'Loaded ePSF {target} from directory. ')
     else:
-        e_psf = np.zeros((len(source.time), over_size ** 2 + 3))
+        e_psf = np.zeros((len(source.time), over_size ** 2 + bg_dof))
         for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):
             fit = fit_psf(A, source, over_size, power=power, time=i)
             e_psf[i] = fit
@@ -217,7 +220,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         np.save(epsf_loc, e_psf)
 
     # TODO: quality use which background?
-    background = np.dot(A[:source.size ** 2, -3:], e_psf[:, -3:].T)
+    background = np.dot(A[:source.size ** 2, -bg_dof:], e_psf[:, -bg_dof:].T)
+    # np.save(f'{local_directory}epsf/bg_{target}_sector_{sector}.npy', background)
     quality_raw = np.zeros(len(source.time), dtype=np.int16)
     sigma = 1.4826 * np.nanmedian(np.abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])))
     quality_raw[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= 3 * sigma] += 1
@@ -271,12 +275,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
 
 
 if __name__ == '__main__':
-    sector = 17
-    ccd = '1-1'
-    local_directory = f'/mnt/d/TESS_Sector_17/'
+    sector = 1
+    ccd = '3-2'
+    target = '11_07'
+    local_directory = f'/mnt/c/users/tehan/desktop/mosaic/'
     os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
-    for i in range(484):
-        target = f'{(i // 22):02d}_{(i % 22):02d}'
-        with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
-            source = pickle.load(input_)
-        epsf(source, factor=2, sector=source.sector, local_directory=local_directory)
+    with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
+        source = pickle.load(input_)
+    epsf(source, factor=2, sector=source.sector, power=1.5, local_directory=local_directory)

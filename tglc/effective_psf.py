@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from wotan import flatten
-
+import tglc
 
 def bilinear(x, y, repeat=23):
     '''
@@ -68,14 +68,23 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     x_p = np.arange(size)
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
-    A = np.zeros((size ** 2, over_size ** 2 + 3))
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
-    A[:, -1] = source.mask.flatten()
-    A[:, -2] = yy.flatten()
-    A[:, -3] = xx.flatten()
-    # A[:, -4] = np.ones(size ** 2)
-    # A[:, -5] = (source.mask * xx).flatten()
-    # A[:, -6] = (source.mask * yy).flatten()
+
+    if type(source) == tglc.ffi.Source:
+        bg_dof = 6
+        A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
+        A[:, -1] = np.ones(size ** 2)
+        A[:, -2] = yy.flatten()
+        A[:, -3] = xx.flatten()
+        A[:, -4] = source.mask.data.flatten()
+        A[:, -5] = (source.mask.data * xx).flatten()
+        A[:, -6] = (source.mask.data * yy).flatten()
+    else:
+        bg_dof = 3
+        A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
+        A[:, -1] = np.ones(size ** 2)
+        A[:, -2] = yy.flatten()
+        A[:, -3] = xx.flatten()
     star_info = []
     for i in range(len(source.gaia)):
         x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
@@ -94,7 +103,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
     A_mod = np.diag(dist.flatten())
-    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, 3)))), axis=-1)
+    A_mod = np.concatenate((A_mod, (np.zeros((over_size ** 2, bg_dof)))), axis=-1)
     A = np.append(A, A_mod, axis=0)
     return A, star_info, over_size, x_round, y_round
 
@@ -115,9 +124,9 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     time index of this ePSF fit
     :return: fit result
     """
-    cal_factor = source.mask.flatten()
-    saturated_index = np.where(cal_factor == 0)
+    saturated_index = source.mask.mask.flatten()
     flux = source.flux[time].flatten()
+    saturated_index[flux < 0.2 * np.nanmedian(flux)] = True
 
     b = np.delete(flux, saturated_index)
     scaler = np.abs(np.delete(flux, saturated_index)) ** power
@@ -125,7 +134,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     scaler = np.append(scaler, np.ones(over_size ** 2))
 
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
-    a = np.delete(A, saturated_index, 0) / scaler[:, np.newaxis]
+    a = np.delete(A, np.where(saturated_index), 0) / scaler[:, np.newaxis]
     b = b / scaler
     alpha = np.dot(a.T, a)
     beta = np.dot(a.T, b)
@@ -161,10 +170,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
-    left = np.maximum(0, x - 2)
-    right = np.minimum(size, x + 3)
-    down = np.maximum(0, y - 2)
-    up = np.minimum(size, y + 3)
+    cut_size = 5
+    left = np.maximum(0, x - cut_size // 2)
+    right = np.minimum(size, x + cut_size // 2 + 1)
+    down = np.maximum(0, y - cut_size // 2)
+    up = np.minimum(size, y + cut_size // 2 + 1)
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
@@ -180,7 +190,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 
     # psf_lc
     over_size = psf_size * factor + 1
-    if near_edge:
+    if near_edge: # TODO: near_edge
         psf_lc = np.zeros(len(source.time))
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
@@ -197,26 +207,35 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     up_11 = np.minimum(size - y + 5, 11)
     coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
     index = coord[down_11:up_11, left_11:right_11]
-
-    A = np.zeros((psf_size ** 2, over_size ** 2 + 3))
+    if type(source) == tglc.ffi.Source:
+        bg_dof = 6
+    else:
+        bg_dof = 3
+    A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
     A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
     psf_sim = psf_shape[:, down_:up_, left_: right_]
     # psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
 
     psf_lc = np.zeros(len(source.time))
-    size = 5
-    A_ = np.zeros((size ** 2, 4))
-    xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2),
-                         (np.arange(size) - (size - 1) / 2))
-    A_[:, -1] = np.ones(size ** 2)
+    A_ = np.zeros((cut_size ** 2, 4))
+    xx, yy = np.meshgrid((np.arange(cut_size) - (cut_size - 1) / 2),
+                         (np.arange(cut_size) - (cut_size - 1) / 2))
+    A_[:, -1] = np.ones(cut_size ** 2)
     A_[:, -2] = yy.flatten()
     A_[:, -3] = xx.flatten()
     edge_pixel = np.array([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24])
+    # edge_pixel = np.array([0, 1, 2, 3, 4, 5, 6,
+    #                        7, 8, 9, 10, 11, 12, 13,
+    #                        14, 15, 19, 20,
+    #                        21, 22, 26, 27,
+    #                        28, 29, 33, 34,
+    #                        35, 36, 37, 38, 39, 40, 41,
+    #                        42, 43, 44, 45, 46, 47, 48])
     med_aperture = np.median(aperture, axis=0).flatten()
     outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
         med_aperture[edge_pixel])
-    epsf_sum = np.sum(np.median(psf_shape, axis=0))
+    epsf_sum = np.sum(np.nanmedian(psf_shape, axis=0))
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
             psf_lc[j] = np.nan
@@ -226,7 +245,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             a = np.delete(A_, edge_pixel[outliers], 0)
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_sim)
+    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
 
 
@@ -273,9 +292,9 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     else:
         cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
                              return_trend=False)
-    aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
-    if aper_mad > 0.02:
-        psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
-        cal_psf_lc /= psf_mad / aper_mad
-        cal_psf_lc += 1 - np.median(cal_psf_lc)
+    # aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
+    # if aper_mad > 0.02:
+    #     psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
+    #     cal_psf_lc /= psf_mad / aper_mad
+    #     cal_psf_lc += 1 - np.median(cal_psf_lc)
     return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
