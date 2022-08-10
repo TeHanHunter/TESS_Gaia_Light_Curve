@@ -52,6 +52,18 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         gaia_rp = 'NaN'
     else:
         gaia_rp = source.gaia[index]['phot_rp_mean_mag']
+    psf_err = 1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc)))
+    if np.isnan(psf_err):
+        psf_err = 'NaN'
+    aper_err = 1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc)))
+    if np.isnan(aper_err):
+        aper_err = 'NaN'
+    cal_psf_err = 1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))),
+    if np.isnan(cal_psf_err):
+        cal_psf_err = 'NaN'
+    cal_aper_err = 1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))),
+    if np.isnan(cal_aper_err):
+        cal_aper_err = 'NaN'
     try:
         ticid = source.tic['ID'][np.where(source.tic['GAIA'] == str(objid))][0]
     except:
@@ -160,14 +172,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('TIMEDEL', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
                             end=True)
     table_hdu.header.append(('XPTIME', exposure_time, '[s] exposure time'), end=True)
-    table_hdu.header.append(('PSF_ERR', 1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))),
-                             '[e-/s] PSF flux error'), end=True)
-    table_hdu.header.append(('APER_ERR', 1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc))),
-                             '[e-/s] aperture flux error'), end=True)
-    table_hdu.header.append(('CPSF_ERR', 1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))),
-                             '[e-/s] calibrated PSF flux error'), end=True)
-    table_hdu.header.append(('CAPE_ERR', 1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))),
-                             '[e-/s] calibrated aperture flux error'), end=True)
+    table_hdu.header.append(('PSF_ERR', psf_err, '[e-/s] PSF flux error'), end=True)
+    table_hdu.header.append(('APER_ERR', aper_err, '[e-/s] aperture flux error'), end=True)
+    table_hdu.header.append(('CPSF_ERR', cal_psf_err, '[e-/s] calibrated PSF flux error'), end=True)
+    table_hdu.header.append(('CAPE_ERR', cal_aper_err, '[e-/s] calibrated aperture flux error'), end=True)
     table_hdu.header.append(('NEAREDGE', near_edge, 'distance to edges of FFI <= 2'), end=True)
     table_hdu.header.append(('LOC_BG', local_bg, 'locally modified background'), end=True)
     table_hdu.header.append(('COMMENT', "TRUE_BG = hdul[1].data['background'] + LOC_BG"), end=True)
