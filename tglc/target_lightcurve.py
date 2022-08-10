@@ -58,10 +58,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     aper_err = 1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc)))
     if np.isnan(aper_err):
         aper_err = 'NaN'
-    cal_psf_err = 1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))),
+    cal_psf_err = 1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc)))
     if np.isnan(cal_psf_err):
         cal_psf_err = 'NaN'
-    cal_aper_err = 1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))),
+    cal_aper_err = 1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc)))
     if np.isnan(cal_aper_err):
         cal_aper_err = 'NaN'
     try:
