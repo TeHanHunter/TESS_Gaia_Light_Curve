@@ -106,30 +106,32 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
     t_start = source.time[0]
     t_stop = source.time[-1]
-    if source.sector < 27:
+    if source.sector < 27: # primary
         exposure_time = 1800
-    else:
+    elif source.sector < 56: # first extended
         exposure_time = 600
+    else: # second extended
+        exposure_time = 200
     c1 = fits.Column(name='time', array=np.array(time), format='D')
     c2 = fits.Column(name='psf_flux', array=np.array(psf_lc), format='D')  # psf factor
-    c3 = fits.Column(name='psf_flux_err',
-                     array=1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))) * np.ones(len(psf_lc)), format='E')
+    # c3 = fits.Column(name='psf_flux_err',
+    #                  array=1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))) * np.ones(len(psf_lc)), format='E')
     c4 = fits.Column(name='aperture_flux', array=aper_lc, format='D')
-    c5 = fits.Column(name='aperture_flux_err',
-                     array=1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc))) * np.ones(len(aper_lc)), format='E')
+    # c5 = fits.Column(name='aperture_flux_err',
+    #                  array=1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc))) * np.ones(len(aper_lc)), format='E')
     c6 = fits.Column(name='cal_psf_flux', array=np.array(cal_psf_lc), format='D')
-    c7 = fits.Column(name='cal_psf_flux_err',
-                     array=1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))) * np.ones(len(cal_psf_lc)),
-                     format='E')
+    # c7 = fits.Column(name='cal_psf_flux_err',
+    #                  array=1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))) * np.ones(len(cal_psf_lc)),
+    #                  format='E')
     c8 = fits.Column(name='cal_aper_flux', array=np.array(cal_aper_lc), format='D')
-    c9 = fits.Column(name='cal_aper_flux_err',
-                     array=1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))) * np.ones(len(cal_aper_lc)),
-                     format='E')
+    # c9 = fits.Column(name='cal_aper_flux_err',
+    #                  array=1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))) * np.ones(len(cal_aper_lc)),
+    #                  format='E')
     c10 = fits.Column(name='background', array=bg, format='E')  # add tilt
     c11 = fits.Column(name='cadence_num', array=np.array(cadence), format='J')  # 32 bit int
     c12 = fits.Column(name='TESS_flags', array=np.array(tess_flag), format='I')  # 16 bit int
     c13 = fits.Column(name='TGLC_flags', array=tglc_flag, format='I')
-    table_hdu = fits.BinTableHDU.from_columns([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13])
+    table_hdu = fits.BinTableHDU.from_columns([c1, c2, c4, c6, c8, c10, c11, c12, c13])
     table_hdu.header.append(('INHERIT', 'T', 'inherit the primary header'), end=True)
     table_hdu.header.append(('EXTNAME', 'LIGHTCURVE', 'name of extension'), end=True)
     table_hdu.header.append(('EXTVER', 1, 'extension version'),  # TODO: version?
@@ -157,7 +159,15 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('MJD_END', t_stop + 56999.5, '[d] end time in barycentric MJD'), end=True)
     table_hdu.header.append(('TIMEDEL', (t_stop - t_start) / len(source.time), '[d] time resolution of data'),
                             end=True)
-    table_hdu.header.append(('XPTIME', exposure_time, '[s] time resolution of data'), end=True)
+    table_hdu.header.append(('XPTIME', exposure_time, '[s] exposure time'), end=True)
+    table_hdu.header.append(('PSF_ERR', 1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))),
+                             '[e-/s] PSF flux error'), end=True)
+    table_hdu.header.append(('APER_ERR', 1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc))),
+                             '[e-/s] aperture flux error'), end=True)
+    table_hdu.header.append(('CPSF_ERR', 1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))),
+                             '[e-/s] calibrated PSF flux error'), end=True)
+    table_hdu.header.append(('CAPE_ERR', 1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))),
+                             '[e-/s] calibrated aperture flux error'), end=True)
     table_hdu.header.append(('NEAREDGE', near_edge, 'distance to edges of FFI <= 2'), end=True)
     table_hdu.header.append(('LOC_BG', local_bg, 'locally modified background'), end=True)
     table_hdu.header.append(('COMMENT', "TRUE_BG = hdul[1].data['background'] + LOC_BG"), end=True)
