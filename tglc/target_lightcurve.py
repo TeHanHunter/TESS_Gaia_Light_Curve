@@ -303,7 +303,7 @@ if __name__ == '__main__':
     sector = 1
     ccd = '3-2'
     target = '11_07'
-    local_directory = f'/home/tehan/data/sector0001/source/'
+    local_directory = f'/home/tehan/data/sector0001/'
     # os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
     for i in range(3):
         for j in range(3):
