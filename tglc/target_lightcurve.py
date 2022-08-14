@@ -4,6 +4,7 @@
 import os
 from os.path import exists
 
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 from astropy.io import fits
@@ -118,24 +119,24 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
     t_start = source.time[0]
     t_stop = source.time[-1]
-    if source.sector < 27: # primary
+    if source.sector < 27:  # primary
         exposure_time = 1800
-    elif source.sector < 56: # first extended
+    elif source.sector < 56:  # first extended
         exposure_time = 600
-    else: # second extended
+    else:  # second extended
         exposure_time = 200
     c1 = fits.Column(name='time', array=np.array(time), format='D')
-    c2 = fits.Column(name='psf_flux', array=np.array(psf_lc), format='D')  # psf factor
+    c2 = fits.Column(name='psf_flux', array=np.array(psf_lc), format='E')  # psf factor
     # c3 = fits.Column(name='psf_flux_err',
     #                  array=1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))) * np.ones(len(psf_lc)), format='E')
-    c4 = fits.Column(name='aperture_flux', array=aper_lc, format='D')
+    c4 = fits.Column(name='aperture_flux', array=aper_lc, format='E')
     # c5 = fits.Column(name='aperture_flux_err',
     #                  array=1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc))) * np.ones(len(aper_lc)), format='E')
-    c6 = fits.Column(name='cal_psf_flux', array=np.array(cal_psf_lc), format='D')
+    c6 = fits.Column(name='cal_psf_flux', array=np.array(cal_psf_lc), format='E')
     # c7 = fits.Column(name='cal_psf_flux_err',
     #                  array=1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc))) * np.ones(len(cal_psf_lc)),
     #                  format='E')
-    c8 = fits.Column(name='cal_aper_flux', array=np.array(cal_aper_lc), format='D')
+    c8 = fits.Column(name='cal_aper_flux', array=np.array(cal_aper_lc), format='E')
     # c9 = fits.Column(name='cal_aper_flux_err',
     #                  array=1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc))) * np.ones(len(cal_aper_lc)),
     #                  format='E')
@@ -223,6 +224,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     else:
         bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
+
+    sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=0).T)
+    residual = np.abs(source.flux[0].flatten() - sim_image)
+    return np.mean(residual), np.median(residual)
+
     epsf_exists = exists(epsf_loc)
     if epsf_exists:
         e_psf = np.load(epsf_loc)
@@ -273,8 +279,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                                near_edge=near_edge)
             aper_lc = np.sum(aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
                              axis=(1, 2))
-            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion, psf_lc=psf_lc, aper_lc=aper_lc,
-                                               near_edge=near_edge, star_num=i)
+            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion, psf_lc=psf_lc,
+                                                                        aper_lc=aper_lc,
+                                                                        near_edge=near_edge, star_num=i)
             # mag.append(source.gaia['tess_mag'][i])
             # mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index])) / portion))
             # mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))
@@ -296,8 +303,24 @@ if __name__ == '__main__':
     sector = 1
     ccd = '3-2'
     target = '11_07'
-    local_directory = f'/mnt/c/users/tehan/desktop/mosaic/'
-    os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
-    with open(local_directory + f'source/{ccd}/source_{target}.pkl', 'rb') as input_:
-        source = pickle.load(input_)
-    epsf(source, factor=2, sector=source.sector, power=1.5, local_directory=local_directory)
+    local_directory = f'/home/tehan/data/sector0001/source/'
+    # os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
+    for i in range(3):
+        for j in range(3):
+            with open(local_directory + f'source/{ccd}/source_{i+10}_0{j+6}.pkl', 'rb') as input_:
+                source = pickle.load(input_)
+            powers = np.linspace(0.1, 2., 100)
+            mean_ = np.zeros(100)
+            median_ = np.zeros(100)
+            for i in range(100):
+                mean_[i], median_[i] = epsf(source, factor=2, sector=source.sector, power=powers[i],
+                                            local_directory=local_directory)
+            np.save(local_directory + f'mean_{i+10}_0{j+6}.npy', mean_)
+            np.save(local_directory + f'median_{i+10}_0{j+6}.npy', median_)
+    # plt.plot(powers, mean_ / np.median(mean_), label='mean')
+    # plt.plot(powers, median_ / np.median(median_), label='median')
+    # plt.xlabel('power')
+    # plt.legend()
+    # plt.savefig(local_directory + 'power.png')
+    # plt.show()
+
