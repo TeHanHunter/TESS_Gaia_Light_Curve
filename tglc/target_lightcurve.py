@@ -301,22 +301,22 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
 
 if __name__ == '__main__':
     sector = 1
-    ccd = '3-2'
-    target = '11_07'
+    ccd = '1-3'
+    # target = '11_07'
     local_directory = f'/home/tehan/data/sector0001/'
     # os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
     for i in range(3):
         for j in range(3):
-            # with open(local_directory + f'source/{ccd}/source_{i+10}_0{j+6}.pkl', 'rb') as input_:
-            #     source = pickle.load(input_)
+            with open(local_directory + f'source/{ccd}/source_{i+6}_0{j+6}.pkl', 'rb') as input_:
+                source = pickle.load(input_)
             powers = np.linspace(0.1, 2., 100)
-            # mean_ = np.zeros(100)
-            # median_ = np.zeros(100)
-            # for k in range(100):
-            #     mean_[k], median_[k] = epsf(source, factor=2, sector=source.sector, power=powers[k],
-            #                                 local_directory=local_directory)
-            mean_ = np.load(local_directory + f'mean_{i+10}_0{j+6}.npy')
-            median_ = np.load(local_directory + f'median_{i+10}_0{j+6}.npy')
+            mean_ = np.zeros(100)
+            median_ = np.zeros(100)
+            for k in range(100):
+                mean_[k], median_[k] = epsf(source, factor=2, sector=source.sector, power=powers[k],
+                                            local_directory=local_directory)
+            # mean_ = np.load(local_directory + f'mean_{i+10}_0{j+6}.npy')
+            # median_ = np.load(local_directory + f'median_{i+10}_0{j+6}.npy')
             plt.plot(powers, mean_ / np.median(mean_), color='C0')
             plt.plot(powers, median_ / np.median(median_), color='C1')
     # plt.plot(powers, mean_ / np.median(mean_), label='mean')
@@ -325,6 +325,6 @@ if __name__ == '__main__':
     plt.plot(powers, median_ / np.median(median_), color='C1', label='median')
     plt.xlabel('power')
     plt.legend()
-    plt.savefig(local_directory + 'power.png')
+    plt.savefig(local_directory + f'power_{ccd}.png')
     plt.show()
 
