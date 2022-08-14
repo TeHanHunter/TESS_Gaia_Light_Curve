@@ -307,7 +307,7 @@ if __name__ == '__main__':
     # os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
     for i in range(3):
         for j in range(3):
-            with open(local_directory + f'source/{ccd}/source_{i+6}_0{j+6}.pkl', 'rb') as input_:
+            with open(local_directory + f'source/{ccd}/source_0{i+6}_0{j+6}.pkl', 'rb') as input_:
                 source = pickle.load(input_)
             powers = np.linspace(0.1, 2., 100)
             mean_ = np.zeros(100)
