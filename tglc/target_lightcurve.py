@@ -312,8 +312,8 @@ if __name__ == '__main__':
             powers = np.linspace(0.1, 2., 100)
             mean_ = np.zeros(100)
             median_ = np.zeros(100)
-            for i in range(100):
-                mean_[i], median_[i] = epsf(source, factor=2, sector=source.sector, power=powers[i],
+            for k in range(100):
+                mean_[k], median_[k] = epsf(source, factor=2, sector=source.sector, power=powers[k],
                                             local_directory=local_directory)
             np.save(local_directory + f'mean_{i+10}_0{j+6}.npy', mean_)
             np.save(local_directory + f'median_{i+10}_0{j+6}.npy', median_)
