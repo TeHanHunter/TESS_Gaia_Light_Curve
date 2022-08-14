@@ -11,7 +11,7 @@ import astroquery.mast
 from glob import glob
 from itertools import product
 from urllib.parse import quote as urlencode
-from astropy.table import Table, hstack
+from astropy.table import Table, hstack, vstack, unique
 from astroquery.mast import Catalogs
 from tqdm import tqdm, trange
 from astropy.io import fits
@@ -159,14 +159,17 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
+        co1 = 38.5
+        co2 = 116.5
+        catalog_1 = self.search_gaia(x, y, co1, co1)
+        catalog_2 = self.search_gaia(x, y, co1, co2)
+        catalog_3 = self.search_gaia(x, y, co2, co1)
+        catalog_4 = self.search_gaia(x, y, co2, co2)
+        catalogdata = vstack([catalog_1, catalog_2, catalog_3, catalog_4], join_type='exact')
+        catalogdata = unique(catalogdata)
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
-        # coord_ = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
-        radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
-        catalogdata = Gaia.cone_search_async(coord, radius,
-                                             columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                                      'phot_rp_mean_mag', 'ra', 'dec']).get_results()
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
 
         # Old methods: work fine for sparse field, not for very crowed fields.
@@ -182,7 +185,6 @@ class Source(object):
         self.time = np.array(time)
         self.wcs = wcs
         # self._fit_cutout_wcs(wcs, (size, size))
-
 
         num_gaia = len(catalogdata)
         tic_id = np.zeros(num_gaia)
@@ -223,79 +225,85 @@ class Source(object):
         catalogdata.sort('tess_mag')
         self.gaia = catalogdata
 
-
-    # the following method is adopted from Astrocut
-    def _fit_cutout_wcs(self, cutout_wcs, cutout_shape):
-        """
-        Given a full (including SIP coefficients) wcs for the cutout,
-        calculate the best fit linear wcs, and a measure of the goodness-of-fit.
-
-        The new WCS is stored in ``self.cutout_wcs``.
-        Goodness-of-fit measures are returned and stored in ``self.cutout_wcs_fit``.
-        Parameters
-        ----------
-        cutout_wcs :  `~astropy.wcs.WCS`
-            The full (including SIP coefficients) cutout WCS object
-        cutout_shape : tuple
-            The shape of the cutout in the form (width, height).
-        Returns
-        -------
-        response : tuple
-            Goodness-of-fit statistics. (max dist, sigma)
-        """
-
-        # Getting matched pixel, world coordinate pairs
-        # We will choose no more than 100 pixels spread evenly throughout the image
-        # Centered on the center pixel.
-        # To do this we the appropriate "step size" between pixel coordinates
-        # (i.e. we take every ith pixel in each row/column) [TODOOOOOO]
-        # For example in a 5x7 cutout with i = 2 we get:
-        #
-        # xxoxoxx
-        # ooooooo
-        # xxoxoxx
-        # ooooooo
-        # xxoxoxx
-        #
-        # Where x denotes the indexes that will be used in the fit.
-        y, x = cutout_shape
-        i = 1
-        while (x / i) * (y / i) > 100:
-            i += 1
-
-        xvals = list(reversed(range(x // 2, -1, -i)))[:-1] + list(range(x // 2, x, i))
-        if xvals[-1] != x - 1:
-            xvals += [x - 1]
-        if xvals[0] != 0:
-            xvals = [0] + xvals
-
-        yvals = list(reversed(range(y // 2, -1, -i)))[:-1] + list(range(y // 2, y, i))
-        if yvals[-1] != y - 1:
-            yvals += [y - 1]
-        if yvals[0] != 0:
-            yvals = [0] + yvals
-
-        pix_inds = np.array(list(product(xvals, yvals)))
-        world_pix = SkyCoord(cutout_wcs.all_pix2world(pix_inds, 0), unit='deg')
-
-        # Getting the fit WCS
-        linear_wcs = fit_wcs_from_points([pix_inds[:, 0], pix_inds[:, 1]], world_pix, proj_point='center')
-
-        self.linear_wcs = linear_wcs
-
-        # Checking the fit (we want to use all of the pixels for this)
-        pix_inds = np.array(list(product(list(range(cutout_shape[1])), list(range(cutout_shape[0])))))
-        world_pix = SkyCoord(cutout_wcs.all_pix2world(pix_inds, 0), unit='deg')
-        world_pix_new = SkyCoord(linear_wcs.all_pix2world(pix_inds, 0), unit='deg')
-
-        dists = world_pix.separation(world_pix_new).to('deg')
-        sigma = np.sqrt(sum(dists.value ** 2))
-        print(dists, sigma)
-        #
-        # self.cutout_wcs_fit['WCS_MSEP'][0] = dists.max().value
-        # self.cutout_wcs_fit['WCS_SIG'][0] = sigma
-
-        # return (dists.max(), sigma)
+    def search_gaia(self, x, y, co1, co2):
+        coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
+        radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
+        catalogdata = Gaia.cone_search_async(coord, radius,
+                                             columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                                                      'phot_rp_mean_mag', 'ra', 'dec']).get_results()
+        return catalogdata
+    # # the following method is adopted from Astrocut
+    # def _fit_cutout_wcs(self, cutout_wcs, cutout_shape):
+    #     """
+    #     Given a full (including SIP coefficients) wcs for the cutout,
+    #     calculate the best fit linear wcs, and a measure of the goodness-of-fit.
+    #
+    #     The new WCS is stored in ``self.cutout_wcs``.
+    #     Goodness-of-fit measures are returned and stored in ``self.cutout_wcs_fit``.
+    #     Parameters
+    #     ----------
+    #     cutout_wcs :  `~astropy.wcs.WCS`
+    #         The full (including SIP coefficients) cutout WCS object
+    #     cutout_shape : tuple
+    #         The shape of the cutout in the form (width, height).
+    #     Returns
+    #     -------
+    #     response : tuple
+    #         Goodness-of-fit statistics. (max dist, sigma)
+    #     """
+    #
+    #     # Getting matched pixel, world coordinate pairs
+    #     # We will choose no more than 100 pixels spread evenly throughout the image
+    #     # Centered on the center pixel.
+    #     # To do this we the appropriate "step size" between pixel coordinates
+    #     # (i.e. we take every ith pixel in each row/column) [TODOOOOOO]
+    #     # For example in a 5x7 cutout with i = 2 we get:
+    #     #
+    #     # xxoxoxx
+    #     # ooooooo
+    #     # xxoxoxx
+    #     # ooooooo
+    #     # xxoxoxx
+    #     #
+    #     # Where x denotes the indexes that will be used in the fit.
+    #     y, x = cutout_shape
+    #     i = 1
+    #     while (x / i) * (y / i) > 100:
+    #         i += 1
+    #
+    #     xvals = list(reversed(range(x // 2, -1, -i)))[:-1] + list(range(x // 2, x, i))
+    #     if xvals[-1] != x - 1:
+    #         xvals += [x - 1]
+    #     if xvals[0] != 0:
+    #         xvals = [0] + xvals
+    #
+    #     yvals = list(reversed(range(y // 2, -1, -i)))[:-1] + list(range(y // 2, y, i))
+    #     if yvals[-1] != y - 1:
+    #         yvals += [y - 1]
+    #     if yvals[0] != 0:
+    #         yvals = [0] + yvals
+    #
+    #     pix_inds = np.array(list(product(xvals, yvals)))
+    #     world_pix = SkyCoord(cutout_wcs.all_pix2world(pix_inds, 0), unit='deg')
+    #
+    #     # Getting the fit WCS
+    #     linear_wcs = fit_wcs_from_points([pix_inds[:, 0], pix_inds[:, 1]], world_pix, proj_point='center')
+    #
+    #     self.linear_wcs = linear_wcs
+    #
+    #     # Checking the fit (we want to use all of the pixels for this)
+    #     pix_inds = np.array(list(product(list(range(cutout_shape[1])), list(range(cutout_shape[0])))))
+    #     world_pix = SkyCoord(cutout_wcs.all_pix2world(pix_inds, 0), unit='deg')
+    #     world_pix_new = SkyCoord(linear_wcs.all_pix2world(pix_inds, 0), unit='deg')
+    #
+    #     dists = world_pix.separation(world_pix_new).to('deg')
+    #     sigma = np.sqrt(sum(dists.value ** 2))
+    #     print(dists, sigma)
+    #     #
+    #     # self.cutout_wcs_fit['WCS_MSEP'][0] = dists.max().value
+    #     # self.cutout_wcs_fit['WCS_SIG'][0] = sigma
+    #
+    #     # return (dists.max(), sigma)
 
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
@@ -326,7 +334,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 cadence.append(hdul[0].header['FFIINDEX'])
                 flux[i] = hdul[1].data[0:2048, 44:2092]
                 time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
-               
+
         except:
             print(f'Corrupted file {file}, download again ...')
             response = requests.get(
