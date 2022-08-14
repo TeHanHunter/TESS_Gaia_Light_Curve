@@ -159,6 +159,7 @@ class Source(object):
         self.cadence = cadence
         self.quality = quality
         self.exposure = exposure
+        self.wcs = wcs
         co1 = 38.5
         co2 = 116.5
         catalog_1 = self.search_gaia(x, y, co1, co1)
@@ -183,7 +184,6 @@ class Source(object):
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
-        self.wcs = wcs
         # self._fit_cutout_wcs(wcs, (size, size))
 
         num_gaia = len(catalogdata)
