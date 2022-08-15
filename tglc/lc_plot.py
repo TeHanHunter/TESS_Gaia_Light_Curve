@@ -500,8 +500,8 @@ def figure_5():
     source = ffi_cut(target=target, size=50, local_directory=local_directory, sector=18)
     with open(f'{local_directory}source/source_NGC 7654_sector_18.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    # epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
-    #      name=None, limit_mag=15, save_aper=False)
+    epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
+         name=None, limit_mag=15, save_aper=False)
     # plt.imshow(source.flux[0], origin='lower', norm=colors.LogNorm())
     # plt.scatter(source.gaia['sector_17_x'][:100], source.gaia['sector_17_y'][:100], s=0.5, c='r')
     # plt.scatter(source.gaia['sector_17_x'][6], source.gaia['sector_17_y'][6], s=0.5, c='r')
