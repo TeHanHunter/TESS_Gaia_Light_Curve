@@ -497,17 +497,17 @@ def figure_5():
     local_directory = f'/home/tehan/data/{target}/'
     os.makedirs(local_directory + 'source/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
-    source = ffi_cut(target=target, size=90, local_directory=local_directory, sector=18)
+    source = ffi_cut(target=target, size=50, local_directory=local_directory, sector=18)
     with open(f'{local_directory}source/source_NGC 7654_sector_18.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
-         name=None, limit_mag=15, save_aper=False)
+    # epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
+    #      name=None, limit_mag=15, save_aper=False)
     # plt.imshow(source.flux[0], origin='lower', norm=colors.LogNorm())
     # plt.scatter(source.gaia['sector_17_x'][:100], source.gaia['sector_17_y'][:100], s=0.5, c='r')
     # plt.scatter(source.gaia['sector_17_x'][6], source.gaia['sector_17_y'][6], s=0.5, c='r')
     # plt.colorbar()
     # plt.show()
-    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_23.npy').reshape(90, 90)
+    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_25.npy').reshape(90, 90)
     fig = plt.figure(constrained_layout=False, figsize=(11, 4))
     gs = fig.add_gridspec(1, 31)
     gs.update(wspace=1, hspace=0.1)
@@ -517,9 +517,9 @@ def figure_5():
     ax1 = fig.add_subplot(gs[0, 0:10], projection=source.wcs, slices=('y', 'x'))
     ax1.set_title('TESS FFI', pad=10)
     im1 = ax1.imshow(source.flux[0].transpose(), origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
-    ax1.scatter(source.gaia['sector_17_y'][:100], source.gaia['sector_17_x'][:100], s=5, c='r',
+    ax1.scatter(source.gaia['sector_18_y'][:100], source.gaia['sector_18_x'][:100], s=5, c='r',
                 label='background stars')
-    ax1.scatter(source.gaia['sector_17_y'][8], source.gaia['sector_17_x'][8], s=30, c='r', marker='*',
+    ax1.scatter(source.gaia['sector_18_y'][25], source.gaia['sector_18_x'][25], s=30, c='r', marker='*',
                 label='target star')
     ax1.coords['pos.eq.ra'].set_axislabel('Right Ascension')
     ax1.coords['pos.eq.ra'].set_axislabel_position('b')
@@ -532,8 +532,8 @@ def figure_5():
     ax2 = fig.add_subplot(gs[0, 10:20], projection=source.wcs, slices=('y', 'x'))
     ax2.set_title('Simulated background stars', pad=10)
     im2 = ax2.imshow(contamination_8.transpose(), origin='lower', cmap=cmap, vmin=-5000, vmax=5000)
-    ax2.scatter(source.gaia['sector_17_y'][:8], source.gaia['sector_17_x'][:8], s=5, c='r')
-    ax2.scatter(source.gaia['sector_17_y'][9:100], source.gaia['sector_17_x'][9:100], s=5, c='r')
+    ax2.scatter(source.gaia['sector_18_y'][:25], source.gaia['sector_18_x'][:25], s=5, c='r')
+    ax2.scatter(source.gaia['sector_18_y'][26:100], source.gaia['sector_18_x'][26:100], s=5, c='r')
     # ax2.set_xticks([20, 25, 30, 35, 40])
     # ax2.set_yticks([20, 25, 30, 35, 40])
 
@@ -548,7 +548,7 @@ def figure_5():
     ax3.set_title('Decontaminated target star', pad=10)
     im3 = ax3.imshow(source.flux[0].transpose() - contamination_8.transpose(), origin='lower', cmap=cmap, vmin=-5000,
                      vmax=5000)
-    ax3.scatter(source.gaia['sector_17_y'][8], source.gaia['sector_17_x'][8], s=30, c='r', marker='*')
+    ax3.scatter(source.gaia['sector_18_y'][19], source.gaia['sector_18_x'][19], s=30, c='r', marker='*')
     ax3.coords['pos.eq.dec'].set_ticklabel_visible(False)
     ax3.coords['pos.eq.ra'].set_axislabel('Right Ascension')
     ax3.coords['pos.eq.ra'].set_axislabel_position('b')
@@ -564,7 +564,7 @@ def figure_5():
     ax_cb.ax.set_yticklabels(['-1', '0', '1', '2', '3', '4', '5'])
     ax_cb.ax.set_ylabel(r'TESS Flux ($\times 1000$ $\mathrm{e^-}$/ s) ')
     ax1.legend(loc=2, prop={'size': 8})
-    plt.setp([ax1, ax2, ax3], xlim=(39.5,54.5), ylim=(39.5,54.5))
+    plt.setp([ax1, ax2, ax3], xlim=(38.5,53.5), ylim=(41.5, 56.5))
     # plt.savefig('/mnt/c/users/tehan/desktop/remove_contamination.png', bbox_inches='tight', dpi=300)
     plt.show()
     plt.close()
