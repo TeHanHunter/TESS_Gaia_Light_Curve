@@ -497,9 +497,9 @@ def figure_5():
     local_directory = f'/home/tehan/data/{target}/'
     os.makedirs(local_directory + 'source/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
-    source = ffi_cut(target=target, size=90, local_directory=local_directory, sector=17)
-    # with open(f'{local_directory}source/source_NGC 7654.pkl', 'rb') as input_:
-    #     source = pickle.load(input_)
+    source = ffi_cut(target=target, size=90, local_directory=local_directory, sector=18)
+    with open(f'{local_directory}source/source_NGC 7654_sector_18.pkl', 'rb') as input_:
+        source = pickle.load(input_)
     epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
          name=None, limit_mag=15, save_aper=False)
     # plt.imshow(source.flux[0], origin='lower', norm=colors.LogNorm())
@@ -507,8 +507,7 @@ def figure_5():
     # plt.scatter(source.gaia['sector_17_x'][6], source.gaia['sector_17_y'][6], s=0.5, c='r')
     # plt.colorbar()
     # plt.show()
-    contamination = np.load('/mnt/c/users/tehan/desktop/7654/contamination.npy')
-    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_8.npy')
+    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_23.npy').reshape(90, 90)
     fig = plt.figure(constrained_layout=False, figsize=(11, 4))
     gs = fig.add_gridspec(1, 31)
     gs.update(wspace=1, hspace=0.1)
@@ -565,7 +564,7 @@ def figure_5():
     ax_cb.ax.set_yticklabels(['-1', '0', '1', '2', '3', '4', '5'])
     ax_cb.ax.set_ylabel(r'TESS Flux ($\times 1000$ $\mathrm{e^-}$/ s) ')
     ax1.legend(loc=2, prop={'size': 8})
-    plt.setp([ax1, ax2, ax3], xlim=(18.5, 33.5), ylim=(21.5, 36.5))
+    plt.setp([ax1, ax2, ax3], xlim=(39.5,54.5), ylim=(39.5,54.5))
     # plt.savefig('/mnt/c/users/tehan/desktop/remove_contamination.png', bbox_inches='tight', dpi=300)
     plt.show()
     plt.close()
