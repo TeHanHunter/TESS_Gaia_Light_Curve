@@ -493,9 +493,9 @@ def figure_4():
 
 def figure_5():
     target = 'NGC 7654'
-    local_directory = f'/mnt/c/users/tehan/desktop/7654/{target}/'
+    # local_directory = f'/mnt/c/users/tehan/desktop/7654/{target}/'
     local_directory = f'/home/tehan/data/{target}/'
-    os.makedirs(local_directory +'source/', exist_ok=True)
+    os.makedirs(local_directory + 'source/', exist_ok=True)
     source = ffi_cut(target=target, size=90, local_directory=local_directory, sector=17)
     # with open(f'{local_directory}source/source_NGC 7654.pkl', 'rb') as input_:
     #     source = pickle.load(input_)
