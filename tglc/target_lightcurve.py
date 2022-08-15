@@ -191,7 +191,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
-         limit_mag=16, edge_compression=1e-4, power=0.8, name=None, save_aper=False, no_progress_bar=False):
+         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi_cut.Source or TGLC.ffi_cut.Source_cut, required

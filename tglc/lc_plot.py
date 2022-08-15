@@ -13,6 +13,7 @@ from glob import glob
 from os.path import exists
 from tglc.target_lightcurve import *
 from tglc.ffi_cut import *
+from tglc.quick_lc import *
 from scipy import ndimage
 
 
@@ -491,14 +492,15 @@ def figure_4():
 
 
 def figure_5():
-    ccd = '1-2'
-    cut_x = 11
-    cut_y = 11
-    # local_directory = f'/mnt/d/TESS_Sector_17/'
-    # with open(local_directory + f'source/{ccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
+    target = 'NGC 7654'
+    local_directory = f'/mnt/c/users/tehan/desktop/7654/{target}/'
+    local_directory = f'/home/tehan/data/{target}/'
+    os.makedirs(local_directory +'source/', exist_ok=True)
+    source = ffi_cut(target=target, size=90, local_directory=local_directory, sector=17)
+    # with open(f'{local_directory}source/source_NGC 7654.pkl', 'rb') as input_:
     #     source = pickle.load(input_)
-    with open(f'/mnt/c/users/tehan/desktop/7654/source_NGC 7654.pkl', 'rb') as input_:
-        source = pickle.load(input_)
+    epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
+         name=None, limit_mag=15, save_aper=False)
     # plt.imshow(source.flux[0], origin='lower', norm=colors.LogNorm())
     # plt.scatter(source.gaia['sector_17_x'][:100], source.gaia['sector_17_y'][:100], s=0.5, c='r')
     # plt.scatter(source.gaia['sector_17_x'][6], source.gaia['sector_17_y'][6], s=0.5, c='r')
@@ -2463,4 +2465,4 @@ def figure_11():
 
 
 if __name__ == '__main__':
-    figure_10()
+    figure_5()
