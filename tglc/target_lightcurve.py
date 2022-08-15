@@ -241,6 +241,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             warnings.warn(
                 f"TESS FFI cut includes Nan values. Please shift the center of the cutout to remove Nan near edge. Target: {target}")
         np.save(epsf_loc, e_psf)
+    # contamination_8 = np.dot(A[:source.size ** 2, :], e_psf[0].T)
+    # np.save('/mnt/c/users/tehan/desktop/7654/contamination_8_.npy', contamination_8)
     # TODO: quality use which background?
     background = np.dot(A[:source.size ** 2, -bg_dof:], e_psf[:, -bg_dof:].T)
     # np.save(f'{local_directory}epsf/bg_{target}_sector_{sector}.npy', background)
