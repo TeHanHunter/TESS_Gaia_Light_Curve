@@ -7,6 +7,7 @@ tglc/effective_psf.py
 tglc/ffi.py
 tglc/ffi_cut.py
 tglc/lc_plot.py
+tglc/mast.py
 tglc/quick_lc.py
 tglc/run.py
 tglc/source_output.py
