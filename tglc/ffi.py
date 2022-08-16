@@ -2,14 +2,14 @@ import json
 import os
 import pickle
 import sys
-from glob import glob
-from os.path import exists
-from urllib.parse import quote as urlencode
-
 import astropy.units as u
 import numpy as np
 import pkg_resources
 import requests
+
+from glob import glob
+from os.path import exists
+from urllib.parse import quote as urlencode
 from astropy.io import fits
 from astropy.table import Table, hstack, vstack, unique
 from astropy.wcs import WCS

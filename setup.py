@@ -20,6 +20,6 @@ setuptools.setup(
     ],
     install_requires=['astropy==5.1', 'astroquery', 'matplotlib', 'numpy', 'oauthlib', 'requests', 'scipy', 'tqdm', 'wheel', 'wotan'],
     packages=setuptools.find_packages(include=['tglc', 'tglc.*']),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     include_package_data=True
 )
