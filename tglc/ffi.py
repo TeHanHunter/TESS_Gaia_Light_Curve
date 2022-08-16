@@ -7,6 +7,7 @@ import pickle
 import pkg_resources
 import numpy as np
 from scipy import ndimage
+from os.path import exists
 import astroquery.mast
 from glob import glob
 from itertools import product
@@ -380,8 +381,13 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     os.makedirs(f'{local_directory}source/{camera}-{ccd}/', exist_ok=True)
     for i in trange(14):  # 22
         for j in range(14):  # 22
-            with open(f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl', 'wb') as output:
-                source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
-                                size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
-                                exposure=exposure, cadence=cadence)  # 93
-                pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+            source_path = f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl'
+            source_exists = exists(source_path)
+            if source_exists and os.path.getsize(source_path) > 0:
+                print(f'{source_path} exists. ')
+            else:
+                with open(source_path, 'wb') as output:
+                    source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
+                                    size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
+                                    exposure=exposure, cadence=cadence)  # 93
+                    pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
