@@ -245,6 +245,8 @@ def ffi_cut(target='', local_directory='', size=90, sector=None):
     """
     if sector is None:
         source_name = f'source_{target}'
+    elif sector is True:
+        source_name = f'source_{target}_earliest_sector'
     else:
         source_name = f'source_{target}_sector_{sector}'
     source_exists = exists(f'{local_directory}source/{source_name}.pkl')
