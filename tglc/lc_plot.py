@@ -1,20 +1,16 @@
+import os
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from wotan import flatten
+from scipy import ndimage
 from astropy.io import ascii
 from astropy.io import fits
-from matplotlib.patches import ConnectionPatch
-from matplotlib import colors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm import trange
-import os
-from glob import glob
-from os.path import exists
-from tglc.target_lightcurve import *
-from tglc.ffi_cut import *
-from tglc.quick_lc import *
-from scipy import ndimage
+from matplotlib.patches import ConnectionPatch
+from tglc.target_lightcurve import epsf
+from tglc.ffi_cut import ffi_cut
 
 
 def load_eleanor(ld='', tic=1, sector=1):
@@ -2460,4 +2456,4 @@ def figure_11():
 
 
 if __name__ == '__main__':
-    figure_5()
+    figure_1()

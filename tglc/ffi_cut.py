@@ -1,7 +1,10 @@
 import warnings
+import os
+import sys
+from astroquery.gaia import Gaia
 from astroquery.mast import Tesscut
-from os.path import exists
-from tglc.ffi import *
+from astroquery.mast import Catalogs
+from astropy.coordinates import SkyCoord
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")

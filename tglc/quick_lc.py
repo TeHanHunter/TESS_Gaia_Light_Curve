@@ -1,6 +1,8 @@
-from tglc.target_lightcurve import *
-from astropy.io import ascii
-
+import os
+import numpy as np
+from tglc.target_lightcurve import epsf
+from tglc.ffi_cut import ffi_cut
+from astroquery.mast import Catalogs
 
 # warnings.simplefilter('ignore', UserWarning)
 

@@ -2,20 +2,17 @@
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
 
 import os
-from os.path import exists
-
-import matplotlib.pyplot as plt
-import numpy as np
-import numpy.ma as ma
-from astropy.io import fits
-from tqdm import trange
-from wotan import flatten
-
 import tglc
-from tglc.effective_psf import *
-from tglc.ffi_cut import *
 import pickle
 import warnings
+import numpy as np
+import numpy.ma as ma
+import matplotlib.pyplot as plt
+
+from astropy.io import fits
+from tqdm import trange
+from os.path import exists
+from tglc.effective_psf import get_psf, fit_psf, fit_lc, bg_mod
 
 warnings.simplefilter('always', UserWarning)
 

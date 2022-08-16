@@ -1,26 +1,21 @@
-import os
-import sys
-import os
 import json
-import requests
+import os
 import pickle
-import pkg_resources
-import numpy as np
-from scipy import ndimage
-from os.path import exists
-import astroquery.mast
+import sys
 from glob import glob
-from itertools import product
+from os.path import exists
 from urllib.parse import quote as urlencode
-from astropy.table import Table, hstack, vstack, unique
-from astroquery.mast import Catalogs
-from tqdm import tqdm, trange
-from astropy.io import fits
-from astropy.wcs import WCS
+
 import astropy.units as u
-from astropy.wcs.utils import fit_wcs_from_points
-from astropy.coordinates import SkyCoord
+import numpy as np
+import pkg_resources
+import requests
+from astropy.io import fits
+from astropy.table import Table, hstack, vstack, unique
+from astropy.wcs import WCS
 from astroquery.gaia import Gaia
+from scipy import ndimage
+from tqdm import tqdm, trange
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
@@ -233,6 +228,7 @@ class Source(object):
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec']).get_results()
         return catalogdata
+
     # # the following method is adopted from Astrocut
     # def _fit_cutout_wcs(self, cutout_wcs, cutout_shape):
     #     """
