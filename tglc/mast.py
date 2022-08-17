@@ -11,6 +11,5 @@ file_path = glob('/home/tehan/data/sector0002/lc/1-1/hlsp_*.fits')
 print(file_path)
 
 for file in file_path:
-    file = file.split('/')[-1]
     with open(file, 'rb') as f:
-        ftps.storbinary(f'STOR {file}', f)
+        ftps.storbinary(f"STOR {file.split('/')[-1]}", f)
