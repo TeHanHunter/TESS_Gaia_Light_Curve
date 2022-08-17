@@ -2,18 +2,15 @@
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
 
 import os
-import tglc
-import pickle
 import warnings
 import numpy as np
 import numpy.ma as ma
-import matplotlib.pyplot as plt
 
 from astropy.io import fits
 from tqdm import trange
 from os.path import exists
 from tglc.effective_psf import get_psf, fit_psf, fit_lc, bg_mod
-
+from tglc.ffi_cut import Source_cut
 warnings.simplefilter('always', UserWarning)
 
 
@@ -214,7 +211,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                         edge_compression=edge_compression)
     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
     epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
-    if type(source) == tglc.ffi_cut.Source_cut:
+    if type(source) == Source_cut:
         bg_dof = 3
         lc_directory = f'{local_directory}lc/'
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
@@ -294,34 +291,4 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                       near_edge=near_edge, save_aper=save_aper)
     # np.save(local_directory + f'mean_diff_aper_{target}.npy', np.array([mag, mean_diff_aper]))
     # np.save(local_directory + f'mean_diff_psf_{target}.npy', np.array([mag, mean_diff_psf]))
-
-
-if __name__ == '__main__':
-    sector = 1
-    ccd = '1-3'
-    # target = '11_07'
-    local_directory = f'/home/tehan/data/sector0001/'
-    # os.makedirs(local_directory + f'epsf/{ccd}/', exist_ok=True)
-    for i in range(3):
-        for j in range(3):
-            with open(local_directory + f'source/{ccd}/source_0{i+6}_0{j+6}.pkl', 'rb') as input_:
-                source = pickle.load(input_)
-            powers = np.linspace(0.1, 2., 100)
-            mean_ = np.zeros(100)
-            median_ = np.zeros(100)
-            for k in range(100):
-                mean_[k], median_[k] = epsf(source, factor=2, sector=source.sector, power=powers[k],
-                                            local_directory=local_directory)
-            # mean_ = np.load(local_directory + f'mean_{i+10}_0{j+6}.npy')
-            # median_ = np.load(local_directory + f'median_{i+10}_0{j+6}.npy')
-            plt.plot(powers, mean_ / np.median(mean_), color='C0')
-            plt.plot(powers, median_ / np.median(median_), color='C1')
-    # plt.plot(powers, mean_ / np.median(mean_), label='mean')
-    # plt.plot(powers, median_ / np.median(median_), label='median')
-    plt.plot(powers, mean_ / np.median(mean_), color='C0', label='mean')
-    plt.plot(powers, median_ / np.median(median_), color='C1', label='median')
-    plt.xlabel('power')
-    plt.legend()
-    plt.savefig(local_directory + f'power_{ccd}.png')
-    plt.show()
 
