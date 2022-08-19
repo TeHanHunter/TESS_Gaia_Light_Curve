@@ -24,11 +24,11 @@ def hlsp_transfer(i, sector=1):
     ftps.retrlines('LIST', dir_list.append)
     dir_list = [d.split()[-1] for d in dir_list]
     # check if sector_dir already exists
-    if sector_dir in dir_list:
-        # print(f"Directory {sector_dir}/ already exists.")
-    # if not, mkdir new sector directory (use relative path, NOT absolute path)
-    else:
-        # print(ftps.mkd(sector_dir))
+    # if sector_dir in dir_list:
+    #     print(f"Directory {sector_dir}/ already exists.")
+    # # if not, mkdir new sector directory (use relative path, NOT absolute path)
+    # else:
+    #     print(ftps.mkd(sector_dir))
     # cd into sector directory (use relative path, NOT absolute path)
     ftps.cwd(sector_dir)
     # print('\n')
