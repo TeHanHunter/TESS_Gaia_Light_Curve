@@ -67,4 +67,4 @@ def google_drive():
 if __name__ == '__main__':
     sector = 3
     for i in range(16):
-        hlsp_transfer(sector=sector, camera=1 + i // 4, ccd=1 + i % 4)
+        hlsp_transfer(sector=sector, cam=1 + i // 4, ccd=1 + i % 4)
