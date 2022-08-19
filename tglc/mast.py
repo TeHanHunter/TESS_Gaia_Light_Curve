@@ -2,11 +2,15 @@ import ftplib
 import getpass
 from glob import glob
 from tqdm import trange
+from multiprocessing import Pool
+from functools import partial
 # from pydrive.auth import GoogleAuth
 # from pydrive.drive import GoogleDrive
 
 
-def hlsp_transfer(sector=1, cam=1, ccd=1):
+def hlsp_transfer(i, sector=1):
+    cam = 1 + i // 4
+    ccd = 1 + i % 4
     ftps = ftplib.FTP_TLS('archive.stsci.edu')
     ftps.login('tehanhunter@gmail.com', getpass.getpass())
     ftps.prot_p()
@@ -14,20 +18,20 @@ def hlsp_transfer(sector=1, cam=1, ccd=1):
     print(f"Sector {sector}")
     sector_dir = f"s{sector:04d}"
     # print current directory
-    print(ftps.pwd())
+    # print(ftps.pwd())
     # get list of existing directories
     dir_list = []
     ftps.retrlines('LIST', dir_list.append)
     dir_list = [d.split()[-1] for d in dir_list]
     # check if sector_dir already exists
     if sector_dir in dir_list:
-        print(f"Directory {sector_dir}/ already exists.")
+        # print(f"Directory {sector_dir}/ already exists.")
     # if not, mkdir new sector directory (use relative path, NOT absolute path)
     else:
-        print(ftps.mkd(sector_dir))
+        # print(ftps.mkd(sector_dir))
     # cd into sector directory (use relative path, NOT absolute path)
     ftps.cwd(sector_dir)
-    print('\n')
+    # print('\n')
 
     cam_ccd_dir = f'cam{cam}-ccd{ccd}'
     # get list of existing cam-ccd directories
@@ -46,7 +50,6 @@ def hlsp_transfer(sector=1, cam=1, ccd=1):
     # code goes here to write files to archive.stsci.edu:/pub/hlsp/tglc/<sector>/<cam-ccd>/
     # below is just an example, use whatever working code you have
     file_path = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
-    print(file_path)
     for i in trange(len(file_path)):
         file = file_path[i]
         with open(file, 'rb') as f:
@@ -65,6 +68,6 @@ def google_drive():
 
 
 if __name__ == '__main__':
-    sector = 3
-    for i in range(16):
-        hlsp_transfer(sector=sector, cam=1 + i // 4, ccd=1 + i % 4)
+    sector = 2
+    with Pool(16) as p:
+        p.map(partial(hlsp_transfer, sector=sector), range(16))
