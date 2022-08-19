@@ -53,7 +53,7 @@ def hlsp_transfer(i, sector=1):
     for i in trange(len(file_path)):
         file = file_path[i]
         with open(file, 'rb') as f:
-            ftps.storbinary(f"STOR {file.split('/')[-1]}", f)
+            ftps.storbinary(f"STOR {file.split('/')[-1]}", f, 102400)
 
 
 def google_drive():
