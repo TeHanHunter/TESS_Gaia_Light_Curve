@@ -365,6 +365,18 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     bad_pixels[med_flux > 0.8 * np.nanmax(med_flux)] = 1
     bad_pixels[med_flux < 0.2 * np.nanmedian(med_flux)] = 1
     bad_pixels[np.isnan(med_flux)] = 1
+
+    x_b, y_b = np.where(bad_pixels)
+    for i in range(len(x_b)):
+        if x_b[i] < 2047:
+            bad_pixels[x_b[i] + 1, y_b[i]] = 1
+        if x_b[i] > 0:
+            bad_pixels[x_b[i] - 1, y_b[i]] = 1
+        if y_b[i] < 2047:
+            bad_pixels[x_b[i], y_b[i] + 1] = 1
+        if y_b[i] > 0:
+            bad_pixels[x_b[i], y_b[i] - 1] = 1
+
     mask = np.ma.masked_array(mask, mask=bad_pixels)
     mask = np.ma.masked_equal(mask, 0)
 

@@ -55,6 +55,8 @@ def hlsp_transfer(i, sector=1):
         with open(file, 'rb') as f:
             ftps.storbinary(f"STOR {file.split('/')[-1]}", f, 102400)
 
+    # check completeness
+
 
 def google_drive():
     gauth = GoogleAuth()
