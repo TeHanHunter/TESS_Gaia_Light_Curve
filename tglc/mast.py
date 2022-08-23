@@ -90,4 +90,4 @@ if __name__ == '__main__':
     sector = 1
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
-    zip_folder(zipname='mdwarf.zip', dir_name='/home/tehan/data/mdwarf/')
+    zip_folder(zipname='mdwarf.zip', dir_name='/home/tehan/data/mdwarfs/')
