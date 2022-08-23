@@ -78,6 +78,7 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs
 def google_drive(zipname='', dir_name=''):
     # zip_folder(zipname=zipname, dir_name=dir_name)
     gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()
     drive = GoogleDrive(gauth)
     upload_files = glob(f'{dir_name}*.fits')
     for i in range(len(upload_files)):
