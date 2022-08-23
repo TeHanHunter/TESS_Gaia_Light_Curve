@@ -79,15 +79,15 @@ def google_drive(zipname='', dir_name=''):
     zip_folder(zipname=zipname, dir_name=dir_name)
     gauth = GoogleAuth()
     drive = GoogleDrive(gauth)
-    upload_file = dir_name + zipname
-    gfile = drive.CreateFile({'parents': [{'id': '1pzschX3uMbxU0lB5WZ6IlEEeAUE8MZ-t'}]})
+    upload_file = dir_name + zipname + '.zip'
+    gfile = drive.CreateFile({'parents': [{'id': '1WDeUJqD3A0tikVKSZQxxESQBAsIzzSKw'}]})
     # Read file and set it as the content of this instance.
     gfile.SetContentFile(upload_file)
     gfile.Upload()  # Upload the file.
 
 
 if __name__ == '__main__':
-    sector = 1
+    # sector = 1
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
-    zip_folder(zipname='mdwarf.zip', dir_name='/home/tehan/data/mdwarfs/')
+    zip_folder(zipname='mdwarf', dir_name='/home/tehan/data/mdwarfs/')
