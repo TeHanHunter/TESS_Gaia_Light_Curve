@@ -1,11 +1,26 @@
 import ftplib
 import getpass
 from glob import glob
+import numpy as np
 from tqdm import trange
 from multiprocessing import Pool
 from functools import partial
+from astropy.io import fits
+
+
 # from pydrive.auth import GoogleAuth
 # from pydrive.drive import GoogleDrive
+
+
+def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs_Tmag_18_TICID.csv'):
+    stars = np.loadtxt(starlist, dtype=int)
+    cam = 1 + i // 4
+    ccd = 1 + i % 4
+    files = glob(f'/home/tehan/data/sector{sector:04d}/{cam}_{ccd}/*.fits')
+    for j in range(len(files)):
+        with fits.open(files[j], mode='denywrite') as hdul:
+            if int(hdul[0].header['TICID']) in stars:
+                hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
 
 
 def hlsp_transfer(i, sector=1):
@@ -70,6 +85,5 @@ def google_drive():
 
 
 if __name__ == '__main__':
-    sector = 2
-    with Pool(16) as p:
-        p.map(partial(hlsp_transfer, sector=sector), range(16))
+    sector = 1
+    star_finder(0, sector=1, starlist='')
