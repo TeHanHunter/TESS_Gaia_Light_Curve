@@ -16,8 +16,8 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs
     stars = np.loadtxt(starlist, dtype=int)
     cam = 1 + i // 4
     ccd = 1 + i % 4
-    files = glob(f'/home/tehan/data/sector{sector:04d}/{cam}_{ccd}/*.fits')
-    for j in range(len(files)):
+    files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}_{ccd}/*.fits')
+    for j in trange(len(files)):
         with fits.open(files[j], mode='denywrite') as hdul:
             if int(hdul[0].header['TICID']) in stars:
                 hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
@@ -86,4 +86,4 @@ def google_drive():
 
 if __name__ == '__main__':
     sector = 1
-    star_finder(0, sector=1, starlist='')
+    star_finder(0, sector=1)
