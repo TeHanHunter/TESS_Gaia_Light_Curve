@@ -6,22 +6,12 @@ from tqdm import trange
 from multiprocessing import Pool
 from functools import partial
 from astropy.io import fits
+import shutil
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
-
-# from pydrive.auth import GoogleAuth
-# from pydrive.drive import GoogleDrive
-
-
-def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs_Tmag_18_TICID.csv'):
-    stars = np.loadtxt(starlist, dtype=int)
-    cam = 1 + i // 4
-    ccd = 1 + i % 4
-    files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
-    for j in trange(len(files)):
-        with fits.open(files[j], mode='denywrite') as hdul:
-            if int(hdul[0].header['TICID']) in stars:
-                hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
-
+def zip_folder(zipname='', dir_name=''):
+    shutil.make_archive(dir_name + zipname, 'zip', dir_name)
 
 def hlsp_transfer(i, sector=1):
     cam = 1 + i // 4
@@ -73,18 +63,31 @@ def hlsp_transfer(i, sector=1):
     # check completeness
 
 
-def google_drive():
+
+def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs_Tmag_18_TICID.csv'):
+    stars = np.loadtxt(starlist, dtype=int)
+    cam = 1 + i // 4
+    ccd = 1 + i % 4
+    files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
+    for j in trange(len(files)):
+        with fits.open(files[j], mode='denywrite') as hdul:
+            if int(hdul[0].header['TICID']) in stars:
+                hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
+
+
+def google_drive(zipname='', dir_name=''):
+    zip_folder(zipname=zipname, dir_name=dir_name)
     gauth = GoogleAuth()
     drive = GoogleDrive(gauth)
-    upload_file_list = ['1.jpg', '2.jpg']
-    for upload_file in upload_file_list:
-        gfile = drive.CreateFile({'parents': [{'id': '1pzschX3uMbxU0lB5WZ6IlEEeAUE8MZ-t'}]})
-        # Read file and set it as the content of this instance.
-        gfile.SetContentFile(upload_file)
-        gfile.Upload()  # Upload the file.
+    upload_file = dir_name + zipname
+    gfile = drive.CreateFile({'parents': [{'id': '1pzschX3uMbxU0lB5WZ6IlEEeAUE8MZ-t'}]})
+    # Read file and set it as the content of this instance.
+    gfile.SetContentFile(upload_file)
+    gfile.Upload()  # Upload the file.
 
 
 if __name__ == '__main__':
     sector = 1
-    with Pool(16) as p:
-        p.map(partial(star_finder, sector=sector), range(16))
+    # with Pool(16) as p:
+    #     p.map(partial(star_finder, sector=sector), range(16))
+    zip_folder(zipname='mdwarf.zip', dir_name='/home/tehan/data/mdwarf/')
