@@ -76,18 +76,19 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs
 
 
 def google_drive(zipname='', dir_name=''):
-    zip_folder(zipname=zipname, dir_name=dir_name)
+    # zip_folder(zipname=zipname, dir_name=dir_name)
     gauth = GoogleAuth()
     drive = GoogleDrive(gauth)
-    upload_file = dir_name + zipname + '.zip'
-    gfile = drive.CreateFile({'parents': [{'id': '1WDeUJqD3A0tikVKSZQxxESQBAsIzzSKw'}]})
-    # Read file and set it as the content of this instance.
-    gfile.SetContentFile(upload_file)
-    gfile.Upload()  # Upload the file.
+    upload_files = glob(f'{dir_name}*.fits')
+    for i in range(len(upload_files)):
+        gfile = drive.CreateFile({'parents': [{'id': '1WDeUJqD3A0tikVKSZQxxESQBAsIzzSKw'}]})
+        # Read file and set it as the content of this instance.
+        gfile.SetContentFile(upload_files[i])
+        gfile.Upload()  # Upload the file.
 
 
 if __name__ == '__main__':
     # sector = 1
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
-    zip_folder(zipname='mdwarf', dir_name='/home/tehan/data/mdwarfs/')
+    google_drive(zipname='mdwarf', dir_name='/home/tehan/data/mdwarfs/')
