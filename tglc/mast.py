@@ -7,11 +7,10 @@ from multiprocessing import Pool
 from functools import partial
 from astropy.io import fits
 import shutil
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+
 
 def zip_folder(zipname='', dir_name=''):
-    shutil.make_archive(dir_name + zipname, 'zip', dir_name)
+    shutil.make_archive(zipname, 'zip', dir_name)
 
 def hlsp_transfer(i, sector=1):
     cam = 1 + i // 4
@@ -63,7 +62,6 @@ def hlsp_transfer(i, sector=1):
     # check completeness
 
 
-
 def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs_Tmag_18_TICID.csv'):
     stars = np.loadtxt(starlist, dtype=int)
     cam = 1 + i // 4
@@ -74,18 +72,6 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs
             if int(hdul[0].header['TICID']) in stars:
                 hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
 
-
-def google_drive(zipname='', dir_name=''):
-    # zip_folder(zipname=zipname, dir_name=dir_name)
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()
-    drive = GoogleDrive(gauth)
-    upload_files = glob(f'{dir_name}*.fits')
-    for i in range(len(upload_files)):
-        gfile = drive.CreateFile({'parents': [{'id': '1WDeUJqD3A0tikVKSZQxxESQBAsIzzSKw'}]})
-        # Read file and set it as the content of this instance.
-        gfile.SetContentFile(upload_files[i])
-        gfile.Upload()  # Upload the file.
 
 
 if __name__ == '__main__':
