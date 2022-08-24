@@ -69,13 +69,15 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs
     files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
     for j in trange(len(files)):
         with fits.open(files[j], mode='denywrite') as hdul:
-            if int(hdul[0].header['TICID']) in stars:
-                hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
+            try:
+                if int(hdul[0].header['TICID']) in stars:
+                    hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
+            except:
+                pass
 
 
 
 if __name__ == '__main__':
-    # sector = 1
-    # with Pool(16) as p:
-    #     p.map(partial(star_finder, sector=sector), range(16))
-    google_drive(zipname='mdwarf', dir_name='/home/tehan/data/mdwarfs/')
+    sector = 1
+    with Pool(16) as p:
+        p.map(partial(star_finder, sector=sector), range(16))

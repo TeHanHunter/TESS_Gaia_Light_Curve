@@ -392,7 +392,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
             source_path = f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl'
             source_exists = exists(source_path)
             if source_exists and os.path.getsize(source_path) > 0:
-                print(f'{source_path} exists. ')
+                # print(f'{source_path} exists. ')
+                pass
             else:
                 with open(source_path, 'wb') as output:
                     source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
