@@ -62,7 +62,7 @@ def hlsp_transfer(i, sector=1):
     # check completeness
 
 
-def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs_Tmag_18_TICID.csv'):
+def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.txt'):
     stars = np.loadtxt(starlist, dtype=int)
     cam = 1 + i // 4
     ccd = 1 + i % 4
@@ -71,7 +71,7 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/mdwarfs/sector_1_mdwarfs
         with fits.open(files[j], mode='denywrite') as hdul:
             try:
                 if int(hdul[0].header['TICID']) in stars:
-                    hdul.writeto(f"/home/tehan/data/mdwarfs/{files[j].split('/')[-1]}", overwrite=True)
+                    hdul.writeto(f"/home/tehan/data/ben/sector0001/{files[j].split('/')[-1]}", overwrite=True)
             except:
                 pass
 
