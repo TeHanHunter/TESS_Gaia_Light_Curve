@@ -127,7 +127,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     """
     saturated_index = source.mask.mask.flatten()
     flux = source.flux[time].flatten()
-    saturated_index[flux < 0.2 * np.nanmedian(flux)] = True
+    saturated_index[flux < 0.8 * np.nanmedian(flux)] = True
 
     b = np.delete(flux, saturated_index)
     scaler = np.abs(np.delete(flux, saturated_index)) ** power
