@@ -2454,6 +2454,27 @@ def figure_11():
 
     plt.show()
 
+def figure_12():
+    local_directory = '/home/tehan/data/sector0001/'
+    camccd = '4-3'
+    sector = 1
+    fig = plt.figure(constrained_layout=False, figsize=(9, 9))
+    gs = fig.add_gridspec(14, 14)
+    gs.update(wspace=0.05, hspace=0.05)
+    for i in range(196):
+        cut_x = i // 14
+        cut_y = i % 14
+        psf = np.load(f'{local_directory}epsf/{camccd}/epsf_{cut_x:02d}_{cut_y:02d}_sector_{sector}_{camccd}.npy')
+        cmap = 'bone'
+        if np.isnan(psf).any():
+            cmap = 'inferno'
+        ax = fig.add_subplot(gs[13 - cut_y, cut_x])
+        ax.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap=cmap, origin='lower')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.tick_params(axis='x', bottom=False)
+        ax.tick_params(axis='y', left=False)
+    plt.savefig(f'{local_directory}/epsf_examples.png', bbox_inches='tight', dpi=300)
 
 if __name__ == '__main__':
-    figure_6()
+    figure_12()
