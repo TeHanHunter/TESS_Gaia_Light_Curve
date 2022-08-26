@@ -1,7 +1,8 @@
 .. image:: logo/TGLC_Title.png
   :width: 800
   :alt: TESS-Gaia Light Curve
-
+.. image:: https://zenodo.org/badge/420868490.svg
+   :target: https://zenodo.org/badge/latestdoi/420868490
 ==================================
 Introduction
 ==================================
@@ -18,9 +19,10 @@ Usage
 
 Download from MAST
 ----------------
-The easiest usage requires no package installation. Simply follow (coming soon) to download light curves from MAST. Light curves are being fitted sector by sector and will be available on MAST gradually. MAST hosts all Gaia DR2 stars down to 16th magnitude. Each .fits file includes PSF and aperture light curves and their calibrated versions. 
+The easiest usage requires no package installation. Simply follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to download light curves from MAST. Light curves are being fitted sector by sector and will be available on MAST gradually. MAST hosts all Gaia DR2 stars down to 16th magnitude. Each .fits file includes PSF and aperture light curves and their calibrated versions. 
 
-Available sectors: 
+Available sectors: `sector worklist <https://docs.google.com/spreadsheets/d/1FhHElWb1wmx9asWiZecAJ2umN0-P_aXn55OBVB34_rg/edit?usp=sharing>`_
+
 
 Fit from scratch
 ----------------
