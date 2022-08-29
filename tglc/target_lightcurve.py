@@ -239,7 +239,6 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     # np.save('/mnt/c/users/tehan/desktop/7654/contamination_8_.npy', contamination_8)
     # TODO: quality use which background?
     background = np.dot(A[:source.size ** 2, -bg_dof:], e_psf[:, -bg_dof:].T)
-    # np.save(f'{local_directory}epsf/bg_{target}_sector_{sector}.npy', background)
     quality_raw = np.zeros(len(source.time), dtype=np.int16)
     sigma = 1.4826 * np.nanmedian(np.abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])))
     quality_raw[abs(e_psf[:, -1] - np.nanmedian(e_psf[:, -1])) >= 3 * sigma] += 1
@@ -289,6 +288,4 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                       bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                       cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i], y_aperture=y_aperture[i],
                       near_edge=near_edge, save_aper=save_aper)
-    # np.save(local_directory + f'mean_diff_aper_{target}.npy', np.array([mag, mean_diff_aper]))
-    # np.save(local_directory + f'mean_diff_psf_{target}.npy', np.array([mag, mean_diff_psf]))
 

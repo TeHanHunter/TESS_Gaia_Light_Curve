@@ -2454,6 +2454,7 @@ def figure_11():
 
     plt.show()
 
+
 def figure_12():
     local_directory = '/home/tehan/data/sector0001/'
     camccd = '4-3'
@@ -2475,6 +2476,7 @@ def figure_12():
         ax.tick_params(axis='x', bottom=False)
         ax.tick_params(axis='y', left=False)
     plt.savefig(f'{local_directory}/epsf_examples.png', bbox_inches='tight', dpi=300)
+
 
 if __name__ == '__main__':
     figure_12()

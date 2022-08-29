@@ -10,7 +10,7 @@ import shutil
 
 
 def zip_folder(zipname='', dir_name=''):
-    shutil.make_archive(zipname, 'zip', dir_name)
+    shutil.make_archive('/home/tehan/data/mast/' + zipname, 'zip', dir_name)
 
 def hlsp_transfer(i, sector=1):
     cam = 1 + i // 4
@@ -79,5 +79,10 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.t
 
 if __name__ == '__main__':
     sector = 1
-    with Pool(16) as p:
-        p.map(partial(star_finder, sector=sector), range(16))
+    # with Pool(16) as p:
+    #     p.map(partial(star_finder, sector=sector), range(16))
+    for i in range(16):
+        cam = 1 + i // 4
+        ccd = 1 + i % 4
+        shutil.make_archive(f'sector_{sector}_cam_{cam}_ccd_{ccd}', 'zip',
+                            f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/')
