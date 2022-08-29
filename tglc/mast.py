@@ -13,9 +13,9 @@ import os
 def zip_folder(i, sector=1):
     cam = 1 + i // 4
     ccd = 1 + i % 4
-    shutil.make_archive(f'sector_{sector}_cam_{cam}_ccd_{ccd}', 'zip',
-                        f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/',
-                        '')
+    os.makedirs(f'/home/tehan/data/mast/sector{sector:04d}/', exist_ok=True)
+    shutil.make_archive(f'/home/tehan/data/mast/sector{sector:04d}/sector_{sector}_cam_{cam}_ccd_{ccd}', 'zip',
+                        f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/')
 
 def hlsp_transfer(i, sector=1):
     cam = 1 + i // 4
@@ -86,6 +86,5 @@ if __name__ == '__main__':
     sector = 1
     with Pool(16) as p:
         p.map(partial(zip_folder, sector=sector), range(16))
-
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
