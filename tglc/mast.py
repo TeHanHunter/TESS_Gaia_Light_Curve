@@ -10,16 +10,19 @@ import shutil
 import os
 
 
-def zip_folder(i, sector=1):
+def zip_folder(i, sector=1, ftps=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
     os.makedirs(f'/home/tehan/data/mast/sector{sector:04d}/', exist_ok=True)
-    shutil.make_archive(f'/home/tehan/data/mast/sector{sector:04d}/sector_{sector}_cam_{cam}_ccd_{ccd}', 'zip',
-                        f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/')
+    zip_file = f'/home/tehan/data/mast/sector{sector:04d}/sector_{sector}_cam_{cam}_ccd_{ccd}'
+    original_file = f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/'
+    # shutil.make_archive(zip_file, 'zip', original_file)
 
-def hlsp_transfer(i, sector=1):
-    cam = 1 + i // 4
-    ccd = 1 + i % 4
+    with open(f'{zip_file}.zip', 'rb') as f:
+        ftps.storbinary(f"STOR sector_{sector}_cam_{cam}_ccd_{ccd}.zip", f, 102400)
+
+
+def hlsp_transfer(sector=1):
     ftps = ftplib.FTP_TLS('archive.stsci.edu')
     ftps.login('tehanhunter@gmail.com', getpass.getpass())
     ftps.prot_p()
@@ -31,7 +34,7 @@ def hlsp_transfer(i, sector=1):
     # get list of existing directories
     dir_list = []
     ftps.retrlines('LIST', dir_list.append)
-    dir_list = [d.split()[-1] for d in dir_list]
+    # dir_list = [d.split()[-1] for d in dir_list]
     # check if sector_dir already exists
     # if sector_dir in dir_list:
     #     print(f"Directory {sector_dir}/ already exists.")
@@ -42,27 +45,30 @@ def hlsp_transfer(i, sector=1):
     ftps.cwd(sector_dir)
     # print('\n')
 
-    cam_ccd_dir = f'cam{cam}-ccd{ccd}'
-    # get list of existing cam-ccd directories
-    subdir_list = []
-    ftps.retrlines('LIST', subdir_list.append)
-    subdir_list = [d.split()[-1] for d in subdir_list]
-    # check if cam_ccd_dir already exists
-    if cam_ccd_dir in subdir_list:
-        print(f"Subdirectory {cam_ccd_dir} already exists.")
-    # if not, mkdir new cam-ccd subdirectory (use relative path, NOT absolute path)
-    else:
-        ftps.mkd(cam_ccd_dir)
-    print(f"Writing files to {cam_ccd_dir}:")
-    # cd into new cam-ccd subdirectory
-    ftps.cwd(cam_ccd_dir)
+    # cam_ccd_dir = f'cam{cam}-ccd{ccd}'
+    # # get list of existing cam-ccd directories
+    # subdir_list = []
+    # ftps.retrlines('LIST', subdir_list.append)
+    # subdir_list = [d.split()[-1] for d in subdir_list]
+    # # check if cam_ccd_dir already exists
+    # if cam_ccd_dir in subdir_list:
+    #     print(f"Subdirectory {cam_ccd_dir} already exists.")
+    # # if not, mkdir new cam-ccd subdirectory (use relative path, NOT absolute path)
+    # else:
+    #     ftps.mkd(cam_ccd_dir)
+    # print(f"Writing files to {cam_ccd_dir}:")
+    # # cd into new cam-ccd subdirectory
+    # ftps.cwd(cam_ccd_dir)
     # code goes here to write files to archive.stsci.edu:/pub/hlsp/tglc/<sector>/<cam-ccd>/
     # below is just an example, use whatever working code you have
-    file_path = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
-    for i in trange(len(file_path)):
-        file = file_path[i]
-        with open(file, 'rb') as f:
-            ftps.storbinary(f"STOR {file.split('/')[-1]}", f, 102400)
+    with Pool(16) as p:
+        p.map(partial(zip_folder, sector=sector, ftps=ftps), range(16))
+
+    # file_path = glob(f'/home/tehan/data/mast/sector{sector:04d}/*.zip')
+    # for i in trange(len(file_path)):
+    #     file = file_path[i]
+    #     with open(file, 'rb') as f:
+    #         ftps.storbinary(f"STOR {file.split('/')[-1]}", f, 102400)
 
     # check completeness
 
@@ -83,8 +89,6 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.t
 
 
 if __name__ == '__main__':
-    sector = 1
-    with Pool(16) as p:
-        p.map(partial(zip_folder, sector=sector), range(16))
+    hlsp_transfer(sector = 1)
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
