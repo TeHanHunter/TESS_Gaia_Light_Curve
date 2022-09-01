@@ -16,7 +16,7 @@ def zip_folder(i, sector=1):
     os.makedirs(f'/home/tehan/data/mast/sector{sector:04d}/', exist_ok=True)
     zip_file = f'/home/tehan/data/mast/sector{sector:04d}/sector_{sector}_cam_{cam}_ccd_{ccd}'
     original_file = f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/'
-    # shutil.make_archive(zip_file, 'zip', original_file)
+    shutil.make_archive(zip_file, 'zip', original_file)
 
     ftps = ftplib.FTP_TLS('archive.stsci.edu')
     ftps.login('tehanhunter@gmail.com', getpass.getpass())
