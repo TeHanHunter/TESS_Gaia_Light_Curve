@@ -62,9 +62,9 @@ def hlsp_transfer(sector=1):
     # ftps.cwd(cam_ccd_dir)
     # code goes here to write files to archive.stsci.edu:/pub/hlsp/tglc/<sector>/<cam-ccd>/
     # below is just an example, use whatever working code you have
-    with Pool(16) as p:
-        p.map(partial(zip_folder, sector=sector, ftps=ftps), range(16))
-
+    # with Pool(16) as p:
+    #     p.map(partial(zip_folder, sector=sector, ftps=ftps), range(16))
+    zip_folder(0, ftps=ftps)
     # file_path = glob(f'/home/tehan/data/mast/sector{sector:04d}/*.zip')
     # for i in trange(len(file_path)):
     #     file = file_path[i]
@@ -88,8 +88,7 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.t
                 pass
 
 
-
 if __name__ == '__main__':
-    hlsp_transfer(sector = 1)
+    hlsp_transfer(sector=1)
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
