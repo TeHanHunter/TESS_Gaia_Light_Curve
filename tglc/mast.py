@@ -18,7 +18,7 @@ def zip_folder(i, sector=1, ftps=None):
     original_file = f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/'
     # shutil.make_archive(zip_file, 'zip', original_file)
 
-    with open(f'{zip_file}.zip', 'rb') as f:
+    with open(f'sector_{sector}_cam_{cam}_ccd_{ccd}.zip', 'rb') as f:
         ftps.storbinary(f"STOR sector_{sector}_cam_{cam}_ccd_{ccd}.zip", f, 102400)
 
 
