@@ -5,6 +5,7 @@
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
 
 import os
+
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
@@ -27,9 +28,17 @@ def lc_per_cut(i, camccd='', local_directory=''):
     cut_y = i % 14
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)  # TODO: power?
+    powers = np.arange(0.4, 2)
+    med_err = np.zeros(30)
+    for j in range(30):
+        med_err[j] = epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector,
+                          power=powers[j],
+                          local_directory=local_directory, limit_mag=16, save_aper=False,
+                          no_progress_bar=True)
+    np.save(f'{local_directory}/powers/{cut_x:02d}_{cut_y:02d}.npy', med_err)
 
+    # epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
+    #      local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
 
 def lc_per_ccd(camccd='1-1', local_directory=''):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)

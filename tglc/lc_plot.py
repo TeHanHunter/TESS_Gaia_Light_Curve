@@ -2405,7 +2405,7 @@ def figure_10():
 def figure_11():
     with open(f'/mnt/c/users/tehan/desktop/source_00_03.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    fig = plt.figure(constrained_layout=False, figsize=(11, 4))
+    fig = plt.figure(constrained_layout=False, figsize=(13, 4))
     gs = fig.add_gridspec(1, 35)
     gs.update(wspace=1, hspace=0.1)
     vmax = 140
@@ -2414,8 +2414,12 @@ def figure_11():
     ax1 = fig.add_subplot(gs[0, 0:10])
     ax1.imshow(np.nanmedian(source.flux, axis=0), vmin=vmin, vmax=vmax, origin='lower', cmap='viridis')
     ax1.set_title('TESS FFI cutout')
-    ax1.set_ylabel('Pixels')
-    ax1.set_xlabel('Pixels')
+    ax1.set_xticklabels([])
+    ax1.set_yticklabels([])
+    ax1.tick_params(axis='x', bottom=False)
+    ax1.tick_params(axis='y', left=False)
+    # ax1.set_ylabel('Pixels')
+    # ax1.set_xlabel('Pixels')
     # ax1.set_xlim(50,75)
     # ax1.set_ylim(80,105)
     mask = source.mask.data
@@ -2426,9 +2430,12 @@ def figure_11():
     bg = np.load('/mnt/c/users/tehan/desktop/bg_00_03_sector_2.npy')
     ax2 = fig.add_subplot(gs[0, 10:20])
     im2 = ax2.imshow(bg[:150 ** 2, 0].reshape(150, 150), vmin=vmin, vmax=vmax, origin='lower', cmap='viridis')
-    ax2.set_yticklabels([])
     ax2.set_title('Simulated background')
-    ax2.set_xlabel('Pixels')
+    # ax2.set_xlabel('Pixels')
+    ax2.set_xticklabels([])
+    ax2.set_yticklabels([])
+    ax2.tick_params(axis='x', bottom=False)
+    ax2.tick_params(axis='y', left=False)
 
     ax_cb = fig.colorbar(im2, cax=fig.add_subplot(gs[0, 20]), orientation='vertical',
                          boundaries=np.linspace(vmin, vmax, 1000),
@@ -2441,9 +2448,12 @@ def figure_11():
     ax3 = fig.add_subplot(gs[0, 24:34])
     im3 = ax3.imshow(np.nanmedian(source.flux, axis=0) - bg[:150 ** 2, 0].reshape(150, 150), vmin=vmin, vmax=vmax,
                      origin='lower', cmap='viridis')
+    ax3.set_xticklabels([])
     ax3.set_yticklabels([])
+    ax3.tick_params(axis='x', bottom=False)
+    ax3.tick_params(axis='y', left=False)
     ax3.set_title('Background removed FFI')
-    ax3.set_xlabel('Pixels')
+    # ax3.set_xlabel('Pixels')
 
     ax_cb = fig.colorbar(im3, cax=fig.add_subplot(gs[0, 34]), orientation='vertical',
                          boundaries=np.linspace(vmin, vmax, 1000),
@@ -2451,7 +2461,6 @@ def figure_11():
     ax_cb.ax.set_yticklabels(['0', '10', '20', '30', r'$\geq 40$'])
     ax_cb.ax.set_ylabel(r'TESS Flux ($\mathrm{e^-}$/ s) ')
     plt.savefig('/mnt/c/users/tehan/desktop/cal_bg.png', bbox_inches='tight', dpi=300)
-
     plt.show()
 
 
@@ -2479,4 +2488,4 @@ def figure_12():
 
 
 if __name__ == '__main__':
-    figure_12()
+    figure_11()
