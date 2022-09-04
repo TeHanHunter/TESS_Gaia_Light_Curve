@@ -2490,9 +2490,14 @@ def figure_12():
 def figure_13():
     files = glob.glob('/mnt/c/users/tehan/desktop/powers/*.npy')
     powers = np.linspace(0.4, 2, 30)
+    plt.figure(constrained_layout=False, figsize=(5, 4))
     for i in range(196):
         residual = np.load(files[i])
-        plt.plot(powers, residual / np.median(residual), c='k', alpha=0.3)
+        plt.plot(powers, residual / np.median(residual), c='C0', alpha=0.1)
+    plt.xlabel(r'weighting power $l$')
+    plt.ylabel('Normalized MAD of residual image')
+    plt.ylim(0.86, 1.8)
+    plt.savefig(f'/mnt/c/users/tehan/desktop/powers.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
