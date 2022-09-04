@@ -498,7 +498,7 @@ def figure_5():
         source = pickle.load(input_)
     # epsf(source, factor=2, sector=source.sector, target=target, power=1.4, local_directory=local_directory,
     #      name=None, limit_mag=15, save_aper=False)
-    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_8_.npy').reshape(50,50)
+    contamination_8 = np.load('/mnt/c/users/tehan/desktop/7654/contamination_8_.npy').reshape(50, 50)
     fig = plt.figure(constrained_layout=False, figsize=(11, 4))
     gs = fig.add_gridspec(1, 31)
     gs.update(wspace=1, hspace=0.1)
@@ -555,7 +555,7 @@ def figure_5():
     ax_cb.ax.set_yticklabels(['-1', '0', '1', '2', '3', '4', '5'])
     ax_cb.ax.set_ylabel(r'TESS Flux ($\times 1000$ $\mathrm{e^-}$/ s) ')
     ax1.legend(loc=2, prop={'size': 8})
-    plt.setp([ax1, ax2, ax3], xlim=(18.5,33.5), ylim=(21.5, 36.5))
+    plt.setp([ax1, ax2, ax3], xlim=(18.5, 33.5), ylim=(21.5, 36.5))
     # plt.savefig('/mnt/c/users/tehan/desktop/remove_contamination_.png', bbox_inches='tight', dpi=300)
     plt.show()
     plt.close()
@@ -2487,5 +2487,14 @@ def figure_12():
     plt.savefig(f'{local_directory}/epsf_examples.png', bbox_inches='tight', dpi=300)
 
 
+def figure_13():
+    files = glob.glob('/mnt/c/users/tehan/desktop/powers/*.npy')
+    powers = np.linspace(0.4, 2, 30)
+    for i in range(196):
+        residual = np.load(files[i])
+        plt.plot(powers, residual / np.median(residual), c='k', alpha=0.3)
+    plt.show()
+
+
 if __name__ == '__main__':
-    figure_11()
+    figure_13()
