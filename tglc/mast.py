@@ -39,7 +39,7 @@ def zip_folder(i, sector=1, do_zip=True):
     ftps.cwd(sector_dir)
     # print('\n')
     with open(f'{zip_file}.zip', 'rb') as f:
-        ftps.storbinary(f"STOR sector_{sector}_cam_{cam}_ccd_{ccd}.zip", f, 102400)
+        ftps.storbinary(f"STOR sector_{sector}_cam_{cam}_ccd_{ccd}.zip", f)
 
 
 def hlsp_transfer(sector=1, do_zip=True):
