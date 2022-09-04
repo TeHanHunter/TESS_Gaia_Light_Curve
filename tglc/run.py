@@ -28,7 +28,7 @@ def lc_per_cut(i, camccd='', local_directory=''):
     cut_y = i % 14
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    powers = np.arange(0.4, 2)
+    powers = np.linspace(0.4, 2, 30)
     med_err = np.zeros(30)
     for j in range(30):
         med_err[j] = epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector,
