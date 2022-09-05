@@ -30,7 +30,7 @@ def lc_per_cut(i, camccd='', local_directory=''):
     # epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
     #      local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)  # TODO: power?
     powers = np.linspace(0.4, 2, 30)
-    residual = np.zeros(30, 150, 150)
+    residual = np.zeros((30, 150**2))
     for j in range(30):
         residual[j] = epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector,
                           power=powers[j],
