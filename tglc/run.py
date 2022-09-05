@@ -27,9 +27,16 @@ def lc_per_cut(i, camccd='', local_directory=''):
     cut_y = i % 14
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)  # TODO: power?
-
+    # epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
+    #      local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)  # TODO: power?
+    powers = np.linspace(0.4, 2, 30)
+    residual = np.zeros(30, 150, 150)
+    for j in range(30):
+        residual[j] = epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector,
+                          power=powers[j],
+                          local_directory=local_directory, limit_mag=16, save_aper=False,
+                          no_progress_bar=True)
+    np.save(f'{local_directory}/residual/{cut_x:02d}_{cut_y:02d}.npy', residual)
 
 def lc_per_ccd(camccd='1-1', local_directory=''):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
@@ -69,7 +76,8 @@ if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 1
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    for i in range(16):
-        name = f'{1 + i // 4}-{1 + i % 4}'
-        lc_per_ccd(camccd=name, local_directory=local_directory)
-        plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
+    # for i in range(16):
+    i = 0
+    name = f'{1 + i // 4}-{1 + i % 4}'
+    lc_per_ccd(camccd=name, local_directory=local_directory)
+    plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
