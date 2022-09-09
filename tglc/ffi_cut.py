@@ -52,7 +52,7 @@ class Source_cut(object):
         self.mask = []
         target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=3)
         if len(target) == 0:
-            target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
+            target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=3)
         ra = target[0]['ra']
         dec = target[0]['dec']
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
@@ -134,7 +134,7 @@ class Source_cut(object):
         self.mask = mask
 
         gaia_targets = self.catalogdata[
-            'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec']
+            'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
         gaia_targets['phot_bp_mean_mag'].fill_value = np.nan
         gaia_targets['phot_rp_mean_mag'].fill_value = np.nan
         gaia_targets = gaia_targets.filled()
