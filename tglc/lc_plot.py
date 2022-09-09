@@ -579,7 +579,7 @@ def figure_6(mode='psf'):
         for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name='Gaia DR2 '+data['gaia_id'][i].split()[-1], power=1.5, save_aper=True)
+                 name='Gaia DR3 '+data['gaia_id'][i].split()[-1], power=1.5, save_aper=True)
         # plt.imshow(source.flux[0])
         # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
         #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
