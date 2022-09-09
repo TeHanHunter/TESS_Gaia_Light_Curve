@@ -88,8 +88,8 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('TELESCOP', 'TESS', 'telescope'),
         fits.Card('INSTRUME', 'TESS Photometer', 'detector type'),
         fits.Card('FILTER', 'TESS', 'the filter used for the observations'),
-        fits.Card('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR2 ID'),
-        fits.Card('GAIADR2', objid, 'integer version of Gaia DR2 ID'),
+        fits.Card('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR3 ID'),
+        fits.Card('GAIADR3', objid, 'integer version of Gaia DR3 ID'),
         fits.Card('TICID', ticid, 'TESS Input Catalog ID'),
         fits.Card('SECTOR', source.sector, 'observation sector'),
         fits.Card('CAMERA', source.camera, 'camera No.'),
@@ -100,10 +100,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('RADESYS', 'ICRS', 'reference frame of celestial coordinates'),
         fits.Card('RA_OBJ', source.gaia[index]['ra'], '[deg] right ascension, J2000'),
         fits.Card('DEC_OBJ', source.gaia[index]['dec'], '[deg] declination, J2000'),
-        fits.Card('TESSMAG', source.gaia[index]['tess_mag'], 'TESS magnitude, fitted by Gaia DR2 bands'),
-        fits.Card('GAIA_G', source.gaia[index]['phot_g_mean_mag'], 'Gaia DR2 g band magnitude'),
-        fits.Card('GAIA_bp', gaia_bp, 'Gaia DR2 bp band magnitude'),
-        fits.Card('GAIA_rp', gaia_rp, 'Gaia DR2 rp band magnitude'),
+        fits.Card('TESSMAG', source.gaia[index]['tess_mag'], 'TESS magnitude, fitted by Gaia DR3 bands'),
+        fits.Card('GAIA_G', source.gaia[index]['phot_g_mean_mag'], 'Gaia DR3 g band magnitude'),
+        fits.Card('GAIA_bp', gaia_bp, 'Gaia DR3 bp band magnitude'),
+        fits.Card('GAIA_rp', gaia_rp, 'Gaia DR3 rp band magnitude'),
         fits.Card('RAWFLUX', raw_flux, 'median flux of raw FFI'),
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
     if save_aper:
@@ -146,9 +146,9 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('TELESCOP', 'TESS', 'telescope'), end=True)
     table_hdu.header.append(('INSTRUME', 'TESS Photometer', 'detector type'), end=True)
     table_hdu.header.append(('FILTER', 'TESS', 'the filter used for the observations'), end=True)
-    table_hdu.header.append(('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR2 ID'),
+    table_hdu.header.append(('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR3 ID'),
                             end=True)
-    table_hdu.header.append(('GAIADR2', objid, 'integer version of GaiaDR2 designation'), end=True)
+    table_hdu.header.append(('GAIADR3', objid, 'integer version of GaiaDR3 designation'), end=True)
     table_hdu.header.append(('RADESYS', 'ICRS', 'reference frame of celestial coordinates'), end=True)
     table_hdu.header.append(('RA_OBJ', source.gaia[index]['ra'], '[deg] right ascension, J2000'), end=True)
     table_hdu.header.append(('DEC_OBJ', source.gaia[index]['dec'], '[deg] declination, J2000'), end=True)
@@ -217,10 +217,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
     else:
         bg_dof = 6
-    os.makedirs(lc_directory, exist_ok=True)
-    sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=0).T)
-    residual = np.abs(source.flux[0].flatten() - sim_image)
-    return residual
+    # os.makedirs(lc_directory, exist_ok=True)
+    # sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=0).T)
+    # residual = np.abs(source.flux[0].flatten() - sim_image)
+    # return residual
 
     epsf_exists = exists(epsf_loc)
     if epsf_exists:

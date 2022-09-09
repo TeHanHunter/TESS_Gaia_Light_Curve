@@ -65,7 +65,7 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
     request = {"service": "Mast.Catalogs.Filtered.Tic.Position.Rows",
                "format": "json",
                "params": {
-                   "columns": 'ID, GAIA',
+                   # "columns": 'ID, GAIA',
                    "filters": [],
                    "ra": ra,
                    "dec": dec,
