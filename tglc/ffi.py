@@ -192,9 +192,9 @@ class Source(object):
         for i, designation in enumerate(catalogdata['designation']):
             ra = catalogdata['ra'][i]
             dec = catalogdata['dec'][i]
-            if np.isnan(catalogdata['pmra'][i]): # masked?
+            if not np.isnan(catalogdata['pmra'].mask[i]):  # masked?
                 ra += catalogdata['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-            if np.isnan(catalogdata['pmdec'][i]):
+            if not np.isnan(catalogdata['pmdec'].mask[i]):
                 dec += catalogdata['pmdec'][i] * interval / 1000 / 3600
             pixel = self.wcs.all_world2pix(
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)

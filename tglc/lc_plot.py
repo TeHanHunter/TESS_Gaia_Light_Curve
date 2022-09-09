@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -571,15 +571,15 @@ def figure_6(mode='psf'):
     os.makedirs(local_directory + f'source/', exist_ok=True)
     data = ascii.read(local_directory + 'PS_2022.04.17_18.23.57_.csv')
     hosts = list(data['tic_id'])
-    for i in range(len(hosts)):
-        target = hosts[i]  # Target identifier or coordinates TOI-3714
-        print(target)
-        size = 90  # int, suggests big cuts
-        source = ffi_cut(target=target, size=size, local_directory=local_directory)
-        for j in range(len(source.sector_table)):
-            source.select_sector(sector=source.sector_table['sector'][j])
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name='Gaia DR3 '+data['gaia_id'][i].split()[-1], power=1.5, save_aper=True)
+    # for i in range(len(hosts)):
+    #     target = hosts[i]  # Target identifier or coordinates TOI-3714
+    #     print(target)
+    #     size = 90  # int, suggests big cuts
+    #     source = ffi_cut(target=target, size=size, local_directory=local_directory)
+    #     for j in range(len(source.sector_table)):
+    #         source.select_sector(sector=source.sector_table['sector'][j])
+    #         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+    #              name='Gaia DR3 '+data['gaia_id'][i].split()[-1], power=1.5, save_aper=True)
         # plt.imshow(source.flux[0])
         # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
         #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
