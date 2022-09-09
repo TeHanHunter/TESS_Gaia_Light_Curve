@@ -50,7 +50,7 @@ class Source_cut(object):
         self.cadence = cadence
         self.quality = []
         self.mask = []
-        target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+        target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=3)
         if len(target) == 0:
             target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
         ra = target[0]['ra']
@@ -148,8 +148,10 @@ class Source_cut(object):
         for i, designation in enumerate(gaia_targets['designation']):
             ra = gaia_targets['ra'][i]
             dec = gaia_targets['dec'][i]
-            ra += gaia_targets['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-            dec += gaia_targets['pmdec'][i] * interval / 1000 / 3600
+            if gaia_targets['pmra'].mask[i]:
+                ra += gaia_targets['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
+            if gaia_targets['pmdec'].mask[i]:
+                dec += gaia_targets['pmdec'][i] * interval / 1000 / 3600
             pixel = self.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
             y_gaia[i] = pixel[0][1]
