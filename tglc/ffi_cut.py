@@ -50,9 +50,9 @@ class Source_cut(object):
         self.cadence = cadence
         self.quality = []
         self.mask = []
-        target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=3)
+        target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         if len(target) == 0:
-            target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=3)
+            target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
         ra = target[0]['ra']
         dec = target[0]['dec']
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
@@ -137,6 +137,8 @@ class Source_cut(object):
             'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
         gaia_targets['phot_bp_mean_mag'].fill_value = np.nan
         gaia_targets['phot_rp_mean_mag'].fill_value = np.nan
+        gaia_targets['pmra'].fill_value = np.nan
+        gaia_targets['pmdec'].fill_value = np.nan
         gaia_targets = gaia_targets.filled()
         num_gaia = len(gaia_targets)
         # tic_id = np.zeros(num_gaia)
@@ -144,21 +146,16 @@ class Source_cut(object):
         y_gaia = np.zeros(num_gaia)
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
-        # TODO: multiprocess below
         for i, designation in enumerate(gaia_targets['designation']):
             ra = gaia_targets['ra'][i]
             dec = gaia_targets['dec'][i]
-            if gaia_targets['pmra'].mask[i]:
+            if np.isnan(gaia_targets['pmra'][i]):
                 ra += gaia_targets['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-            if gaia_targets['pmdec'].mask[i]:
+            if np.isnan(gaia_targets['pmdec'][i]):
                 dec += gaia_targets['pmdec'][i] * interval / 1000 / 3600
             pixel = self.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
             y_gaia[i] = pixel[0][1]
-            # try:
-            #     tic_id[i] = self.tic['ID'][np.where(self.tic['GAIA'] == designation.split()[2])[0][0]]
-            # except:
-            #     tic_id[i] = np.nan
             if np.isnan(gaia_targets['phot_g_mean_mag'][i]):
                 in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
@@ -170,8 +167,6 @@ class Source_cut(object):
             else:
                 in_frame[i] = False
         tess_flux = 10 ** (- tess_mag / 2.5)
-        # t_tic = Table()
-        # t_tic[f'tic'] = tic_id[in_frame]
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
