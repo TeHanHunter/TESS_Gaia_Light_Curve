@@ -259,7 +259,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     start = 0
     end = num_stars
     if name is not None:
-        start = int(np.where(source.gaia['designation'] == name)[0][0])
+        start = int(np.where(source.gaia['designation'].split()[-1] == name.split()[-1])[0][0])
         end = start + 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:

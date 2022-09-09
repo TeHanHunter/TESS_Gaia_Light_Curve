@@ -180,7 +180,8 @@ class Source(object):
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
-        # self._fit_cutout_wcs(wcs, (size, size))
+        median_time = np.median(self.time)
+        interval = (median_time - 388.5) / 365.25
 
         num_gaia = len(catalogdata)
         tic_id = np.zeros(num_gaia)
