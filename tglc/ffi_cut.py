@@ -149,9 +149,9 @@ class Source_cut(object):
         for i, designation in enumerate(gaia_targets['designation']):
             ra = gaia_targets['ra'][i]
             dec = gaia_targets['dec'][i]
-            if np.isnan(gaia_targets['pmra'][i]):
+            if not np.isnan(gaia_targets['pmra'][i]):
                 ra += gaia_targets['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-            if np.isnan(gaia_targets['pmdec'][i]):
+            if not np.isnan(gaia_targets['pmdec'][i]):
                 dec += gaia_targets['pmdec'][i] * interval / 1000 / 3600
             pixel = self.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]

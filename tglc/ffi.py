@@ -189,6 +189,12 @@ class Source(object):
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
         for i, designation in enumerate(catalogdata['designation']):
+            ra = catalogdata['ra'][i]
+            dec = catalogdata['dec'][i]
+            if np.isnan(catalogdata['pmra'][i]): # masked?
+                ra += catalogdata['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
+            if np.isnan(catalogdata['pmdec'][i]):
+                dec += catalogdata['pmdec'][i] * interval / 1000 / 3600
             pixel = self.wcs.all_world2pix(
                 np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
@@ -226,7 +232,7 @@ class Source(object):
         radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
         catalogdata = Gaia.cone_search_async(coord, radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                                      'phot_rp_mean_mag', 'ra', 'dec']).get_results()
+                                                      'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
         return catalogdata
 
     # # the following method is adopted from Astrocut
