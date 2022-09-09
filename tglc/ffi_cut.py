@@ -19,13 +19,13 @@ if not sys.warnoptions:
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 Gaia.ROW_LIMIT = -1
-Gaia.MAIN_GAIA_TABLE = "gaiadr2.gaia_source"
+Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 
 
 class Source_cut(object):
     def __init__(self, name, size=50, sector=None, cadence=None):
         """
-        Source_cut object that includes all data from TESS and Gaia DR2
+        Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
         Target identifier (e.g. "NGC 7654" or "M31"),
         or coordinate in the format of ra dec (e.g. '351.40691 61.646657')
@@ -52,7 +52,7 @@ class Source_cut(object):
         self.mask = []
         target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         if len(target) == 0:
-            target = Catalogs.query_object(self.name, radius=5*21 * 0.707 / 3600, catalog="Gaia", version=2)
+            target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
         ra = target[0]['ra']
         dec = target[0]['dec']
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
@@ -60,8 +60,8 @@ class Source_cut(object):
         print(f'Target Gaia: {target[0]["designation"]}')
         catalogdata = Gaia.cone_search_async(coord, radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                                      'phot_rp_mean_mag', 'ra', 'dec']).get_results()
-        print(f'Found {len(catalogdata)} Gaia DR2 objects.')
+                                                      'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
+        print(f'Found {len(catalogdata)} Gaia DR3 objects.')
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = catalogdata_tic['ID', 'GAIA']
@@ -121,6 +121,8 @@ class Source_cut(object):
         self.flux = data_flux
         self.flux_err = data_flux_err
         self.quality = np.zeros(len(data_time))
+        median_time = np.median(data_time)
+        interval = (median_time - 388.5) / 365.25
 
         mask = np.ones(np.shape(data_flux[0]))
         bad_pixels = np.zeros(np.shape(data_flux[0]))
@@ -144,8 +146,11 @@ class Source_cut(object):
         in_frame = [True] * num_gaia
         # TODO: multiprocess below
         for i, designation in enumerate(gaia_targets['designation']):
-            pixel = self.wcs.all_world2pix(
-                np.array([gaia_targets['ra'][i], gaia_targets['dec'][i]]).reshape((1, 2)), 0)
+            ra = gaia_targets['ra'][i]
+            dec = gaia_targets['dec'][i]
+            ra += gaia_targets['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
+            dec += gaia_targets['pmdec'][i] * interval / 1000 / 3600
+            pixel = self.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
             y_gaia[i] = pixel[0][1]
             # try:
@@ -179,7 +184,7 @@ class Source_cut(object):
 class Source_cut_pseudo(object):
     def __init__(self, name, size=50, sector=0, cadence=None):
         """
-        Source_cut object that includes all data from TESS and Gaia DR2
+        Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
         Target identifier (e.g. "NGC 7654" or "M31"),
         or coordinate in the format of ra dec (e.g. '351.40691 61.646657')
