@@ -2506,4 +2506,4 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    figure_13()
+    figure_6()
