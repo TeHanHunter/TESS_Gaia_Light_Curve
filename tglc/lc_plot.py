@@ -1502,7 +1502,7 @@ def figure_8():
     ax5_3.text(2.12, 0.5, 'mag=15.03', horizontalalignment='center',
                verticalalignment='center', transform=ax5_3.transAxes, rotation=270)
     ax5_1.legend(bbox_to_anchor=(3.3, 0), loc=3, markerscale=2)
-    plt.savefig('/mnt/c/users/tehan/desktop/EB_comparison.png', bbox_inches='tight', dpi=300)
+    # plt.savefig('/mnt/c/users/tehan/desktop/EB_comparison.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
@@ -2506,4 +2506,4 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    figure_6()
+    figure_9()
