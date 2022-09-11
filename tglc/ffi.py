@@ -212,6 +212,8 @@ class Source(object):
                                   i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
                 if np.isnan(tess_mag[i]):
                     tess_mag[i] = catalogdata['phot_g_mean_mag'][i] - 0.430
+                if np.isnan(tess_mag[i]):
+                    in_frame[i] = False
             else:
                 in_frame[i] = False
 
@@ -221,7 +223,7 @@ class Source(object):
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
-        t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
+        t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.nanmax(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
         catalogdata = hstack([t_tic, catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
