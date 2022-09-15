@@ -20,7 +20,6 @@ from tqdm import tqdm, trange
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # TODO: dr3 MJD = 2457388.5, TBJD = 388.5
 
-
 # The next three functions are adopted from astroquery MAST API https://mast.stsci.edu/api/v0/pyex.html#incPy
 def mast_query(request):
     """Perform a MAST query.
