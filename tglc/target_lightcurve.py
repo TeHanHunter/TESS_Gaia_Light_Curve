@@ -17,7 +17,7 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False):
+              local_bg=None, save_aper=False, portion=1):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -123,7 +123,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     c2 = fits.Column(name='psf_flux', array=np.array(psf_lc), format='E')  # psf factor
     # c3 = fits.Column(name='psf_flux_err',
     #                  array=1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))) * np.ones(len(psf_lc)), format='E')
-    c4 = fits.Column(name='aperture_flux', array=aper_lc, format='E')
+    c4 = fits.Column(name='aperture_flux', array=aper_lc / portion, format='E')
     # c5 = fits.Column(name='aperture_flux_err',
     #                  array=1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc))) * np.ones(len(aper_lc)), format='E')
     c6 = fits.Column(name='cal_psf_flux', array=np.array(cal_psf_lc), format='E')
@@ -287,5 +287,5 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                       aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
                       bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                       cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i], y_aperture=y_aperture[i],
-                      near_edge=near_edge, save_aper=save_aper)
+                      near_edge=near_edge, save_aper=save_aper, portion=portion)
 
