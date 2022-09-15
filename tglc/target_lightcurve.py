@@ -256,6 +256,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     # mag = []
     # mean_diff_aper = []
     # mean_diff_psf = []
+    out_of_frame = np.isnan(source.flux[0])
     start = 0
     end = num_stars
     if name is not None:
@@ -265,6 +266,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
             if 1.5 <= x_round[i] < source.size - 2.5 and 1.5 <= y_round[i] < source.size - 2.5:
                 near_edge = False
+            elif out_of_frame[x_round, y_round]:
+                print(f"Skipping star {source.gaia['designation'][i]}, not in the frame")
+                continue
             else:
                 near_edge = True
             aperture, psf_lc, star_y, star_x, portion = fit_lc(A, source, star_info=star_info, x=x_round[i],
