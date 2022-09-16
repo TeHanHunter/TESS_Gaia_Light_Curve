@@ -172,10 +172,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
     cut_size = 5
-    left = np.maximum(0, x - cut_size // 2)
-    right = np.minimum(size, x + cut_size // 2 + 1)
-    down = np.maximum(0, y - cut_size // 2)
-    up = np.minimum(size, y + cut_size // 2 + 1)
+    in_frame = np.where(np.invert(np.isnan(source.flux[0])))
+    left = np.maximum(np.min(in_frame[1]), x - cut_size // 2)
+    right = np.minimum(size - np.max(in_frame[1]), x + cut_size // 2 + 1)
+    down = np.maximum(np.min(in_frame[0]), y - cut_size // 2)
+    up = np.minimum(ize - np.max(in_frame[0]), y + cut_size // 2 + 1)
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
