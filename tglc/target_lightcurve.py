@@ -247,12 +247,12 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     index_1 = np.where(np.array(source.quality) == 0)[0]
     index_2 = np.where(quality_raw == 0)[0]
     index = np.intersect1d(index_1, index_2)
-    out_of_frame = np.where(np.isnan(source.flux[0]))
     if type(source) == Source_cut:
-        x_left = np.max(out_of_frame[1][out_of_frame[1] < (source.size - 1) / 2], initial=0) - 0.5
-        x_right = np.max(out_of_frame[1][out_of_frame[1] > (source.size - 1) / 2], initial=0) + 0.5
-        y_left = np.max(out_of_frame[0][out_of_frame[0] < (source.size - 1) / 2], initial=0) - 0.5
-        y_right = np.max(out_of_frame[0][out_of_frame[0] > (source.size - 1) / 2], initial=0) + 0.5
+        in_frame = np.where(np.invert(np.isnan(source.flux[0])))
+        x_left = np.min(in_frame[1]) - 0.5
+        x_right = source.size - np.max(in_frame[1]) + 0.5
+        y_left = np.min(in_frame[0]) - 0.5
+        y_right = source.size - np.max(in_frame[0]) + 0.5
     else:
         x_left = 1.5 if cut_x != 0 else -0.5
         x_right = 2.5 if cut_x != 13 else 0.5
