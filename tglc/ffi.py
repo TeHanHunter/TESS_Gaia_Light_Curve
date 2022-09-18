@@ -167,16 +167,15 @@ class Source(object):
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
-
         query2 = """
-                SELECT dr2_source_id, dr3_source_id, angular_distance, magnitude_difference, proper_motion_propagation
+                SELECT dr2_source_id, dr3_source_id
                 FROM gaiadr3.dr2_neighbourhood
                 WHERE dr2_source_id IN {gaia_ids}
                 """
         gaia_array = np.array(catalogdata_tic['GAIA'])
         gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
         job2 = Gaia.launch_job_async(query2.format(gaia_ids=gaia_tuple))
-        results2 = job2.get_results()['dr2_source_id', 'dr3_source_id']
+        results2 = job2.get_results()
 
         tic_ids = []
         for i in range(len(results2)):
