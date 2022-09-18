@@ -10,7 +10,7 @@ from astroquery.gaia import Gaia
 from astroquery.mast import Tesscut
 from astroquery.mast import Catalogs
 from astropy.coordinates import SkyCoord
-from astropy.table import Table, hstack
+from astropy.table import Table, hstack, Column
 from astropy.wcs import WCS
 from tglc.ffi import tic_advanced_search_position_rows
 
@@ -64,7 +64,23 @@ class Source_cut(object):
         print(f'Found {len(catalogdata)} Gaia DR3 objects.')
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
         print(f'Found {len(catalogdata_tic)} TIC objects.')
-        self.tic = catalogdata_tic['ID', 'GAIA']
+        query2 = """
+        SELECT dr2_source_id, dr3_source_id, angular_distance, magnitude_difference, proper_motion_propagation
+        FROM gaiadr3.dr2_neighbourhood
+        WHERE dr2_source_id IN {gaia_ids}
+        """
+        gaia_array = np.array(catalogdata_tic['GAIA'])
+        gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
+        job2 = Gaia.launch_job_async(query2.format(gaia_ids=gaia_tuple))
+        results2 = job2.get_results()['dr2_source_id', 'dr3_source_id']
+
+        tic_ids = []
+        for i in range(len(results2)):
+            tic_ids.append(str(catalogdata_tic['ID']
+                               [np.where(catalogdata_tic['GAIA'] == str(results2['dr2_source_id'][i]))][0]))
+        tic_ids = Column(np.array(tic_ids), name='TIC')
+        results2.add_column(tic_ids)
+        self.tic = results2
         sector_table = Tesscut.get_sectors(coordinates=coord)
         if len(sector_table) == 0:
             warnings.warn('TESS has not observed this position yet :(')

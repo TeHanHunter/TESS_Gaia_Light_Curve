@@ -62,7 +62,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     if np.isnan(cal_aper_err):
         cal_aper_err = 'NaN'
     try:
-        ticid = source.tic['ID'][np.where(source.tic['GAIA'] == str(objid))][0]
+        ticid = source.tic['TIC'][np.where(source.tic['dr3_source_id'] == objid)][0]
     except:
         ticid = ''
     try:

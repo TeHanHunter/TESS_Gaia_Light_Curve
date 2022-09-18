@@ -11,7 +11,7 @@ from glob import glob
 from os.path import exists
 from urllib.parse import quote as urlencode
 from astropy.io import fits
-from astropy.table import Table, hstack, vstack, unique
+from astropy.table import Table, hstack, vstack, unique, Column
 from astropy.wcs import WCS
 from astroquery.gaia import Gaia
 from scipy import ndimage
@@ -168,14 +168,23 @@ class Source(object):
         dec = float(coord.split()[1])
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
 
-        # Old methods: work fine for sparse field, not for very crowed fields.
-        # catalogdata = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-        #                                     catalog="Gaia", version=2)
-        # print(f'Found {len(catalogdata)} Gaia DR2 objects.')
-        # catalogdata_tic = Catalogs.query_object(coord, radius=(self.size + 6) * 21 * 0.707 / 3600,
-        #                                         catalog="TIC")
-        # # print(f'Found {len(catalogdata_tic)} TIC objects.')
-        self.tic = catalogdata_tic['ID', 'GAIA']
+        query2 = """
+                SELECT dr2_source_id, dr3_source_id, angular_distance, magnitude_difference, proper_motion_propagation
+                FROM gaiadr3.dr2_neighbourhood
+                WHERE dr2_source_id IN {gaia_ids}
+                """
+        gaia_array = np.array(catalogdata_tic['GAIA'])
+        gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
+        job2 = Gaia.launch_job_async(query2.format(gaia_ids=gaia_tuple))
+        results2 = job2.get_results()['dr2_source_id', 'dr3_source_id']
+
+        tic_ids = []
+        for i in range(len(results2)):
+            tic_ids.append(str(catalogdata_tic['ID']
+                               [np.where(catalogdata_tic['GAIA'] == str(results2['dr2_source_id'][i]))][0]))
+        tic_ids = Column(np.array(tic_ids), name='TIC')
+        results2.add_column(tic_ids)
+        self.tic = results2
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
