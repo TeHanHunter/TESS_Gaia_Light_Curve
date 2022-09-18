@@ -12,8 +12,8 @@ import warnings
 import astroquery
 import matplotlib.pyplot as plt
 
-logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
-warnings.simplefilter('ignore', UserWarning)
+# logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
+# warnings.simplefilter('ignore', UserWarning)
 
 
 def median_mask(sector_num=26):
