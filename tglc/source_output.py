@@ -12,7 +12,7 @@ import warnings
 import astroquery
 import matplotlib.pyplot as plt
 
-# logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
+logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
 # warnings.simplefilter('ignore', UserWarning)
 
 
