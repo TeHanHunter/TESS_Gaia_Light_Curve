@@ -346,7 +346,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                                             size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
                                             exposure=exposure, cadence=cadence)  # 93
                             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
-                    except requests.exceptions.HTTPError:
+                    except:
                         attempts += 1
                         print(f'Trial No.{attempts+1}.')
 
