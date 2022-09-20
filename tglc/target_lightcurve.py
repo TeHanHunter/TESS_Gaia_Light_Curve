@@ -62,7 +62,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     if np.isnan(cal_aper_err):
         cal_aper_err = 'NaN'
     try:
-        ticid = source.tic['TIC'][np.where(source.tic['dr3_source_id'] == objid)][0]
+        ticid = str(source.tic['TIC'][np.where(source.tic['dr3_source_id'] == objid)][0])
     except:
         ticid = ''
     try:
@@ -295,10 +295,13 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
             quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
-            lc_output(source, local_directory=lc_directory, index=i,
-                      tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
-                      aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
-                      bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
-                      cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
-                      y_aperture=y_aperture[i],
-                      near_edge=near_edge, save_aper=save_aper, portion=portion)
+            if np.isnan(aper_lc).all():
+                continue
+            else:
+                lc_output(source, local_directory=lc_directory, index=i,
+                          tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+                          aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
+                          bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
+                          cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
+                          y_aperture=y_aperture[i],
+                          near_edge=near_edge, save_aper=save_aper, portion=portion)

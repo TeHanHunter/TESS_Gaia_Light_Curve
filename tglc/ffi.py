@@ -74,6 +74,27 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
     out_data = json.loads(out_string)
     return mast_json2table(out_data)
 
+def convert_gaia_id(catalogdata_tic):
+    query = """
+            SELECT dr2_source_id, dr3_source_id
+            FROM gaiadr3.dr2_neighbourhood
+            WHERE dr2_source_id IN {gaia_ids}
+            """
+    floor_30000 = len(catalogdata_tic) // 30000 + 1
+    t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=('i64', 'i64', 'i64'))
+    for i in range(floor_30000):
+        gaia_array = np.array(catalogdata_tic['GAIA'][i*30000:(i+1)*30000])
+        gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
+        results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
+        tic_ids = []
+        for j in range(len(results)):
+            tic_ids.append(catalogdata_tic['ID']
+                               [np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0])
+        tic_ids = Column(np.array(tic_ids), name='TIC')
+        results.add_column(tic_ids)
+        t = vstack(t, results)
+    return t
+
 
 # from Tim
 def background_mask(im=None):
@@ -167,23 +188,7 @@ class Source(object):
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
-        query2 = """
-                SELECT dr2_source_id, dr3_source_id
-                FROM gaiadr3.dr2_neighbourhood
-                WHERE dr2_source_id IN {gaia_ids}
-                """
-        gaia_array = np.array(catalogdata_tic['GAIA'])
-        gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
-        job2 = Gaia.launch_job_async(query2.format(gaia_ids=gaia_tuple))
-        results2 = job2.get_results()
-
-        tic_ids = []
-        for i in range(len(results2)):
-            tic_ids.append(str(catalogdata_tic['ID']
-                               [np.where(catalogdata_tic['GAIA'] == str(results2['dr2_source_id'][i]))][0]))
-        tic_ids = Column(np.array(tic_ids), name='TIC')
-        results2.add_column(tic_ids)
-        self.tic = results2
+        self.tic = convert_gaia_id(catalogdata_tic)
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
