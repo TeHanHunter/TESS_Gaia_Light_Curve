@@ -20,6 +20,7 @@ from tqdm import tqdm, trange
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # TODO: dr3 MJD = 2457388.5, TBJD = 388.5
 
+
 # The next three functions are adopted from astroquery MAST API https://mast.stsci.edu/api/v0/pyex.html#incPy
 def mast_query(request):
     """Perform a MAST query.
@@ -74,6 +75,7 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
     out_data = json.loads(out_string)
     return mast_json2table(out_data)
 
+
 def convert_gaia_id(catalogdata_tic):
     query = """
             SELECT dr2_source_id, dr3_source_id
@@ -84,14 +86,14 @@ def convert_gaia_id(catalogdata_tic):
     print(floor_30000)
     t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=('i64', 'i64', 'i64'))
     for i in range(floor_30000):
-        gaia_array = np.array(catalogdata_tic[i*30000:(i+1)*30000]['GAIA'])
+        gaia_array = np.array(catalogdata_tic[i * 30000:((i + 1) * 30000)]['GAIA'])
         print(gaia_array)
         gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
         results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
         tic_ids = []
         for j in range(len(results)):
             tic_ids.append(catalogdata_tic['ID']
-                               [np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0])
+                           [np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0])
         tic_ids = Column(np.array(tic_ids), name='TIC')
         results.add_column(tic_ids)
         t = vstack(t, results)
@@ -349,11 +351,11 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 while attempts < 3:
                     try:
                         with open(source_path, 'wb') as output:
-                            source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector, time=time,
+                            source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
+                                            time=time,
                                             size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
                                             exposure=exposure, cadence=cadence)  # 93
                             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
                     except:
                         attempts += 1
-                        print(f'Trial No.{attempts+1}.')
-
+                        print(f'Trial No.{attempts + 1}.')
