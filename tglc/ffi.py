@@ -83,11 +83,9 @@ def convert_gaia_id(catalogdata_tic):
             WHERE dr2_source_id IN {gaia_ids}
             """
     floor_30000 = len(catalogdata_tic) // 30000 + 1
-    print(floor_30000)
     t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=('i64', 'i64', 'i64'))
     for i in range(floor_30000):
-        gaia_array = np.array(catalogdata_tic[i * 30000:((i + 1) * 30000)]['GAIA'])
-        print(gaia_array)
+        gaia_array = np.array(catalogdata_tic['GAIA'][i * 30000:((i + 1) * 30000)])
         gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
         results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
         tic_ids = []
