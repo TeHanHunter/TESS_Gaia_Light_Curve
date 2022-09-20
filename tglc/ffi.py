@@ -83,18 +83,18 @@ def convert_gaia_id(catalogdata_tic):
             WHERE dr2_source_id IN {gaia_ids}
             """
     floor_30000 = len(catalogdata_tic) // 30000 + 1
-    t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=('i64', 'i64', 'i64'))
+    t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=(np.int64, np.int64, np.int64))
     for i in range(floor_30000):
         gaia_array = np.array(catalogdata_tic['GAIA'][i * 30000:((i + 1) * 30000)])
         gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
         results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
         tic_ids = []
         for j in range(len(results)):
-            tic_ids.append(catalogdata_tic['ID']
-                           [np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0])
+            tic_ids.append(int(catalogdata_tic['ID']
+                           [np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
         tic_ids = Column(np.array(tic_ids), name='TIC')
         results.add_column(tic_ids)
-        t = vstack(t, results)
+        t = vstack([t, results])
     return t
 
 
@@ -232,15 +232,13 @@ class Source(object):
                 in_frame[i] = False
 
         tess_flux = 10 ** (- tess_mag / 2.5)
-        t_tic = Table()
-        t_tic[f'tic'] = tic_id[in_frame]
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
         t[f'tess_flux'] = tess_flux[in_frame]
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.nanmax(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
-        catalogdata = hstack([t_tic, catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
+        catalogdata = hstack([catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
         catalogdata.sort('tess_mag')
         self.gaia = catalogdata
 
