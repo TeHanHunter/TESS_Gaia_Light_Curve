@@ -87,8 +87,8 @@ def convert_gaia_id(catalogdata_tic):
     t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=(np.int64, np.int64, np.int64))
     for i in range(floor_30000):
         gaia_array = np.array(catalogdata_tic['GAIA'][i * 30000:((i + 1) * 30000)])
-        print(gaia_array)
         gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
+        print(gaia_tuple)
         results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
         tic_ids = []
         for j in range(len(results)):
@@ -97,7 +97,7 @@ def convert_gaia_id(catalogdata_tic):
         tic_ids = Column(np.array(tic_ids), name='TIC')
         results.add_column(tic_ids)
         t = vstack([t, results])
-        print('table length: '+len(t))
+        print(f'table length: {len(t)}')
     return t
 
 
