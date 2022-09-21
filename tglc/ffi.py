@@ -83,6 +83,7 @@ def convert_gaia_id(catalogdata_tic):
             WHERE dr2_source_id IN {gaia_ids}
             """
     floor_30000 = len(catalogdata_tic) // 30000 + 1
+    print(floor_30000)
     t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=(np.int64, np.int64, np.int64))
     for i in range(floor_30000):
         gaia_array = np.array(catalogdata_tic['GAIA'][i * 30000:((i + 1) * 30000)])
@@ -95,6 +96,7 @@ def convert_gaia_id(catalogdata_tic):
         tic_ids = Column(np.array(tic_ids), name='TIC')
         results.add_column(tic_ids)
         t = vstack([t, results])
+        print('table length: '+len(t))
     return t
 
 
