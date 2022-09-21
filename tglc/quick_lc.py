@@ -37,7 +37,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
                  name=name, limit_mag=limit_mag, save_aper=save_aper)
         if first_sector_only:
             break
-        # except:
+        else:
             sector_num = source.sector_table["sector"][j]
             # warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
 
