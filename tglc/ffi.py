@@ -189,8 +189,8 @@ class Source(object):
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
-        print(f'camera={camera}, ccd={ccd}: ra={ra}, dec={dec}, radius={(self.size + 2) * 21 * 0.707 / 3600}')
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
+        print(f'no_of_stars={len(catalogdata_tic)}, camera={camera}, ccd={ccd}: ra={ra}, dec={dec}, radius={(self.size + 2) * 21 * 0.707 / 3600}')
         self.tic = convert_gaia_id(catalogdata_tic)
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
@@ -344,15 +344,15 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 # print(f'{source_path} exists. ')
                 pass
             else:
-                attempts = 0
-                while attempts < 3:
-                    try:
-                        with open(source_path, 'wb') as output:
-                            source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
-                                            time=time,
-                                            size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
-                                            exposure=exposure, cadence=cadence)  # 93
-                            pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
-                    except:
-                        attempts += 1
-                        print(f'Trial No.{attempts + 1}.')
+                # attempts = 0
+                # while attempts < 3:
+                #     try:
+                with open(source_path, 'wb') as output:
+                    source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
+                                    time=time,
+                                    size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
+                                    exposure=exposure, cadence=cadence)  # 93
+                    pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+                    # except:
+                    #     attempts += 1
+                    #     print(f'Trial No.{attempts + 1}.')
