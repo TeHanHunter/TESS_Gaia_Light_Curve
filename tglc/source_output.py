@@ -12,8 +12,8 @@ import warnings
 import astroquery
 import matplotlib.pyplot as plt
 
-logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
-warnings.simplefilter('ignore', UserWarning)
+# logging.getLogger(astroquery.__name__).setLevel(logging.ERROR)
+# warnings.simplefilter('ignore', UserWarning)
 
 
 def median_mask(sector_num=26):
@@ -65,11 +65,11 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(f'{local_directory}log/', exist_ok=True)
     os.makedirs(f'{local_directory}mask/', exist_ok=True)
 
-    # with Pool(4) as p:
-    #     p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
+    with Pool(4) as p:
+        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
 
-    for i in range(16):
-        ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
+    # for i in range(16):
+    #     ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
 
 
 if __name__ == '__main__':

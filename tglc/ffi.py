@@ -190,7 +190,7 @@ class Source(object):
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
-        print(f'no_of_stars={len(catalogdata_tic)}, camera={camera}, ccd={ccd}: ra={ra}, dec={dec}, radius={(self.size + 2) * 21 * 0.707 / 3600}')
+        # print(f'no_of_stars={len(catalogdata_tic)}, camera={camera}, ccd={ccd}: ra={ra}, dec={dec}, radius={(self.size + 2) * 21 * 0.707 / 3600}')
         self.tic = convert_gaia_id(catalogdata_tic)
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
