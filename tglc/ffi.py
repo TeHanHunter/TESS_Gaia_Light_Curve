@@ -293,8 +293,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     time_order = np.argsort(np.array(time))
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
-    quality = quality[time_order]
-    cadence = cadence[time_order]
+    quality = np.array(quality)[time_order]
+    cadence = np.array(cadence)[time_order]
     # mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
     # for i in range(len(time)):
     #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
