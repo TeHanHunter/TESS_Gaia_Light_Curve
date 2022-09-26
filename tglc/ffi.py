@@ -78,23 +78,21 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
     return mast_json2table(out_data)
 
 
-def convert_gaia_id(catalogdata):
+def convert_gaia_id(catalogdata_tic):
     query = """
             SELECT dr2_source_id, dr3_source_id
             FROM gaiadr3.dr2_neighbourhood
             WHERE dr2_source_id IN {gaia_ids}
             """
-    t = Table(names=('dr2_source_id', 'dr3_source_id', 'TIC'), dtype=(np.int64, np.int64, np.int64))
-    gaia_array = np.array(catalogdata['GAIA'])
+    gaia_array = np.array(catalogdata_tic['GAIA'])
     gaia_tuple = tuple(gaia_array[gaia_array != 'None'])
     results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
     tic_ids = []
     for j in range(len(results)):
-        tic_ids.append(int(catalogdata['ID'][np.where(catalogdata['GAIA'] == str(results['dr2_source_id'][j]))][0]))
+        tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
     tic_ids = Column(np.array(tic_ids), name='TIC')
     results.add_column(tic_ids)
-    t = vstack([t, results])
-    return t
+    return results
 
 
 # from Tim
