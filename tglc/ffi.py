@@ -343,16 +343,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 # print(f'{source_path} exists. ')
                 pass
             else:
-                # attempts = 0
-                # while attempts < 3:
-                #     try:
                 with open(source_path, 'wb') as output:
-                    print('start')
                     source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
                                     time=time, size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
                                     exposure=exposure, cadence=cadence)
-                    print('yes')
                     pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
-                    # except:
-                    #     attempts += 1
-                    #     print(f'Trial No.{attempts + 1}.')
