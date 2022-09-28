@@ -192,7 +192,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 
     # psf_lc
     over_size = psf_size * factor + 1
-    if near_edge: # TODO: near_edge
+    if near_edge:  # TODO: near_edge
         psf_lc = np.zeros(len(source.time))
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)

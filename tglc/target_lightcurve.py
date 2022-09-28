@@ -11,6 +11,7 @@ from astropy.io import fits
 from tqdm import trange
 from os.path import exists
 from tglc.effective_psf import get_psf, fit_psf, fit_lc, bg_mod
+from tglc.ffi import Source
 from tglc.ffi_cut import Source_cut
 
 warnings.simplefilter('always', UserWarning)
@@ -273,6 +274,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         end = start + 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
+            if type(source) == Source:
+                x_left = 1.5
+                x_right = 2.5
+                y_left = 1.5
+                y_right = 2.5
             if x_left + 2 <= x_round[i] < source.size - (x_right + 2) and y_left + 2 <= y_round[i] < source.size - (
                     y_right + 2):
                 near_edge = False
