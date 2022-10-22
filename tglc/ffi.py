@@ -218,6 +218,8 @@ class Source(object):
                 tic_id[i] = np.nan
             if np.isnan(catalogdata['phot_g_mean_mag'][i]):
                 in_frame[i] = False
+            elif catalogdata['phot_g_mean_mag'][i] >= 25:
+                in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
                 dif = catalogdata['phot_bp_mean_mag'][i] - catalogdata['phot_rp_mean_mag'][i]
                 tess_mag[i] = catalogdata['phot_g_mean_mag'][
