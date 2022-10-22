@@ -158,6 +158,8 @@ class Source_cut(object):
             y_gaia[i] = pixel[0][1]
             if np.isnan(gaia_targets['phot_g_mean_mag'][i]):
                 in_frame[i] = False
+            elif gaia_targets['phot_g_mean_mag'][i] >= 25:
+                in_frame[i] = False
             elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
                 dif = gaia_targets['phot_bp_mean_mag'][i] - gaia_targets['phot_rp_mean_mag'][i]
                 tess_mag[i] = gaia_targets['phot_g_mean_mag'][
