@@ -27,7 +27,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
     os.makedirs(local_directory + f'source/', exist_ok=True)
     source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector)  # sector
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
-    name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[0])
+    name = 'Gaia DR3 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
         name = None
     for j in range(len(source.sector_table)):
