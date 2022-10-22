@@ -1,7 +1,7 @@
 astropy~=5.1
 astroquery==0.4.5
-matplotlib~=3.3.3
-numpy~=1.22.4
+matplotlib
+numpy
 scipy==1.7.3
 setuptools==45.2.0
 tqdm==4.59.0

@@ -285,7 +285,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             else:
                 near_edge = True
             aperture, psf_lc, star_y, star_x, portion = \
-                fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
+                fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                        near_edge=near_edge)
             aper_lc = np.sum(
                 aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
