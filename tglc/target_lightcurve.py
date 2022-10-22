@@ -3,6 +3,8 @@
 
 import os
 import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 import tglc
@@ -222,6 +224,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
     # sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=0).T)
+    # plt.imshow(sim_image.reshape(90,90))
+    # plt.show()
+    # plt.imshow(source.flux[0])
+    # plt.show()
     # residual = np.abs(source.flux[0].flatten() - sim_image)
     # return residual
 
@@ -294,6 +300,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                                         psf_lc=psf_lc,
                                                                         aper_lc=aper_lc,
                                                                         near_edge=near_edge, star_num=i)
+            plt.plot(source.time % 1.9221, cal_psf_lc, '.')
+            plt.show()
             # mag.append(source.gaia['tess_mag'][i])
             # mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index])) / portion))
             # mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))

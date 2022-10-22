@@ -146,7 +146,7 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
 
 
 def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0, factor=2, psf_size=11, e_psf=None,
-           near_edge=False, prior=0.2):
+           near_edge=False, prior=0.001):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -174,7 +174,7 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
-    cut_size = 11
+    cut_size = 5
     in_frame = np.where(np.invert(np.isnan(source.flux[0])))
     left = np.maximum(np.min(in_frame[1]), x[star_num] - cut_size // 2)
     right = np.minimum(np.max(in_frame[1]), x[star_num] + cut_size // 2 + 1)
@@ -192,6 +192,8 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
     for j in range(len(source.time)):
         aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((len(source.time), up - down, right - left))
+    plt.imshow(aperture[0])
+    plt.show()
     # psf_lc
     over_size = psf_size * factor + 1
     if near_edge:  # TODO: near_edge
@@ -220,8 +222,7 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
     A_[:(cut_size ** 2), -1] = np.ones(cut_size ** 2)
     A_[:(cut_size ** 2), -2] = yy.flatten()
     A_[:(cut_size ** 2), -3] = xx.flatten()
-
-    psf_sim = np.zeros((len(source.time), len(field_star_num), cut_size ** 2 + len(field_star_num)))
+    psf_sim = np.zeros((len(source.time), 11 ** 2 + len(field_star_num), len(field_star_num)))
     for j, star in enumerate(field_star_num):
         delta_x = x[star_num] - x[star]
         delta_y = y[star_num] - y[star]
@@ -248,19 +249,39 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
         psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
         epsf_sum = np.sum(np.nanmedian(psf_shape, axis=0))
         psf_sim_index = coord[down_shift:up_shift, left_shift:right_shift].flatten()
-        psf_sim[:, j, psf_sim_index] = psf_shape[:, down_shift_:up_shift_, left_shift_:right_shift_].reshape(
+        psf_sim[:, psf_sim_index, j] = psf_shape[:, down_shift_:up_shift_, left_shift_:right_shift_].reshape(
             len(source.time), -1) / epsf_sum
-        psf_sim[:, j, cut_size ** 2 + j] = np.ones(len(source.time)) / (prior * source.gaia[star]['tess_mag'])
-    plt.imshow(psf_sim[0, 10, :121].reshape(11, 11))
+        if star != star_num:
+            psf_sim[:, 11 ** 2 + j, j] = np.ones(len(source.time)) / (
+                    prior * 1.5e4 * 10 ** ((10 - source.gaia[star]['tess_mag']) / 2.5))
+            # print(np.isnan(psf_sim).any())
+        else:
+            portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+    # plt.imshow(np.dot(psf_sim[0, :, :121].T, source.gaia['tess_flux_ratio'][field_star_num]).reshape(11, 11))
+    # plt.show()
+    # print(x[star_num], y[star_num])
+    # plt.imshow(source.flux[0])
+    # plt.show()
+
+    star_index = np.where(np.array(field_star_num) == star)[0]
+    plt.imshow(psf_sim[0])
     plt.show()
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
             psf_lc[j] = np.nan
         else:
             aper_flat = aperture[j, :, :].flatten()
-            A_[:, 0] = psf_sim[j, :, :].flatten()
-            psf_lc[j] = np.linalg.lstsq(A_, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+            aper_flat = np.append(aper_flat, np.ones(len(field_star_num)) / prior)
+            aper_flat[cut_size ** 2 + star_index] = 0
+            A_[:cut_size ** 2, :len(field_star_num)] = psf_sim[j, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8],
+                                                       :].reshape(cut_size ** 2, 315)
+            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num), 315)
+            # plt.imshow(A_)
+            # plt.show()
+            psf_lc[j] = np.linalg.lstsq(A_, aper_flat)[0][star_index]
+    # plt.plot(source.time, psf_lc, '.')
+    # plt.show()
+    # print(psf_lc)
     return aperture, psf_lc, y[star_num] - down, x[star_num] - left, portion
 
 
