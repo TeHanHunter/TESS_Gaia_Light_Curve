@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 import tglc
-
+import matplotlib.pyplot as plt
 from astropy.io import fits
 from tqdm import trange
 from os.path import exists
