@@ -6,6 +6,7 @@ import astropy.units as u
 import numpy as np
 import pkg_resources
 import requests
+import time
 
 from glob import glob
 from os.path import exists
@@ -244,13 +245,17 @@ class Source(object):
 
     def search_gaia(self, x, y, co1, co2):
         coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
-        print(coord)
-        print(type(coord))
         radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
-        catalogdata = Gaia.cone_search_async(coord, radius,
+        attempt = 0
+        while attempt < 5:
+            try:
+                catalogdata = Gaia.cone_search_async(coord, radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
-        return catalogdata
+                return catalogdata
+            except:
+                attempt += 1
+                time.sleep(30)
 
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
