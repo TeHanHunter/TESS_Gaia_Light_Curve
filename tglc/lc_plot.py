@@ -2505,5 +2505,10 @@ def figure_13():
     plt.show()
 
 
+def figure_14():
+    print('s')
+
+
+
 if __name__ == '__main__':
     figure_9()

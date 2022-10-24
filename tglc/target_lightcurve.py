@@ -190,7 +190,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
-         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False):
+         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False, prior=0.1):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi_cut.Source or TGLC.ffi_cut.Source_cut, required
@@ -290,18 +290,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 near_edge = False
             else:
                 near_edge = True
-            aperture, psf_lc, star_y, star_x, portion = \
-                fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
-                       near_edge=near_edge)
-            aper_lc = np.sum(
-                aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
-                axis=(1, 2))
-            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
-                                                                        psf_lc=psf_lc,
-                                                                        aper_lc=aper_lc,
-                                                                        near_edge=near_edge, star_num=i)
-            plt.plot(source.time % 1.9221, cal_psf_lc, '.')
-            plt.show()
+
             # mag.append(source.gaia['tess_mag'][i])
             # mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index])) / portion))
             # mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))
@@ -309,6 +298,26 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
             quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
+            q = quality == 0
+            mad = np.zeros(100)
+            prior = np.linspace(0.1, 0.00001, num=100)
+            for j in range(100):
+                aperture, psf_lc, star_y, star_x, portion = \
+                    fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
+                           near_edge=near_edge, prior=prior[j])
+                aper_lc = np.sum(
+                    aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
+                    axis=(1, 2))
+                local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
+                                                                            psf_lc=psf_lc,
+                                                                            aper_lc=aper_lc,
+                                                                            near_edge=near_edge, star_num=i)
+                mad[j] = np.mean(np.abs(np.diff(cal_psf_lc[q])))
+            np.save('/home/tehan/Documents/tglc/prior_mad.npy',mad)
+            # plt.plot(source.time % 1.9221, cal_psf_lc, '.')
+            # plt.show()
+
+
             if np.isnan(aper_lc).all():
                 continue
             else:
