@@ -192,8 +192,7 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
     for j in range(len(source.time)):
         aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((len(source.time), up - down, right - left))
-    plt.imshow(aperture[0])
-    plt.show()
+
     # psf_lc
     over_size = psf_size * factor + 1
     if near_edge:  # TODO: near_edge
@@ -216,7 +215,7 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
             field_star_num.append(j)
 
     psf_lc = np.zeros(len(source.time))
-    A_ = np.zeros((cut_size ** 2 + len(field_star_num), len(field_star_num) + 3))
+    A_ = np.zeros((cut_size ** 2 + len(field_star_num), len(field_star_num) + 4))
     xx, yy = np.meshgrid((np.arange(cut_size) - (cut_size - 1) / 2),
                          (np.arange(cut_size) - (cut_size - 1) / 2))
     A_[:(cut_size ** 2), -1] = np.ones(cut_size ** 2)
@@ -263,22 +262,26 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
     # plt.imshow(source.flux[0])
     # plt.show()
 
-    star_index = np.where(np.array(field_star_num) == star)[0]
-    plt.imshow(psf_sim[0])
-    plt.show()
+    star_index = np.where(np.array(field_star_num) == star_num)[0]
+    field_star = psf_sim[0, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8], :].reshape(cut_size ** 2,
+                                                                                     len(field_star_num)) * \
+                 source.gaia['tess_flux_ratio'][field_star_num]
+    field_star[:, star_index] = 0
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
             psf_lc[j] = np.nan
         else:
             aper_flat = aperture[j, :, :].flatten()
-            aper_flat = np.append(aper_flat, np.ones(len(field_star_num)) / prior)
+            aper_flat = np.append(aper_flat, np.zeros(len(field_star_num)) / prior)
             aper_flat[cut_size ** 2 + star_index] = 0
-            A_[:cut_size ** 2, :len(field_star_num)] = psf_sim[j, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8],
-                                                       :].reshape(cut_size ** 2, 315)
+            postcards = psf_sim[j, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8], :].reshape(cut_size ** 2,
+                                                                                            len(field_star_num))
+            A_[:cut_size ** 2, :len(field_star_num)] = postcards
+            field_star = postcards * source.gaia['tess_flux_ratio'][field_star_num]
+            field_star[:, star_index] = 0
+            A_[:(cut_size ** 2), -4] = np.sum(field_star, axis=1)
             A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num), 315)
-            # plt.imshow(A_)
-            # plt.show()
-            psf_lc[j] = np.linalg.lstsq(A_, aper_flat)[0][star_index]
+            psf_lc[j] = np.linalg.lstsq(A_, aper_flat)[0][0]
     # plt.plot(source.time, psf_lc, '.')
     # plt.show()
     # print(psf_lc)
