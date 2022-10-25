@@ -8,7 +8,7 @@ os.environ["MKL_NUM_THREADS"] = "8"
 os.environ["NUMEXPR_NUM_THREADS"] = "8"
 os.environ["OMP_NUM_THREADS"] = "8"
 from multiprocessing import Pool
-
+from functools import partial
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
