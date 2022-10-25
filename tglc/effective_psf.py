@@ -280,7 +280,7 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
             field_star = postcards * source.gaia['tess_flux_ratio'][field_star_num]
             field_star[:, star_index] = 0
             A_[:(cut_size ** 2), -4] = np.sum(field_star, axis=1)
-            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num), 315)
+            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num), len(field_star_num))
             psf_lc[j] = np.linalg.lstsq(A_, aper_flat)[0][0]
     # plt.plot(source.time, psf_lc, '.')
     # plt.show()
