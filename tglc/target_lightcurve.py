@@ -322,6 +322,6 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     if name is not None:
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
-    with Pool(16) as p:
+    with Pool() as p:
       p.map(partial(prior_mad_lc, source=source, x_left=x_left, x_right=x_right, y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, star_info=star_info, e_psf=e_psf, index=index), range(100))
       
