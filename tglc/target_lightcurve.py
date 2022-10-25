@@ -194,7 +194,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         overwrite=True)
     return
 
-def prior_mad_lc(i, source=None, x_left=[], x_right=[], y_left=[], y_right=[], x_round=[], y_round=[], star_info=[], e_psf=[], index=[], background=[]):
+def prior_mad_lc(i, A=[], source=None, x_left=[], x_right=[], y_left=[], y_right=[], x_round=[], y_round=[], star_info=[], e_psf=[], index=[], background=[]):
     if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
         if type(source) == Source:
             x_left = 1.5
@@ -323,7 +323,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
     with Pool() as p:
-      p.map(partial(prior_mad_lc, source=source, x_left=x_left, x_right=x_right, 
+      p.map(partial(prior_mad_lc, A=A, source=source, x_left=x_left, x_right=x_right, 
                     y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, 
                     star_info=star_info, e_psf=e_psf, index=index, background=background), range(100))
       
