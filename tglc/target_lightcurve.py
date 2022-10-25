@@ -3,10 +3,10 @@
 
 import os
 
-os.environ["OPENBLAS_NUM_THREADS"] = "8"
-os.environ["MKL_NUM_THREADS"] = "8"
-os.environ["NUMEXPR_NUM_THREADS"] = "8"
-os.environ["OMP_NUM_THREADS"] = "8"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 from multiprocessing import Pool
 from functools import partial
 import warnings
@@ -194,7 +194,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         overwrite=True)
     return
 
-def prior_mad_lc(i, source=None, x_round=[], y_round=[], star_info=[], e_psf=[], index=[]):
+def prior_mad_lc(i, source=None, x_left=[], x_right=[], y_left=[], y_right=[], x_round=[], y_round=[], star_info=[], e_psf=[], index=[]):
     if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
         if type(source) == Source:
             x_left = 1.5
@@ -323,5 +323,5 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
     with Pool(16) as p:
-      p.map(partial(prior_mad_lc, source=source, x_round=x_round, y_round=y_round, star_info=star_info, e_psf=e_psf, index=index), range(100))
+      p.map(partial(prior_mad_lc, source=source, x_left=x_left, x_right=x_right, y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, star_info=star_info, e_psf=e_psf, index=index), range(100))
       
