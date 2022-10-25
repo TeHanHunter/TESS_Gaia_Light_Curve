@@ -69,13 +69,20 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
                    "columns": 'ID, GAIA',
                    "filters": [
                        {"paramName": "Tmag",
-                        "values": [{"min": 0., "max": 16.5}]}],
+                        "values": [{"min": -10., "max": 16.5}]}],
                    "ra": ra,
                    "dec": dec,
                    "radius": radius
                }}
-    headers, out_string = mast_query(request)
-    out_data = json.loads(out_string)
+    attempt = 0
+    while attempt < 5:
+        try:
+            headers, out_string = mast_query(request)
+            out_data = json.loads(out_string)
+        except:
+            attempt += 1
+            time.sleep(10)
+            print('Trying TIC search again.')
     return mast_json2table(out_data)
 
 
@@ -255,8 +262,8 @@ class Source(object):
                 return catalogdata
             except:
                 attempt += 1
-                time.sleep(30)
-
+                time.sleep(10)
+                print('Trying Gaia search again.')
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
