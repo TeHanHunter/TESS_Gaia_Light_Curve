@@ -313,7 +313,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                                             aper_lc=aper_lc,
                                                                             near_edge=near_edge, star_num=i)
                 mad[j] = np.mean(np.abs(np.diff(cal_psf_lc[q])))
-            np.save('/home/tehan/Documents/tglc/prior_mad.npy',mad)
+            np.save(f'/home/tehan/data/priors/prior_mad_{source.gaia['designation'][i]}.npy', mad)
             # plt.plot(source.time % 1.9221, cal_psf_lc, '.')
             # plt.show()
 
