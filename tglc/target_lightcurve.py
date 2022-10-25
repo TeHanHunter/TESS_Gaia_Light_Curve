@@ -194,7 +194,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         overwrite=True)
     return
 
-def prior_mad_lc(i, source=None, x_left=[], x_right=[], y_left=[], y_right=[], x_round=[], y_round=[], star_info=[], e_psf=[], index=[]):
+def prior_mad_lc(i, source=None, x_left=[], x_right=[], y_left=[], y_right=[], x_round=[], y_round=[], star_info=[], e_psf=[], index=[], background=[]):
     if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
         if type(source) == Source:
             x_left = 1.5
@@ -217,7 +217,7 @@ def prior_mad_lc(i, source=None, x_left=[], x_right=[], y_left=[], y_right=[], x
         q = quality == 0
         mad = np.zeros(100)
         prior = np.linspace(0.1, 0.00001, num=100)
-        for j in range(100):
+        for j in trange(100):
             aperture, psf_lc, star_y, star_x, portion = \
                 fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                        near_edge=near_edge, prior=prior[j])
@@ -323,5 +323,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
     with Pool() as p:
-      p.map(partial(prior_mad_lc, source=source, x_left=x_left, x_right=x_right, y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, star_info=star_info, e_psf=e_psf, index=index), range(100))
+      p.map(partial(prior_mad_lc, source=source, x_left=x_left, x_right=x_right, 
+                    y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, 
+                    star_info=star_info, e_psf=e_psf, index=index, background=background), range(100))
       
