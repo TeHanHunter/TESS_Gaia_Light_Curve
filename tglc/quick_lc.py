@@ -46,7 +46,7 @@ if __name__ == '__main__':
     target = 'TIC 270022476'
     local_directory = f'/home/tehan/data/priors/{target}/'
     os.makedirs(local_directory, exist_ok=True)
-    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=14,
+    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
                     get_all_lc=True, first_sector_only=True, sector=None)
 
     ####### list of targets example

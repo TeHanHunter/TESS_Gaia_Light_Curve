@@ -580,13 +580,13 @@ def figure_6(mode='psf'):
     #         source.select_sector(sector=source.sector_table['sector'][j])
     #         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
     #              name='Gaia DR3 '+data['gaia_id'][i].split()[-1], power=1.5, save_aper=True)
-        # plt.imshow(source.flux[0])
-        # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
-        #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
-        # plt.xlim(-0.5, 89.5)
-        # plt.ylim(-0.5, 89.5)
-        # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
-        # plt.show()
+    # plt.imshow(source.flux[0])
+    # plt.scatter(source.gaia[f'sector_{source.sector_table["sector"][j]}_x'][:100],
+    #             source.gaia[f'sector_{source.sector_table["sector"][j]}_y'][:100], c='r', s=5)
+    # plt.xlim(-0.5, 89.5)
+    # plt.ylim(-0.5, 89.5)
+    # plt.title(f'{target}_sector_{source.sector_table["sector"][j]}')
+    # plt.show()
 
     fig = plt.figure(constrained_layout=False, figsize=(10, 10))
     gs = fig.add_gridspec(5, 12)
@@ -2505,10 +2505,116 @@ def figure_13():
     plt.show()
 
 
-def figure_14():
-    print('s')
+def figure_14(target='TIC 270022476'):
+    fig = plt.figure(constrained_layout=False, figsize=(5, 4))
+    gs = fig.add_gridspec(3, 3)
+    gs.update(wspace=0.1, hspace=0.5)
 
+    prior_mad = np.load(f'/home/tehan/Documents/tglc/prior_mad/prior_mad_{target}.npy')
+    ax1 = fig.add_subplot(gs[:2, :])
+    ax1.plot(np.logspace(-5, -1, num=100), prior_mad / np.median(prior_mad), lw=3, color='k')
+    ax1.plot(np.logspace(-5, -1, num=100)[0], prior_mad[0] / np.median(prior_mad), '.', ms=10, c='C1')
+    ax1.plot(np.logspace(-5, -1, num=100)[69], prior_mad[69] / np.median(prior_mad), '.', ms=10, c='C0')
+    ax1.plot(np.logspace(-5, -1, num=100)[-1], prior_mad[-1] / np.median(prior_mad), '.', ms=10, c='C2')
+    ax1.set_title('Field Star Prior (fraction of median flux)')
+    # ax1.set_ylim(0.0034, 0.0043)
+    ax1.set_ylabel('MAD of normalized flux')
+    ax1.set_xscale('log')
+    # ax1.vlines(0.00001, ymin=0.0034, ymax=prior_mad[0], ls='--', color='r')
+    # ax1.vlines(0.0061359, ymin=0.0034, ymax=prior_mad[69], ls='--', color='r')
+    # ax1.vlines(0.1, ymin=0.0034, ymax=prior_mad[-1], ls='--', color='r')
+
+    # ax1.xaxis.set_ticks_position('both')
+    files = glob('/home/tehan/Documents/tglc/priors/*.npy')
+    for i in range(len(files)):
+        mad = np.load(files[i])
+        ax1.plot(np.linspace(0.1, 0.00001, num=100), mad / np.median(mad), alpha=0.2, c='k')
+    period = 1.9221
+    ax2 = fig.add_subplot(gs[2, 0])
+    with fits.open(
+            f'/home/tehan/Documents/tglc/{target}/lc/hlsp_tglc_tess_ffi_gaiaid-2015669349341459328-s0017-cam3-ccd2_tess_v1_llc_000001.fits',
+            mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t5 = hdul[1].data['time'][q]
+        f5 = hdul[1].data['cal_psf_flux'][q]
+    ax2.plot(t5 % period / period, f5, '.', c='C1', ms=1)
+    ax2.set_ylabel('Normalized flux')
+    ax2.set_ylim(0.92, 1.02)
+
+    ax3 = fig.add_subplot(gs[2, 1])
+    with fits.open(
+            f'/home/tehan/Documents/tglc/{target}/lc/hlsp_tglc_tess_ffi_gaiaid-2015669349341459328-s0017-cam3-ccd2_tess_v1_llc_0006136.fits',
+            mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t3 = hdul[1].data['time'][q]
+        f3 = hdul[1].data['cal_psf_flux'][q]
+    ax3.plot(t3 % period / period, f3, '.', c='C0', ms=1)
+    ax3.set_yticklabels([])
+    ax3.set_xlabel('Phase')
+    ax3.set_ylim(0.92, 1.02)
+
+    ax4 = fig.add_subplot(gs[2, 2])
+    with fits.open(
+            f'/home/tehan/Documents/tglc/{target}/lc/hlsp_tglc_tess_ffi_gaiaid-2015669349341459328-s0017-cam3-ccd2_tess_v1_llc_01.fits',
+            mode='denywrite') as hdul:
+        q = hdul[1].data['TGLC_flags'] == 0
+        t1 = hdul[1].data['time'][q]
+        f1 = hdul[1].data['cal_psf_flux'][q]
+    ax4.plot(t1 % period / period, f1, '.', c='C2', ms=1)
+    ax4.set_yticklabels([])
+    ax4.set_ylim(0.92, 1.02)
+
+    xyA = [0.00001, prior_mad[0]]
+    xyB = [0.5, 1.023]
+    # ConnectionPatch handles the transform internally so no need to get fig.transFigure
+    arrow = ConnectionPatch(
+        xyA,
+        xyB,
+        coordsA=ax1.transData,
+        coordsB=ax2.transData,
+        # Default shrink parameter is 0 so can be omitted
+        color="C1",
+        arrowstyle="-|>",  # "normal" arrow
+        mutation_scale=10,  # controls arrow head size
+        linewidth=2,
+    )
+    fig.patches.append(arrow)
+
+    xyA = [0.00613590727, prior_mad[69]]
+    xyB = [0.5, 1.023]
+    # ConnectionPatch handles the transform internally so no need to get fig.transFigure
+    arrow = ConnectionPatch(
+        xyA,
+        xyB,
+        coordsA=ax1.transData,
+        coordsB=ax3.transData,
+        # Default shrink parameter is 0 so can be omitted
+        color="C0",
+        arrowstyle="-|>",  # "normal" arrow
+        mutation_scale=10,  # controls arrow head size
+        linewidth=2,
+    )
+    fig.patches.append(arrow)
+
+    xyA = [0.1, prior_mad[-1]]
+    xyB = [0.5, 1.023]
+    # ConnectionPatch handles the transform internally so no need to get fig.transFigure
+    arrow = ConnectionPatch(
+        xyA,
+        xyB,
+        coordsA=ax1.transData,
+        coordsB=ax4.transData,
+        # Default shrink parameter is 0 so can be omitted
+        color="C2",
+        arrowstyle="-|>",  # "normal" arrow
+        mutation_scale=10,  # controls arrow head size
+        linewidth=2,
+    )
+    fig.patches.append(arrow)
+
+    # plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
+    plt.show()
 
 
 if __name__ == '__main__':
-    figure_9()
+    figure_14()

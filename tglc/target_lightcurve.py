@@ -216,7 +216,7 @@ def prior_mad_lc(i, A=[], source=None, x_left=[], x_right=[], y_left=[], y_right
         quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
         q = quality == 0
         mad = np.zeros(100)
-        prior = np.linspace(0.1, 0.00001, num=100)
+        prior = np.logspace(-5, 0, num=100)
         for j in trange(100):
             aperture, psf_lc, star_y, star_x, portion = \
                 fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
