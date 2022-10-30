@@ -175,7 +175,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('CPSF_ERR', cal_psf_err, '[e-/s] calibrated PSF flux error'), end=True)
     table_hdu.header.append(('CAPE_ERR', cal_aper_err, '[e-/s] calibrated aperture flux error'), end=True)
     table_hdu.header.append(('NEAREDGE', near_edge, 'distance to edges of FFI <= 2'), end=True)
-    table_hdu.header.append(('LOC_BG', local_bg, 'locally modified background'), end=True)
+    table_hdu.header.append(('LOC_BG', local_bg, '[e-/s] locally modified background'), end=True)
     table_hdu.header.append(('COMMENT', "TRUE_BG = hdul[1].data['background'] + LOC_BG"), end=True)
     table_hdu.header.append(('WOTAN_WL', 1, 'wotan detrending window length'), end=True)
     table_hdu.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
