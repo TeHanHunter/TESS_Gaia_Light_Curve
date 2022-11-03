@@ -311,6 +311,6 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                           cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                           y_aperture=y_aperture[i],
                           near_edge=near_edge, save_aper=save_aper, portion=portion)
-np.save(f'{local_directory}mag.npy', mag)
-np.save(f'{local_directory}MAD_aper.npy', median_diff_aper)
-np.save(f'{local_directory}MAD_psf.npy', median_diff_psf)
+    np.save(f'{local_directory}mag.npy', mag)
+    np.save(f'{local_directory}MAD_aper.npy', median_diff_aper)
+    np.save(f'{local_directory}MAD_psf.npy', median_diff_psf)
