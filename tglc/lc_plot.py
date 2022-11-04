@@ -391,68 +391,80 @@ def figure_2():
 
 
 def figure_3():
-    # 1-1/07_07
-    noise_2015 = ascii.read('/mnt/c/users/tehan/downloads/noisemodel.dat')
-    local_directory = f'/mnt/d/TESS_Sector_17/'
-    input_files = glob(f'/mnt/d/TESS_Sector_17/mastDownload/HLSP/*/*.fits')
-    input_files1 = glob('/mnt/d/TESS_Sector_17/source/1-1/pca/*')
-    input_files2 = glob('/mnt/d/TESS_Sector_17/source/1-1/psf/*')
-    mag = []
-    mean_diff = []
-    for i in trange(len(input_files)):
-        with fits.open(input_files[i], mode='denywrite') as hdul:
-            quality = hdul[1].data['QUALITY']
-            lc = hdul[1].data['KSPSAP_FLUX']
-            mag_ = hdul[0].header['TESSMAG']
-            # scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
-            index = np.where(quality == 0)
-            mag.append(mag_)
-            mean_diff.append(np.mean(np.abs(np.diff(lc[index] / np.nanmedian(lc[index])))))
-    mag1 = []
-    mean_diff1 = []
-    for i in trange(len(input_files1)):
-        lc = np.load(input_files1[i])
-        mag_ = float(os.path.basename(input_files1[i])[:-4])
-        mag1.append(mag_)
-        scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
-        mean_diff1.append(np.mean(np.abs(np.diff(lc))) / scale)
-    mag2 = []
-    mean_diff2 = []
-    for i in trange(len(input_files2)):
-        lc = np.load(input_files2[i])
-        mag_ = float(os.path.basename(input_files2[i])[:-4])
-        mag2.append(mag_)
-        scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
-        mean_diff2.append(np.mean(np.abs(np.diff(lc))) / scale)
-    mean_diff_aper = np.load(local_directory + f'mean_diff_aper_07_07.npy')
-    aper_precision = mean_diff_aper[1] / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - mean_diff_aper[0]) / 2.5))
-    mean_diff_psf = np.load(local_directory + f'mean_diff_psf_07_07.npy')
-    psf_precision = mean_diff_psf[1] / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - mean_diff_psf[0]) / 2.5))
+    target = '21.0607 34.4578'
+    local_directory = f'/home/tehan/Documents/tglc/{target}/'
+    os.makedirs(local_directory, exist_ok=True)
+    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
+                    get_all_lc=True, first_sector_only=False, sector=17)
+
+    # 1-1/07_07 # 21.0607 34.4578 # 90
+    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+    # local_directory = f'/mnt/d/TESS_Sector_17/'
+    # input_files = glob(f'/mnt/d/TESS_Sector_17/mastDownload/HLSP/*/*.fits')
+    # input_files1 = glob('/mnt/d/TESS_Sector_17/source/1-1/pca/*')
+    # input_files2 = glob('/mnt/d/TESS_Sector_17/source/1-1/psf/*')
+    # mag = []
+    # mean_diff = []
+    # for i in trange(len(input_files)):
+    #     with fits.open(input_files[i], mode='denywrite') as hdul:
+    #         quality = hdul[1].data['QUALITY']
+    #         lc = hdul[1].data['KSPSAP_FLUX']
+    #         mag_ = hdul[0].header['TESSMAG']
+    #         # scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
+    #         index = np.where(quality == 0)
+    #         mag.append(mag_)
+    #         mean_diff.append(np.mean(np.abs(np.diff(lc[index] / np.nanmedian(lc[index])))))
+    # mag1 = []
+    # mean_diff1 = []
+    # for i in trange(len(input_files1)):
+    #     lc = np.load(input_files1[i])
+    #     mag_ = float(os.path.basename(input_files1[i])[:-4])
+    #     mag1.append(mag_)
+    #     scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
+    #     mean_diff1.append(np.mean(np.abs(np.diff(lc))) / scale)
+    # mag2 = []
+    # mean_diff2 = []
+    # for i in trange(len(input_files2)):
+    #     lc = np.load(input_files2[i])
+    #     mag_ = float(os.path.basename(input_files2[i])[:-4])
+    #     mag2.append(mag_)
+    #     scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
+    #     mean_diff2.append(np.mean(np.abs(np.diff(lc))) / scale)
+
+    tglc_mag = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/mag.npy')
+    MAD_aper = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/MAD_aper.npy')
+    AAD_aper = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/AAD_aper.npy')
+    MAD_psf = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/MAD_psf.npy')
+    AAD_psf = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/AAD_psf.npy')
+    aper_precision = 1.2 * AAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
+    psf_precision = 1.2 * AAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
 
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 1], hspace=0.1), figsize=(5, 6))
-    ax[0].plot(mag1, np.array(mean_diff1) / np.sqrt(2), '.', c='C2', ms=2, label='eleanor PCA', alpha=0.8)
-    ax[0].plot(mag, np.array(mean_diff) / np.sqrt(2), '^', c='C0', ms=1.5, label='QLP', alpha=0.8)
-    # ax[0].plot(mag2, mean_diff2  / np.median(mean_diff2), '.', c='C2', ms=2, label='eleanor PSF')
-    ax[0].plot(mean_diff_psf[0], psf_precision, 'D', c='r', ms=1, label='TGLC PSF', alpha=0.8)
+    # ax[0].plot(mag1, np.array(mean_diff1) / np.sqrt(2), '.', c='C2', ms=2, label='eleanor PCA', alpha=0.8)
+    # ax[0].plot(mag, np.array(mean_diff) / np.sqrt(2), '^', c='C0', ms=1.5, label='QLP', alpha=0.8)
+    # # ax[0].plot(mag2, mean_diff2  / np.median(mean_diff2), '.', c='C2', ms=2, label='eleanor PSF')
+    ax[0].plot(tglc_mag, psf_precision, 'D', c='r', ms=1, label='TGLC PSF', alpha=0.8)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
-    # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
-    ax[0].hlines(y=.1, xmin=np.min(mean_diff_aper[0]), xmax=np.max(mean_diff_aper[0]), colors='k', linestyles='dotted')
-    ax[0].hlines(y=.01, xmin=np.min(mean_diff_aper[0]), xmax=np.max(mean_diff_aper[0]), colors='k', linestyles='dotted')
+    # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
+    ax[0].hlines(y=.1, xmin=np.min(tglc_mag), xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
+    ax[0].hlines(y=.01, xmin=np.min(tglc_mag), xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
 
     leg = ax[0].legend(loc=4, markerscale=4)
-    for lh in leg.legendHandles:
-        lh._legmarker.set_alpha(1)
+    # for lh in leg.legendHandles:
+    #     lh._legmarker.set_alpha(1)
     # ax[0].xlabel('TESS magnitude')
     ax[0].set_ylabel(r'Estimated Photometric Precision')
     ax[0].set_yscale('log')
     ax[0].set_ylim(1e-4, 1)
 
     ratio = aper_precision / psf_precision
-    runningmed = ndimage.median_filter(ratio, size=151, mode='nearest')
+    tglc_mag = tglc_mag[np.invert(np.isnan(ratio))]
+    ratio = ratio[np.invert(np.isnan(ratio))]
+    runningmed = ndimage.median_filter(ratio, size=1500, mode='nearest')
 
-    ax[1].plot(mean_diff_aper[0][:4254], ratio[:4254], '.', c='C1', ms=6, alpha=0.15, label='TGLC Aperture / PSF')
-    ax[1].plot(mean_diff_aper[0][:4254], runningmed[:4254], c='k', label='Median Filter')
-    ax[1].hlines(y=1, xmin=np.min(mean_diff_aper[0]), xmax=np.max(mean_diff_aper[0]), colors='k', linestyles='dotted')
+    ax[1].plot(tglc_mag[:-100], ratio[:-100], '.', c='C1', ms=6, alpha=0.15, label='TGLC Aperture / PSF')
+    ax[1].plot(tglc_mag[:-100], runningmed[:-100], c='k', label='Median Filter')
+    ax[1].hlines(y=1, xmin=np.min(tglc_mag), xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
     ax[1].set_yscale('log')
     ax[1].set_ylim(0.5, 2)
     ax[1].tick_params(axis='y', which='minor', labelleft=False)
@@ -461,10 +473,10 @@ def figure_3():
     ax[1].set_xlabel('TESS magnitude')
     ax[1].set_ylabel('Aperture / PSF')
     leg = ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1)
-    for lh in leg.legendHandles:
-        lh._legmarker.set_alpha(1)
+    # for lh in leg.legendHandles:
+    #     lh._legmarker.set_alpha(1)
     plt.xlim(5, 20.5)
-    plt.savefig('/mnt/c/users/tehan/desktop/MAD.png', bbox_inches='tight', dpi=300)
+    # plt.savefig('/mnt/c/users/tehan/desktop/MAD.png', bbox_inches='tight', dpi=300)
     plt.show()
     # point-to-point scatter
 
@@ -2506,4 +2518,4 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    figure_9()
+    figure_3()
