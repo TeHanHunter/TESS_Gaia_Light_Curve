@@ -2643,7 +2643,8 @@ def figure_15():
             ax1.plot(x, mad, color='C0', alpha=0.02)
             ax2.plot(source.gaia['sector_17_x'][index], source.gaia['sector_17_y'][index], c='C0',
                      marker='.', ms=40 / source.gaia['tess_mag'][index], zorder=0)
-
+    ax1.plot(0, 0, color='C1', alpha=1, label='Local Bright Stars')
+    ax1.plot(0, 0, color='C0', alpha=1, label='Dimmer Stars')
     ax1.set_xscale('log')
     # ax2.set_xscale('log')
     ax1.set_yscale('log')
@@ -2660,6 +2661,7 @@ def figure_15():
     ax2.set_xlim(-0.5, 35.5)
     ax2.set_ylim(-0.5, 35.5)
     # print(np.max(mags))
+    ax1.legend(bbox_to_anchor=(0.36, 0.41), fontsize=7)
 
     plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
     plt.show()
