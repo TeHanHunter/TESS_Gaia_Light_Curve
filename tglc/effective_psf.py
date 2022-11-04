@@ -282,8 +282,8 @@ def fit_lc(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0
             # A_[:(cut_size ** 2), -4] = np.sum(field_star, axis=1)
             A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num), len(field_star_num))
             a = np.delete(A_, cut_size ** 2 + star_index, 0)
-            print(np.shape(np.linalg.lstsq(a, aper_flat)))
-            print(type(star_index))
+            print(np.shape(np.linalg.lstsq(a, aper_flat)[0]))
+            print(type(star_index[0]))
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][star_index]
     # plt.plot(source.time, psf_lc, '.')
     # plt.show()
