@@ -264,9 +264,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     x_aperture = source.gaia[f'sector_{source.sector}_x'] - np.maximum(0, x_round - 2)
     y_aperture = source.gaia[f'sector_{source.sector}_y'] - np.maximum(0, y_round - 2)
 
-    mag = []
-    median_diff_aper = []
-    median_diff_psf = []
+    # mag = []
+    # median_diff_aper = []
+    # median_diff_psf = []
     start = 0
     end = num_stars
     if name is not None:
@@ -294,9 +294,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                                                         psf_lc=psf_lc,
                                                                         aper_lc=aper_lc,
                                                                         near_edge=near_edge, star_num=i)
-            mag.append(source.gaia['tess_mag'][i])
-            median_diff_aper.append(np.nanmedian(np.abs(np.diff(aper_lc[index])) / portion))
-            median_diff_psf.append(np.nanmedian(np.abs(np.diff(psf_lc[index]))))
+            # mag.append(source.gaia['tess_mag'][i])
+            # median_diff_aper.append(np.nanmedian(np.abs(np.diff(aper_lc[index])) / portion))
+            # median_diff_psf.append(np.nanmedian(np.abs(np.diff(psf_lc[index]))))
             background_ = background[x_round[i] + source.size * y_round[i], :]
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
@@ -311,6 +311,6 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                           cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                           y_aperture=y_aperture[i],
                           near_edge=near_edge, save_aper=save_aper, portion=portion)
-    np.save(f'{local_directory}mag.npy', mag)
-    np.save(f'{local_directory}MAD_aper.npy', median_diff_aper)
-    np.save(f'{local_directory}MAD_psf.npy', median_diff_psf)
+    # np.save(f'{local_directory}mag.npy', mag)
+    # np.save(f'{local_directory}MAD_aper.npy', median_diff_aper)
+    # np.save(f'{local_directory}MAD_psf.npy', median_diff_psf)
