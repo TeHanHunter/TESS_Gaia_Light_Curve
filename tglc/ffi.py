@@ -74,15 +74,9 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
                    "dec": dec,
                    "radius": radius
                }}
-    attempt = 0
-    while attempt < 5:
-        try:
-            headers, out_string = mast_query(request)
-            out_data = json.loads(out_string)
-        except:
-            attempt += 1
-            time.sleep(10)
-            print('Trying TIC search again.')
+
+    headers, out_string = mast_query(request)
+    out_data = json.loads(out_string)
     return mast_json2table(out_data)
 
 
