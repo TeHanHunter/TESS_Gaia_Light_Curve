@@ -2629,7 +2629,7 @@ def figure_15():
     ax1 = fig.add_subplot(gs[:, :])
     ax2 = fig.add_subplot(gs[1:9, 0:8])
     ax2.imshow(np.log(source.flux[0]))
-    x = np.logspace(-5, 0, num=100)
+    x = np.logspace(-9, 0, num=100)
     mags = np.zeros(len(files))
     for i in trange(len(files)):
         mad = np.load(files[i])
@@ -2637,12 +2637,12 @@ def figure_15():
         index = np.where(source.gaia['designation'] == 'Gaia DR3 ' + (files[i].split(' ')[-1][:-4]))
         mags[i] = source.gaia['tess_mag'][index]
         if mad[50] < 100:
-            ax1.plot(x, mad, color='C1', alpha=0.02)
+            ax1.plot(x, mad, color='C1', alpha=0.5)
             ax2.plot(source.gaia['sector_17_x'][index], source.gaia['sector_17_y'][index], c='C1',
                      marker='.', ms=40 / source.gaia['tess_mag'][index], zorder=1)
             # ax2.plot(x, mad, color='C1', alpha=0.2)
         else:
-            ax1.plot(x, mad, color='C0', alpha=0.02)
+            ax1.plot(x, mad, color='C0', alpha=0.5)
             ax2.plot(source.gaia['sector_17_x'][index], source.gaia['sector_17_y'][index], c='C0',
                      marker='.', ms=40 / source.gaia['tess_mag'][index], zorder=0)
     ax1.plot(0, 0, color='C1', alpha=1, label='Local Bright Stars')
@@ -2665,9 +2665,9 @@ def figure_15():
     # print(np.max(mags))
     ax1.legend(bbox_to_anchor=(0.36, 0.41), fontsize=7)
 
-    plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
+    # plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
 if __name__ == '__main__':
-    figure_3()
+    figure_15()

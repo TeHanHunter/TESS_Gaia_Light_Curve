@@ -216,7 +216,7 @@ def prior_mad_lc(i, A=[], source=None, x_left=[], x_right=[], y_left=[], y_right
         quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
         q = quality == 0
         mad = np.zeros(100)
-        prior = np.logspace(-8, 0, num=100)
+        prior = np.logspace(-5, 0, num=100)
         for j in trange(100):
             aperture, psf_lc, star_y, star_x, portion = \
                 fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
@@ -325,5 +325,5 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     with Pool() as p:
       p.map(partial(prior_mad_lc, A=A, source=source, x_left=x_left, x_right=x_right, 
                     y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, 
-                    star_info=star_info, e_psf=e_psf, index=index, background=background), range(num_stars))
+                    star_info=star_info, e_psf=e_psf, index=index, background=background), range((num_stars-10), num_stars))
       
