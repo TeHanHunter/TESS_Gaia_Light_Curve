@@ -325,5 +325,5 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     with Pool() as p:
       p.map(partial(prior_mad_lc, A=A, source=source, x_left=x_left, x_right=x_right, 
                     y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, 
-                    star_info=star_info, e_psf=e_psf, index=index, background=background), range((num_stars-10), num_stars))
+                    star_info=star_info, e_psf=e_psf, index=index, background=background), range(num_stars))
       
