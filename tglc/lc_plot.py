@@ -11,6 +11,7 @@ from tqdm import trange
 from matplotlib.patches import ConnectionPatch
 from tglc.target_lightcurve import epsf
 from tglc.ffi_cut import ffi_cut
+from tglc.quick_lc import tglc_lc
 
 
 def load_eleanor(ld='', tic=1, sector=1):
