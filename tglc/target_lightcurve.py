@@ -216,7 +216,7 @@ def prior_mad_lc(i, A=[], source=None, x_left=[], x_right=[], y_left=[], y_right
         quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
         q = quality == 0
         mad = np.zeros(100)
-        prior = np.logspace(-5, 0, num=100)
+        prior = np.logspace(-8, 0, num=100)
         for j in trange(100):
             aperture, psf_lc, star_y, star_x, portion = \
                 fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
@@ -228,7 +228,7 @@ def prior_mad_lc(i, A=[], source=None, x_left=[], x_right=[], y_left=[], y_right
                                                                         psf_lc=psf_lc,
                                                                         aper_lc=aper_lc,
                                                                         near_edge=near_edge, star_num=i)
-            mad[j] = np.mean(np.abs(np.diff(cal_psf_lc[q])))
+            mad[j] = np.median(np.abs(np.diff(cal_psf_lc[q])))
         np.save(f'/home/tehan/data/priors/prior_mad_{source.gaia["designation"][i]}.npy', mad)
         # plt.plot(source.time % 1.9221, cal_psf_lc, '.')
         # plt.show()
