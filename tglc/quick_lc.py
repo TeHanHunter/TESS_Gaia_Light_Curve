@@ -43,11 +43,11 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 
 if __name__ == '__main__':
-    target = '21.0607 34.4578'
+    target = 'TOI 519'
     local_directory = f'/home/tehan/Documents/tglc/{target}/'
     os.makedirs(local_directory, exist_ok=True)
     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
-                    get_all_lc=True, first_sector_only=False, sector=17)
+                    get_all_lc=False, first_sector_only=True, sector=None)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'

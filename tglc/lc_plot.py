@@ -395,8 +395,18 @@ def figure_3():
     target = '21.0607 34.4578'
     local_directory = f'/home/tehan/Documents/tglc/{target}/'
     os.makedirs(local_directory, exist_ok=True)
-    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
-                    get_all_lc=True, first_sector_only=False, sector=17)
+    # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
+    #                 get_all_lc=True, first_sector_only=False, sector=17)
+    files = glob(f'{local_directory}lc/*.fits')
+    mag_both = np.zeros(len(files))
+    MAD_both = np.zeros(len(files))
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            mag_both[i] = hdul[0].header['TESSMAG']
+            psf_lc = hdul[1].data['psf_flux']
+            aper_lc = hdul[1].data['aperture_flux']
+            aver_lc = np.mean(np.vstack((psf_lc, aper_lc)), axis=0)
+            MAD_both[i] = np.nanmedian(np.abs(np.diff(aver_lc)))
 
     # 1-1/07_07 # 21.0607 34.4578 # 90
     noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
@@ -432,13 +442,14 @@ def figure_3():
     #     scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
     #     mean_diff2.append(np.mean(np.abs(np.diff(lc))) / scale)
 
-    tglc_mag = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/mag.npy')
+    # tglc_mag = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/mag.npy')
+    tglc_mag = mag_both
     MAD_aper = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/MAD_aper.npy')
     AAD_aper = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/AAD_aper.npy')
     MAD_psf = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/MAD_psf.npy')
     AAD_psf = np.load('/home/tehan/Documents/tglc/21.0607 34.4578/AAD_psf.npy')
-    aper_precision = 1.2 * AAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
-    psf_precision = 1.2 * AAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
+    aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
+    psf_precision = 1.48 * MAD_both / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
 
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 1], hspace=0.1), figsize=(5, 6))
     # ax[0].plot(mag1, np.array(mean_diff1) / np.sqrt(2), '.', c='C2', ms=2, label='eleanor PCA', alpha=0.8)
@@ -461,10 +472,10 @@ def figure_3():
     ratio = aper_precision / psf_precision
     tglc_mag = tglc_mag[np.invert(np.isnan(ratio))]
     ratio = ratio[np.invert(np.isnan(ratio))]
-    runningmed = ndimage.median_filter(ratio, size=1500, mode='nearest')
+    runningmed = ndimage.median_filter(ratio, size=150, mode='nearest')
 
-    ax[1].plot(tglc_mag[:-100], ratio[:-100], '.', c='C1', ms=6, alpha=0.15, label='TGLC Aperture / PSF')
-    ax[1].plot(tglc_mag[:-100], runningmed[:-100], c='k', label='Median Filter')
+    ax[1].plot(tglc_mag[:-100], ratio[:-100], '.', c='C1', ms=6, alpha=0.15, label='TGLC Aperture / average')
+    # ax[1].plot(tglc_mag[:-100], runningmed[:-100], c='k', label='Median Filter')
     ax[1].hlines(y=1, xmin=np.min(tglc_mag), xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
     ax[1].set_yscale('log')
     ax[1].set_ylim(0.5, 2)
