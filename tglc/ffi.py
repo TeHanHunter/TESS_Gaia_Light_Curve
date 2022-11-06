@@ -246,6 +246,7 @@ class Source(object):
 
     def search_gaia(self, x, y, co1, co2):
         coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
+        print(coord)
         radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
         attempt = 0
         while attempt < 5:
