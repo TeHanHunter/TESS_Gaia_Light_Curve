@@ -257,7 +257,7 @@ class Source(object):
             except:
                 attempt += 1
                 time.sleep(10)
-                print('Trying Gaia search again.')
+                print(f'Trying Gaia search again. Coord = {coord}, radius = {radius}')
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
