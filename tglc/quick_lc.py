@@ -44,7 +44,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 if __name__ == '__main__':
     target = 'TIC 270022476'
-    local_directory = f'/home/tehan/data/priors/{target}/'
+    local_directory = f'/home/tehan/Documents/tglc/priors/{target}/'
     os.makedirs(local_directory, exist_ok=True)
     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
                     get_all_lc=True, first_sector_only=True, sector=None)

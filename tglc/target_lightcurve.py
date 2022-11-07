@@ -322,8 +322,52 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     if name is not None:
         start = int(np.where(source.gaia['designation'] == name)[0][0])
         end = start + 1
-    with Pool() as p:
-      p.map(partial(prior_mad_lc, A=A, source=source, x_left=x_left, x_right=x_right, 
-                    y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round, 
-                    star_info=star_info, e_psf=e_psf, index=index, background=background), range(num_stars))
-      
+    # with Pool() as p:
+    #   p.map(partial(prior_mad_lc, A=A, source=source, x_left=x_left, x_right=x_right,
+    #                 y_left=y_left, y_right=y_right, x_round=x_round, y_round=y_round,
+    #                 star_info=star_info, e_psf=e_psf, index=index, background=background), range(num_stars))
+
+    i = 1816
+    if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
+        if type(source) == Source:
+            x_left = 1.5
+            x_right = 2.5
+            y_left = 1.5
+            y_right = 2.5
+        if x_left + 2 <= x_round[i] < source.size - (x_right + 2) and y_left + 2 <= y_round[i] < source.size - (
+                y_right + 2):
+            near_edge = False
+        else:
+            near_edge = True
+
+        # mag.append(source.gaia['tess_mag'][i])
+        # mean_diff_aper.append(np.nanmean(np.abs(np.diff(aper_lc[index])) / portion))
+        # mean_diff_psf.append(np.nanmean(np.abs(np.diff(psf_lc[index]))))
+        background_ = background[x_round[i] + source.size * y_round[i], :]
+        quality = np.zeros(len(source.time), dtype=np.int16)
+        sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
+        quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
+        q = quality == 0
+        mad = np.zeros(100)
+        prior = np.logspace(-5, 0, num=100)[60]
+        aperture, psf_lc, star_y, star_x, portion = \
+            fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
+                   near_edge=near_edge, prior=prior)
+        aper_lc = np.sum(
+            aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
+            axis=(1, 2))
+        local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
+                                                                    psf_lc=psf_lc,
+                                                                    aper_lc=aper_lc,
+                                                                    near_edge=near_edge, star_num=i)
+        background_ = background[x_round[i] + source.size * y_round[i], :]
+        quality = np.zeros(len(source.time), dtype=np.int16)
+        sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
+        quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
+        lc_output(source, local_directory=lc_directory, index=i,
+                  tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+                  aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
+                  bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
+                  cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
+                  y_aperture=y_aperture[i],
+                  near_edge=near_edge, save_aper=save_aper, portion=portion)
