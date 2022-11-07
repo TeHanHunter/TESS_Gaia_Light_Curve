@@ -418,19 +418,19 @@ def figure_3():
     #             pass
     # np.save(f'/home/tehan/Documents/tglc/{target}/tic.npy', tic)
     tic = np.load(f'/home/tehan/Documents/tglc/{target}/tic.npy')
-    # mag_both = np.zeros(len(files))
-    # MAD_both = np.zeros(len(files))
-    # for i in trange(len(files)):
-    #     with fits.open(files[i], mode='denywrite') as hdul:
-    #         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-    #         mag_both[i] = hdul[0].header['TESSMAG']
-    #         psf_lc = hdul[1].data['psf_flux'][q]
-    #         aper_lc = hdul[1].data['aperture_flux'][q]
-    #         aver_lc = np.mean(np.vstack((psf_lc, aper_lc)), axis=0)
-    #         MAD_both[i] = np.nanmedian(np.abs(np.diff(aver_lc)))
-    # arg_sort = np.argsort(mag_both)
-    # np.save(f'/home/tehan/Documents/tglc/{target}/mag_both.npy', mag_both[arg_sort])
-    # np.save(f'/home/tehan/Documents/tglc/{target}/MAD_both.npy', MAD_both[[arg_sort]])
+    mag_both = np.zeros(len(files))
+    MAD_both = np.zeros(len(files))
+    for i in trange(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+            mag_both[i] = hdul[0].header['TESSMAG']
+            psf_lc = hdul[1].data['psf_flux'][q]
+            aper_lc = hdul[1].data['aperture_flux'][q]
+            aver_lc = np.average(np.vstack((psf_lc, aper_lc)), weights=[0.4,0.6], axis=0)
+            MAD_both[i] = np.nanmedian(np.abs(np.diff(aver_lc)))
+    arg_sort = np.argsort(mag_both)
+    np.save(f'/home/tehan/Documents/tglc/{target}/mag_both.npy', mag_both[arg_sort])
+    np.save(f'/home/tehan/Documents/tglc/{target}/MAD_both.npy', MAD_both[[arg_sort]])
 
     # 1-1/07_07 # 21.0607 34.4578 # 90
     noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
