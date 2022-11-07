@@ -2624,21 +2624,26 @@ def figure_15():
     gs.update(wspace=0.1, hspace=0.1)
     with open('/home/tehan/Documents/tglc/priors/TIC 270022476/source/source_TIC 270022476.pkl', 'rb') as input_:
         source = pickle.load(input_)
-
+    index = np.where(source.gaia['designation'] == 'Gaia DR3 2015669349341459328')[0][0]
+    x_star = source.gaia[index]['sector_17_x']
+    y_star = source.gaia[index]['sector_17_y']
     files = glob('/home/tehan/Documents/tglc/priors/*.npy')
     ax1 = fig.add_subplot(gs[:, :])
     x = np.logspace(-5, 0, num=100)
-    mags = np.zeros(len(files))
+    # mags = np.zeros(len(files))
     for i in trange(len(files)):
         mad = np.load(files[i])
         mad /= mad[0]
-        index = np.where(source.gaia['designation'] == 'Gaia DR3 ' + (files[i].split(' ')[-1][:-4]))
-        mags[i] = source.gaia['tess_mag'][index]
-        ax1.plot(x, mad, color='C0', alpha=0.3)
-        if np.min(mad) < 0.6:
-            print(files[i])
-    ax1.plot(0, 0, color='C1', alpha=1, label='Local Bright Stars')
-    ax1.plot(0, 0, color='C0', alpha=1, label='Dimmer Stars')
+        index_ = np.where(source.gaia['designation'] == 'Gaia DR3 ' + (files[i].split(' ')[-1][:-4]))[0][0]
+        # mags[i] = source.gaia['tess_mag'][index]
+        ax1.plot(x, mad, color='C0', alpha=0.08, zorder=0)
+        if (np.abs(source.gaia['sector_17_x'][index_] - x_star) < 2) and (
+                np.abs(source.gaia['sector_17_y'][index_] - y_star) < 2):
+            if np.min(mad) < 0.9:
+                print(np.argmin(mad))
+                print(files[i])
+            ax1.plot(x, mad, color='C1', lw=2, alpha=1, zorder=1)
+
     ax1.set_xscale('log')
     # ax2.set_xscale('log')
     # ax1.set_yscale('log')
