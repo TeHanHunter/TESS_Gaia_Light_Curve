@@ -2643,7 +2643,7 @@ def figure_15():
         elif name == 'Gaia DR3 2015669353645091072':
             ax1.plot(x, mad, color='C0', lw=2, alpha=1, zorder=1, label='Dim star close to EB')
             ax1.plot(x[60], mad[60], color='r', alpha=1, zorder=2, marker='D', ms=4, ls='', label='Best Prior')
-
+    ax1.plot(x, mad, color='k', alpha=0.03, zorder=0, label='All Stars')
     with fits.open(
             '/home/tehan/Documents/tglc/priors/TIC 270022476/lc/hlsp_tglc_tess_ffi_gaiaid-2015669353645091072-s0017-cam3-ccd2_tess_v1_llc.fits',
             mode='denywrite') as hdul:
@@ -2697,9 +2697,11 @@ def figure_15():
     ax1.set_ylabel('MAD of normalized flux')
     ax2.set_xlabel('TBJD')
     ax2.set_ylabel('Normalized flux')
-    ax1.legend(loc=0, fontsize=7)
+    leg = ax1.legend(loc=0, fontsize=7)
+    for lh in leg.legendHandles:
+        lh.set_alpha(1)
 
-    # plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
