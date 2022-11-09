@@ -246,7 +246,6 @@ class Source(object):
 
     def search_gaia(self, x, y, co1, co2):
         coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
-        print(coord)
         radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
         attempt = 0
         while attempt < 5:
@@ -342,7 +341,6 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     for i in range(10):
         hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][i]])
         wcs = WCS(hdul[1].header)
-        print(wcs.axis_type_names)
         if wcs.axis_type_names == ['RA', 'DEC']:
             break
 
