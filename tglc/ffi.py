@@ -339,8 +339,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     mask = np.ma.masked_array(mask, mask=bad_pixels)
     mask = np.ma.masked_equal(mask, 0)
 
-    for i in range(100):
-        hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][0]])
+    for i in range(10):
+        hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][i]])
         wcs = WCS(hdul[1].header)
         print(wcs)
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
