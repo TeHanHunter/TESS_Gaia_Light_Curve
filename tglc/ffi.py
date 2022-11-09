@@ -342,7 +342,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     for i in range(10):
         hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][i]])
         wcs = WCS(hdul[1].header)
-        print(wcs)
+        print(wcs.axis_type_names)
+        if wcs.axis_type_names == ['RA', 'DEC']:
+            break
+
     exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
