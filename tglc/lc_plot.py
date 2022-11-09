@@ -401,23 +401,23 @@ def eleanor(tic, local_directory=''):
 
 
 def figure_3():
-    # target = '21.0607 34.4578'
-    target = 'TOI 519'
+    target = '21.0607 34.4578'
+    # target = 'TOI 519'
     local_directory = f'/home/tehan/Documents/tglc/{target}/'
     # os.makedirs(local_directory, exist_ok=True)
     # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
     #                 get_all_lc=True, first_sector_only=False, sector=17)
     files = glob(f'{local_directory}lc/*.fits')
 
-    # tic = np.zeros((len(files), 2))
-    # for i in range(len(files)):
-    #     with fits.open(files[i], mode='denywrite') as hdul:
-    #         try:
-    #             tic[i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
-    #         except:
-    #             pass
-    # np.save(f'/home/tehan/Documents/tglc/{target}/tic.npy', tic)
-    tic = np.load(f'/home/tehan/Documents/tglc/{target}/tic.npy')
+    tic = np.zeros((len(files), 2))
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            try:
+                tic[i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
+            except:
+                pass
+    np.save(f'/home/tehan/Documents/tglc/{target}/tic.npy', tic)
+    # tic = np.load(f'/home/tehan/Documents/tglc/{target}/tic.npy')
 
 
     # 1-1/07_07 # 21.0607 34.4578 # 90
@@ -441,7 +441,7 @@ def figure_3():
     # diff = []
     for i in trange(len(ele_file)):
         lc = np.load(ele_file[i])[1]
-        tic_id = int(os.path.basename(ele_file[i]).split(' ')[-1][:-11])
+        tic_id = int(os.path.basename(ele_file[i]).split(' ')[-1][:-12])
         mag_ = tic[np.where(tic[:, 0] == tic_id)[0][0], 1]
         mag_ele.append(mag_)
         scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
@@ -512,7 +512,7 @@ def figure_3():
     for lh in leg.legendHandles:
         lh.set_alpha(1)
     plt.xlim(7, 20.5)
-    plt.savefig(f'{local_directory}MAD.png', bbox_inches='tight', dpi=300)
+    # plt.savefig(f'{local_directory}MAD.png', bbox_inches='tight', dpi=300)
     plt.show()
     # point-to-point scatter
 
@@ -2508,7 +2508,7 @@ def figure_11():
                          ticks=[0, 10, 20, 30, 40], aspect=50, shrink=0.7)
     ax_cb.ax.set_yticklabels(['0', '10', '20', '30', r'$\geq 40$'])
     ax_cb.ax.set_ylabel(r'TESS Flux ($\mathrm{e^-}$/ s) ')
-    plt.savefig('/mnt/c/users/tehan/desktop/cal_bg.png', bbox_inches='tight', dpi=300)
+    # plt.savefig('/mnt/c/users/tehan/desktop/cal_bg.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
