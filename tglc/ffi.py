@@ -95,11 +95,10 @@ def convert_gaia_id(catalogdata_tic):
         gaia_tuple_cut = tuple(gaia_array_cut[gaia_array_cut != 'None'])
         results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
     tic_ids = []
-    for j in trange(len(results)):
+    for j in range(len(results)):
         tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
     tic_ids = Column(np.array(tic_ids), name='TIC')
     results.add_column(tic_ids)
-    print(results[0])
     return results
 
 
