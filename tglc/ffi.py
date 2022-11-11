@@ -88,6 +88,7 @@ def convert_gaia_id(catalogdata_tic):
             """
     gaia_array = np.array(catalogdata_tic['GAIA'])
     segment = len(gaia_array) // 10000
+    print(len(gaia_array), segment)
     gaia_tuple = tuple(gaia_array[:10000][gaia_array[:10000] != 'None'])
     results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
     for i in range(segment):
