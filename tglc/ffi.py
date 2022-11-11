@@ -88,19 +88,18 @@ def convert_gaia_id(catalogdata_tic):
             """
     gaia_array = np.array(catalogdata_tic['GAIA'])
     segment = len(gaia_array) // 10000
-    print(len(gaia_array), segment)
     gaia_tuple = tuple(gaia_array[:10000][gaia_array[:10000] != 'None'])
     results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
     for i in range(segment):
         gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
         gaia_tuple_cut = tuple(gaia_array_cut[gaia_array_cut != 'None'])
         results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
-        print(len(results))
     tic_ids = []
-    for j in range(len(results)):
+    for j in trange(len(results)):
         tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
     tic_ids = Column(np.array(tic_ids), name='TIC')
     results.add_column(tic_ids)
+    print(results[0])
     return results
 
 
