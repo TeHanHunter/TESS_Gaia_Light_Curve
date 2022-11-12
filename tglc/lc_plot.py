@@ -401,8 +401,8 @@ def eleanor(tic, local_directory=''):
 
 
 def figure_3():
-    target = '21.0607 34.4578'
-    # target = 'TOI 519'
+    # target = '21.0607 34.4578'
+    target = 'TOI 519'
     local_directory = f'/home/tehan/Documents/tglc/{target}/'
     # os.makedirs(local_directory, exist_ok=True)
     # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
@@ -423,7 +423,7 @@ def figure_3():
     # 1-1/07_07 # 21.0607 34.4578 # 90
     noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
     qlp_file = glob(f'{local_directory}QLP/HLSP/*/*.fits')
-    ele_file = glob(f'{local_directory}lc_eleanor_corr/*.npy')
+    ele_file = glob(f'{local_directory}lc_eleanor_psf/*.npy')
 
     mag_qlp = []
     median_diff_qlp = []
@@ -441,7 +441,7 @@ def figure_3():
     # diff = []
     for i in trange(len(ele_file)):
         lc = np.load(ele_file[i])[1]
-        tic_id = int(os.path.basename(ele_file[i]).split(' ')[-1][:-12])
+        tic_id = int(os.path.basename(ele_file[i]).split(' ')[-1][:-10])
         mag_ = tic[np.where(tic[:, 0] == tic_id)[0][0], 1]
         mag_ele.append(mag_)
         scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
@@ -467,7 +467,7 @@ def figure_3():
 
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1), figsize=(5, 7))
     ax[0].plot(mag_both, aver_precision, 'D', c='r', ms=1, label='TGLC Average', alpha=0.4)
-    ax[0].plot(mag_ele, ele_precision, '^', c='C0', ms=1.5, label='eleanor CORR', alpha=0.4)
+    ax[0].plot(mag_ele, ele_precision, '^', c='C0', ms=1.5, label='eleanor PSF', alpha=0.4)
     ax[0].plot(mag_qlp, qlp_precision, '.', c='C2', ms=2, label='QLP', alpha=0.4)
 
     # ax[0].plot(tglc_mag, aper_precision, 'D', c='k', ms=1, label='TGLC PSF', alpha=0.8)
