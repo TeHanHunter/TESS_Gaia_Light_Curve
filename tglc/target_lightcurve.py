@@ -349,7 +349,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
         q = quality == 0
         mad = np.zeros(100)
-        prior = np.logspace(-5, 0, num=100)[60]
+        prior = np.logspace(-5, 0, num=100)[65]
         aperture, psf_lc, star_y, star_x, portion = \
             fit_lc(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                    near_edge=near_edge, prior=prior)

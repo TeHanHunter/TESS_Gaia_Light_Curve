@@ -2645,11 +2645,27 @@ def figure_15():
             ax1.plot(x[60], mad[60], color='r', alpha=1, zorder=2, marker='D', ms=4, ls='', label='Best Prior')
     ax1.plot(x, mad, color='k', alpha=0.03, zorder=0, label='All Stars')
     with fits.open(
-            '/home/tehan/Documents/tglc/priors/TIC 270022476/lc/hlsp_tglc_tess_ffi_gaiaid-2015669353645091072-s0017-cam3-ccd2_tess_v1_llc.fits',
+            '/home/tehan/Documents/tglc/priors/TIC 270022476/lc/hlsp_tglc_tess_ffi_gaiaid-2015669353645091072-s0017-cam3-ccd2_tess_v1_llc_001.fits',
             mode='denywrite') as hdul:
         q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
-        time_prior = hdul[1].data['time'][q]
-        psf_lc_prior = hdul[1].data['cal_psf_flux'][q]
+        time_prior_001 = hdul[1].data['time'][q]
+        psf_lc_prior_001 = hdul[1].data['cal_psf_flux'][q]
+        # aper_lc_prior = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(
+            '/home/tehan/Documents/tglc/priors/TIC 270022476/lc/hlsp_tglc_tess_ffi_gaiaid-2015669353645091072-s0017-cam3-ccd2_tess_v1_llc_0001.fits',
+            mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        time_prior_0001 = hdul[1].data['time'][q]
+        psf_lc_prior_0001 = hdul[1].data['cal_psf_flux'][q]
+        # aper_lc_prior = hdul[1].data['cal_aper_flux'][q]
+
+    with fits.open(
+            '/home/tehan/Documents/tglc/priors/TIC 270022476/lc/hlsp_tglc_tess_ffi_gaiaid-2015669353645091072-s0017-cam3-ccd2_tess_v1_llc_002.fits',
+            mode='denywrite') as hdul:
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        time_prior_002 = hdul[1].data['time'][q]
+        psf_lc_prior_002 = hdul[1].data['cal_psf_flux'][q]
         # aper_lc_prior = hdul[1].data['cal_aper_flux'][q]
 
     with fits.open(
@@ -2670,7 +2686,9 @@ def figure_15():
 
     ax2 = fig.add_subplot(gs[2:, 0])
     ax2.plot(time, psf_lc - 0.5, c='C0')
-    ax2.plot(time_prior, psf_lc_prior, c='C0')
+    # ax2.plot(time_prior_001, psf_lc_prior_001, c='C0')
+    # ax2.plot(time_prior_0001, psf_lc_prior_0001, c='C0')
+    ax2.plot(time_prior_002, psf_lc_prior_002, c='C0')
     ax2.plot(time_eb, psf_lc_eb + 0.5, c='C1')
     ax2.text(1759, 1.35, 'EB' + '\n' + 'Fixed field')
     ax2.text(1759, .85, 'Dim star' + '\n' + 'Best prior')
@@ -2701,7 +2719,7 @@ def figure_15():
     for lh in leg.legendHandles:
         lh.set_alpha(1)
 
-    plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
+    # plt.savefig(f'/home/tehan/Documents/tglc/prior.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
