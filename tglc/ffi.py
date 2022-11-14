@@ -87,9 +87,11 @@ def convert_gaia_id(catalogdata_tic):
             WHERE dr2_source_id IN {gaia_ids}
             """
     gaia_array = np.array(catalogdata_tic['GAIA'])
+    np.save('gaia_array.npy', gaia_array)
     segment = len(gaia_array) // 10000
     gaia_tuple = tuple(gaia_array[:10000][gaia_array[:10000] != 'None'])
     results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
+    np.save('result.npy', np.array(results))
     for i in range(segment):
         gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
         gaia_tuple_cut = tuple(gaia_array_cut[gaia_array_cut != 'None'])
