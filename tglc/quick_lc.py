@@ -10,7 +10,7 @@ controller = ThreadpoolController()
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False, sector=None):
+            first_sector_only=False, sector=None, prior=None):
     '''
     Generate light curve for a single target.
 
@@ -34,7 +34,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
         # try:
         source.select_sector(sector=source.sector_table['sector'][j])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
         if first_sector_only:
             break
         else:
@@ -44,10 +44,10 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 if __name__ == '__main__':
     target = 'TIC 270022476'
-    local_directory = f'/home/tehan/Documents/tglc/{target}/'
+    local_directory = f'/home/tehan/Downloads/tglc/{target}/'
     os.makedirs(local_directory, exist_ok=True)
     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                    get_all_lc=True, first_sector_only=True, sector=None)
+                    get_all_lc=True, first_sector_only=True, sector=None, prior=0.01)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'

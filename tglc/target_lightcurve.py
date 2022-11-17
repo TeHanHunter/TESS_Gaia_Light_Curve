@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from tqdm import trange
 from os.path import exists
-from tglc.effective_psf import get_psf, fit_psf, fit_lc, bg_mod
+from tglc.effective_psf import get_psf, fit_psf, fit_lc, fit_lc_float_field, bg_mod
 from tglc.ffi import Source
 from tglc.ffi_cut import Source_cut
 
@@ -20,7 +20,7 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False, portion=1):
+              local_bg=None, save_aper=False, portion=1, prior=None):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -179,6 +179,8 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('COMMENT', "TRUE_BG = hdul[1].data['background'] + LOC_BG"), end=True)
     table_hdu.header.append(('WOTAN_WL', 1, 'wotan detrending window length'), end=True)
     table_hdu.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
+    if type(prior) == float:
+        table_hdu.header.append(('PRIOR', prior, 'prior of field stars'), end=True)
 
     hdul = fits.HDUList([primary_hdu, table_hdu])
     hdul.writeto(
@@ -188,7 +190,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
-         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False):
+         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False, prior=None):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi_cut.Source or TGLC.ffi_cut.Source_cut, required
@@ -281,9 +283,16 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 near_edge = False
             else:
                 near_edge = True
-            aperture, psf_lc, star_y, star_x, portion = \
-                fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
-                       near_edge=near_edge)
+
+            if type(prior) == float:
+                aperture, psf_lc, star_y, star_x, portion = \
+                    fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
+                                       near_edge=near_edge, prior=prior)
+            else:
+                aperture, psf_lc, star_y, star_x, portion = \
+                    fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
+                           near_edge=near_edge)
+
             aper_lc = np.sum(
                 aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
                 axis=(1, 2))
@@ -303,5 +312,5 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                           aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
                           bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                           cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
-                          y_aperture=y_aperture[i],
-                          near_edge=near_edge, save_aper=save_aper, portion=portion)
+                          y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
+                          prior=prior)
