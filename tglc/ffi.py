@@ -125,7 +125,7 @@ def background_mask(im=None):
         _ok = ok[:, i] * ok[:, i + di]
         coef = np.median(im[:, i + di][_ok] / im[:, i][_ok])
         if 0.5 < coef < 2:
-            running_factor *= coef
+            running_factor *= coef543
             cal_factor[i + di] = running_factor
             i += di
             di = 1  # Reset the stepsize to one.
@@ -352,7 +352,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
         if wcs.axis_type_names == ['RA', 'DEC']:
             break
 
-    exposure = int((hdul[0].header['TSTART'] - hdul[0].header['TSTOP']) * 86400)
+    exposure = int((hdul[0].header['TSTOP'] - hdul[0].header['TSTART']) * 86400)
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)

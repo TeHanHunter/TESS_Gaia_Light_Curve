@@ -296,6 +296,16 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             aper_lc = np.sum(
                 aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
                 axis=(1, 2))
+            if source.sector < 27:  # primary
+                exposure_time = 1800
+            elif source.sector < 56:  # first extended
+                exposure_time = 600
+            else:  # second extended
+                exposure_time = 200
+            saturated_arg_aper = np.where(aper_lc > 9 * 2e5 / exposure_time)
+            aper_lc[saturated_arg_aper] = np.nan
+            saturated_arg_psf = np.where(psf_lc > 9 * 2e5 / exposure_time)
+            psf_lc[saturated_arg_psf] = np.nan
             local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
                                                                         psf_lc=psf_lc,
                                                                         aper_lc=aper_lc,
