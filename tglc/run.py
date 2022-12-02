@@ -35,7 +35,6 @@ def lc_per_ccd(camccd='1-1', local_directory=''):
     with Pool() as p:
         p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
 
-
 def plot_epsf(sector=1, camccd='', local_directory=''):
     fig = plt.figure(constrained_layout=False, figsize=(20, 9))
     gs = fig.add_gridspec(14, 30)
