@@ -18,6 +18,7 @@ def zip_folder(i, sector=1, do_zip=True):
     original_file = f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/'
     if do_zip:
         shutil.make_archive(zip_file, 'zip', original_file)
+        return
     ftps = ftplib.FTP_TLS('archive.stsci.edu')
     ftps.login('tehanhunter@gmail.com', getpass.getpass())
     ftps.prot_p()
@@ -63,5 +64,6 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.t
 
 if __name__ == '__main__':
     hlsp_transfer(sector=1, do_zip=True)
+    hlsp_transfer(sector=1, do_zip=False)
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
