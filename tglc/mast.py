@@ -63,7 +63,8 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.t
 
 
 if __name__ == '__main__':
-    hlsp_transfer(sector=1, do_zip=True)
-    hlsp_transfer(sector=1, do_zip=False)
+    sector = 1
+    hlsp_transfer(sector=sector, do_zip=True)
+    hlsp_transfer(sector=sector, do_zip=False)
     # with Pool(16) as p:
     #     p.map(partial(star_finder, sector=sector), range(16))
