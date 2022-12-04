@@ -139,7 +139,12 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     b = b / scaler
     alpha = np.dot(a.T, a)
     beta = np.dot(a.T, b)
-    fit = np.linalg.solve(alpha, beta)
+    try:
+        fit = np.linalg.solve(alpha, beta)
+    except np.linalg.LinAlgError:
+        fit = np.full(np.shape(a)[1], np.nan)
+        print(len(fit))
+        # fit = np.linalg.lstsq(a, b, rcond=None)[0]
     return fit
 
 

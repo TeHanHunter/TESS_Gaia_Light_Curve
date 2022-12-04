@@ -13,7 +13,6 @@ import os
 def zip_folder(i, sector=1, do_zip=True):
     cam = 1 + i // 4
     ccd = 1 + i % 4
-    os.makedirs(f'/home/tehan/data/mast/sector{sector:04d}/', exist_ok=True)
     zip_file = f'/home/tehan/data/mast/sector{sector:04d}/sector_{sector}_cam_{cam}_ccd_{ccd}'
     original_file = f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/'
     if do_zip:
