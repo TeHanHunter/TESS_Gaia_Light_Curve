@@ -301,9 +301,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 exposure_time = 600
             else:  # second extended
                 exposure_time = 200
-            saturated_arg_aper = np.where(aper_lc > 100 * 9 * 2e5 / exposure_time)  # saturation is 2e5 e-
+            saturated_arg_aper = np.where(aper_lc > 1e5 * 9 * 2e5 / exposure_time)  # saturation is 2e5 e-
             aper_lc[saturated_arg_aper] = np.nan
-            saturated_arg_psf = np.where(psf_lc > 100 * 9 * 2e5 / exposure_time)
+            saturated_arg_psf = np.where(psf_lc > 1e5 * 9 * 2e5 / exposure_time)
             psf_lc[saturated_arg_psf] = np.nan
             local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
                                                                         psf_lc=psf_lc,
