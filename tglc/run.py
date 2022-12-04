@@ -62,7 +62,6 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{camccd}', x=0.5, y=0.92, size=20)
     plt.savefig(f'{local_directory}log/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
 
-
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 1
