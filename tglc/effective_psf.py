@@ -3,7 +3,7 @@ from wotan import flatten
 import tglc
 
 
-def bilinear(x, y, repeat=23):
+def bilinear(x, y, repeat=1):
     '''
     A bilinear formula
     np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
