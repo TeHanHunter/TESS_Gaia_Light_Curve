@@ -13,7 +13,7 @@ def bilinear(x, y, repeat=23):
     :param repeat: side length of epsf
     :return: bilinear interpolation
     '''
-    return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
+    return [1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat
 
 
 def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0])):
@@ -177,7 +177,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     a = star_info[star_num][1]
     star_info_num = (np.repeat(star_info[star_num][0], 4),
                      np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
-                     star_info[star_num][2] * len(a))
+                     np.array(star_info[star_num][2] * len(a)))
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
