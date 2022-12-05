@@ -5,6 +5,7 @@
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
 
 import os
+
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
@@ -30,10 +31,12 @@ def lc_per_cut(i, camccd='', local_directory=''):
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
          local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
 
+
 def lc_per_ccd(camccd='1-1', local_directory=''):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
     with Pool() as p:
         p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
+
 
 def plot_epsf(sector=1, camccd='', local_directory=''):
     fig = plt.figure(constrained_layout=False, figsize=(20, 9))
@@ -61,6 +64,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig.text(0.09, 0.5, 'CUT Y (0-13)', va='center', rotation='vertical')
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{camccd}', x=0.5, y=0.92, size=20)
     plt.savefig(f'{local_directory}log/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
+
 
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())

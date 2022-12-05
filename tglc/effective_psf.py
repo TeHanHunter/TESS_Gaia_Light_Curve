@@ -263,8 +263,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 
 
 def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0, factor=2, psf_size=11,
-                       e_psf=None,
-                       near_edge=False, prior=0.001):
+                       e_psf=None, near_edge=False, prior=0.001):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -289,6 +288,11 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
     whether the star is 2 pixels or closer to the edge of a CCD
     :return: aperture lightcurve, PSF lightcurve, vertical pixel coord, horizontal pixel coord, portion of light in aperture
     """
+    over_size = psf_size * factor + 1
+    a = star_info[star_num][1]
+    star_info_num = (np.repeat(star_info[star_num][0], 4),
+                     np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
+                     np.tile(star_info[star_num][2], len(a)))
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
