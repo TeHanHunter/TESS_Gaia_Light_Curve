@@ -95,10 +95,11 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
         index = coord[down[i]:up[i], left[i]:right[i]]
         A[np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F')] += \
             flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))
+        # star_info.append(
+        #     (np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
+        #      flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))))
         star_info.append(
-            (np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
-             flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))))
-
+            (index, a, flux_ratio[i] * bilinear(x_residual[i], y_residual[i])))
     coord_ = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
     x_coord, y_coord = np.meshgrid(coord_, coord_)
     variance = psf_size
@@ -172,6 +173,11 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     whether the star is 2 pixels or closer to the edge of a CCD
     :return: aperture lightcurve, PSF lightcurve, vertical pixel coord, horizontal pixel coord, portion of light in aperture
     """
+    over_size = psf_size * factor + 1
+    a = star_info[star_num][1]
+    star_info_num = (np.repeat(star_info[star_num][0], 4),
+                     np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
+                     star_info[star_num][2] * len(a))
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
@@ -186,8 +192,8 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     A_cut = np.zeros((len(index), np.shape(A)[1]))
     for i in range(len(index)):
         A_ = np.zeros(np.shape(A)[-1])
-        star_pos = np.where(star_info[star_num][0] == index[i])[0]
-        A_[star_info[star_num][1][star_pos]] = star_info[star_num][2][star_pos]
+        star_pos = np.where(star_info_num[0] == index[i])[0]
+        A_[star_info_num[1][star_pos]] = star_info_num[2][star_pos]
         A_cut[i] = A[index[i], :] - A_
     aperture = np.zeros((len(source.time), len(index)))
     for j in range(len(source.time)):
@@ -218,7 +224,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     else:
         bg_dof = 3
     A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
-    A[np.repeat(index, 4), star_info[star_num][1]] = star_info[star_num][2]
+    A[np.repeat(index, 4), star_info_num[1]] = star_info_num[2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
     psf_sim = psf_shape[:, down_:up_, left_: right_]
     # psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
