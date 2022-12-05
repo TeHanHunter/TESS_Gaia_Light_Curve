@@ -2,6 +2,7 @@ import numpy as np
 from wotan import flatten
 import tglc
 
+
 def bilinear(x, y, repeat=23):
     '''
     A bilinear formula
@@ -13,7 +14,7 @@ def bilinear(x, y, repeat=23):
     :param repeat: side length of epsf
     :return: bilinear interpolation
     '''
-    return [1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat
+    return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 
 
 def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0])):
@@ -86,8 +87,8 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
         A[:, -3] = xx.flatten()
     star_info = []
     for i in range(len(source.gaia)):
-    #     if i == 8:
-    #         continue
+        #     if i == 8:
+        #         continue
         x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
         y_psf = factor * (y_p[down[i]:up[i]] - y_round[i] + half_size) + (y_shift[i] % 1) // (1 / factor)
         x_psf, y_psf = np.meshgrid(x_psf, y_psf)  # super slow here
@@ -177,7 +178,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     a = star_info[star_num][1]
     star_info_num = (np.repeat(star_info[star_num][0], 4),
                      np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
-                     np.array(star_info[star_num][2] * len(a)))
+                     np.tile(star_info[star_num][2], len(a)))
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
@@ -261,8 +262,9 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     return aperture, psf_lc, y - down, x - left, portion
 
 
-def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0, factor=2, psf_size=11, e_psf=None,
-           near_edge=False, prior=0.001):
+def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0, factor=2, psf_size=11,
+                       e_psf=None,
+                       near_edge=False, prior=0.001):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -388,7 +390,7 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
             psf_lc[j] = np.nan
         else:
             aper_flat = aperture[j, :, :].flatten()
-            aper_flat = np.append(aper_flat, np.zeros(len(field_star_num) - 1)) #  / prior
+            aper_flat = np.append(aper_flat, np.zeros(len(field_star_num) - 1))  # / prior
             aper_flat[cut_size ** 2 + star_index] = 0
             postcards = psf_sim[j, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8], :].reshape(cut_size ** 2,
                                                                                             len(field_star_num))
@@ -396,7 +398,8 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
             field_star = postcards * source.gaia['tess_flux_ratio'][field_star_num]
             field_star[:, star_index] = 0
             # A_[:(cut_size ** 2), -4] = np.sum(field_star, axis=1)
-            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num), len(field_star_num))
+            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num),
+                                                                                       len(field_star_num))
             a = np.delete(A_, cut_size ** 2 + star_index, 0)
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][star_index]
     # plt.plot(source.time, psf_lc, '.')
