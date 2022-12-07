@@ -442,14 +442,25 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     if np.isnan(local_bg):
         local_bg = 0
     psf_lc = psf_lc - local_bg
-    cal_aper_lc = flatten(source.time, aper_lc / np.nanmedian(aper_lc), window_length=1, method='biweight',
-                          return_trend=False)
+
+    cal_aper_lc = aper_lc / np.nanmedian(aper_lc)
+    cal_aper_lc[np.where(cal_aper_lc > 100)] = np.nan
+    if np.isnan(cal_aper_lc).all():
+        print('Calibrated aperture flux are not accessible or processed incorrectly. ')
+    else:
+        cal_aper_lc = flatten(source.time, cal_aper_lc, window_length=1, method='biweight',
+                              return_trend=False)
     if near_edge:
         cal_psf_lc = psf_lc
         return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
     else:
-        cal_psf_lc = flatten(source.time, psf_lc / np.nanmedian(psf_lc), window_length=1, method='biweight',
-                             return_trend=False)
+        cal_psf_lc = psf_lc / np.nanmedian(psf_lc)
+        cal_psf_lc[np.where(cal_psf_lc > 100)] = np.nan
+        if np.isnan(cal_psf_lc).all():
+            print('Calibrated PSF flux are not accessible or processed incorrectly. ')
+        else:
+            cal_psf_lc = flatten(source.time, cal_psf_lc, window_length=1, method='biweight',
+                                 return_trend=False)
     # aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
     # if aper_mad > 0.02:
     #     psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
