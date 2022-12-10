@@ -7,7 +7,7 @@
 Introduction
 ==================================
 
-TESS-Gaia Light Curve (TGLC) is a dataset of TESS full-frame image light curves publicly available via the MAST portal. It is fitted with effective PSF and decontaminated with Gaia DR2 and achieved percent-level photometric precision down to 16th magnitude! It unlocks astrophysics to a vast number of dim stars below 12th magnitude.
+TESS-Gaia Light Curve (TGLC) is a dataset of TESS full-frame image light curves publicly available via the MAST portal. It is fitted with effective PSF and decontaminated with Gaia DR3 and achieved percent-level photometric precision down to 16th TESS magnitude! It unlocks astrophysics to a vast number of dim stars below 12th TESS magnitude.
 
 .. image:: logo/EB_comparison_git.png
   :width: 800
@@ -19,7 +19,7 @@ Usage
 
 Download from MAST
 ----------------
-The easiest usage requires no package installation. Simply follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to download light curves from MAST. Light curves are being fitted sector by sector and will be available on MAST gradually. MAST hosts all Gaia DR2 stars down to 16th magnitude. Each .fits file includes PSF and aperture light curves and their calibrated versions. 
+The easiest usage requires no package installation. Simply follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to download light curves from MAST. Light curves are being fitted sector by sector and will be available on MAST gradually. MAST hosts all Gaia DR3 stars down to 16th magnitude. Each .fits file includes PSF and aperture light curves and their calibrated versions. 
 
 Available sectors: `sector worklist <https://docs.google.com/spreadsheets/d/1FhHElWb1wmx9asWiZecAJ2umN0-P_aXn55OBVB34_rg/edit?usp=sharing>`_
 
