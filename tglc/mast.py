@@ -7,6 +7,7 @@ from multiprocessing import Pool
 from functools import partial
 from astropy.io import fits
 import shutil
+import time
 import os
 
 
@@ -19,6 +20,7 @@ def zip_folder(i, sector=1, do_zip=True):
         shutil.make_archive(zip_file, 'zip', original_file)
         return
     else:
+        time.sleep(i)
         ftps = ftplib.FTP_TLS('archive.stsci.edu')
         ftps.login('tehanhunter@gmail.com', getpass.getpass())
         ftps.prot_p()
@@ -66,5 +68,4 @@ if __name__ == '__main__':
     sector = 1
     hlsp_transfer(sector=sector, do_zip=True)
     hlsp_transfer(sector=sector, do_zip=False)
-    # with Pool(16) as p:
-    #     p.map(partial(star_finder, sector=sector), range(16))
+
