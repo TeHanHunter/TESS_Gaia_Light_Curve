@@ -18,28 +18,29 @@ def zip_folder(i, sector=1, do_zip=True):
     if do_zip:
         shutil.make_archive(zip_file, 'zip', original_file)
         return
-    ftps = ftplib.FTP_TLS('archive.stsci.edu')
-    ftps.login('tehanhunter@gmail.com', getpass.getpass())
-    ftps.prot_p()
-    ftps.cwd('pub/hlsp/tglc/')
-    print(f"Sector {sector}")
-    sector_dir = f"s{sector:04d}"
-    # print current directory
-    dir_list = []
-    ftps.retrlines('LIST', dir_list.append)
-    dir_list = [d.split()[-1] for d in dir_list]
-    # check if sector_dir already exists
-    if sector_dir in dir_list:
-        pass
-        # print(f"Directory {sector_dir}/ already exists.")
-    # if not, mkdir new sector directory (use relative path, NOT absolute path)
     else:
-        print(ftps.mkd(sector_dir))
-    # cd into sector directory (use relative path, NOT absolute path)
-    ftps.cwd(sector_dir)
-    # print('\n')
-    with open(f'{zip_file}.zip', 'rb') as f:
-        ftps.storbinary(f"STOR sector_{sector}_cam_{cam}_ccd_{ccd}.zip", f)
+        ftps = ftplib.FTP_TLS('archive.stsci.edu')
+        ftps.login('tehanhunter@gmail.com', getpass.getpass())
+        ftps.prot_p()
+        ftps.cwd('pub/hlsp/tglc/')
+        print(f"Sector {sector}")
+        sector_dir = f"s{sector:04d}"
+        # print current directory
+        dir_list = []
+        ftps.retrlines('LIST', dir_list.append)
+        dir_list = [d.split()[-1] for d in dir_list]
+        # check if sector_dir already exists
+        if sector_dir in dir_list:
+            pass
+            # print(f"Directory {sector_dir}/ already exists.")
+        # if not, mkdir new sector directory (use relative path, NOT absolute path)
+        else:
+            print(ftps.mkd(sector_dir))
+        # cd into sector directory (use relative path, NOT absolute path)
+        ftps.cwd(sector_dir)
+        # print('\n')
+        with open(f'{zip_file}.zip', 'rb') as f:
+            ftps.storbinary(f"STOR sector_{sector}_cam_{cam}_ccd_{ccd}.zip", f)
 
 
 def hlsp_transfer(sector=1, do_zip=True):
