@@ -25,7 +25,7 @@ There are three data access methods:
 
 MAST Portal/bulk download
 ----------------
-The easiest usage requires no package installation. Simply follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to download light curves from MAST. Light curves are being fitted sector by sector and will be available on MAST gradually. MAST hosts all Gaia DR3 stars down to 16th magnitude. Each .fits file includes PSF and aperture light curves and their calibrated versions. 
+The easiest usage requires no package installation. Simply follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to download light curves from MAST or use `MAST Portal <https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html>`. Light curves are being fitted sector by sector and will be available on MAST gradually. MAST hosts all Gaia DR3 stars down to 16th magnitude. Each .fits file includes PSF and aperture light curves and their calibrated versions. 
 
 MAST available sectors: `sector worklist <https://docs.google.com/spreadsheets/d/1FhHElWb1wmx9asWiZecAJ2umN0-P_aXn55OBVB34_rg/edit?usp=sharing>`_
 
@@ -37,3 +37,8 @@ Users can also fit light curves using the package tglc. Using tglc, one can spec
   pip install tglc
   
 for the latest tglc release. After installation, follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to fit light curves. If there is a problem, please leave a comment in the Issues section to help us improve. Thank you!
+
+==================================
+Reference
+==================================
+Our paper is accepted by AJ and the pre-print is available on `arxiv <https://arxiv.org/abs/2301.03704>`_. We will update the reference once it's published on AJ. 
