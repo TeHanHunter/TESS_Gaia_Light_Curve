@@ -25,21 +25,25 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
+    if first_sector_only:
+        sector = True
     source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector)  # sector
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
     name = 'Gaia DR3 ' + str(np.array(catalogdata['GAIA'])[0])
     if get_all_lc:
         name = None
-    for j in range(len(source.sector_table)):
-        # try:
-        source.select_sector(sector=source.sector_table['sector'][j])
+    if type(sector) == int:
+        source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
-        if first_sector_only:
-            break
-        else:
-            sector_num = source.sector_table["sector"][j]
-            # warnings.warn(f'Skipping sector {sector_num}. (Target not in cut)')
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+    else:
+        for j in range(len(source.sector_table)):
+            # try:
+            source.select_sector(sector=source.sector_table['sector'][j])
+            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                     name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+            if first_sector_only:
+                break
 
 
 if __name__ == '__main__':
