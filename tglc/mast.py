@@ -11,6 +11,22 @@ import time
 import os
 
 
+def filter_no_tic_(i, sector=1):
+    time.sleep(i)
+    cam = 1 + i // 4
+    ccd = 1 + i % 4
+    files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/*.fits')
+    for j in range(len(files)):
+        hdul = fits.open(files[j])
+        if hdul[0].header['TICID'] == '':
+            shutil.move(files[j], f'/home/tehan/data/sector{sector:04d}/extra_lc/{os.path.basename(files[j])}')
+
+
+def filter_no_tic(sector=1):
+    os.makedirs(f'/home/tehan/data/sector{sector:04d}/extra_lc/', exist_ok=True)
+    with Pool(16) as p:
+        p.map(partial(filter_no_tic_, sector=sector), range(16))
+
 def zip_folder(i, sector=1, do_zip=True):
     time.sleep(i)
     cam = 1 + i // 4
@@ -66,6 +82,7 @@ def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.t
 
 if __name__ == '__main__':
     sector = 1
+    filter_no_tic(sector=sector)
     hlsp_transfer(sector=sector, do_zip=True)
     hlsp_transfer(sector=sector, do_zip=False)
 
