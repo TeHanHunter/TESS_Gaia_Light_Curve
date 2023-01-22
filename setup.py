@@ -6,12 +6,12 @@ with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name="tglc",
-    version='0.5.1',
+    version='0.5.2',
     author="Te Han",
     author_email="tehanhunter@gmail.com",
     description="TESS-Gaia Light Curve",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     url="https://github.com/TeHanHunter/TESS_Gaia_Light_Curve",
     classifiers=[
         "Programming Language :: Python :: 3",
