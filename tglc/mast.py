@@ -85,7 +85,7 @@ def search_stars(i, sector=1, sector_list=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
     files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
-    for j in range(len(files)):
+    for j in trange(len(files)):
         with fits.open(files[j], mode='denywrite') as hdul:
             try:
                 if int(hdul[0].header['TICID']) in sector_list[sector - 1]:
@@ -99,7 +99,7 @@ def star_spliter(server=1,  # or 2
                  star_list='/mnt/c/users/tehan/Downloads/TESS_EBs_Prsa22.csv'):
     prsa_ebs = ascii.read(star_list)
     sector_list = tuple([] for _ in range(55))  ##1 extended mission
-    for j in trange(len(prsa_ebs)):
+    for j in range(len(prsa_ebs)):
         try:
             sectors = prsa_ebs['sectors'][j].split(',')
             for k in range(len(sectors)):
