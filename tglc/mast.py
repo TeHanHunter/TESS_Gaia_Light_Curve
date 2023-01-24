@@ -107,7 +107,7 @@ def star_spliter(server=1,  # or 2
         except AttributeError:
             pass
     for i in range(server, 27, 2):
-        os.makedirs('/home/tehan/data/dominic/sector{sector:04d}/', exist_ok=True)
+        os.makedirs('/home/tehan/data/dominic/sector{i:04d}/', exist_ok=True)
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, sector_list=sector_list), range(16))
     return
