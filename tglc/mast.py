@@ -107,14 +107,14 @@ def star_spliter(server=1,  # or 2
         except AttributeError:
             pass
     for i in range(server, 27, 2):
-        os.mkdir('/home/tehan/data/dominic/sector{sector:04d}/', exist_ok=True)
+        os.makedirs('/home/tehan/data/dominic/sector{sector:04d}/', exist_ok=True)
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, sector_list=sector_list), range(16))
     return
 
 
 if __name__ == '__main__':
-    star_spliter(server=2, star_list='/mnt/c/users/tehan/Downloads/TESS_EBs_Prsa22.csv')
+    star_spliter(server=1, star_list='/home/tehan/data/TESS_EBs_Prsa22.csv')
     # sector = 1
     # filter_no_tic(sector=sector)
     # hlsp_transfer(sector=sector, do_zip=True)
