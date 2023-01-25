@@ -16,7 +16,19 @@ TESS-Gaia Light Curve (TGLC) is a dataset of TESS full-frame image light curves 
 ==================================
 Usage
 ==================================
+There are four fluxes in each FITS file: aperture flux, PSF flux, calibrated aperture flux, and calibrated PSF flux.
+If you are uncertain which to use:
+* Calibrated aperture flux is the most robust in transit depth. Use this if you are doing transit science.
+* Calibrated psf flux is better in deblending targets. Use this if you need to deblend a target near a variable source
+(The best deblending can be achieved with tglc package by setting a non-zero prior).
+* The aperture flux and PSF flux are not detrended or normalized. Use this if you are doing stellar variability science.
 
+The `tutorial <tutorial/TGLC_tutorial.ipynb>`_ shows the syntaxes and differences among these light curves in several examples.
+
+
+==================================
+Data Access
+==================================
 There are three data access methods:
 
 * MAST Portal: Easiest for acquiring light curves for a few stars. However, new sectors are updated relatively slowly. 
