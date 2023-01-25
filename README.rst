@@ -22,7 +22,7 @@ If you are uncertain which to use:
 * Calibrated aperture flux is the most robust in transit depth. Use this if you are doing transit science.
 * Calibrated psf flux is better in deblending targets. Use this if you need to deblend a target near a variable source. The best deblending can be achieved with tglc package by setting a non-zero prior.
 * The aperture flux and PSF flux are not detrended or normalized. Use this if you are doing stellar variability science.
-
+* **If you are uncertain, start with calibrated aperture flux!**
 The `tutorial <tutorial/TGLC_tutorial.ipynb>`_ shows the syntaxes and differences among these light curves in several examples.
 
 
