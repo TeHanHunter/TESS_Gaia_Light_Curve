@@ -53,4 +53,4 @@ for the latest tglc release. After installation, follow the `tutorial <tutorial/
 ==================================
 Reference
 ==================================
-Our paper is accepted by AJ and the pre-print is available on `arxiv <https://arxiv.org/abs/2301.03704>`_. We will update the reference once it's published on AJ. 
+If you find the TGLC light curves or the tglc package useful in your research, please cite `our paper <https://iopscience.iop.org/article/10.3847/1538-3881/acaaa7>`_ published on the Astronomical Journal. 
