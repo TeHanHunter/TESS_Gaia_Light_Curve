@@ -68,19 +68,6 @@ def hlsp_transfer(sector=1, do_zip=True):
         p.map(partial(zip_folder, sector=sector, do_zip=do_zip), range(16))
 
 
-# def star_finder(i, sector=1, starlist='/home/tehan/data/ben/test_list_sector01.txt'):
-#     stars = np.loadtxt(starlist, dtype=int)
-#     cam = 1 + i // 4
-#     ccd = 1 + i % 4
-#     files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
-#     for j in trange(len(files)):
-#         with fits.open(files[j], mode='denywrite') as hdul:
-#             try:
-#                 if int(hdul[0].header['TICID']) in stars:
-#                     hdul.writeto(f"/home/tehan/data/ben/sector0001/{files[j].split('/')[-1]}", overwrite=True)
-#             except:
-#                 pass
-
 def search_stars(i, sector=1, sector_list=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
@@ -114,8 +101,8 @@ def star_spliter(server=1,  # or 2
 
 
 if __name__ == '__main__':
-    star_spliter(server=1, star_list='/home/tehan/data/TESS_EBs_Prsa22.csv')
-    # sector = 1
-    # filter_no_tic(sector=sector)
-    # hlsp_transfer(sector=sector, do_zip=True)
-    # hlsp_transfer(sector=sector, do_zip=False)
+    sector = 1
+    filter_no_tic(sector=sector)
+    hlsp_transfer(sector=sector, do_zip=True)
+    hlsp_transfer(sector=sector, do_zip=False)
+    # star_spliter(server=1, star_list='/home/tehan/data/TESS_EBs_Prsa22.csv')
