@@ -41,7 +41,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     list of cadences of TESS FFI
     :return:
     """
-    objid = [int(s) for s in (source.gaia[index]['designation']).split() if s.isdigit()][0]
+    objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
     source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits'
     source_exists = exists(source_path)
     if source_exists and os.path.getsize(source_path) > 0:
@@ -95,7 +95,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('TELESCOP', 'TESS', 'telescope'),
         fits.Card('INSTRUME', 'TESS Photometer', 'detector type'),
         fits.Card('FILTER', 'TESS', 'the filter used for the observations'),
-        fits.Card('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR3 ID'),
+        fits.Card('OBJECT', source.gaia[index]['DESIGNATION'], 'string version of Gaia DR3 ID'),
         fits.Card('GAIADR3', objid, 'integer version of Gaia DR3 ID'),
         fits.Card('TICID', ticid, 'TESS Input Catalog ID'),
         fits.Card('SECTOR', source.sector, 'observation sector'),
@@ -153,7 +153,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('TELESCOP', 'TESS', 'telescope'), end=True)
     table_hdu.header.append(('INSTRUME', 'TESS Photometer', 'detector type'), end=True)
     table_hdu.header.append(('FILTER', 'TESS', 'the filter used for the observations'), end=True)
-    table_hdu.header.append(('OBJECT', source.gaia[index]['designation'], 'string version of Gaia DR3 ID'),
+    table_hdu.header.append(('OBJECT', source.gaia[index]['DESIGNATION'], 'string version of Gaia DR3 ID'),
                             end=True)
     table_hdu.header.append(('GAIADR3', objid, 'integer version of GaiaDR3 designation'), end=True)
     table_hdu.header.append(('RADESYS', 'ICRS', 'reference frame of celestial coordinates'), end=True)
@@ -272,7 +272,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     start = 0
     end = num_stars
     if name is not None:
-        start = int(np.where(source.gaia['designation'] == name)[0][0])
+        start = int(np.where(source.gaia['DESIGNATION'] == name)[0][0])
         end = start + 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:

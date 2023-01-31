@@ -1,3 +1,3 @@
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __author__ = 'Te Han, Timothy Brandt'
 __credits__ = 'University of California, Santa Barbara'

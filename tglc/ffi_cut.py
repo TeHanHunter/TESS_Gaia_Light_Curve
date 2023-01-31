@@ -134,7 +134,7 @@ class Source_cut(object):
         self.mask = mask
 
         gaia_targets = self.catalogdata[
-            'designation', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
+            'DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
         gaia_targets['phot_bp_mean_mag'].fill_value = np.nan
         gaia_targets['phot_rp_mean_mag'].fill_value = np.nan
         gaia_targets['pmra'].fill_value = np.nan
@@ -146,7 +146,7 @@ class Source_cut(object):
         y_gaia = np.zeros(num_gaia)
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
-        for i, designation in enumerate(gaia_targets['designation']):
+        for i, designation in enumerate(gaia_targets['DESIGNATION']):
             ra = gaia_targets['ra'][i]
             dec = gaia_targets['dec'][i]
             if not np.isnan(gaia_targets['pmra'][i]):

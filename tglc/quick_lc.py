@@ -47,7 +47,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 
 if __name__ == '__main__':
-    target = 'TIC 270022476'
+    target = 'TOI 519'
     local_directory = f'/home/tehan/Downloads/tglc/{target}/'
     os.makedirs(local_directory, exist_ok=True)
     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,

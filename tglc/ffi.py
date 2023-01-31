@@ -192,7 +192,7 @@ class Source(object):
         catalog_3 = self.search_gaia(x, y, co2, co1)
         catalog_4 = self.search_gaia(x, y, co2, co2)
         catalogdata = vstack([catalog_1, catalog_2, catalog_3, catalog_4], join_type='exact')
-        catalogdata = unique(catalogdata, keys='designation')
+        catalogdata = unique(catalogdata, keys='DESIGNATION')
         coord = wcs.pixel_to_world([x + (size - 1) / 2 + 44], [y + (size - 1) / 2])[0].to_string()
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
@@ -211,7 +211,7 @@ class Source(object):
         y_gaia = np.zeros(num_gaia)
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
-        for i, designation in enumerate(catalogdata['designation']):
+        for i, designation in enumerate(catalogdata['DESIGNATION']):
             ra = catalogdata['ra'][i]
             dec = catalogdata['dec'][i]
             if not np.isnan(catalogdata['pmra'].mask[i]):  # masked?
