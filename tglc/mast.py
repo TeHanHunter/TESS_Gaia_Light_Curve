@@ -104,5 +104,5 @@ if __name__ == '__main__':
     sector = 1
     filter_no_tic(sector=sector)
     hlsp_transfer(sector=sector, do_zip=True)
-    hlsp_transfer(sector=sector, do_zip=False)
+    # hlsp_transfer(sector=sector, do_zip=False)
     # star_spliter(server=1, star_list='/home/tehan/data/TESS_EBs_Prsa22.csv')
