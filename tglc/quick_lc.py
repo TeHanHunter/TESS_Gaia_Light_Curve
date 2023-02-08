@@ -70,7 +70,6 @@ def search_stars(i, sector=1, tics=None, local_directory=None):
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     for i in range(server, 27, 2):
-        os.makedirs(f'/home/tehan/data/dominic/sector{i:04d}/', exist_ok=True)
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
