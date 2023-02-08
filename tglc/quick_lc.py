@@ -102,7 +102,7 @@ def get_tglc_lc(tics=None, method='search', server=1, local_directory=None):
 
 if __name__ == '__main__':
     tics = [236785891, 380517859, 72889156, 289666986, 114947483, 264468702, 12938488]
-    local_directory = f'/home/tehan/cosmos/GEMS/TIC {tics}/'
+    local_directory = f'/home/tehan/cosmos/GEMS/'
     os.makedirs(local_directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='search', server=2, local_directory=local_directory)
 
