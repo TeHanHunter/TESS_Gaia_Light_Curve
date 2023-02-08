@@ -2658,18 +2658,5 @@ def figure_13():
     plt.show()
 
 
-def plot_lc(directory=None):
-    files = glob(f'{directory}*.fits')
-    os.makedirs(f'{directory}plots/', exist_ok=True)
-    for i in range(len(files)):
-        with fits.open(files[i], mode='denywrite') as hdul:
-            plt.figure(constrained_layout=False, figsize=(8, 4))
-            plt.plot(hdul[1].data['time'], hdul[1].data['cal_psf_flux'], '.', label='cal_psf')
-            plt.plot(hdul[1].data['time'], hdul[1].data['cal_aper_flux'], '.', label='cal_aper')
-            plt.title(f'TIC_{hdul[0].header["TICID"]}')
-            plt.legend()
-            plt.savefig(f'{directory}plots/TIC_{hdul[0].header["TICID"]}.png', dpi=300)
-
-
 if __name__ == '__main__':
-    plot_lc(directory='/home/tehan/Documents/tglc/dominic/sector0002/')
+    figure_3()

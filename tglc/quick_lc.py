@@ -1,4 +1,10 @@
 import os
+import glob
+from tqdm import trange
+from astropy.io import fits
+import matplotlib.pyplot as plt
+from multiprocessing import Pool
+from functools import partial
 from tglc.target_lightcurve import epsf
 from tglc.ffi_cut import ffi_cut
 from astroquery.mast import Catalogs
@@ -46,12 +52,60 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
                 break
 
 
+
+def search_stars(i, sector=1, tics=None, directory=None):
+    cam = 1 + i // 4
+    ccd = 1 + i % 4
+    files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
+    for j in trange(len(files)):
+        with fits.open(files[j], mode='denywrite') as hdul:
+            try:
+                if int(hdul[0].header['TICID']) in tics:
+                    hdul.writeto(f"directory{files[j].split('/')[-1]}",
+                                 overwrite=True)
+            except:
+                pass
+
+
+def star_spliter(server=1,  # or 2
+                 tics=None, directory=None):
+    for i in range(server, 27, 2):
+        os.makedirs(f'/home/tehan/data/dominic/sector{i:04d}/', exist_ok=True)
+        with Pool(16) as p:
+            p.map(partial(search_stars, sector=i, tics=tics, directory=directory), range(16))
+    return
+
+
+def plot_lc(local_directory=None):
+    files = glob(f'{local_directory}*.fits')
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            plt.figure(constrained_layout=False, figsize=(8, 4))
+            plt.plot(hdul[1].data['time'], hdul[1].data['cal_psf_flux'], '.', label='cal_psf')
+            plt.plot(hdul[1].data['time'], hdul[1].data['cal_aper_flux'], '.', label='cal_aper')
+            plt.title(f'TIC_{hdul[0].header["TICID"]}')
+            plt.legend()
+            plt.savefig(f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}.png', dpi=300)
+
+
+def get_tglc_lc(tics=None, method='search', server=1, local_directory=None):
+    if method == 'query':
+        for i in range(len(tics)):
+            target = f'TIC {tics[i]}'
+            local_directory = f'{local_directory}{target}/'
+            os.makedirs(local_directory, exist_ok=True)
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+                    get_all_lc=False, first_sector_only=False, sector=None, prior=None)
+    if method == 'search':
+        star_spliter(server=server,  tics=tics, local_directory=local_directory)
+
+
 if __name__ == '__main__':
-    target = 'TOI 519'
-    local_directory = f'/home/tehan/Downloads/tglc/{target}/'
+    tics = [236785891, 380517859, 72889156, 289666986, 114947483, 264468702, 12938488]
+    local_directory = f'/home/tehan/Downloads/tglc/TIC {tics}/'
     os.makedirs(local_directory, exist_ok=True)
-    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                    get_all_lc=False, first_sector_only=True, sector=None, prior=None)
+    get_tglc_lc(tics=tics, method='search', server=1, local_directory=local_directory)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
