@@ -53,7 +53,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 
 
-def search_stars(i, sector=1, tics=None, directory=None):
+def search_stars(i, sector=1, tics=None, local_directory=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
     files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
@@ -61,18 +61,18 @@ def search_stars(i, sector=1, tics=None, directory=None):
         with fits.open(files[j], mode='denywrite') as hdul:
             try:
                 if int(hdul[0].header['TICID']) in tics:
-                    hdul.writeto(f"directory{files[j].split('/')[-1]}",
+                    hdul.writeto(f"{local_directory}{files[j].split('/')[-1]}",
                                  overwrite=True)
             except:
                 pass
 
 
 def star_spliter(server=1,  # or 2
-                 tics=None, directory=None):
+                 tics=None, local_directory=None):
     for i in range(server, 27, 2):
         os.makedirs(f'/home/tehan/data/dominic/sector{i:04d}/', exist_ok=True)
         with Pool(16) as p:
-            p.map(partial(search_stars, sector=i, tics=tics, directory=directory), range(16))
+            p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
 
 
@@ -103,9 +103,9 @@ def get_tglc_lc(tics=None, method='search', server=1, local_directory=None):
 
 if __name__ == '__main__':
     tics = [236785891, 380517859, 72889156, 289666986, 114947483, 264468702, 12938488]
-    local_directory = f'/home/tehan/Downloads/tglc/TIC {tics}/'
+    local_directory = f'/home/tehan/cosmos/GEMS/TIC {tics}/'
     os.makedirs(local_directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='search', server=1, local_directory=local_directory)
+    get_tglc_lc(tics=tics, method='search', server=2, local_directory=local_directory)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
