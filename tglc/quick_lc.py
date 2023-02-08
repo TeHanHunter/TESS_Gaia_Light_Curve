@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 from tqdm import trange
 from astropy.io import fits
 import matplotlib.pyplot as plt
