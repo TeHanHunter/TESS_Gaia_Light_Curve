@@ -277,7 +277,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                  str(source.tic['dr3_source_id'][np.where(source.tic['TIC'] == name)][0]))[0][0])
             end = start + 1
         except IndexError:
-            print(f'Target not found in the requested sector (Sector {sector}). ')
+            print(f'Target not found in the requested sector (Sector {sector}). It is possible that this target does '
+                  f'not have a Gaia ID. ')
             return
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
