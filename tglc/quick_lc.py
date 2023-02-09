@@ -15,7 +15,7 @@ import numpy as np
 controller = ThreadpoolController()
 
 @controller.wrap(limits=1, user_api='blas')
-def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
+def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
             first_sector_only=False, sector=None, prior=None):
     '''
     Generate light curve for a single target.
@@ -35,7 +35,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
         sector = True
     source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector)  # sector
     catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
-    name = 'Gaia DR3 ' + str(np.array(catalogdata['GAIA'])[0])
+    name = 'Gaia DR3 ' + str(np.array(catalogdata['GAIA'])[np.where(catalogdata['ID'] == target.split()[-1])])
     if get_all_lc:
         name = None
     if type(sector) == int:
