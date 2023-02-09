@@ -273,6 +273,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     end = num_stars
     if name is not None:
         try:
+            print(source.tic)
+            print(source.gaia['DESIGNATION'])
+            print(str(source.tic['dr3_source_id'][np.where(source.tic['TIC'] == name)][0]))
             start = int(np.where(source.gaia['DESIGNATION'] == 'Gaia DR3 ' +
                                  str(source.tic['dr3_source_id'][np.where(source.tic['TIC'] == name)][0]))[0][0])
             end = start + 1
