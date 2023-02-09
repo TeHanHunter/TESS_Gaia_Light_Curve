@@ -39,9 +39,9 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     else:
         catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
         if target[0:3] == 'TIC':
-            name = int(np.array(catalogdata['GAIA'])[np.where(catalogdata['ID'] == target[4:])])
+            name = int(target[4:])
         else:
-            name = int(np.array(catalogdata['GAIA'])[0])
+            name = int(np.array(catalogdata['ID'])[0])
             print("Since the provided target is not TIC ID, the resulted light curve with get_all_lc=False can not be "
                   "guaranteed to be the target's light curve. Please check the TIC ID of the output file before using "
                   "the light curve or try use TIC ID as the target in the format of 'TIC 12345678'.")
