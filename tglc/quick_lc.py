@@ -34,10 +34,17 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     if first_sector_only:
         sector = True
     source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector)  # sector
-    catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
-    name = 'Gaia DR3 ' + str(np.array(catalogdata['GAIA'])[np.where(catalogdata['ID'] == target.split()[-1])])
     if get_all_lc:
         name = None
+    else:
+        catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
+        if target[0:3] == 'TIC':
+            name = str(np.array(catalogdata['GAIA'])[np.where(catalogdata['ID'] == target[4:])])
+        else:
+            name = str(np.array(catalogdata['GAIA'])[0])
+            print("Since the provided target is not TIC ID, the resulted light curve with get_all_lc=False can not be "
+                  "guaranteed to be the target's light curve. Please check the TIC ID of the output file before using "
+                  "the light curve or try use TIC ID as the target in the format of 'TIC 12345678'.")
     if type(sector) == int:
         source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
