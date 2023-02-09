@@ -272,8 +272,12 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     start = 0
     end = num_stars
     if name is not None:
-        start = int(np.where(source.gaia['DESIGNATION'] == name)[0][0])
-        end = start + 1
+        try:
+            start = int(np.where(source.gaia['DESIGNATION'] == name)[0][0])
+            end = start + 1
+        except IndexError:
+            print(f'Target not found in the requested sector (Sector {sector}). ')
+            return
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
             if type(source) == Source:
