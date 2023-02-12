@@ -102,14 +102,14 @@ def get_tglc_lc(tics=None, method='search', server=1, directory=None):
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, sector=None, prior=None)
+                    get_all_lc=False, first_sector_only=True, sector=None, prior=None)
     if method == 'search':
         star_spliter(server=server,  tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [236785891, 380517859, 72889156, 289666986, 114947483, 264468702, 12938488]
-    directory = f'/home/tehan/data/cosmos/GEMS/'
+    tics = [236785891]
+    directory = f'/home/tehan/Downloads/tglc/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=directory)

@@ -752,7 +752,7 @@ def figure_6(mode='psf'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009*.fits')[0],
                    mode='denywrite') as hdul:
-        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        q =  list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_09 = hdul[1].data['time'][q]
         f_09 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0010*.fits')[0],
