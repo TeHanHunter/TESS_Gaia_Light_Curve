@@ -10,6 +10,7 @@ import shutil
 import time
 import os
 from astropy.io import ascii
+import zipfile
 
 
 def filter_no_tic_(i, sector=1):
@@ -29,14 +30,20 @@ def filter_no_tic(sector=1):
         p.map(partial(filter_no_tic_, sector=sector), range(16))
 
 
-def zip_folder(i, sector=1, do_zip=True):
+def zip_folder(i, sector=1, do_zip=True, lc_num_per_zip=1e6):
     time.sleep(i)
     cam = 1 + i // 4
     ccd = 1 + i % 4
     zip_file = f'/home/tehan/data/mast/sector{sector:04d}/sector_{sector}_cam_{cam}_ccd_{ccd}'
     original_file = f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/'
+    files = glob(f'{original_file}*.fits')
     if do_zip:
-        shutil.make_archive(zip_file, 'zip', original_file)
+        num_zips = int(len(files) // lc_num_per_zip + 1)
+        for i in range(num_zips):
+            with zipfile.ZipFile(f'{zip_file}_{i:02d}.zip', 'w') as zipMe:
+                for file in files[i:int(i * lc_num_per_zip)]:
+                    zipMe.write(file, compress_type=zipfile.ZIP_DEFLATED)
+        # shutil.make_archive(zip_file, 'zip', original_file)
         return
     else:
         ftps = ftplib.FTP_TLS('archive.stsci.edu')
