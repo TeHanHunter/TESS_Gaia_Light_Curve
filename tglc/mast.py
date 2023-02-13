@@ -41,7 +41,7 @@ def zip_folder(i, sector=1, do_zip=True, lc_num_per_zip=1e6):
         num_zips = int(len(files) // lc_num_per_zip + 1)
         for i in range(num_zips):
             with zipfile.ZipFile(f'{zip_file}_{i:02d}.zip', 'w') as zipMe:
-                for file in files[i:int(i * lc_num_per_zip)]:
+                for file in files[int(i * lc_num_per_zip):int((i+1) * lc_num_per_zip)]:
                     zipMe.write(file, compress_type=zipfile.ZIP_DEFLATED)
         # shutil.make_archive(zip_file, 'zip', original_file)
         return
