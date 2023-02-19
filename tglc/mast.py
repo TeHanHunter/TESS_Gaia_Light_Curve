@@ -81,16 +81,17 @@ def search_stars(i, sector=1, star_list=None):
     files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
     for j in trange(len(files)):
         with fits.open(files[j], mode='denywrite') as hdul:
-            if int(hdul[0].header['TICID']) in star_list:
-                hdul.writeto(f"/home/tehan/data/cosmos/dominic_EB/sector{sector:04d}/{files[j].split('/')[-1]}",
-                             overwrite=True)
+            try:
+                if int(hdul[0].header['TICID']) in star_list:
+                    hdul.writeto(f"/home/tehan/data/cosmos/dominic_EB/sector{sector:04d}/{files[j].split('/')[-1]}",
+                                 overwrite=True)
+            except ValueError:
+                pass
 
 
 def star_spliter(server=1,  # or 2
                  star_list='/home/tehan/data/cosmos/dominic_EB/eb_cat.txt'):
     prsa_ebs = ascii.read(star_list)['ID'].data
-    print('Done')
-    print(465174375 in prsa_ebs)
     # sector_list = tuple([] for _ in range(55))  ##1 extended mission
     # for j in range(len(prsa_ebs)):
     #     try:
