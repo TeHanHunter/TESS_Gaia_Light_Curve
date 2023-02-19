@@ -41,7 +41,7 @@ def zip_folder(i, sector=1, do_zip=True, lc_num_per_zip=1e6):
         num_zips = int(len(files) // lc_num_per_zip + 1)
         for i in range(num_zips):
             with zipfile.ZipFile(f'{zip_file}_{i:02d}.zip', 'w') as zipMe:
-                for file in files[int(i * lc_num_per_zip):int((i+1) * lc_num_per_zip)]:
+                for file in files[int(i * lc_num_per_zip):int((i + 1) * lc_num_per_zip)]:
                     zipMe.write(file, compress_type=zipfile.ZIP_DEFLATED)
         # shutil.make_archive(zip_file, 'zip', original_file)
         return
@@ -75,41 +75,40 @@ def hlsp_transfer(sector=1, do_zip=True):
         p.map(partial(zip_folder, sector=sector, do_zip=do_zip), range(16))
 
 
-def search_stars(i, sector=1, sector_list=None):
+def search_stars(i, sector=1, star_list=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
     files = glob(f'/home/tehan/data/sector{sector:04d}/lc/{cam}-{ccd}/hlsp_*.fits')
     for j in trange(len(files)):
         with fits.open(files[j], mode='denywrite') as hdul:
-            try:
-                if int(hdul[0].header['TICID']) in sector_list[sector - 1]:
-                    hdul.writeto(f"/home/tehan/data/dominic/sector{sector:04d}/{files[j].split('/')[-1]}",
-                                 overwrite=True)
-            except:
-                pass
+            if int(hdul[0].header['TICID']) in star_list:
+                hdul.writeto(f"/home/tehan/data/cosmos/dominic_EB/sector{sector:04d}/{files[j].split('/')[-1]}",
+                             overwrite=True)
 
 
 def star_spliter(server=1,  # or 2
-                 star_list='/mnt/c/users/tehan/Downloads/TESS_EBs_Prsa22.csv'):
-    prsa_ebs = ascii.read(star_list)
-    sector_list = tuple([] for _ in range(55))  ##1 extended mission
-    for j in range(len(prsa_ebs)):
-        try:
-            sectors = prsa_ebs['sectors'][j].split(',')
-            for k in range(len(sectors)):
-                sector_list[int(sectors[k]) - 1].append(prsa_ebs['tess_id'][j])
-        except AttributeError:
-            pass
+                 star_list='/home/tehan/data/dominic_EB/eb_cat.txt'):
+    prsa_ebs = ascii.read(star_list)['ID'].data
+    print('Done')
+    print(465174375 in prsa_ebs)
+    # sector_list = tuple([] for _ in range(55))  ##1 extended mission
+    # for j in range(len(prsa_ebs)):
+    #     try:
+    #         sectors = prsa_ebs['sectors'][j].split(',')
+    #         for k in range(len(sectors)):
+    #             sector_list[int(sectors[k]) - 1].append(prsa_ebs['tess_id'][j])
+    #     except AttributeError:
+    #         pass
     for i in range(server, 27, 2):
-        os.makedirs(f'/home/tehan/data/dominic/sector{i:04d}/', exist_ok=True)
+        os.makedirs(f'/home/tehan/data/cosmos/dominic_EB/sector{i:04d}/', exist_ok=True)
         with Pool(16) as p:
-            p.map(partial(search_stars, sector=i, sector_list=sector_list), range(16))
+            p.map(partial(search_stars, sector=i, star_list=prsa_ebs), range(16))
     return
 
 
 if __name__ == '__main__':
-    sector = 1
-    filter_no_tic(sector=sector)
-    hlsp_transfer(sector=sector, do_zip=True)
+    # sector = 1
+    # filter_no_tic(sector=sector)
+    # hlsp_transfer(sector=sector, do_zip=True)
     # hlsp_transfer(sector=sector, do_zip=False)
-    # star_spliter(server=1, star_list='/home/tehan/data/TESS_EBs_Prsa22.csv')
+    star_spliter(server=1)  # star_list='/home/tehan/Documents/tglc/dominic_EB/eb_cat.txt'
