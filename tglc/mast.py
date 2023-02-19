@@ -87,7 +87,7 @@ def search_stars(i, sector=1, star_list=None):
 
 
 def star_spliter(server=1,  # or 2
-                 star_list='/home/tehan/data/dominic_EB/eb_cat.txt'):
+                 star_list='/home/tehan/data/cosmos/dominic_EB/eb_cat.txt'):
     prsa_ebs = ascii.read(star_list)['ID'].data
     print('Done')
     print(465174375 in prsa_ebs)
