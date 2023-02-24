@@ -100,8 +100,8 @@ def plot_lc(local_directory=None):
             # plt.xlim(2845, 2855)
             plt.title(f'TIC_{hdul[0].header["TICID"]}')
             plt.legend()
-            plt.show()
-            # plt.savefig(f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}.png', dpi=300)
+            # plt.show()
+            plt.savefig(f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}.png', dpi=300)
 
 
 def get_tglc_lc(tics=None, method='search', server=1, directory=None):
@@ -111,17 +111,18 @@ def get_tglc_lc(tics=None, method='search', server=1, directory=None):
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                    get_all_lc=False, first_sector_only=True, sector=None, prior=None)
+                    get_all_lc=False, first_sector_only=False, sector=None, prior=None)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [90888077]
-    directory = f'/home/tehan/Documents/GEMS/TIC 90888077/lc/'
-    # os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    tics = [16005254]
+    directory = f'/home/tehan/Documents/GEMS/'
+    os.makedirs(directory, exist_ok=True)
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     plot_lc(local_directory=directory)
+
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
     # data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
