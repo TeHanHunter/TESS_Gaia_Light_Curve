@@ -1,6 +1,7 @@
 import os
 from glob import glob
 from tqdm import trange
+from wotan import flatten
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
@@ -12,7 +13,9 @@ from astroquery.mast import Catalogs
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
+
 controller = ThreadpoolController()
+
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
@@ -54,10 +57,9 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             # try:
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                     name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
             if first_sector_only:
                 break
-
 
 
 def search_stars(i, sector=1, tics=None, local_directory=None):
@@ -87,12 +89,19 @@ def plot_lc(local_directory=None):
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
+            q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             plt.figure(constrained_layout=False, figsize=(8, 4))
-            plt.plot(hdul[1].data['time'], hdul[1].data['cal_psf_flux'], '.', label='cal_psf')
-            plt.plot(hdul[1].data['time'], hdul[1].data['cal_aper_flux'], '.', label='cal_aper')
+            # plt.plot(hdul[1].data['time'], hdul[1].data['cal_psf_flux'], '.', label='cal_psf')
+            cal_aper_lc, trend = flatten(hdul[1].data['time'], hdul[1].data['aperture_flux'] + np.min(hdul[1].data['aperture_flux']) + 1000, window_length=1,
+                                        method='biweight', return_trend=True)
+            cal_aper = (hdul[1].data['aperture_flux'] + np.min(hdul[1].data['aperture_flux']) + 1000 - trend) / np.median(hdul[1].data['aperture_flux']) + 1
+            # plt.plot(hdul[1].data['time'], cal_aper, '.', c='silver', label='cal_aper')
+            plt.plot(hdul[1].data['time'][q], cal_aper[q], '.k', label='cal_aper_flagged')
+            # plt.xlim(2845, 2855)
             plt.title(f'TIC_{hdul[0].header["TICID"]}')
             plt.legend()
-            plt.savefig(f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}.png', dpi=300)
+            plt.show()
+            # plt.savefig(f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}.png', dpi=300)
 
 
 def get_tglc_lc(tics=None, method='search', server=1, directory=None):
@@ -104,15 +113,15 @@ def get_tglc_lc(tics=None, method='search', server=1, directory=None):
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
                     get_all_lc=False, first_sector_only=True, sector=None, prior=None)
     if method == 'search':
-        star_spliter(server=server,  tics=tics, local_directory=directory)
+        star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [236785891]
-    directory = f'/home/tehan/Downloads/tglc/'
-    os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_lc(local_directory=directory)
+    tics = [90888077]
+    directory = f'/home/tehan/Documents/GEMS/TIC 90888077/lc/'
+    # os.makedirs(directory, exist_ok=True)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    plot_lc(local_directory=directory)
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
     # data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
