@@ -449,7 +449,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     if np.isnan(cal_aper_lc).all():
         print('Calibrated aperture flux are not accessible or processed incorrectly. ')
     else:
-        cal_aper_lc, trend = flatten(source.time, cal_aper_lc - np.min(cal_aper_lc) + 1000,
+        _, trend = flatten(source.time, cal_aper_lc - np.min(cal_aper_lc) + 1000,
                                     window_length=1, method='biweight', return_trend=True)
         cal_aper_lc = (cal_aper_lc - np.min(cal_aper_lc) + 1000 - trend) / np.median(cal_aper_lc) + 1
         # cal_aper_lc = flatten(source.time, cal_aper_lc, window_length=1, method='biweight',
@@ -463,7 +463,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
         if np.isnan(cal_psf_lc).all():
             print('Calibrated PSF flux are not accessible or processed incorrectly. ')
         else:
-            cal_psf_lc, trend = flatten(source.time, cal_psf_lc - np.min(cal_psf_lc) + 1000,
+            _, trend = flatten(source.time, cal_psf_lc - np.min(cal_psf_lc) + 1000,
                                          window_length=1, method='biweight', return_trend=True)
             cal_psf_lc = (cal_psf_lc - np.min(cal_psf_lc) + 1000 - trend) / np.median(cal_psf_lc) + 1
             # cal_psf_lc = flatten(source.time, cal_psf_lc, window_length=1, method='biweight',
