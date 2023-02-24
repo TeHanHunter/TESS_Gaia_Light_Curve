@@ -92,11 +92,11 @@ def plot_lc(local_directory=None):
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             plt.figure(constrained_layout=False, figsize=(8, 4))
             # plt.plot(hdul[1].data['time'], hdul[1].data['cal_psf_flux'], '.', label='cal_psf')
-            cal_aper_lc, trend = flatten(hdul[1].data['time'], hdul[1].data['aperture_flux'] + np.min(hdul[1].data['aperture_flux']) + 1000, window_length=1,
-                                        method='biweight', return_trend=True)
-            cal_aper = (hdul[1].data['aperture_flux'] + np.min(hdul[1].data['aperture_flux']) + 1000 - trend) / np.median(hdul[1].data['aperture_flux']) + 1
-            # plt.plot(hdul[1].data['time'], cal_aper, '.', c='silver', label='cal_aper')
-            plt.plot(hdul[1].data['time'][q], cal_aper[q], '.k', label='cal_aper_flagged')
+            # cal_aper_lc, trend = flatten(hdul[1].data['time'], hdul[1].data['aperture_flux'] + np.min(hdul[1].data['aperture_flux']) + 1000, window_length=1,
+            #                             method='biweight', return_trend=True)
+            # cal_aper = (hdul[1].data['aperture_flux'] + np.min(hdul[1].data['aperture_flux']) + 1000 - trend) / np.median(hdul[1].data['aperture_flux']) + 1
+            plt.plot(hdul[1].data['time'], hdul[1].data['cal_aper_flux'], '.', c='silver', label='cal_aper')
+            plt.plot(hdul[1].data['time'][q], hdul[1].data['cal_aper_flux'][q], '.k', label='cal_aper_flagged')
             # plt.xlim(2845, 2855)
             plt.title(f'TIC_{hdul[0].header["TICID"]}')
             plt.legend()
