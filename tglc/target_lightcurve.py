@@ -294,7 +294,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             else:
                 near_edge = True
 
-            if type(prior) == float or np.float64:
+            if type(prior) == float or type(prior) == np.float64:
                 aperture, psf_lc, star_y, star_x, portion = \
                     fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                                        near_edge=near_edge, prior=prior)
