@@ -275,7 +275,7 @@ def get_tglc_lc(tics=None, method='search', server=1, directory=None, prior=None
 
 if __name__ == '__main__':
     tics = [311555090, 406717909, 202468443, 60910638, 73692250, 77490011, 67512645, 135272255]
-    directory = f'/home/tehan/Documents/GEMS/'
+    directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_contamination(local_directory=f'{directory}TIC 27858644/', gaia_dr3=2091177593123254016)
