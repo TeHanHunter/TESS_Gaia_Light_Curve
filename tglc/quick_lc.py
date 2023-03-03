@@ -261,7 +261,7 @@ def choose_prior(local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.show()
 
 
-def get_tglc_lc(tics=None, method='search', server=1, directory=None, prior=None):
+def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
     if method == 'query':
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'

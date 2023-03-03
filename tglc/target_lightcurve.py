@@ -44,9 +44,9 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
     source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits'
     source_exists = exists(source_path)
-    # if source_exists and (os.path.getsize(source_path) > 0):
-    #     print('LC exists, please (re)move the file if you wish to overwrite.')
-    #     return
+    if source_exists and (os.path.getsize(source_path) > 0):
+        print('LC exists, please (re)move the file if you wish to overwrite.')
+        return
     if np.isnan(source.gaia[index]['phot_bp_mean_mag']) or ma.is_masked(source.gaia[index]['phot_bp_mean_mag']):
         gaia_bp = 'NaN'
     else:
