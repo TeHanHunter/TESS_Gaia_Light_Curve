@@ -98,10 +98,10 @@ def plot_lc(local_directory=None):
             # plt.xlim(2845, 2855)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
             plt.legend()
-            plt.show()
-            # plt.savefig(
-            #     f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}.png',
-            #     dpi=300)
+            # plt.show()
+            plt.savefig(
+                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}.png',
+                dpi=300)
 
 
 def plot_pf_lc(local_directory=None, period=None):
@@ -274,45 +274,12 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [311555090, 406717909, 202468443, 60910638, 73692250, 77490011, 67512645, 135272255]
-    directory = f'/home/tehan/data/cosmos/GEMS/'
+    tics = [172370679]
+    directory = f'/home/tehan/Documents/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_contamination(local_directory=f'{directory}TIC 27858644/', gaia_dr3=2091177593123254016)
-    # plot_contamination(local_directory=f'{directory}TIC 90888077/', gaia_dr3=2845310284780420864)
-    # plot_lc(local_directory=f'{directory}TIC 27858644/lc/')
+    plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
+    # plot_lc(local_directory=f'{directory}TIC 135272255/lc/')
     # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
     # choose_prior(local_directory=directory)
-
-    ####### list of targets example
-    # local_directory = '/home/tehan/data/ob_associations/'
-    # data = ascii.read(f'{local_directory}Bouret_2021_2013_Ostars.csv')
-    # hosts = np.array(data['Gaia EDR3'])
-    # for i in range(24, len(hosts)):
-    #     tglc_lc(target='Gaia EDR3 ' + str(hosts[i]), local_directory=local_directory, size=90, save_aper=True, get_all_lc=False)
-
-    ####### list of targets
-    # local_directory = '/mnt/d/Astro/hpf/'
-    # os.makedirs(local_directory + f'logs/', exist_ok=True)
-    # os.makedirs(local_directory + f'lc/', exist_ok=True)
-    # os.makedirs(local_directory + f'epsf/', exist_ok=True)
-    # os.makedirs(local_directory + f'source/', exist_ok=True)
-    # data = ascii.read(local_directory + 'hpf_toi_ffi_targets.txt')
-    # hosts = np.array(data['TIC'])
-    # gaia_name = []
-    # for i in range(len(hosts)):
-    #     target = hosts[i]  # Target identifier or coordinates TOI-3714
-    #     catalogdata = Catalogs.query_object('TIC ' + str(target), radius=0.02, catalog="TIC")
-    #     name = 'Gaia DR2 ' + str(np.array(catalogdata['GAIA'])[np.where(catalogdata['ID'] == str(target))[0][0]])
-    #     gaia_name.append(name)
-    #     print('TIC ' + str(target), name)
-    #     size = 90  # int, suggests big cuts
-    #     source = ffi_cut(target='TIC ' + str(target), size=size, local_directory=local_directory)
-    #     for j in range(len(source.sector_table)):
-    #         try:
-    #             source.select_sector(sector=source.sector_table['sector'][j])
-    #             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-    #                  name=name)
-    #         except:
-    #             warnings.warn(f'Skipping sector {source.sector_table["sector"][j]}. (Target not in cut)')
-    # np.savetxt('/mnt/d/Astro/hpf/hpf_gaia_dr2.txt', gaia_name)

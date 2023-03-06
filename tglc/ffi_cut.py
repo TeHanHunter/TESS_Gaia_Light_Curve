@@ -112,10 +112,10 @@ class Source_cut(object):
         data_time = hdu[1].data['TIME']
         data_flux = hdu[1].data['FLUX']
         data_flux_err = hdu[1].data['FLUX_ERR']
-        data_quality = hdu[1].data['QUALITY']
-        data_time = data_time[np.where(data_quality == 0)]
-        data_flux = data_flux[np.where(data_quality == 0), :, :][0]
-        data_flux_err = data_flux_err[np.where(data_quality == 0), :, :][0]
+        # data_quality = hdu[1].data['QUALITY']
+        # data_time = data_time[np.where(data_quality == 0)]
+        # data_flux = data_flux[np.where(data_quality == 0), :, :][0]
+        # data_flux_err = data_flux_err[np.where(data_quality == 0), :, :][0]
         self.wcs = wcs
         self.time = data_time
         self.flux = data_flux
