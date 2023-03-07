@@ -274,12 +274,12 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [172370679]
-    directory = f'/home/tehan/Documents/GEMS/'
+    tics = [119585136]
+    directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_contamination(local_directory=f'{directory}TIC 27858644/', gaia_dr3=2091177593123254016)
-    plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
+    # plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
     # plot_lc(local_directory=f'{directory}TIC 135272255/lc/')
     # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
     # choose_prior(local_directory=directory)
