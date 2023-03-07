@@ -55,16 +55,16 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         gaia_rp = 'NaN'
     else:
         gaia_rp = source.gaia[index]['phot_rp_mean_mag']
-    psf_err = 1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc)))
+    psf_err = 1.4826 * np.nanmedian(np.abs(psf_lc - np.nanmedian(psf_lc)))
     if np.isnan(psf_err):
         psf_err = 'NaN'
-    aper_err = 1.4826 * np.median(np.abs(aper_lc - np.median(aper_lc)))
+    aper_err = 1.4826 * np.nanmedian(np.abs(aper_lc - np.nanmedian(aper_lc)))
     if np.isnan(aper_err):
         aper_err = 'NaN'
-    cal_psf_err = 1.4826 * np.median(np.abs(cal_psf_lc - np.median(cal_psf_lc)))
+    cal_psf_err = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - np.nanmedian(cal_psf_lc)))
     if np.isnan(cal_psf_err):
         cal_psf_err = 'NaN'
-    cal_aper_err = 1.4826 * np.median(np.abs(cal_aper_lc - np.median(cal_aper_lc)))
+    cal_aper_err = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - np.nanmedian(cal_aper_lc)))
     if np.isnan(cal_aper_err):
         cal_aper_err = 'NaN'
     try:
