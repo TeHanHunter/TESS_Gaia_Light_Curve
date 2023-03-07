@@ -50,6 +50,13 @@ Users can also fit light curves using the package tglc. Using tglc, one can spec
   
 for the latest tglc release. After installation, follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to fit light curves. If there is a problem, please leave a comment in the Issues section to help us improve. Thank you!
 
+
+==================================
+Known Problems
+==================================
+There are several imperfections we noticed in the MAST TGLC light curves and tglc package:
+* If the star is very dim (~< 15 Tmag) near a variable source, it can make the aperture and/or PSF light curve negative for some cadences. This is a very rare scenario, but could be important. The detrending algorithm could malfunction and result in bad cal_aper_flux and/or cal_psf_flux. This is now fixed for tglc package, but this problem remains for the primary mission light curves published on MAST. Please detrend again if necessary. We will also correct for the extended mission light curves on MAST.
+
 ==================================
 Reference
 ==================================
