@@ -86,15 +86,15 @@ def star_spliter(server=1,  # or 2
     return
 
 
-def plot_lc(local_directory=None):
+def plot_lc(local_directory=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             plt.figure(constrained_layout=False, figsize=(8, 4))
-            plt.plot(hdul[1].data['time'], hdul[1].data['cal_aper_flux'], '.', c='silver', label='cal_aper')
-            plt.plot(hdul[1].data['time'][q], hdul[1].data['cal_aper_flux'][q], '.k', label='cal_aper_flagged')
+            plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
+            plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
             # plt.xlim(2845, 2855)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
             plt.legend()
@@ -274,12 +274,16 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [119585136]
-    directory = f'/home/tehan/data/cosmos/GEMS/'
-    os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_contamination(local_directory=f'{directory}TIC 27858644/', gaia_dr3=2091177593123254016)
+    target = '7.806500 85.008861'
+    directory = f'/home/tehan/data/cosmos/'
+    tglc_lc(target=target, local_directory=directory, size=90, save_aper=True, limit_mag=22, get_all_lc=False,
+            first_sector_only=False, sector=None, prior=None)
+    # tics = [119585136]
+    # directory = f'/home/tehan/data/cosmos/GEMS/'
+    # os.makedirs(directory, exist_ok=True)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    plot_contamination(local_directory=f'{directory}{target}/', gaia_dr3=573571549281813760)
     # plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
-    # plot_lc(local_directory=f'{directory}TIC 135272255/lc/')
+    plot_lc(local_directory=f'{directory}{target}/lc/', type='aperture_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
     # choose_prior(local_directory=directory)
