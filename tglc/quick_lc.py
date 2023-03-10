@@ -282,8 +282,8 @@ if __name__ == '__main__':
     # directory = f'/home/tehan/data/cosmos/GEMS/'
     # os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_contamination(local_directory=f'{directory}{target}/', gaia_dr3=573571549281813760)
+    plot_contamination(local_directory=f'{directory}/', gaia_dr3=573571549281813760)
     # plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
-    plot_lc(local_directory=f'{directory}{target}/lc/', type='aperture_flux')
+    plot_lc(local_directory=f'{directory}/lc/', type='aperture_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
     # choose_prior(local_directory=directory)
