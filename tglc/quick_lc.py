@@ -275,9 +275,9 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     target = '7.806500 85.008861'
-    directory = f'/home/tehan/data/cosmos/'
+    directory = f'/home/tehan/data/cosmos/{target}'
     tglc_lc(target=target, local_directory=directory, size=90, save_aper=True, limit_mag=22, get_all_lc=False,
-            first_sector_only=False, sector=None, prior=None)
+            first_sector_only=False, sector=25, prior=None)
     # tics = [119585136]
     # directory = f'/home/tehan/data/cosmos/GEMS/'
     # os.makedirs(directory, exist_ok=True)
