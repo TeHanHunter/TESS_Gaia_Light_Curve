@@ -62,7 +62,7 @@ def mast_json2table(json_obj):
     return data_table
 
 
-def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5, limit_mag=None):
+def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5, limit_mag=16):
     request = {"service": "Mast.Catalogs.Filtered.Tic.Position.Rows",
                "format": "json",
                "params": {
