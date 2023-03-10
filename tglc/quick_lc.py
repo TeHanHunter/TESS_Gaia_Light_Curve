@@ -236,14 +236,14 @@ def choose_prior(local_directory=None, priors=np.logspace(-5, 0, 100)):
     for i in trange(len(priors)):
         get_tglc_lc(tics=tics, method='query', server=1, directory=local_directory, prior=priors[i])
         with fits.open(
-                '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0014-cam1-ccd1_tess_v1_llc.fits',
+                '/home/tehan/data/cosmos/GEMS/TIC 16005254/lc/hlsp_tglc_tess_ffi_gaiaid-52359538285081728-s0043-cam3-ccd3_tess_v1_llc.fits',
                 mode='denywrite') as hdul:
             mad[0, i] = np.nanmedian(abs(hdul[1].data['cal_psf_flux'] - np.nanmedian(hdul[1].data['cal_psf_flux'])))
         with fits.open(
-                '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0015-cam1-ccd2_tess_v1_llc.fits',
+                '/home/tehan/data/cosmos/GEMS/TIC 16005254/lc/hlsp_tglc_tess_ffi_gaiaid-52359538285081728-s0044-cam1-ccd1_tess_v1_llc.fits',
                 mode='denywrite') as hdul:
             mad[1, i] = np.nanmedian(abs(hdul[1].data['cal_psf_flux'] - np.nanmedian(hdul[1].data['cal_psf_flux'])))
-    np.save('/home/tehan/data/cosmos/GEMS/TOI-5344/mad.npy', mad)
+    np.save('/home/tehan/data/cosmos/GEMS/TIC 16005254/mad.npy', mad)
     # plt.plot(priors, mad)
     # plt.xscale('log')
     # plt.title(f'best prior = {priors[np.argmin(mad)]:04d}')
