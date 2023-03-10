@@ -150,7 +150,7 @@ def plot_pf_lc(local_directory=None, period=None):
 def plot_contamination(local_directory=None, gaia_dr3=None):
     files = glob(f'{local_directory}lc/*.fits')
     for i in range(len(files)):
-        with open(glob(f'{local_directory}source/*.pkl')[i], 'rb') as input_:
+        with open(glob(f'{local_directory}source/*.pkl')[0], 'rb') as input_:
             with fits.open(files[i], mode='denywrite') as hdul:
                 sector = hdul[0].header['SECTOR']
                 source = pickle.load(input_)
