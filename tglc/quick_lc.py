@@ -215,7 +215,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                     for k in range(x_):
                         ax_ = fig.add_subplot(gs[(4 - j), (5 + k)])
                         ax_.patch.set_facecolor('C0')
-                        ax_.patch.set_alpha(min(1, max(0, 3 * np.median(hdul[0].data[:, j, k]) / max_flux)))
+                        ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
                         q = [a and b for a, b in
                              zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
 
@@ -232,30 +232,18 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
 
 
 def choose_prior(local_directory=None, priors=np.logspace(-5, 0, 100)):
-    mad = np.zeros((5, 100))
+    mad = np.zeros((2, 100))
     for i in trange(len(priors)):
         get_tglc_lc(tics=tics, method='query', server=1, directory=local_directory, prior=priors[i])
         with fits.open(
                 '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0014-cam1-ccd1_tess_v1_llc.fits',
                 mode='denywrite') as hdul:
-            mad[0, i] = np.median(abs(hdul[1].data['cal_psf_flux'] - np.median(hdul[1].data['cal_psf_flux'])))
+            mad[0, i] = np.nanmedian(abs(hdul[1].data['cal_psf_flux'] - np.nanmedian(hdul[1].data['cal_psf_flux'])))
         with fits.open(
                 '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0015-cam1-ccd2_tess_v1_llc.fits',
                 mode='denywrite') as hdul:
-            mad[1, i] = np.median(abs(hdul[1].data['cal_psf_flux'] - np.median(hdul[1].data['cal_psf_flux'])))
-        with fits.open(
-                '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0041-cam1-ccd1_tess_v1_llc.fits',
-                mode='denywrite') as hdul:
-            mad[2, i] = np.median(abs(hdul[1].data['cal_psf_flux'] - np.median(hdul[1].data['cal_psf_flux'])))
-        with fits.open(
-                '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0054-cam3-ccd2_tess_v1_llc.fits',
-                mode='denywrite') as hdul:
-            mad[3, i] = np.median(abs(hdul[1].data['cal_psf_flux'] - np.median(hdul[1].data['cal_psf_flux'])))
-        with fits.open(
-                '/home/tehan/data/cosmos/GEMS/TIC 172370679/lc/hlsp_tglc_tess_ffi_gaiaid-2073530190996615424-s0055-cam3-ccd1_tess_v1_llc.fits',
-                mode='denywrite') as hdul:
-            mad[4, i] = np.median(abs(hdul[1].data['cal_psf_flux'] - np.median(hdul[1].data['cal_psf_flux'])))
-    np.save('/home/tehan/data/cosmos/GEMS/TIC 172370679/mad.npy', mad)
+            mad[1, i] = np.nanmedian(abs(hdul[1].data['cal_psf_flux'] - np.nanmedian(hdul[1].data['cal_psf_flux'])))
+    np.save('/home/tehan/data/cosmos/GEMS/TOI-5344/mad.npy', mad)
     # plt.plot(priors, mad)
     # plt.xscale('log')
     # plt.title(f'best prior = {priors[np.argmin(mad)]:04d}')
@@ -276,11 +264,11 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     tics = [16005254]
-    directory = f'/home/tehan/Documents/GEMS/'
+    directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}lc/', type='aperture_flux')
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
     # plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
     # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
-    # choose_prior(local_directory=directory)
+    choose_prior(local_directory=directory)
