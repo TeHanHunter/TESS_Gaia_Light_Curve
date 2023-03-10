@@ -149,6 +149,7 @@ def plot_pf_lc(local_directory=None, period=None):
 
 def plot_contamination(local_directory=None, gaia_dr3=None):
     files = glob(f'{local_directory}lc/*.fits')
+    os.makedirs(f'{local_directory}lc/plots/', exist_ok=True)
     for i in range(len(files)):
         with open(glob(f'{local_directory}source/*.pkl')[0], 'rb') as input_:
             with fits.open(files[i], mode='denywrite') as hdul:
@@ -159,8 +160,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 # print(source.gaia[891])
                 # print(source.gaia[140])
                 nearby_stars = np.argsort(
-                    (source.gaia[f'sector_{sector}_x'][:1000] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
-                    (source.gaia[f'sector_{sector}_y'][:1000] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[1:10]
+                    (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
+                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[1:5]
                 # print(f'sector = {source.sector}')
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
@@ -173,7 +174,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 ax0 = fig.add_subplot(gs[:5, :5])
                 ax0.imshow(source.flux[0], cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
 
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][:1000], source.gaia[f'sector_{sector}_y'][:1000], s=50,
+                ax0.scatter(source.gaia[f'sector_{sector}_x'][:500], source.gaia[f'sector_{sector}_y'][:500], s=50,
                             c='r', label='background stars')
                 ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars],
                             source.gaia[f'sector_{sector}_y'][nearby_stars], s=50,
@@ -219,10 +220,10 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                              zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
 
                         _, trend = flatten(hdul[1].data['time'][q],
-                                           hdul[0].data[:, j, k][q] - np.min(hdul[0].data[:, j, k][q]) + 1000,
+                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
                                            window_length=1, method='biweight', return_trend=True)
-                        cal_aper = (hdul[0].data[:, j, k][q] - np.min(
-                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.median(
+                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
                             hdul[0].data[:, j, k][q]) + 1
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
                 plt.savefig(f'{local_directory}lc/plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
@@ -274,16 +275,12 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    target = '7.806500 85.008861'
-    directory = f'/home/tehan/data/cosmos/{target}/'
-    tglc_lc(target=target, local_directory=directory, size=90, save_aper=True, limit_mag=22, get_all_lc=False,
-            first_sector_only=False, sector=25, prior=None)
-    # tics = [119585136]
-    # directory = f'/home/tehan/data/cosmos/GEMS/'
-    # os.makedirs(directory, exist_ok=True)
+    tics = [16005254]
+    directory = f'/home/tehan/Documents/GEMS/'
+    os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}lc/', type='aperture_flux')
-    plot_contamination(local_directory=f'{directory}', gaia_dr3=573571549281813760)
+    # plot_lc(local_directory=f'{directory}lc/', type='aperture_flux')
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
     # plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
     # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
     # choose_prior(local_directory=directory)
