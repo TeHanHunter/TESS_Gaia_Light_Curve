@@ -62,14 +62,14 @@ def mast_json2table(json_obj):
     return data_table
 
 
-def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5):
+def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5, limit_mag=None):
     request = {"service": "Mast.Catalogs.Filtered.Tic.Position.Rows",
                "format": "json",
                "params": {
                    "columns": 'ID, GAIA',
                    "filters": [
                        {"paramName": "Tmag",
-                        "values": [{"min": -10., "max": 16.5}]}],
+                        "values": [{"min": -10., "max": (limit_mag + 0.5)}]}],
                    "ra": ra,
                    "dec": dec,
                    "radius": radius

@@ -38,7 +38,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     os.makedirs(local_directory + f'source/', exist_ok=True)
     if first_sector_only:
         sector = True
-    source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector)  # sector
+    source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector, limit_mag=limit_mag)  # sector
     if get_all_lc:
         name = None
     else:

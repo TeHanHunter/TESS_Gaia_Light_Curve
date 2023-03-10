@@ -23,7 +23,7 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 
 
 class Source_cut(object):
-    def __init__(self, name, size=50, sector=None, cadence=None):
+    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
@@ -62,7 +62,7 @@ class Source_cut(object):
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
         print(f'Found {len(catalogdata)} Gaia DR3 objects.')
-        catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
+        catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600, limit_mag=limit_mag)
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         self.tic = convert_gaia_id(catalogdata_tic)
         sector_table = Tesscut.get_sectors(coordinates=coord)
@@ -234,7 +234,7 @@ class Source_cut_pseudo(object):
         self.gaia = gaia_targets
 
 
-def ffi_cut(target='', local_directory='', size=90, sector=None):
+def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -261,6 +261,6 @@ def ffi_cut(target='', local_directory='', size=90, sector=None):
         print('Loaded ffi_cut from directory. ')
     else:
         with open(f'{local_directory}source/{source_name}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size, sector=sector)
+            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
