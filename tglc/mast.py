@@ -108,8 +108,8 @@ def star_spliter(server=1,  # or 2
 
 
 if __name__ == '__main__':
-    # sector = 1
-    # filter_no_tic(sector=sector)
-    # hlsp_transfer(sector=sector, do_zip=True)
+    sector = 1
+    filter_no_tic(sector=sector)
+    hlsp_transfer(sector=sector, do_zip=True)
     # hlsp_transfer(sector=sector, do_zip=False)
     star_spliter(server=1)  # star_list='/home/tehan/Documents/tglc/dominic_EB/eb_cat.txt'

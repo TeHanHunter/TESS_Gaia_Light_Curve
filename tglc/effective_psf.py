@@ -259,6 +259,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
     portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+    # print(np.nansum(psf_shape[:, 3:8, 3:8]) / np.nansum(psf_shape))
     return aperture, psf_lc, y - down, x - left, portion
 
 
@@ -427,6 +428,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     :return: local background, modified aperture light curve, modified PSF light curve
     '''
     bar = 15000 * 10 ** ((source.gaia['tess_mag'][star_num] - 10) / -2.5)
+    # print(bar)
     # med_epsf = np.nanmedian(e_psf[:, :23 ** 2].reshape(len(source.time), 23, 23), axis=0)
     # centroid_to_aper_ratio = 4/9 * np.sum(med_epsf[10:13, 10:13]) / np.sum(med_epsf)
     # centroid_to_aper_ratio = np.nanmedian(ratio)
