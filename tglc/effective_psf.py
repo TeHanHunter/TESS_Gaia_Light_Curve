@@ -435,6 +435,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     # flux_bar = aperture_bar * centroid_to_aper_ratio
     # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
     aperture_bar = bar * portion
+    # print(bar)
     local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
     if np.isnan(local_bg):
         local_bg = 0
