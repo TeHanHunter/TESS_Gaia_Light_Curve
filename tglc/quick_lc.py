@@ -63,7 +63,6 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             if first_sector_only:
                 break
 
-
 def search_stars(i, sector=1, tics=None, local_directory=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
@@ -77,14 +76,12 @@ def search_stars(i, sector=1, tics=None, local_directory=None):
             except:
                 pass
 
-
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     for i in range(server, 27, 2):
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
-
 
 def plot_lc(local_directory=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
@@ -96,7 +93,8 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
             # plt.xlim(2845, 2855)
-            plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
+            plt.ylim(0.5, 1.5)
+            plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
             plt.legend()
             # plt.show()
             plt.savefig(
@@ -146,7 +144,7 @@ def plot_aperture(local_directory=None, type='cal_aper_flux'):
             data = np.append(data, data_, axis=1)
     np.savetxt(f'{local_directory}TESS_TOI-5344_5_5_aper.csv', data, delimiter=',')
 
-def plot_pf_lc(local_directory=None, period=None):
+def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     fig = plt.figure(figsize=(13, 5))
@@ -158,20 +156,21 @@ def plot_pf_lc(local_directory=None, period=None):
             if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
                 if hdul[0].header["SECTOR"] <= 26:
                     t = hdul[1].data['time'][q]
-                    f = hdul[1].data['cal_psf_flux'][q]
-                else:
+                    f = hdul[1].data[type][q]
+                elif hdul[0].header["SECTOR"] <= 55:
                     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
                     f = np.mean(
-                        hdul[1].data['cal_aper_flux'][q][:len(hdul[1].data['cal_aper_flux'][q]) // 3 * 3].reshape(-1,
-                                                                                                                  3),
-                        axis=1)
-                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data['cal_aper_flux'], '.', c=f'C{j}', ms=2)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=0,
+                        hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 3 * 3].reshape(-1, 3), axis=1)
+                else:
+                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
+                    f = np.mean(
+                        hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
+                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=2)
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1,
                              marker='.', ms=2, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
-                #
             else:
                 not_plotted_num += 1
-            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data'
+            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
     # PDCSAP_files = glob('/home/tehan/Documents/GEMS/TIC 172370679/PDCSAP/*.txt')
     # for i in range(len(files)):
     #     PDCSAP = ascii.read(PDCSAP_files[i])
@@ -183,11 +182,12 @@ def plot_pf_lc(local_directory=None, period=None):
     # plt.xlim(0.84, 0.86)
     plt.legend()
     plt.title(title)
-    plt.xlabel('Phase (days)')
+    plt.xlim(0.16, 0.26)
+    plt.ylim(0.9, 1.1)
+    plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
     plt.close(fig)
-
 
 def plot_contamination(local_directory=None, gaia_dr3=None):
     files = glob(f'{local_directory}lc/*.fits')
@@ -203,7 +203,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 # print(source.gaia[140])
                 nearby_stars = np.argsort(
                     (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
-                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[1:5]
+                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[0:5]
                 # print(f'sector = {source.sector}')
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
@@ -224,12 +224,31 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 for l in range(len(nearby_stars)):
                     index = np.where(
                         source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
+                    gaia_targets = source.gaia
+                    median_time = np.median(source.time)
+                    interval = (median_time - 388.5) / 365.25 + 3000
+                    ra = gaia_targets['ra'][nearby_stars[l]]
+                    dec = gaia_targets['dec'][nearby_stars[l]]
+                    if not np.isnan(gaia_targets['pmra'][nearby_stars[l]]):
+                        ra += gaia_targets['pmra'][nearby_stars[l]] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
+                    if not np.isnan(gaia_targets['pmdec'][nearby_stars[l]]):
+                        dec += gaia_targets['pmdec'][nearby_stars[l]] * interval / 1000 / 3600
+                    pixel = source.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
+                    x_gaia = pixel[0][0]
+                    y_gaia = pixel[0][1]
+                    ax0.arrow(source.gaia[f'sector_{sector}_x'][nearby_stars[l]],
+                              source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
+                              x_gaia - source.gaia[f'sector_{sector}_x'][nearby_stars[l]],
+                              y_gaia - source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
+                              width=0.02, color='r', edgecolor=None, head_width=0.1)
                     try:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                    source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
+                                    source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
                                     f'TIC {int(source.tic["TIC"][index])}', rotation=90)
                     except TypeError:
-                        pass
+                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
+                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
+                                 f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
                 ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
 
                 # ax0.legend()
@@ -268,10 +287,10 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                             hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
                             hdul[0].data[:, j, k][q]) + 1
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
+                        ax_.set_ylim(0.95, 1.05)
                 plt.savefig(f'{local_directory}lc/plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
                             dpi=300)
                 plt.show()
-
 
 def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     mad = np.zeros((2, 100))
@@ -293,7 +312,6 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.title(f'best prior = {priors[np.argmin(mad)]:04d}')
     # plt.show()
 
-
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
     if method == 'query':
         for i in range(len(tics)):
@@ -311,9 +329,8 @@ if __name__ == '__main__':
     directory = f'/home/tehan/Documents/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
     # plot_aperture(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
-    # plot_contamination(local_directory=f'{directory}TIC 172370679/', gaia_dr3=2073530190996615424)
-    # plot_pf_lc(local_directory=f'{directory}TIC 27858644/lc/', period=384)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.7926244)
     # choose_prior(tics, local_directory=directory)

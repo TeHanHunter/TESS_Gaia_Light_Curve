@@ -200,6 +200,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     for j in range(len(source.time)):
         aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((len(source.time), up - down, right - left))
+    # np.save(f'_residual_{source.sector}.npy', aperture)
 
     # psf_lc
     over_size = psf_size * factor + 1
@@ -259,7 +260,8 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
     portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
-    # print(np.nansum(psf_shape[:, 3:8, 3:8]) / np.nansum(psf_shape))
+    print(np.nansum(psf_shape[:, 5, 5]) / np.nansum(psf_shape))
+    # np.save(f'toi-5344_psf_{source.sector}.npy', psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
 
 
