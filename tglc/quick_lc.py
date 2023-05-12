@@ -57,14 +57,20 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+    elif first_sector_only:
+        source.select_sector(sector=source.sector_table['sector'][0])
+        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+    elif last_sector_only:
+        source.select_sector(sector=source.sector_table['sector'][-1])
+        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
     else:
         for j in range(len(source.sector_table)):
             # try:
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
-            if first_sector_only:
-                break
 
 
 def search_stars(i, sector=1, tics=None, local_directory=None):
