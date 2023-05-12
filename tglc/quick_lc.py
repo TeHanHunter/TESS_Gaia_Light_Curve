@@ -21,7 +21,7 @@ controller = ThreadpoolController()
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False, sector=None, prior=None):
+            first_sector_only=False, last_sector_only=False, sector=None, prior=None):
     '''
     Generate light curve for a single target.
 
@@ -37,8 +37,11 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     if first_sector_only:
-        sector = True
-    source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector, limit_mag=limit_mag)  # sector
+        sector = 'first'
+    elif last_sector_only:
+        sector = 'last'
+    source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
+                     limit_mag=limit_mag)  # sector
     if get_all_lc:
         name = None
     else:
@@ -63,6 +66,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             if first_sector_only:
                 break
 
+
 def search_stars(i, sector=1, tics=None, local_directory=None):
     cam = 1 + i // 4
     ccd = 1 + i % 4
@@ -76,12 +80,14 @@ def search_stars(i, sector=1, tics=None, local_directory=None):
             except:
                 pass
 
+
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     for i in range(server, 27, 2):
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
+
 
 def plot_lc(local_directory=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
@@ -100,11 +106,13 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.savefig(
                 f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}.png',
                 dpi=300)
+            plt.close()
+
 
 def plot_aperture(local_directory=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
-    portion=[0.9361215204370542, 0.9320709087810205]
+    portion = [0.9361215204370542, 0.9320709087810205]
     data = np.empty((3, 0))
 
     for i in range(len(files)):
@@ -124,7 +132,8 @@ def plot_aperture(local_directory=None, type='cal_aper_flux'):
                                window_length=1, method='biweight', return_trend=True)
             cal_aper_lc = (cal_aper_lc - np.nanmin(cal_aper_lc) + 1000 - trend) / np.nanmedian(cal_aper_lc) + 1
             non_outliers = np.where(cal_aper_lc[q] > 0.6)[0]
-            plt.plot(hdul[1].data['time'][q][non_outliers] % 3.79262026, cal_aper_lc[q][non_outliers], '.r', label=f'5_5_pixel_flagged')
+            plt.plot(hdul[1].data['time'][q][non_outliers] % 3.79262026, cal_aper_lc[q][non_outliers], '.r',
+                     label=f'5_5_pixel_flagged')
             plt.xlim(0.5, 1.0)
             plt.ylim(0.95, 1.1)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
@@ -143,6 +152,7 @@ def plot_aperture(local_directory=None, type='cal_aper_flux'):
                               ])
             data = np.append(data, data_, axis=1)
     np.savetxt(f'{local_directory}TESS_TOI-5344_5_5_aper.csv', data, delimiter=',')
+
 
 def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
@@ -188,6 +198,7 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     plt.ylabel('Normalized flux')
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
     plt.close(fig)
+
 
 def plot_contamination(local_directory=None, gaia_dr3=None):
     files = glob(f'{local_directory}lc/*.fits')
@@ -243,8 +254,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                               width=0.02, color='r', edgecolor=None, head_width=0.1)
                     try:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                    source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
-                                    f'TIC {int(source.tic["TIC"][index])}', rotation=90)
+                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
+                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90)
                     except TypeError:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
@@ -292,6 +303,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                             dpi=300)
                 plt.show()
 
+
 def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     mad = np.zeros((2, 100))
     for i in trange(len(priors)):
@@ -312,25 +324,27 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.title(f'best prior = {priors[np.argmin(mad)]:04d}')
     # plt.show()
 
+
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
     if method == 'query':
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
-            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, sector=None, prior=prior)
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=True, sector=None, prior=prior)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [16005254]
+    tics = [11893637, 148673115, 392365135, 144400022, 207492082, 453430899, 85334035, 166597074, 95431305, 409372963,
+            8174712, 252803606, 2016398819, 318251856, 307957392, 207436278, 298164374, 18906490, 368129164]
     directory = f'/home/tehan/Documents/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
     # plot_aperture(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.7926244)
     # choose_prior(tics, local_directory=directory)

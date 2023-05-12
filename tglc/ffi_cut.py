@@ -71,9 +71,12 @@ class Source_cut(object):
         print(sector_table)
         if sector is None:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size)
-        elif sector is True:
+        elif sector == 'first':
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector_table['sector'][0])
             sector = sector_table['sector'][0]
+        elif sector == 'last':
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector_table['sector'][-1])
+            sector = sector_table['sector'][-1]
         else:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector)
         self.catalogdata = catalogdata
@@ -249,8 +252,10 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None)
     """
     if sector is None:
         source_name = f'source_{target}'
-    elif sector is True:
+    elif sector == 'first':
         source_name = f'source_{target}_earliest_sector'
+    elif sector == 'last':
+        source_name = f'source_{target}_last_sector'
     else:
         source_name = f'source_{target}_sector_{sector}'
     source_exists = exists(f'{local_directory}source/{source_name}.pkl')
