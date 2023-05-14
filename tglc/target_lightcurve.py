@@ -278,9 +278,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                                  str(source.tic['dr3_source_id'][np.where(source.tic['TIC'] == name)][0]))[0][0])
             end = start + 1
         except IndexError:
-            print(f'Target not found in the requested sector (Sector {sector}). It is possible that this target does '
-                  f'not have a Gaia ID. ')
-            return
+            print(f'Target not found in the requested sector (Sector {sector}). This can be caused by a lack of Gaia '
+                  f'ID or an incomplete TESS to Gaia crossmatch table. Please check whether the output light curve Gaia'
+                  f' DR3 ID agrees with your target.')
+            start = 0
+            end = 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
             if type(source) == Source:
