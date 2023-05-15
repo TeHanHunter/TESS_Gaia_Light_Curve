@@ -344,8 +344,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [11893637, 148673115, 392365135, 144400022, 207492082, 453430899, 85334035, 166597074, 95431305, 409372963,
-            8174712, 252803606, 2016398819, 318251856, 307957392, 207436278, 298164374, 18906490, 368129164]
+    tics = [11893637]
     directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
