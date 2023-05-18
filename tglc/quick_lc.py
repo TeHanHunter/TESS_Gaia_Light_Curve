@@ -344,12 +344,20 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [11893637]
-    directory = f'/home/tehan/data/cosmos/GEMS/'
-    os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    # tics = [11893637]
+    # directory = f'/home/tehan/data/cosmos/GEMS/'
+    # os.makedirs(directory, exist_ok=True)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
     # plot_aperture(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.7926244)
     # choose_prior(tics, local_directory=directory)
+    directory = f'/home/tehan/data/cosmos/mallory_micro/'
+    targets = ascii.read(f'{directory}prime_mulens_targets.csv')
+    for i in range(len(targets)):
+        target = f'{targets["RA (deg)"][i]} {targets["Dec (deg)"][i]}'
+        local_directory = f'{directory}{target}/'
+        os.makedirs(local_directory, exist_ok=True)
+        tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+                get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=targets['Sector'][i], prior=None)
