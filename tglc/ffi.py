@@ -93,6 +93,7 @@ def convert_gaia_id(catalogdata_tic):
     gaia_tuple = tuple(gaia_array[:10000])
     results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
     # np.save('result.npy', np.array(results))
+    print(catalogdata_tic)
     for i in range(segment):
         gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
         gaia_tuple_cut = tuple(gaia_array_cut)
