@@ -96,6 +96,7 @@ def convert_gaia_id(catalogdata_tic):
     for i in range(segment):
         gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
         gaia_tuple_cut = tuple(gaia_array_cut)
+        print(gaia_tuple_cut)
         results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
     tic_ids = []
     for j in range(len(results)):
@@ -125,7 +126,7 @@ def background_mask(im=None):
         _ok = ok[:, i] * ok[:, i + di]
         coef = np.median(im[:, i + di][_ok] / im[:, i][_ok])
         if 0.5 < coef < 2:
-            running_factor *= coef543
+            running_factor *= coef
             cal_factor[i + di] = running_factor
             i += di
             di = 1  # Reset the stepsize to one.
