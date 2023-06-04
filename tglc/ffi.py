@@ -93,11 +93,13 @@ def convert_gaia_id(catalogdata_tic):
     gaia_tuple = tuple(gaia_array[:10000])
     results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
     # np.save('result.npy', np.array(results))
-    print(catalogdata_tic)
+    print(gaia_array)
+    print(len(gaia_array))
     for i in range(segment):
         gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
         gaia_tuple_cut = tuple(gaia_array_cut)
         print(gaia_tuple_cut)
+        print(Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results())
         results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
     tic_ids = []
     for j in range(len(results)):
@@ -199,7 +201,6 @@ class Source(object):
         ra = float(coord.split()[0])
         dec = float(coord.split()[1])
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600)
-        catalogdata_tic.remove_rows(-1)
         # print(f'no_of_stars={len(catalogdata_tic)}, camera={camera}, ccd={ccd}: ra={ra}, dec={dec}, radius={(self.size + 2) * 21 * 0.707 / 3600}')
         self.tic = convert_gaia_id(catalogdata_tic)
         self.flux = flux[:, y:y + size, x:x + size]
