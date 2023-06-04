@@ -359,5 +359,8 @@ if __name__ == '__main__':
         target = f'{targets["RA (deg)"][i]} {targets["Dec (deg)"][i]}'
         local_directory = f'{directory}{target}/'
         os.makedirs(local_directory, exist_ok=True)
-        tglc_lc(target=target, local_directory=local_directory, size=60, save_aper=False, limit_mag=16,
-                get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=int(targets['Sector'][i]), prior=None)
+        try:
+            tglc_lc(target=target, local_directory=local_directory, size=60, save_aper=False, limit_mag=16,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=int(targets['Sector'][i]), prior=None)
+        except TypeError:
+            print(f'{target} failed, not in sector {targets["Sector"][i]}')
