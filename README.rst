@@ -3,6 +3,8 @@
   :alt: TESS-Gaia Light Curve
 .. image:: https://zenodo.org/badge/420868490.svg
    :target: https://zenodo.org/badge/latestdoi/420868490
+.. image:: https://static.pepy.tech/personalized-badge/tglc?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Total%20Downloads
+ :target: https://pepy.tech/project/tglc
 ==================================
 Introduction
 ==================================
