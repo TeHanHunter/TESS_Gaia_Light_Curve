@@ -3,6 +3,8 @@
   :alt: TESS-Gaia Light Curve
 .. image:: https://zenodo.org/badge/420868490.svg
    :target: https://zenodo.org/badge/latestdoi/420868490
+.. image:: https://static.pepy.tech/personalized-badge/tglc?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Total%20Downloads
+ :target: https://pepy.tech/project/tglc
 ==================================
 Introduction
 ==================================
@@ -56,7 +58,7 @@ Known Problems
 ==================================
 There are several imperfections we noticed in the MAST TGLC light curves and tglc package:
 
-* If the star is very dim (~< 15 Tmag) near a variable source, it can make the aperture and/or PSF light curve negative for some cadences. The detrending algorithm could malfunction and result in bad cal_aper_flux and/or cal_psf_flux. This is now fixed for tglc package, but this problem remains for the primary mission light curves published on MAST. Please detrend again if necessary.The extended mission light curves on MAST will not be affected. This is a very rare scenario, but could be important.
+* If the star is very dim (~< 15 Tmag) near a variable source, it can make the aperture and/or PSF light curve negative for some cadences. The detrending algorithm could malfunction and result in bad cal_aper_flux and/or cal_psf_flux. This is now fixed for tglc package, but this problem remains for the primary mission light curves published on MAST. Please detrend again if necessary. The extended mission light curves on MAST will not be affected. This is a very rare scenario, but could be important.
 
 ==================================
 Reference
