@@ -344,25 +344,21 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [274002141]
+    tics = [38846515]
     # directory = f'/home/tehan/Documents/GEMS/'
-    directory = f'/home/tehan/data/cosmos/GEMS/'
+    directory = f'/home/tehan/data/cosmos/MKI/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-    # plot_aperture(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=52359538285081728)
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.1239035, type='cal_aper_flux')
-    # choose_prior(tics, local_directory=directory)
 
-    # directory = f'/home/tehan/data/cosmos/mallory_micro/'
-    # targets = ascii.read(f'{directory}prime_mulens_targets.csv')
-    # for i in range(len(targets)):
-    #     target = f'{targets["RA (deg)"][i]} {targets["Dec (deg)"][i]}'
-    #     local_directory = f'{directory}{target}/'
-    #     os.makedirs(local_directory, exist_ok=True)
-    #     try:
-    #         tglc_lc(target=target, local_directory=local_directory, size=60, save_aper=False, limit_mag=16,
-    #                 get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=int(targets['Sector'][i]), prior=None)
-    #     except TypeError:
-    #         print(f'{target} failed, not in sector {targets["Sector"][i]}')
+    # running reference star for Roland
+    sectors = [1,2,3,4,5,6,7,8,9,10,11,12,13,
+               27,28,29,30,31,32,33,34,35,36,37,38,39,
+               61,62,63,64,65,66,67,68,69] # haven't finish the last several
+
+    target = f'TIC {tics[0]}'
+    local_directory = f'{directory}{target}/'
+    os.makedirs(local_directory, exist_ok=True)
+    for i in range(len(sectors)):
+        tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+                get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None)
