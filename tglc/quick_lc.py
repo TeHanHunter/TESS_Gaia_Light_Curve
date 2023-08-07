@@ -348,8 +348,8 @@ if __name__ == '__main__':
     # directory = f'/home/tehan/Documents/GEMS/'
     directory = f'/home/tehan/data/cosmos/MKI/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
     # running reference star for Roland
     sectors = [1,2,3,4,5,6,7,8,9,10,11,12,13,
