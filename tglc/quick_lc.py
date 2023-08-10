@@ -344,7 +344,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [38846515]
+    tics = [165553746]
     # directory = f'/home/tehan/Documents/GEMS/'
     directory = f'/home/tehan/data/cosmos/MKI/'
     os.makedirs(directory, exist_ok=True)
@@ -352,9 +352,8 @@ if __name__ == '__main__':
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
     # running reference star for Roland
-    sectors = [1,2,3,4,5,6,7,8,9,10,11,12,13,
-               27,28,29,30,31,32,33,34,35,36,37,38,39,
-               61,62,63,64,65,66,67,68,69] # haven't finish the last several
+    sectors = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 40, 41,
+               47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60]
 
     target = f'TIC {tics[0]}'
     local_directory = f'{directory}{target}/'
