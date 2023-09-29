@@ -23,7 +23,7 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 
 
 class Source_cut(object):
-    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None):
+    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None, transient=None):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
@@ -50,6 +50,8 @@ class Source_cut(object):
         self.cadence = cadence
         self.quality = []
         self.mask = []
+        self.transient = transient
+
         target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         if len(target) == 0:
             target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
@@ -92,6 +94,7 @@ class Source_cut(object):
             self.select_sector(sector=sector_table['sector'][0])
         else:
             self.select_sector(sector=sector)
+
 
     def select_sector(self, sector=1):
         """
@@ -138,6 +141,11 @@ class Source_cut(object):
 
         gaia_targets = self.catalogdata[
             'DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
+
+        # inject transients
+        if self.transient is not None:
+            gaia_targets.add_row([self.transient[0], 20, 20, 20, self.transient[1], self.transient[2], 0, 0])
+
         gaia_targets['phot_bp_mean_mag'].fill_value = np.nan
         gaia_targets['phot_rp_mean_mag'].fill_value = np.nan
         gaia_targets['pmra'].fill_value = np.nan
@@ -178,7 +186,9 @@ class Source_cut(object):
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.max(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
-        gaia_targets = hstack([gaia_targets[in_frame], t])  # TODO: sorting not sorting all columns
+        gaia_targets = hstack([gaia_targets[in_frame], t])
+        if self.transient is not None:
+            gaia_targets['tess_flux'][np.where(gaia_targets['DESIGNATION'] == self.transient[0])[0][0]] = 0
         gaia_targets.sort('tess_mag')
         self.gaia = gaia_targets
 
@@ -237,7 +247,7 @@ class Source_cut_pseudo(object):
         self.gaia = gaia_targets
 
 
-def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None):
+def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None, transient=None):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -266,6 +276,6 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None)
         print('Loaded ffi_cut from directory. ')
     else:
         with open(f'{local_directory}source/{source_name}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag)
+            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source

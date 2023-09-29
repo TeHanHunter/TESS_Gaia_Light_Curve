@@ -21,7 +21,7 @@ controller = ThreadpoolController()
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False, last_sector_only=False, sector=None, prior=None):
+            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None):
     '''
     Generate light curve for a single target.
 
@@ -41,13 +41,15 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     elif last_sector_only:
         sector = 'last'
     source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
-                     limit_mag=limit_mag)  # sector
+                     limit_mag=limit_mag, transient=transient)  # sector
     if get_all_lc:
         name = None
     else:
         catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
         if target[0:3] == 'TIC':
             name = int(target[4:])
+        elif transient is not None:
+            name = transient[0]
         else:
             name = int(np.array(catalogdata['ID'])[0])
             print("Since the provided target is not TIC ID, the resulted light curve with get_all_lc=False can not be "
@@ -104,13 +106,13 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.figure(constrained_layout=False, figsize=(8, 4))
             plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
-            # plt.xlim(2845, 2855)
-            plt.ylim(0.9, 1.1)
+            # plt.xlim(2753, 2755)
+            # plt.ylim(-20, 50)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
             plt.legend()
             # plt.show()
             plt.savefig(
-                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}.png',
+                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}.png',
                 dpi=300)
             plt.close()
 
@@ -338,26 +340,48 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior)
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    transient=None)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [165553746]
-    # directory = f'/home/tehan/Documents/GEMS/'
-    directory = f'/home/tehan/data/cosmos/MKI/'
+    tics = [82329624]
+    directory = ''
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
-    # running reference star for Roland
-    sectors = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 40, 41,
-               47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60]
+    # target = '145.3937083 75.8210000'
+    # local_directory = f'{directory}{target}/'
+    # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+    #         get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=53, prior=None,
+    #         transient=('GRB 220623A', 145.3937083, 75.8210000))
+    # plot_lc(local_directory=f'{local_directory}lc/', type='psf_flux')
+    # plot_lc(local_directory=f'{local_directory}lc/', type='aperture_flux')
 
-    target = f'TIC {tics[0]}'
-    local_directory = f'{directory}{target}/'
-    os.makedirs(local_directory, exist_ok=True)
-    for i in range(len(sectors)):
-        tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None)
+    # # running reference star for Roland
+    # sectors = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 40, 41,
+    #            47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60]
+    #
+    # target = f'TIC {tics[0]}'
+    # local_directory = f'{directory}{target}/'
+    # os.makedirs(local_directory, exist_ok=True)
+    # for i in range(len(sectors)):
+    #     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+    #             get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None)
+
+    # from astropy.io import fits
+    # from glob import glob
+    # import matplotlib.pyplot as plt
+    #
+    # files = glob('/home/tehan/Documents/MKI/Michael/TIC 165553746_lc/*.fits')
+    # for i in range(len(files)):
+    #     with fits.open(files[i]) as hdul:
+    #         q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0),
+    #                                      list(hdul[1].data['TGLC_flags'] == 0))]
+    #         plt.plot(hdul[1].data['time'][q], hdul[1].data['aperture_flux'][q], '.')
+    # plt.title('TIC 165553746')
+    # # plt.ylim(8000,12000)
+    # plt.show()

@@ -20,7 +20,7 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False, portion=1, prior=None):
+              local_bg=None, save_aper=False, portion=1, prior=None, transient=None):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -41,7 +41,10 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     list of cadences of TESS FFI
     :return:
     """
-    objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
+    if transient is None:
+        objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
+    else:
+        objid = transient[0]
     source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits'
     source_exists = exists(source_path)
     # if source_exists and (os.path.getsize(source_path) > 0):
@@ -277,12 +280,17 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             start = int(np.where(source.gaia['DESIGNATION'] == 'Gaia DR3 ' +
                                  str(source.tic['dr3_source_id'][np.where(source.tic['TIC'] == name)][0]))[0][0])
             end = start + 1
-        except IndexError:
-            print(f'Target not found in the requested sector (Sector {sector}). This can be caused by a lack of Gaia '
-                  f'ID or an incomplete TESS to Gaia crossmatch table. Please check whether the output light curve Gaia'
-                  f' DR3 ID agrees with your target.')
-            start = 0
-            end = 1
+        except:
+            try:
+                start = int(np.where(source.gaia['DESIGNATION'] == name)[0][0])
+                end = start + 1
+            except IndexError:
+                print(
+                    f'Target not found in the requested sector (Sector {sector}). This can be caused by a lack of Gaia '
+                    f'ID or an incomplete TESS to Gaia crossmatch table. Please check whether the output light curve Gaia'
+                    f' DR3 ID agrees with your target.')
+                start = 0
+                end = 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
             if type(source) == Source:
@@ -335,4 +343,4 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                           bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                           cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                           y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                          prior=prior)
+                          prior=prior, transient=source.transient)

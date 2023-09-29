@@ -248,7 +248,7 @@ class Source(object):
         t[f'tess_flux_ratio'] = tess_flux[in_frame] / np.nanmax(tess_flux[in_frame])
         t[f'sector_{self.sector}_x'] = x_gaia[in_frame]
         t[f'sector_{self.sector}_y'] = y_gaia[in_frame]
-        catalogdata = hstack([catalogdata[in_frame], t])  # TODO: sorting not sorting all columns
+        catalogdata = hstack([catalogdata[in_frame], t])
         catalogdata.sort('tess_mag')
         self.gaia = catalogdata
 
