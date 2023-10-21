@@ -56,20 +56,39 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                   "guaranteed to be the target's light curve. Please check the TIC ID of the output file before using "
                   "the light curve or try use TIC ID as the target in the format of 'TIC 12345678'.")
     if type(sector) == int:
+        print(f'Only processing Sector {sector}.')
+        print('Downloading Data from MAST and Gaia ...')
         source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
     elif first_sector_only:
+        print(f'Only processing the first sector the target is observed in: Sector {source.sector_table["sector"][0]}.')
+        print('Downloading Data from MAST and Gaia ...')
         source.select_sector(sector=source.sector_table['sector'][0])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
     elif last_sector_only:
+        print(f'Only processing the last sector the target is observed in: Sector {source.sector_table["sector"][-1]}.')
+        print('Downloading Data from MAST and Gaia ...')
         source.select_sector(sector=source.sector_table['sector'][-1])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
-    else:
+    elif sector == None:
+        print(f'Processing all available sectors of the target.')
+        print('Downloading Data from MAST and Gaia ...')
         for j in range(len(source.sector_table)):
-            # try:
+            print(f'Downloading Sector {source.sector_table["sector"][j]}.')
+            source = ffi_cut(target=target, size=size, local_directory=local_directory,
+                             sector=source.sector_table['sector'][j],
+                             limit_mag=limit_mag, transient=transient)
+            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+    else:
+        print(
+            f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
+            f'large, the download is likely to cause a timeout error from MAST.')
+        print('Downloading Data from MAST and Gaia ...')
+        for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
@@ -107,7 +126,7 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
             # plt.xlim(2753, 2755)
-            # plt.ylim(-20, 50)
+            # plt.ylim(0.7, 1.1)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
             plt.legend()
             # plt.show()
@@ -347,8 +366,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [82329624]
-    directory = ''
+    tics = [56913729]
+    directory = f'/home/tehan/Documents/tglc/panyang/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
