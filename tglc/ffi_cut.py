@@ -70,7 +70,6 @@ class Source_cut(object):
         sector_table = Tesscut.get_sectors(coordinates=coord)
         if len(sector_table) == 0:
             warnings.warn('TESS has not observed this position yet :(')
-        print(sector_table)
         if sector is None:
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size)
         elif sector == 'first':

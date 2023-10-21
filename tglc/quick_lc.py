@@ -11,6 +11,9 @@ from functools import partial
 from tglc.target_lightcurve import epsf
 from tglc.ffi_cut import ffi_cut
 from astroquery.mast import Catalogs
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astroquery.mast import Tesscut
 
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
@@ -40,8 +43,14 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         sector = 'first'
     elif last_sector_only:
         sector = 'last'
-    source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
-                     limit_mag=limit_mag, transient=transient)  # sector
+    target_ = Catalogs.query_object(target, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+    if len(target_) == 0:
+        target_ = Catalogs.query_object(target.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
+    ra = target_[0]['ra']
+    dec = target_[0]['dec']
+    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+    sector_table = Tesscut.get_sectors(coordinates=coord)
+    print(sector_table)
     if get_all_lc:
         name = None
     else:
@@ -58,28 +67,36 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     if type(sector) == int:
         print(f'Only processing Sector {sector}.')
         print('Downloading Data from MAST and Gaia ...')
+        source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
+                         limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
     elif first_sector_only:
-        print(f'Only processing the first sector the target is observed in: Sector {source.sector_table["sector"][0]}.')
+        print(f'Only processing the first sector the target is observed in: Sector {sector_table["sector"][0]}.')
         print('Downloading Data from MAST and Gaia ...')
+
+        source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
+                         limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=source.sector_table['sector'][0])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
     elif last_sector_only:
-        print(f'Only processing the last sector the target is observed in: Sector {source.sector_table["sector"][-1]}.')
+        print(f'Only processing the last sector the target is observed in: Sector {sector_table["sector"][-1]}.')
         print('Downloading Data from MAST and Gaia ...')
+        source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
+                         limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=source.sector_table['sector'][-1])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
     elif sector == None:
         print(f'Processing all available sectors of the target.')
         print('Downloading Data from MAST and Gaia ...')
-        for j in range(len(source.sector_table)):
-            print(f'Downloading Sector {source.sector_table["sector"][j]}.')
+        for j in range(len(sector_table)):
+            print(f'################################################')
+            print(f'Downloading Sector {sector_table["sector"][j]}.')
             source = ffi_cut(target=target, size=size, local_directory=local_directory,
-                             sector=source.sector_table['sector'][j],
+                             sector=sector_table['sector'][j],
                              limit_mag=limit_mag, transient=transient)
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
@@ -88,6 +105,8 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
             f'large, the download is likely to cause a timeout error from MAST.')
         print('Downloading Data from MAST and Gaia ...')
+        source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
+                         limit_mag=limit_mag, transient=transient)  # sector
         for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
