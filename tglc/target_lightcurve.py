@@ -337,10 +337,20 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             if np.isnan(aper_lc).all():
                 continue
             else:
-                lc_output(source, local_directory=lc_directory, index=i,
-                          tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
-                          aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
-                          bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
-                          cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
-                          y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                          prior=prior, transient=source.transient)
+                if type(source) == Source:
+                    lc_output(source, local_directory=lc_directory, index=i,
+                              tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+                              aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
+                              bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
+                              cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
+                              y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
+                              prior=prior)
+                else:
+                    lc_output(source, local_directory=lc_directory, index=i,
+                              tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+                              aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i],
+                              tglc_flag=quality,
+                              bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
+                              cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
+                              y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
+                              prior=prior, transient=source.transient)
