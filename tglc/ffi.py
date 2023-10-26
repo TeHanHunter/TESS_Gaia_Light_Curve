@@ -282,7 +282,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'{local_directory}ffi*/**/*{camera}-{ccd}-????-?_ffic.fits*')
+    input_files = glob(f'/pdo/spoc-data/sector-{sector:03d}/ffi*/**/*{camera}-{ccd}-????-?_ffic.fits*')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []
     quality = []
