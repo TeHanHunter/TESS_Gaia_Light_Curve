@@ -29,7 +29,7 @@ def lc_per_cut(i, camccd='', local_directory=''):
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
+         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=False)
 
 
 def lc_per_ccd(camccd='1-1', local_directory=''):
