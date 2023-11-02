@@ -312,7 +312,6 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 aperture, psf_lc, star_y, star_x, portion = \
                     fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
                            near_edge=near_edge)
-
             aper_lc = np.sum(
                 aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
                 axis=(1, 2))
@@ -325,6 +324,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             saturated_arg_aper = np.where(aper_lc > 1e5 * 9 * 2e5 / exposure_time)  # saturation is 2e5 e-
             aper_lc[saturated_arg_aper] = np.nan
             saturated_arg_psf = np.where(psf_lc > 1e5 * 9 * 2e5 / exposure_time)
+            psf_lc[saturated_arg_psf] = np.nan
+            saturated_arg_aper = np.where(aper_lc <= 0)  # Negative frames
+            aper_lc[saturated_arg_aper] = np.nan
+            saturated_arg_psf = np.where(psf_lc <= 0)
             psf_lc[saturated_arg_psf] = np.nan
             local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
                                                                         psf_lc=psf_lc,
