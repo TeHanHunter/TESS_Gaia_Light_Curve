@@ -43,6 +43,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         sector = 'first'
     elif last_sector_only:
         sector = 'last'
+    print(f'Target: {target}')
     target_ = Catalogs.query_object(target, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
     if len(target_) == 0:
         target_ = Catalogs.query_object(target.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
@@ -380,16 +381,18 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/lc/', type='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [56913729]
-    directory = f'/home/tehan/Documents/tglc/panyang/'
+    tics = [388076422]
+    # directory = f'/home/tehan/Documents/tglc/Elisabeth/'
+    directory = f'/home/tehan/data/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
     # target = '145.3937083 75.8210000'
     # local_directory = f'{directory}{target}/'
