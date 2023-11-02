@@ -334,14 +334,14 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
             quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
-            if i == 4e6:
+            if cut_x == 7:
                 lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}_extra/'
                 os.makedirs(lc_directory, exist_ok=True)
             if np.isnan(aper_lc).all():
                 continue
             else:
                 if type(source) == Source:
-                    if i >= 4e6:
+                    if cut_x >= 7:
                         lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}_extra/'
                     lc_output(source, local_directory=lc_directory, index=i,
                               tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
