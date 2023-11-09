@@ -104,7 +104,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     else:
         print(
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
-            f'large, the download is likely to cause a timeout error from MAST.')
+            f'large, the download might cause a timeout error from MAST.')
         print('Downloading Data from MAST and Gaia ...')
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
                          limit_mag=limit_mag, transient=transient)  # sector
@@ -379,7 +379,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=25, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/lc/', type='cal_aper_flux')
     if method == 'search':
@@ -388,8 +388,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     tics = [388076422]
-    # directory = f'/home/tehan/Documents/tglc/Elisabeth/'
-    directory = f'/home/tehan/data/cosmos/GEMS/'
+    directory = f'/home/tehan/Documents/tglc/'
+    # directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')

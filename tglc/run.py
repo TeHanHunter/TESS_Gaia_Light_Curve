@@ -28,9 +28,25 @@ def lc_per_cut(i, camccd='', local_directory=''):
     cut_y = i % 14
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
-    epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=False)
-
+    residual=epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
+         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
+    np.save(f'/home/tehan/cosmos/MKI/Roland/{cut_x:02d}_{cut_y:02d}.npy', residual)
+    fig = plt.figure(constrained_layout=False, figsize=(8, 8))
+    gs = fig.add_gridspec(2, 2)
+    gs.update(wspace=0.4, hspace=0.2)
+    wcs = source.wcs
+    ax0 = fig.add_subplot(gs[0:2, 0:2], projection=wcs)
+    ax0.imshow(residual, origin='bottom')
+    ax0.coords['pos.eq.ra'].set_axislabel('Right Ascension')
+    ax0.coords['pos.eq.ra'].set_axislabel_position('l')
+    ax0.coords['pos.eq.ra'].set_ticklabel(rotation=90)
+    ax0.coords['pos.eq.dec'].set_axislabel('Declination')
+    ax0.coords['pos.eq.dec'].set_axislabel_position('b')
+    ax0.coords.grid(color='k', ls='dotted')
+    ax0.tick_params(axis='x', labelbottom=True)
+    ax0.tick_params(axis='y', labelleft=True)
+    ax0.set_title(f'Sector 42 Camera 1 CCD 1, cut {cut_x:02d}_{cut_y:02d}, cadence {source.cadence[2817]}, time {source.time[2817]}')
+    plt.savefig(f'/home/tehan/cosmos/MKI/Roland/figs/{cut_x:02d}_{cut_y:02d}.png')
 
 def lc_per_ccd(camccd='1-1', local_directory=''):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
@@ -68,11 +84,12 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
-    sector = 1
+    sector = 42
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    for i in range(16):
-        name = f'{1 + i // 4}-{1 + i % 4}'
-        lc_per_ccd(camccd=name, local_directory=local_directory)
-        plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
+    lc_per_ccd(camccd='1-1', local_directory=local_directory)
+    # for i in range(16):
+    #     name = f'{1 + i // 4}-{1 + i % 4}'
+    #     lc_per_ccd(camccd=name, local_directory=local_directory)
+    #     plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
     # name = f'1-3'
     # lc_per_cut(169, camccd=name, local_directory=local_directory)
