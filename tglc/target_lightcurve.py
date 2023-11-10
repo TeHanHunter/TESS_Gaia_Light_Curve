@@ -231,10 +231,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     else:
         bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
-    sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=2817).T)
-    # residual = np.abs(source.flux[2817].flatten() - sim_image)
-    residual = source.flux[2817].flatten() - sim_image.reshape((source.size, source.size))
-    return residual
+    # sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=2817).T)
+    # # residual = np.abs(source.flux[2817].flatten() - sim_image)
+    # residual = source.flux[2817].flatten() - sim_image.reshape((source.size, source.size))
+    # return residual
 
     epsf_exists = exists(epsf_loc)
     if epsf_exists:
