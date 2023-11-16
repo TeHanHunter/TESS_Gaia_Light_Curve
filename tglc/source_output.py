@@ -77,7 +77,7 @@ if __name__ == '__main__':
     sector = 56
     ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:04d}/')
     # ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
-    # files = glob.glob('/home/tehan/data/sector{sector:04d}/source/*/source_00_00.pkl')
+    # files = glob.glob(f'/home/tehan/data/sector{sector:04d}/source/*/source_00_00.pkl')
     # for i in range(len(files)):
     #     with open(files[i], 'rb') as input_:
     #         source = pickle.load(input_)
