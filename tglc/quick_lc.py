@@ -128,6 +128,46 @@ def search_stars(i, sector=1, tics=None, local_directory=None):
                 pass
 
 
+def timebin(time, meas, meas_err, binsize):
+	"""Bin in equal sized time bins
+
+	This routine bins a set of times, measurements, and measurement errors
+	into time bins.  All inputs and outputs should be floats or double.
+	binsize should have the same units as the time array.
+	(from Andrew Howard, ported to Python by BJ Fulton)
+
+	Args:
+		time (array): array of times
+		meas (array): array of measurements to be comined
+		meas_err (array): array of measurement uncertainties
+		binsize (float): width of bins in same units as time array
+
+	Returns:
+		tuple: (bin centers, binned measurements, binned uncertainties)
+	"""
+
+	ind_order = np.argsort(time)
+	time = time[ind_order]
+	meas = meas[ind_order]
+	meas_err = meas_err[ind_order]
+	ct = 0
+	while ct < len(time):
+		ind = np.where((time >= time[ct]) & (time < time[ct]+binsize))[0]
+		num = len(ind)
+		wt = (1./meas_err[ind])**2.	 # weights based in errors
+		wt = wt/np.sum(wt)			  # normalized weights
+		if ct == 0:
+			time_out = [np.sum(wt*time[ind])]
+			meas_out = [np.sum(wt*meas[ind])]
+			meas_err_out = [1./np.sqrt(np.sum(1./(meas_err[ind])**2))]
+		else:
+			time_out.append(np.sum(wt*time[ind]))
+			meas_out.append(np.sum(wt*meas[ind]))
+			meas_err_out.append(1./np.sqrt(np.sum(1./(meas_err[ind])**2)))
+		ct += num
+
+	return time_out, meas_out, meas_err_out
+
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     for i in range(server, 27, 2):
@@ -222,9 +262,20 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
                     f = np.mean(
                         hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=2)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1,
-                             marker='.', ms=2, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
+
+                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1.5,
+                             marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
+
+                time_out, meas_out, meas_err_out = timebin(time=t, meas=f,
+                                                           meas_err=[hdul[1].header['CAPE_ERR']] * len(t),
+                                                           binsize=600 / 86400)
+                plt.errorbar(time_out, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=2,
+                             marker='.', ms=5, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
+
+                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1.5,
+                             marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
@@ -387,12 +438,14 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [388076422]
-    directory = f'/home/tehan/Documents/tglc/'
+    tics = [419411415]
+    directory = '/mnt/c/Users/tehan/Desktop/'
+    # directory = f'/home/tehan/Documents/tglc/'
     # directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=1.630757, type='cal_aper_flux')
 
     # target = '145.3937083 75.8210000'
     # local_directory = f'{directory}{target}/'
