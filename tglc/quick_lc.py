@@ -233,6 +233,7 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
         with fits.open(files[j], mode='denywrite') as hdul:
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+            q = [a and b for a, b in zip(q, list(hdul[1].data[type] > 0.85))]
             if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
                 if hdul[0].header["SECTOR"] <= 26:
                     t = hdul[1].data['time'][q]
