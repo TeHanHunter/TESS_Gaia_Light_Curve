@@ -228,6 +228,9 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     fig = plt.figure(figsize=(13, 5))
+    t_all = np.array([])
+    f_all = np.array([])
+    f_err_all = np.array([])
     for j in range(len(files)):
         not_plotted_num = 0
         with fits.open(files[j], mode='denywrite') as hdul:
@@ -248,16 +251,18 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
                     f = np.mean(
                         hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
-
+                t_all = np.append(t_all,t)
+                f_all = np.append(f_all,f)
+                f_err_all = np.append(f_err_all,np.array([hdul[1].header['CAPE_ERR']] * len(t)))
                 # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
                 plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=1.5,
                              marker='.', ms=3, zorder=2)
 
-                time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
-                                                           meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
-                                                           binsize=600 / 86400)
-                plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
-                             marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
+                # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
+                #                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
+                #                                            binsize=600 / 86400)
+                # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
+                #              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
@@ -268,6 +273,11 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
     #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
+    time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
+                                               meas_err=f_err_all,
+                                               binsize=600 / 86400)
+    plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
+                 marker='.', ms=8, zorder=3, label=f'Sector 15, 41, 55')
     plt.ylim(0.87, 1.05)
     plt.xlim(0.3, 0.43)
     plt.legend()
