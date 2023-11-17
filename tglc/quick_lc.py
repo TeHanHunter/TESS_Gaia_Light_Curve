@@ -236,9 +236,9 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
         with fits.open(files[j], mode='denywrite') as hdul:
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            q = [a and b for a, b in zip(q, list(hdul[1].data[type] > 0.85))]
-            if hdul[0].header['sector'] == 15:
-                q = [a and b for a, b in zip(q, list(hdul[1].data['time'] < 1736))]
+            # q = [a and b for a, b in zip(q, list(hdul[1].data[type] > 0.85))]
+            # if hdul[0].header['sector'] == 15:
+            #     q = [a and b for a, b in zip(q, list(hdul[1].data['time'] < 1736))]
             if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
                 if hdul[0].header["SECTOR"] <= 26:
                     t = hdul[1].data['time'][q]
@@ -254,10 +254,10 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                 t_all = np.append(t_all,t)
                 f_all = np.append(f_all,f)
                 f_err_all = np.append(f_err_all,np.array([hdul[1].header['CAPE_ERR']] * len(t)))
+
                 # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
                 plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=1.5,
                              marker='.', ms=3, zorder=2)
-
                 # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
                 #                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
                 #                                            binsize=600 / 86400)
@@ -273,11 +273,13 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
     #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
+
     time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
                                                meas_err=f_err_all,
                                                binsize=300 / 86400)
     plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
-                 marker='.', ms=8, zorder=3, label=f'Sector 15, 41, 55')
+                 marker='.', ms=8, zorder=3, label=f'All sectors')
+
     plt.ylim(0.87, 1.05)
     plt.xlim(0.3, 0.43)
     plt.legend()
