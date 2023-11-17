@@ -275,7 +275,7 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
     time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
                                                meas_err=f_err_all,
-                                               binsize=600 / 86400)
+                                               binsize=300 / 86400)
     plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
                  marker='.', ms=8, zorder=3, label=f'Sector 15, 41, 55')
     plt.ylim(0.87, 1.05)
