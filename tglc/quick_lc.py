@@ -246,19 +246,15 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                     f = np.mean(
                         hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
 
-                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1.5,
-                             marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
+                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
+                # plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1.5,
+                #              marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
 
                 time_out, meas_out, meas_err_out = timebin(time=t, meas=f,
                                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
                                                            binsize=600 / 86400)
                 plt.errorbar(time_out, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=2,
                              marker='.', ms=5, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
-
-                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1.5,
-                             marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
@@ -422,9 +418,9 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     tics = [419411415]
-    # directory = '/mnt/c/Users/tehan/Desktop/'
+    directory = '/mnt/c/Users/tehan/Desktop/'
     # directory = f'/home/tehan/Documents/tglc/'
-    directory = f'/home/tehan/data/cosmos/GEMS/'
+    # directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
