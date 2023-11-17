@@ -246,9 +246,9 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                     f = np.mean(
                         hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
 
-                plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c=f'C{j}', ls='', elinewidth=1.5,
-                             marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
+                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=1.5,
+                             marker='.', ms=3, zorder=2)
 
                 time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
                                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
@@ -265,12 +265,12 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
     #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
-    # plt.ylim(0.94, 1.025)
-    # plt.xlim(0.84, 0.86)
+    plt.ylim(0.86, 1.025)
+    plt.xlim(0.35, 0.41)
     plt.legend()
     plt.title(title)
     # plt.xlim(0.6, 0.7)
-    plt.ylim(0.9, 1.1)
+    # plt.ylim(0.9, 1.1)
     plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
