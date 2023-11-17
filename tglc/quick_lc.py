@@ -254,8 +254,8 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                 time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
                                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
                                                            binsize=600 / 86400)
-                plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=2,
-                             marker='.', ms=5, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
+                plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
+                             marker='.', ms=8, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
