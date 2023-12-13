@@ -135,21 +135,22 @@ def timebin(time, meas, meas_err, binsize):
     meas_err = meas_err[ind_order]
     ct = 0
     while ct < len(time):
-        ind = np.where((time >= time[ct]) & (time < time[ct]+binsize))[0]
+        ind = np.where((time >= time[ct]) & (time < time[ct] + binsize))[0]
         num = len(ind)
-        wt = (1./meas_err[ind])**2.	 # weights based in errors
-        wt = wt/np.sum(wt)			  # normalized weights
+        wt = (1. / meas_err[ind]) ** 2.  # weights based in errors
+        wt = wt / np.sum(wt)  # normalized weights
         if ct == 0:
-            time_out = [np.sum(wt*time[ind])]
-            meas_out = [np.sum(wt*meas[ind])]
-            meas_err_out = [1./np.sqrt(np.sum(1./(meas_err[ind])**2))]
+            time_out = [np.sum(wt * time[ind])]
+            meas_out = [np.sum(wt * meas[ind])]
+            meas_err_out = [1. / np.sqrt(np.sum(1. / (meas_err[ind]) ** 2))]
         else:
-            time_out.append(np.sum(wt*time[ind]))
-            meas_out.append(np.sum(wt*meas[ind]))
-            meas_err_out.append(1./np.sqrt(np.sum(1./(meas_err[ind])**2)))
+            time_out.append(np.sum(wt * time[ind]))
+            meas_out.append(np.sum(wt * meas[ind]))
+            meas_err_out.append(1. / np.sqrt(np.sum(1. / (meas_err[ind]) ** 2)))
         ct += num
 
     return time_out, meas_out, meas_err_out
+
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
@@ -224,7 +225,7 @@ def plot_aperture(local_directory=None, type='cal_aper_flux'):
     np.savetxt(f'{local_directory}TESS_TOI-5344_5_5_aper.csv', data, delimiter=',')
 
 
-def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
+def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     fig = plt.figure(figsize=(13, 5))
@@ -251,9 +252,9 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
                     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
                     f = np.mean(
                         hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                t_all = np.append(t_all,t)
-                f_all = np.append(f_all,f)
-                f_err_all = np.append(f_err_all,np.array([hdul[1].header['CAPE_ERR']] * len(t)))
+                t_all = np.append(t_all, t)
+                f_all = np.append(f_all, f)
+                f_err_all = np.append(f_err_all, np.array([hdul[1].header['CAPE_ERR']] * len(t)))
 
                 # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
                 plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=1.5,
@@ -273,7 +274,6 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
     #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
-    print(len(t_all % period))
     time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
                                                meas_err=f_err_all,
                                                binsize=300 / 86400)
@@ -284,10 +284,11 @@ def plot_pf_lc(local_directory=None, period=None, type='cal_aper_flux'):
     # plt.xlim(0.3, 0.43)
     plt.legend()
     plt.title(title)
-    # plt.xlim(0.6, 0.7)
+    plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
+    plt.vlines(x=(mid_transit_tbjd % period), ymin=0, xmax=2, ls='dotted', colors='grey')
     plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
@@ -434,13 +435,14 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [27846348]
-    directory = f'/home/tehan/Documents/GEMS/'
-    # directory = f'/home/tehan/data/cosmos/GEMS/'
+    tics = [230741378]
+    # directory = f'/home/tehan/Documents/GEMS/'
+    directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=1.630757, type='cal_aper_flux')
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
+               type='cal_aper_flux')
 
     # target = '145.3937083 75.8210000'
     # local_directory = f'{directory}{target}/'
