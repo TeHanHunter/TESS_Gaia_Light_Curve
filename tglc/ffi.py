@@ -316,7 +316,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     # for i in range(len(time)):
     #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
     #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
-
+    if np.min(np.diff(cadence)) != 1:
+        np.save(f'{local_directory}/Wrong_Cadence_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', np.min(np.diff(cadence)))
     if producing_mask:
         median_flux = np.median(flux, axis=0)
         mask = background_mask(im=median_flux)
