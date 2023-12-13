@@ -288,7 +288,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='c
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
-    plt.vlines(x=(mid_transit_tbjd % period), ymin=0, xmax=2, ls='dotted', colors='grey')
+    plt.vlines(x=(mid_transit_tbjd % period), ymin=0, ymax=2, ls='dotted', colors='grey')
     plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
