@@ -447,36 +447,3 @@ if __name__ == '__main__':
                type='cal_psf_flux')
     plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
                type='cal_aper_flux')
-
-    # target = '145.3937083 75.8210000'
-    # local_directory = f'{directory}{target}/'
-    # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-    #         get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=53, prior=None,
-    #         transient=('GRB 220623A', 145.3937083, 75.8210000))
-    # plot_lc(local_directory=f'{local_directory}lc/', type='psf_flux')
-    # plot_lc(local_directory=f'{local_directory}lc/', type='aperture_flux')
-
-    # # running reference star for Roland
-    # sectors = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 40, 41,
-    #            47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60]
-    #
-    # target = f'TIC {tics[0]}'
-    # local_directory = f'{directory}{target}/'
-    # os.makedirs(local_directory, exist_ok=True)
-    # for i in range(len(sectors)):
-    #     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-    #             get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None)
-
-    # from astropy.io import fits
-    # from glob import glob
-    # import matplotlib.pyplot as plt
-    #
-    # files = glob('/home/tehan/Documents/MKI/Michael/TIC 165553746_lc/*.fits')
-    # for i in range(len(files)):
-    #     with fits.open(files[i]) as hdul:
-    #         q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0),
-    #                                      list(hdul[1].data['TGLC_flags'] == 0))]
-    #         plt.plot(hdul[1].data['time'][q], hdul[1].data['aperture_flux'][q], '.')
-    # plt.title('TIC 165553746')
-    # # plt.ylim(8000,12000)
-    # plt.show()
