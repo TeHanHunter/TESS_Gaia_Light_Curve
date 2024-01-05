@@ -447,7 +447,10 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     if np.isnan(local_bg):
         local_bg = 0
     psf_lc = psf_lc - local_bg
-
+    negative_arg_aper = np.where(aper_lc <= 0)  # Negative frames
+    aper_lc[negative_arg_aper] = np.nan
+    negative_arg_psf = np.where(psf_lc <= 0)
+    psf_lc[negative_arg_psf] = np.nan
     # removes very large outliers to prevent wotan to freeze
     cal_aper_lc = aper_lc / np.nanmedian(aper_lc)
     cal_aper_lc[np.where(cal_aper_lc > 100)] = np.nan
