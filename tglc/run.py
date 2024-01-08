@@ -15,44 +15,27 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import multiprocessing
-
+from tqdm import tqdm
+from tqdm import trange
 from astropy.io import fits
 from tglc.target_lightcurve import epsf
 from multiprocessing import Pool
 from functools import partial
 from glob import glob
+from astropy.table import Table
 
-
-def lc_per_cut(i, camccd='', local_directory=''):
+def lc_per_cut(i, camccd='', local_directory='', target_list=None):
     cut_x = i // 14
     cut_y = i % 14
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
-    # residual =
-    # np.save(f'/home/tehan/cosmos/MKI/Roland/{cut_x:02d}_{cut_y:02d}.npy', residual)
-    # fig = plt.figure(constrained_layout=False, figsize=(8, 8))
-    # gs = fig.add_gridspec(2, 2)
-    # gs.update(wspace=0.4, hspace=0.2)
-    # wcs = source.wcs
-    # ax0 = fig.add_subplot(gs[0:2, 0:2], projection=wcs)
-    # ax0.imshow(residual, origin='bottom')
-    # ax0.coords['pos.eq.ra'].set_axislabel('Right Ascension')
-    # ax0.coords['pos.eq.ra'].set_axislabel_position('l')
-    # ax0.coords['pos.eq.ra'].set_ticklabel(rotation=90)
-    # ax0.coords['pos.eq.dec'].set_axislabel('Declination')
-    # ax0.coords['pos.eq.dec'].set_axislabel_position('b')
-    # ax0.coords.grid(color='k', ls='dotted')
-    # ax0.tick_params(axis='x', labelbottom=True)
-    # ax0.tick_params(axis='y', labelleft=True)
-    # ax0.set_title(f'Sector 42 Camera 1 CCD 1, cut {cut_x:02d}_{cut_y:02d}, cadence {source.cadence[2817]}, time {source.time[2817]}')
-    # plt.savefig(f'/home/tehan/cosmos/MKI/Roland/figs/{cut_x:02d}_{cut_y:02d}.png')
+         local_directory=local_directory, limit_mag=20, save_aper=False, no_progress_bar=True, target_list=target_list)
 
-def lc_per_ccd(camccd='1-1', local_directory=''):
+def lc_per_ccd(camccd='1-1', local_directory='', target_list=None):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
     with Pool() as p:
-        p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory), range(196))
+        p.map(partial(lc_per_cut, camccd=camccd, local_directory=local_directory, target_list=target_list), range(196))
 
 
 def plot_epsf(sector=1, camccd='', local_directory=''):
@@ -84,12 +67,21 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 
 if __name__ == '__main__':
-    print("Number of cpu : ", multiprocessing.cpu_count())
-    sector = 1
-    local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    for i in range(16):
-        name = f'{1 + i // 4}-{1 + i % 4}'
-        lc_per_ccd(camccd=name, local_directory=local_directory)
-        plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
-    # name = f'1-3'
-    # lc_per_cut(169, camccd=name, local_directory=local_directory)
+    file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_ForTe (1).csv'
+    table = Table.read(file_path, format='csv', delimiter=',')
+    result_dict = {}
+    for row in tqdm(table, desc="Processing data"):
+        designation = row['designation']
+        sectors = row['sectors'].split()
+        for sector in sectors:
+            if sector not in result_dict:
+                result_dict[sector] = []
+            result_dict[sector].append(designation)
+    for sector in trange(1, 57, 2):
+        target_list = result_dict[str(sector)]
+        print("Number of cpu : ", multiprocessing.cpu_count())
+        sector = sector
+        local_directory = f'/home/tehan/data/sector{sector:04d}/'
+        for i in range(16):
+            name = f'{1 + i // 4}-{1 + i % 4}'
+            lc_per_ccd(camccd=name, local_directory=local_directory, target_list=target_list)
