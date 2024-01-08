@@ -29,6 +29,7 @@ def lc_per_cut(i, camccd='', local_directory='', target_list=None):
     cut_y = i % 14
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
+        print(source.gaia.colnames)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
          local_directory=local_directory, limit_mag=20, save_aper=False, no_progress_bar=True, target_list=target_list)
 
