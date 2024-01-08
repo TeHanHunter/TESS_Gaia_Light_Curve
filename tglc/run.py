@@ -77,7 +77,9 @@ if __name__ == '__main__':
             if sector not in result_dict:
                 result_dict[sector] = []
             result_dict[sector].append(designation)
-    for sector in trange(1, 57, 2):
+    sorted_keys = sorted(result_dict.keys())
+    print(sorted_keys)
+    for sector in trange(2, 56, 2):
         target_list = result_dict[str(sector)]
         print("Number of cpu : ", multiprocessing.cpu_count())
         sector = sector
