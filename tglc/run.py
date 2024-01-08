@@ -67,7 +67,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 
 if __name__ == '__main__':
-    file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_ForTe (1).csv'
+    file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_ForTe.csv'
     table = Table.read(file_path, format='csv', delimiter=',')
     result_dict = {}
     for row in tqdm(table, desc="Processing data"):
