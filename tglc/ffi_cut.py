@@ -117,7 +117,7 @@ class Source_cut(object):
         data_time = hdu[1].data['TIME']
         data_flux = hdu[1].data['FLUX']
         data_flux_err = hdu[1].data['FLUX_ERR']
-        # data_quality = hdu[1].data['QUALITY']
+        data_quality = hdu[1].data['QUALITY']
         # data_time = data_time[np.where(data_quality == 0)]
         # data_flux = data_flux[np.where(data_quality == 0), :, :][0]
         # data_flux_err = data_flux_err[np.where(data_quality == 0), :, :][0]
@@ -125,7 +125,7 @@ class Source_cut(object):
         self.time = data_time
         self.flux = data_flux
         self.flux_err = data_flux_err
-        self.quality = np.zeros(len(data_time))
+        self.quality = data_quality
         median_time = np.median(data_time)
         interval = (median_time - 388.5) / 365.25
 
