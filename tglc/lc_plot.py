@@ -421,7 +421,7 @@ def get_MAD():
     weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[1]) / 2.5))
     print(np.shape(tic))
     print(np.shape(aper_precision))
-    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy', np.hstack((tic,aper_precision,psf_precision,weighted_precision)))
+    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy', np.vstack((tic[1],aper_precision,psf_precision,weighted_precision)))
     return
 
 def plot_MAD():
