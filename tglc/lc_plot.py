@@ -401,7 +401,7 @@ def eleanor(tic, local_directory=''):
 
 
 def get_MAD():
-    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')
+    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')[:1000]
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
@@ -413,9 +413,11 @@ def get_MAD():
                 tic[i] = hdul[0].header['TESSMAG']
                 aper_flux = hdul[1].data['aperture_flux'][~np.isnan(hdul[1].data['aperture_flux'])]
                 psf_flux = hdul[1].data['psf_flux'][~np.isnan(hdul[1].data['psf_flux'])]
+                weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
+                weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
                 MAD_aper[i] = np.median(np.abs(np.diff(aper_flux)))
                 MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
-                MAD_weighted[i] = np.median(np.abs(np.diff(0.6 * aper_flux + 0.4 * psf_flux)))
+                MAD_weighted[i] = np.median(np.abs(np.diff(weighted_flux)))
             except:
                 pass
     aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
