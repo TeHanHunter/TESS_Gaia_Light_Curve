@@ -404,9 +404,9 @@ def get_MAD():
     files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')[:100]
     print(len(files))
     tic = np.zeros((len(files), 2))
-    MAD_aper = np.zeros((len(files),1))
-    MAD_psf = np.zeros((len(files),1))
-    MAD_weighted = np.zeros((len(files),1))
+    MAD_aper = np.zeros((len(files)))
+    MAD_psf = np.zeros((len(files)))
+    MAD_weighted = np.zeros((len(files)))
     for i in trange(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
@@ -419,7 +419,7 @@ def get_MAD():
     aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[:,1]) / 2.5))
     psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[:,1]) / 2.5))
     weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[:,1]) / 2.5))
-    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy', np.vstack((tic,aper_precision,psf_precision,weighted_precision)))
+    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy', np.hstack((tic,aper_precision,psf_precision,weighted_precision)))
     return
 
 def plot_MAD():
