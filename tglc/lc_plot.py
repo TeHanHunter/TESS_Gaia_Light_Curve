@@ -400,7 +400,29 @@ def eleanor(tic, local_directory=''):
     np.save(f'{local_directory}TIC{tic}_{sector}_corr.npy', np.array([data.time[q], data.corr_flux[q]]))
 
 
-def figure_3():
+def get_MAD():
+    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')
+    print(len(files))
+    tic = np.zeros((len(files), 2))
+    MAD_aper = np.zeros((len(files)))
+    MAD_psf = np.zeros((len(files)))
+    MAD_weighted = np.zeros((len(files)))
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            try:
+                tic[i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
+                MAD_aper[i] = np.median(np.abs(np.diff(hdul[1].data['aperture_flux'])))
+                MAD_psf[i] = np.median(np.abs(np.diff(hdul[1].data['psf_flux'])))
+                MAD_weighted[i] = np.median(np.abs(np.diff(0.6*hdul[1].data['aperture_flux'] + 0.4*hdul[1].data['psf_flux'])))
+            except:
+                pass
+    aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[:,1]) / 2.5))
+    psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[:,1]) / 2.5))
+    weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic[:,1]) / 2.5))
+    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy', np.vstack((tic,aper_precision,psf_precision,weighted_precision)))
+    return
+
+def plot_MAD():
     target = '21.0607 34.4578'
     # target = 'TOI 519'
     local_directory = f'/home/tehan/Documents/tglc/{target}/'
@@ -410,6 +432,7 @@ def figure_3():
     files = glob(f'{local_directory}lc/*.fits')
     print(len(files))
     tic = np.zeros((len(files), 2))
+
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
@@ -2659,4 +2682,4 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    figure_3()
+    get_MAD()
