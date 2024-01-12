@@ -401,7 +401,7 @@ def eleanor(tic, local_directory=''):
 
 
 def get_MAD():
-    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')[:100]
+    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')[:1000]
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
@@ -411,9 +411,11 @@ def get_MAD():
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
                 tic[i] = hdul[0].header['TESSMAG']
-                MAD_aper[i] = np.median(np.abs(np.diff(hdul[1].data['aperture_flux'][~np.isnan(hdul[1].data['aperture_flux'])])))
-                MAD_psf[i] = np.median(np.abs(np.diff(hdul[1].data['psf_flux'])))
-                MAD_weighted[i] = np.median(np.abs(np.diff(0.6*hdul[1].data['aperture_flux'] + 0.4*hdul[1].data['psf_flux'])))
+                aper_flux = hdul[1].data['aperture_flux'][~np.isnan(hdul[1].data['aperture_flux'])]
+                psf_flux = hdul[1].data['psf_flux'][~np.isnan(hdul[1].data['psf_flux'])]
+                MAD_aper[i] = np.median(np.abs(np.diff(aper_flux)))
+                MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
+                MAD_weighted[i] = np.median(np.abs(np.diff(0.6 * aper_flux + 0.4 * psf_flux)))
             except:
                 pass
     aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
@@ -421,20 +423,22 @@ def get_MAD():
     weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
     print(np.shape(tic))
     print(np.shape(aper_precision))
-    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy', np.vstack((tic,aper_precision,psf_precision,weighted_precision)))
+    np.save('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy',
+            np.vstack((tic, aper_precision, psf_precision, weighted_precision)))
     return
+
 
 def plot_MAD():
     mad = np.load('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy')
     noise_2015 = ascii.read('/home/tehan/data/cosmos/GEMS/tessminer/noisemodel.dat')
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1, wspace=0.05),
                            figsize=(5, 5))
-    ax[0, 0].plot(mad[:,1], mad[:,4], 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
+    ax[0, 0].plot(mad[:, 1], mad[:, 4], 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
 
     ax[0, 0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
     # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
-    ax[0, 0].hlines(y=.1, xmin=8, xmax=np.max(mad[:,1]), colors='k', linestyles='dotted')
-    ax[0, 0].hlines(y=.01, xmin=8, xmax=np.max(mad[:,1]), colors='k', linestyles='dotted')
+    ax[0, 0].hlines(y=.1, xmin=8, xmax=np.max(mad[:, 1]), colors='k', linestyles='dotted')
+    ax[0, 0].hlines(y=.01, xmin=8, xmax=np.max(mad[:, 1]), colors='k', linestyles='dotted')
 
     leg = ax[0, 0].legend(loc=4, markerscale=4, fontsize=8)
     for lh in leg.legendHandles:
@@ -444,13 +448,13 @@ def plot_MAD():
     ax[0, 0].set_ylim(1e-4, 1)
     ax[0, 0].set_title('Sparse Field')
 
-    psf_ratio = mad[:,3] / mad[:,4]
-    psf_tglc_mag = mad[:,1][np.invert(np.isnan(psf_ratio))]
+    psf_ratio = mad[:, 3] / mad[:, 4]
+    psf_tglc_mag = mad[:, 1][np.invert(np.isnan(psf_ratio))]
     psf_ratio = psf_ratio[np.invert(np.isnan(psf_ratio))]
     psf_runningmed = ndimage.median_filter(psf_ratio, size=250, mode='nearest')
 
-    aper_ratio = mad[:,2] / mad[:,4]
-    aper_tglc_mag = mad[:,1][np.invert(np.isnan(aper_ratio))]
+    aper_ratio = mad[:, 2] / mad[:, 4]
+    aper_tglc_mag = mad[:, 1][np.invert(np.isnan(aper_ratio))]
     aper_ratio = aper_ratio[np.invert(np.isnan(aper_ratio))]
     aper_runningmed = ndimage.median_filter(aper_ratio, size=300, mode='nearest')
 
@@ -463,7 +467,7 @@ def plot_MAD():
     ax[1, 0].plot(aper_tglc_mag[:-100], aper_runningmed[:-100], c='C0', label='Median', lw=1.5,
                   path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
 
-    ax[1, 0].hlines(y=1, xmin=8, xmax=np.max(mad[:,1]), colors='k', linestyles='dotted')
+    ax[1, 0].hlines(y=1, xmin=8, xmax=np.max(mad[:, 1]), colors='k', linestyles='dotted')
     # ax[1].set_yscale('log')
     ax[1, 0].set_ylim(0.5, 1.5)
     ax[1, 0].tick_params(axis='y', which='minor', labelleft=False)
@@ -609,7 +613,7 @@ def figure_6(mode='psf'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009*.fits')[0],
                    mode='denywrite') as hdul:
-        q =  list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_09 = hdul[1].data['time'][q]
         f_09 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0010*.fits')[0],
