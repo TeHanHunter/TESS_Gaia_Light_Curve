@@ -407,7 +407,7 @@ def get_MAD():
     MAD_aper = np.zeros((len(files)))
     MAD_psf = np.zeros((len(files)))
     MAD_weighted = np.zeros((len(files)))
-    for i in range(len(files)):
+    for i in trange(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
                 tic[i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
@@ -423,81 +423,16 @@ def get_MAD():
     return
 
 def plot_MAD():
-    target = '21.0607 34.4578'
-    # target = 'TOI 519'
-    local_directory = f'/home/tehan/Documents/tglc/{target}/'
-    # os.makedirs(local_directory, exist_ok=True)
-    # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
-    #                 get_all_lc=True, first_sector_only=False, sector=17)
-    files = glob(f'{local_directory}lc/*.fits')
-    print(len(files))
-    tic = np.zeros((len(files), 2))
+    mad = np.load('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy')
+    noise_2015 = ascii.read('/home/tehan/data/cosmos/GEMS/tessminer/noisemodel.dat')
+    fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1, wspace=0.05),
+                           figsize=(5, 5))
+    ax[0, 0].plot(mad[:,1], mad[:,4], 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
 
-    for i in range(len(files)):
-        with fits.open(files[i], mode='denywrite') as hdul:
-            try:
-                tic[i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
-            except:
-                pass
-    np.save(f'/home/tehan/Documents/tglc/{target}/tic.npy', tic)
-    # tic = np.load(f'/home/tehan/Documents/tglc/{target}/tic.npy')
-
-    # 1-1/07_07 # 21.0607 34.4578 # 90
-    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
-    qlp_file = glob(f'{local_directory}QLP/HLSP/*/*.fits')
-    # ele_file = glob(f'{local_directory}lc_eleanor_psf/*.npy')
-
-    mag_qlp = []
-    median_diff_qlp = []
-    for i in trange(len(qlp_file)):
-        with fits.open(qlp_file[i], mode='denywrite') as hdul:
-            quality = hdul[1].data['QUALITY']
-            lc = hdul[1].data['KSPSAP_FLUX']
-            mag_ = hdul[0].header['TESSMAG']
-            scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
-            index = np.where(quality == 0)
-            mag_qlp.append(mag_)
-            median_diff_qlp.append(np.nanmedian(np.abs(np.diff(lc[index]))))
-    mag_ele = []
-    median_diff_ele = []
-    # diff = []
-    # for i in trange(len(ele_file)):
-    #     lc = np.load(ele_file[i])[1]
-    #     tic_id = int(os.path.basename(ele_file[i]).split(' ')[-1][:-10])
-    #     mag_ = tic[np.where(tic[:, 0] == tic_id)[0][0], 1]
-    #     mag_ele.append(mag_)
-    #     scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
-    #     median_diff_ele.append(np.nanmedian(np.abs(np.diff(lc))) / scale)
-    #     diff.append((scale - np.median(lc))/scale)
-    #
-    # plt.plot(mag_ele, diff, '.')
-    # plt.ylim(-50, 50)
-    # plt.show()
-    tglc_mag = np.load(f'/home/tehan/Documents/tglc/{target}/mag.npy')
-    mag_both = np.load(f'/home/tehan/Documents/tglc/{target}/mag_both.npy')
-    MAD_aper = np.load(f'/home/tehan/Documents/tglc/{target}/MAD_aper.npy')
-    # AAD_aper = np.load(f'/home/tehan/Documents/tglc/{target}/AAD_aper.npy')
-    MAD_psf = np.load(f'/home/tehan/Documents/tglc/{target}/MAD_psf.npy')
-    # AAD_psf = np.load(f'/home/tehan/Documents/tglc/{target}/AAD_psf.npy')
-    MAD_both = np.load(f'/home/tehan/Documents/tglc/{target}/MAD_both.npy')
-
-    aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
-    psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
-    aver_precision = 1.48 * MAD_both / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - mag_both) / 2.5))
-    qlp_precision = 1.48 * np.array(median_diff_qlp) / np.sqrt(2)
-    ele_precision = 1.48 * np.array(median_diff_ele) / np.sqrt(2)
-
-    fig, ax = plt.subplots(2, 2, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1, wspace=0.05),
-                           figsize=(10, 5))
-    ax[0, 0].plot(mag_both, aver_precision, 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
-    # ax[0].plot(mag_ele, ele_precision, '^', c='C0', ms=1.5, label='eleanor PSF', alpha=0.4)
-    ax[0, 0].plot(mag_qlp, qlp_precision, '^', c='teal', ms=1.5, label='QLP', alpha=0.9)
-
-    # ax[0].plot(tglc_mag, aper_precision, 'D', c='k', ms=1, label='TGLC PSF', alpha=0.8)
     ax[0, 0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
     # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
-    ax[0, 0].hlines(y=.1, xmin=8, xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
-    ax[0, 0].hlines(y=.01, xmin=8, xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
+    ax[0, 0].hlines(y=.1, xmin=8, xmax=np.max(mad[:,1]), colors='k', linestyles='dotted')
+    ax[0, 0].hlines(y=.01, xmin=8, xmax=np.max(mad[:,1]), colors='k', linestyles='dotted')
 
     leg = ax[0, 0].legend(loc=4, markerscale=4, fontsize=8)
     for lh in leg.legendHandles:
@@ -507,13 +442,13 @@ def plot_MAD():
     ax[0, 0].set_ylim(1e-4, 1)
     ax[0, 0].set_title('Sparse Field')
 
-    psf_ratio = psf_precision / aver_precision
-    psf_tglc_mag = tglc_mag[np.invert(np.isnan(psf_ratio))]
+    psf_ratio = mad[:,3] / mad[:,4]
+    psf_tglc_mag = mad[:,1][np.invert(np.isnan(psf_ratio))]
     psf_ratio = psf_ratio[np.invert(np.isnan(psf_ratio))]
     psf_runningmed = ndimage.median_filter(psf_ratio, size=250, mode='nearest')
 
-    aper_ratio = aper_precision / aver_precision
-    aper_tglc_mag = tglc_mag[np.invert(np.isnan(aper_ratio))]
+    aper_ratio = mad[:,2] / mad[:,4]
+    aper_tglc_mag = mad[:,1][np.invert(np.isnan(aper_ratio))]
     aper_ratio = aper_ratio[np.invert(np.isnan(aper_ratio))]
     aper_runningmed = ndimage.median_filter(aper_ratio, size=300, mode='nearest')
 
@@ -526,7 +461,7 @@ def plot_MAD():
     ax[1, 0].plot(aper_tglc_mag[:-100], aper_runningmed[:-100], c='C0', label='Median', lw=1.5,
                   path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
 
-    ax[1, 0].hlines(y=1, xmin=8, xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
+    ax[1, 0].hlines(y=1, xmin=8, xmax=np.max(mad[:,1]), colors='k', linestyles='dotted')
     # ax[1].set_yscale('log')
     ax[1, 0].set_ylim(0.5, 1.5)
     ax[1, 0].tick_params(axis='y', which='minor', labelleft=False)
@@ -538,110 +473,7 @@ def plot_MAD():
     for lh in leg.legendHandles:
         lh.set_alpha(1)
     plt.xlim(7, 20.5)
-
-    ##############################
-    # target = '21.0607 34.4578'
-    target = 'TOI 519'
-    local_directory = f'/home/tehan/Documents/tglc/{target}/'
-    # os.makedirs(local_directory, exist_ok=True)
-    # tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
-    #                 get_all_lc=True, first_sector_only=False, sector=17)
-    files = glob(f'{local_directory}lc/*.fits')
-
-    tic = np.zeros((len(files), 2))
-    for i in range(len(files)):
-        with fits.open(files[i], mode='denywrite') as hdul:
-            try:
-                tic[i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
-            except:
-                pass
-    np.save(f'/home/tehan/Documents/tglc/{target}/tic.npy', tic)
-    # tic = np.load(f'/home/tehan/Documents/tglc/{target}/tic.npy')
-
-    # 1-1/07_07 # 21.0607 34.4578 # 90
-    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
-    qlp_file = glob(f'{local_directory}QLP/HLSP/*/*.fits')
-    # ele_file = glob(f'{local_directory}lc_eleanor_psf/*.npy')
-
-    mag_qlp = []
-    median_diff_qlp = []
-    for i in trange(len(qlp_file)):
-        with fits.open(qlp_file[i], mode='denywrite') as hdul:
-            quality = hdul[1].data['QUALITY']
-            lc = hdul[1].data['KSPSAP_FLUX']
-            mag_ = hdul[0].header['TESSMAG']
-            scale = 1.5e4 * 10 ** ((10 - mag_) / 2.5)
-            index = np.where(quality == 0)
-            mag_qlp.append(mag_)
-            median_diff_qlp.append(np.nanmedian(np.abs(np.diff(lc[index]))))
-    tglc_mag = np.load(f'/home/tehan/Documents/tglc/{target}/mag.npy')
-    mag_both = np.load(f'/home/tehan/Documents/tglc/{target}/mag_both.npy')
-    MAD_aper = np.load(f'/home/tehan/Documents/tglc/{target}/MAD_aper.npy')
-    # AAD_aper = np.load(f'/home/tehan/Documents/tglc/{target}/AAD_aper.npy')
-    MAD_psf = np.load(f'/home/tehan/Documents/tglc/{target}/MAD_psf.npy')
-    # AAD_psf = np.load(f'/home/tehan/Documents/tglc/{target}/AAD_psf.npy')
-    MAD_both = np.load(f'/home/tehan/Documents/tglc/{target}/MAD_both.npy')
-
-    aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
-    psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tglc_mag) / 2.5))
-    aver_precision = 1.48 * MAD_both / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - mag_both) / 2.5))
-    qlp_precision = 1.48 * np.array(median_diff_qlp) / np.sqrt(2)
-    # ele_precision = 1.48 * np.array(median_diff_ele) / np.sqrt(2)
-
-    # fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1), figsize=(5, 7))
-    ax[0, 1].plot(mag_both, aver_precision, 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
-    # ax[0].plot(mag_ele, ele_precision, '^', c='C0', ms=1.5, label='eleanor PSF', alpha=0.4)
-    ax[0, 1].plot(mag_qlp, qlp_precision, '^', c='teal', ms=1.5, label='QLP', alpha=0.9)
-
-    # ax[0].plot(tglc_mag, aper_precision, 'D', c='k', ms=1, label='TGLC PSF', alpha=0.8)
-    ax[0, 1].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
-    # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
-    ax[0, 1].hlines(y=.1, xmin=8, xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
-    ax[0, 1].hlines(y=.01, xmin=8, xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
-
-    leg = ax[0, 1].legend(loc=4, markerscale=4, fontsize=8)
-    for lh in leg.legendHandles:
-        lh.set_alpha(1)
-    # ax[0, 1].set_ylabel(r'Estimated Photometric Precision')
-    ax[0, 1].set_yscale('log')
-    ax[0, 1].set_ylim(1e-4, 1)
-    ax[0, 1].set_yticklabels([])
-    ax[0, 1].set_title('Crowded Field')
-
-    psf_ratio = psf_precision / aver_precision
-    psf_tglc_mag = tglc_mag[np.invert(np.isnan(psf_ratio))]
-    psf_ratio = psf_ratio[np.invert(np.isnan(psf_ratio))]
-    psf_runningmed = ndimage.median_filter(psf_ratio, size=250, mode='nearest')
-
-    aper_ratio = aper_precision / aver_precision
-    aper_tglc_mag = tglc_mag[np.invert(np.isnan(aper_ratio))]
-    aper_ratio = aper_ratio[np.invert(np.isnan(aper_ratio))]
-    aper_runningmed = ndimage.median_filter(aper_ratio, size=300, mode='nearest')
-
-    ax[1, 1].plot(psf_tglc_mag[:-100], psf_ratio[:-100], '.', c='C1', ms=6, alpha=0.15,
-                  label='TGLC PSF Precision/TGLC Weighted Precision')
-    ax[1, 1].plot(aper_tglc_mag[:-100], aper_ratio[:-100], '.', c='C0', ms=6, alpha=0.15,
-                  label='TGLC Aperture Precision/TGLC Weighted Precision')
-    ax[1, 1].plot(psf_tglc_mag[:-100], psf_runningmed[:-100], c='C1', label='Median', lw=1.5,
-                  path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    ax[1, 1].plot(aper_tglc_mag[:-100], aper_runningmed[:-100], c='C0', label='Median', lw=1.5,
-                  path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-
-    ax[1, 1].hlines(y=1, xmin=8, xmax=np.max(tglc_mag), colors='k', linestyles='dotted')
-    # ax[1].set_yscale('log')
-    ax[1, 1].set_ylim(0.5, 1.5)
-    ax[1, 1].tick_params(axis='y', which='minor', labelleft=False)
-    ax[1, 1].set_yticks(ticks=[0.5, 1, 1.5], labels=['0.5', '1', '1.5'])
-    # ax[1].set_title('Photometric Precision Ratio')
-    ax[1, 1].set_xlabel('TESS magnitude')
-    ax[1, 1].set_yticklabels([])
-    leg = ax[1, 1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
-    for lh in leg.legendHandles:
-        lh.set_alpha(1)
-    plt.xlim(7, 20.5)
-
-    # plt.savefig(f'{local_directory}MAD.png', bbox_inches='tight', dpi=300)
-    plt.show()
+    plt.savefig(f'/home/tehan/data/cosmos/GEMS/tessminer/MAD.png', bbox_inches='tight', dpi=300)
     # point-to-point scatter
 
 
