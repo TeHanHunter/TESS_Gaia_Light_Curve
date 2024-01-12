@@ -411,7 +411,7 @@ def get_MAD():
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
                 tic[:, i] = [int(hdul[0].header['TICID']), hdul[0].header['TESSMAG']]
-                MAD_aper[i] = np.median(np.abs(np.diff(hdul[1].data['aperture_flux'])))
+                MAD_aper[i] = np.median(np.abs(np.diff(hdul[1].data['aperture_flux'][~np.isnan(hdul[1].data['aperture_flux'])])))
                 MAD_psf[i] = np.median(np.abs(np.diff(hdul[1].data['psf_flux'])))
                 MAD_weighted[i] = np.median(np.abs(np.diff(0.6*hdul[1].data['aperture_flux'] + 0.4*hdul[1].data['psf_flux'])))
             except:
