@@ -401,7 +401,7 @@ def eleanor(tic, local_directory=''):
 
 
 def get_MAD():
-    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')
+    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')[:100]
     print(len(files))
     tic = np.zeros((len(files), 2))
     MAD_aper = np.zeros((len(files)))
