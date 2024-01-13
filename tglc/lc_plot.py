@@ -2533,5 +2533,5 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    # get_MAD()
-    plot_MAD()
+    get_MAD()
+    # plot_MAD()
