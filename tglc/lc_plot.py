@@ -421,8 +421,8 @@ def get_MAD():
                     psf_flux = np.mean(hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // 3 * 3].reshape(-1, 3), axis=1)
                     weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
                     weighted_flux = np.mean(weighted_flux[:len(weighted_flux) // 3 * 3].reshape(-1, 3), axis=1)
-                    aper_flux = aper_flux[~np.isnan(hdul[1].data['aperture_flux'])]
-                    psf_flux = psf_flux[~np.isnan(hdul[1].data['psf_flux'])]
+                    aper_flux = aper_flux[~np.isnan(aper_flux)]
+                    psf_flux = psf_flux[~np.isnan(psf_flux)]
                     weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
                 MAD_aper[i] = np.median(np.abs(np.diff(aper_flux)))
                 MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
