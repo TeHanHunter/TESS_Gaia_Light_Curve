@@ -401,7 +401,7 @@ def eleanor(tic, local_directory=''):
 
 
 def get_MAD():
-    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')
+    files = glob(f'/home/tehan/data/cosmos/GEMS/tessminer/*.fits')[:1000]
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
@@ -411,10 +411,19 @@ def get_MAD():
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
                 tic[i] = hdul[0].header['TESSMAG']
-                aper_flux = hdul[1].data['aperture_flux'][~np.isnan(hdul[1].data['aperture_flux'])]
-                psf_flux = hdul[1].data['psf_flux'][~np.isnan(hdul[1].data['psf_flux'])]
-                weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
-                weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
+                if hdul[0].header['sector'] <= 26:
+                    aper_flux = hdul[1].data['aperture_flux'][~np.isnan(hdul[1].data['aperture_flux'])]
+                    psf_flux = hdul[1].data['psf_flux'][~np.isnan(hdul[1].data['psf_flux'])]
+                    weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
+                    weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
+                else:
+                    aper_flux = np.mean(hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // 3 * 3].reshape(-1, 3), axis=1)
+                    psf_flux = np.mean(hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // 3 * 3].reshape(-1, 3), axis=1)
+                    weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
+                    weighted_flux = np.mean(weighted_flux[:len(weighted_flux) // 3 * 3].reshape(-1, 3), axis=1)
+                    aper_flux = aper_flux[~np.isnan(hdul[1].data['aperture_flux'])]
+                    psf_flux = psf_flux[~np.isnan(hdul[1].data['psf_flux'])]
+                    weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
                 MAD_aper[i] = np.median(np.abs(np.diff(aper_flux)))
                 MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
                 MAD_weighted[i] = np.median(np.abs(np.diff(weighted_flux)))
@@ -431,57 +440,59 @@ def get_MAD():
 
 
 def plot_MAD():
-    mad = np.load('/home/tehan/data/cosmos/GEMS/tessminer/mad.npy')
-    noise_2015 = ascii.read('/home/tehan/data/cosmos/GEMS/tessminer/noisemodel.dat')
+    mad = np.load('/home/tehan/Downloads/mad.npy')
+    sorted_indices = np.argsort(mad[0])
+    mad = mad[:, sorted_indices]
+    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1, wspace=0.05),
                            figsize=(5, 5))
-    ax[0, 0].plot(mad[:, 1], mad[:, 4], 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
+    ax[0].plot(mad[0], mad[3], 'D', c='tomato', ms=1, label='TGLC Weighted', alpha=0.9)
 
-    ax[0, 0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
     # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
-    ax[0, 0].hlines(y=.1, xmin=8, xmax=np.max(mad[:, 1]), colors='k', linestyles='dotted')
-    ax[0, 0].hlines(y=.01, xmin=8, xmax=np.max(mad[:, 1]), colors='k', linestyles='dotted')
+    ax[0].hlines(y=.1, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
+    ax[0].hlines(y=.01, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
 
-    leg = ax[0, 0].legend(loc=4, markerscale=4, fontsize=8)
+    leg = ax[0].legend(loc=4, markerscale=4, fontsize=8)
     for lh in leg.legendHandles:
         lh.set_alpha(1)
-    ax[0, 0].set_ylabel(r'Estimated Photometric Precision')
-    ax[0, 0].set_yscale('log')
-    ax[0, 0].set_ylim(1e-4, 1)
-    ax[0, 0].set_title('Sparse Field')
+    ax[0].set_ylabel(r'Estimated Photometric Precision')
+    ax[0].set_yscale('log')
+    ax[0].set_ylim(1e-4, 1)
+    ax[0].set_title('TESSminer')
 
-    psf_ratio = mad[:, 3] / mad[:, 4]
-    psf_tglc_mag = mad[:, 1][np.invert(np.isnan(psf_ratio))]
+    psf_ratio = mad[2] / mad[3]
+    psf_tglc_mag = mad[0][np.invert(np.isnan(psf_ratio))]
     psf_ratio = psf_ratio[np.invert(np.isnan(psf_ratio))]
     psf_runningmed = ndimage.median_filter(psf_ratio, size=250, mode='nearest')
 
-    aper_ratio = mad[:, 2] / mad[:, 4]
-    aper_tglc_mag = mad[:, 1][np.invert(np.isnan(aper_ratio))]
+    aper_ratio = mad[1] / mad[3]
+    aper_tglc_mag = mad[0][np.invert(np.isnan(aper_ratio))]
     aper_ratio = aper_ratio[np.invert(np.isnan(aper_ratio))]
     aper_runningmed = ndimage.median_filter(aper_ratio, size=300, mode='nearest')
 
-    ax[1, 0].plot(psf_tglc_mag[:-100], psf_ratio[:-100], '.', c='C1', ms=6, alpha=0.15,
+    ax[1].plot(psf_tglc_mag[:-100], psf_ratio[:-100], '.', c='C1', ms=6, alpha=0.15,
                   label='TGLC PSF Precision/TGLC Weighted Precision')
-    ax[1, 0].plot(aper_tglc_mag[:-100], aper_ratio[:-100], '.', c='C0', ms=6, alpha=0.15,
+    ax[1].plot(aper_tglc_mag[:-100], aper_ratio[:-100], '.', c='C0', ms=6, alpha=0.15,
                   label='TGLC Aperture Precision/TGLC Weighted Precision')
-    ax[1, 0].plot(psf_tglc_mag[:-100], psf_runningmed[:-100], c='C1', label='Median', lw=1.5,
+    ax[1].plot(psf_tglc_mag[:-100], psf_runningmed[:-100], c='C1', label='Median', lw=1.5,
                   path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    ax[1, 0].plot(aper_tglc_mag[:-100], aper_runningmed[:-100], c='C0', label='Median', lw=1.5,
+    ax[1].plot(aper_tglc_mag[:-100], aper_runningmed[:-100], c='C0', label='Median', lw=1.5,
                   path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
 
-    ax[1, 0].hlines(y=1, xmin=8, xmax=np.max(mad[:, 1]), colors='k', linestyles='dotted')
+    ax[1].hlines(y=1, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
     # ax[1].set_yscale('log')
-    ax[1, 0].set_ylim(0.5, 1.5)
-    ax[1, 0].tick_params(axis='y', which='minor', labelleft=False)
-    ax[1, 0].set_yticks(ticks=[0.5, 1, 1.5], labels=['0.5', '1', '1.5'])
+    ax[1].set_ylim(0.5, 1.5)
+    ax[1].tick_params(axis='y', which='minor', labelleft=False)
+    ax[1].set_yticks(ticks=[0.5, 1, 1.5], labels=['0.5', '1', '1.5'])
     # ax[1].set_title('Photometric Precision Ratio')
-    ax[1, 0].set_xlabel('TESS magnitude')
-    ax[1, 0].set_ylabel('Precision Ratio')
-    leg = ax[1, 0].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
+    ax[1].set_xlabel('TESS magnitude')
+    ax[1].set_ylabel('Precision Ratio')
+    leg = ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
     for lh in leg.legendHandles:
         lh.set_alpha(1)
     plt.xlim(7, 20.5)
-    plt.savefig(f'/home/tehan/data/cosmos/GEMS/tessminer/MAD.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'/home/tehan/Documents/GEMS/tessminer_mad.png', bbox_inches='tight', dpi=300)
     # point-to-point scatter
 
 
@@ -2522,4 +2533,5 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    get_MAD()
+    # get_MAD()
+    plot_MAD()
