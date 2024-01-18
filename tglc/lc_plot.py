@@ -438,13 +438,13 @@ def get_MAD():
 
 
 def plot_MAD():
-    mad = np.load('/home/tehan/Downloads/mad.npy')
+    mad = np.load('/home/tehan/Downloads/mad_180.npy')
     sorted_indices = np.argsort(mad[0])
     mad = mad[:, sorted_indices]
     noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1, wspace=0.05),
                            figsize=(5, 5))
-    ax[0].plot(mad[0], mad[3], 'D', c='tomato', ms=0.1, label='TGLC Weighted', alpha=0.004)
+    ax[0].plot(mad[0], mad[3], '.', c='tomato', ms=0.1, label='TGLC Weighted', alpha=0.01)
 
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
     # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
@@ -457,7 +457,7 @@ def plot_MAD():
     ax[0].set_ylabel(r'Estimated Photometric Precision')
     ax[0].set_yscale('log')
     ax[0].set_ylim(1e-4, 1)
-    ax[0].set_title('TESSminer-30-min bin')
+    ax[0].set_title('TESSminer 180-min bin')
 
     psf_ratio = mad[2] / mad[3]
     psf_tglc_mag = mad[0][np.invert(np.isnan(psf_ratio))]
@@ -490,7 +490,7 @@ def plot_MAD():
     for lh in leg.legendHandles:
         lh.set_alpha(1)
     plt.xlim(7, 20.5)
-    plt.savefig(f'/home/tehan/Documents/GEMS/tessminer_mad.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'/home/tehan/Documents/GEMS/tessminer_mad_180.png', bbox_inches='tight', dpi=300)
     # point-to-point scatter
 
 
@@ -2531,5 +2531,5 @@ def figure_13():
 
 
 if __name__ == '__main__':
-    get_MAD()
-    # plot_MAD()
+    # get_MAD()
+    plot_MAD()
