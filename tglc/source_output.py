@@ -76,10 +76,10 @@ def ffi_to_source(sector=1, local_directory=''):
 if __name__ == '__main__':
     sector = 56
     ffi_to_source(sector=sector, local_directory=f'/home/tehan/data/sector{sector:04d}/')
+    # med_mask = median_mask(sector_num=26)
     # ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
     # files = glob.glob(f'/home/tehan/data/sector{sector:04d}/source/*/source_00_00.pkl')
     # for i in range(len(files)):
     #     with open(files[i], 'rb') as input_:
     #         source = pickle.load(input_)
     #         print(np.min(np.diff(source.cadence)), files[i])
-    # med_mask = median_mask(sector_num=26)
