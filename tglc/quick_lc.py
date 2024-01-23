@@ -170,7 +170,7 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
             # plt.xlim(2753, 2755)
-            # plt.ylim(0.7, 1.1)
+            plt.ylim(0.99, 1.01)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
             plt.legend()
             # plt.show()
@@ -435,11 +435,11 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [56883709]
-    directory = f'/home/tehan/Documents/GEMS/'
+    tics = [363753652, 246861920]
+    directory = f'/mnt/c/Users/tehan/Downloads/'
     # directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
