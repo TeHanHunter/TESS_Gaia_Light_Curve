@@ -438,7 +438,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.23_06.34.37.csv'))
     # print(t['tic_id'][:10])
-    tics = [int(s) for s in t['tic_id'] if s.isdigit()]
+    tics = [int(s[4:]) for s in t['tic_id']]
 
     # for i in range(len(t)):
     #
@@ -446,7 +446,7 @@ if __name__ == '__main__':
     # directory = f'/home/tehan/Documents/GEMS/'
     directory = f'/home/tehan/data/cosmos/transit_depth_validation/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='search', server=2, directory=directory)
+    get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
