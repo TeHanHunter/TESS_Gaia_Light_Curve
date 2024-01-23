@@ -14,6 +14,7 @@ from astroquery.mast import Catalogs
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
+import pkg_resources
 
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
@@ -435,13 +436,19 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [56883709]
-    directory = f'/home/tehan/Documents/GEMS/'
-    # directory = f'/home/tehan/data/cosmos/GEMS/'
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.23_06.34.37.csv'))
+    print(np.where(t['tic_id'] == ''))
+    tics = [int(s) for s in t['tic_id'] if s.isdigit()]
+
+    # for i in range(len(t)):
+    #
+    # ror = t['pl_ratror']
+    # directory = f'/home/tehan/Documents/GEMS/'
+    directory = f'/home/tehan/data/cosmos/transit_depth_validation/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            type='cal_psf_flux')
