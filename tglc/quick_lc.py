@@ -155,7 +155,7 @@ def timebin(time, meas, meas_err, binsize):
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
-    for i in range(server, 27, 2):
+    for i in range(server, 56, 2):
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
@@ -437,7 +437,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.23_06.34.37.csv'))
-    print(np.where(t['tic_id'] == ''))
+    # print(t['tic_id'][:10])
     tics = [int(s) for s in t['tic_id'] if s.isdigit()]
 
     # for i in range(len(t)):
