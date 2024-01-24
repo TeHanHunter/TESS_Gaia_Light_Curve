@@ -170,7 +170,7 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
             # plt.xlim(2753, 2755)
-            plt.ylim(0.99, 1.01)
+            # plt.ylim(0.99, 1.01)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
             plt.legend()
             # plt.show()
@@ -426,8 +426,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
-            tglc_lc(target=target, local_directory=local_directory, size=31, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=28, prior=prior,
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/lc/', type='cal_aper_flux')
     if method == 'search':
