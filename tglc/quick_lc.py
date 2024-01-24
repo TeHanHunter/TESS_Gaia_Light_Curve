@@ -400,7 +400,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
 
 
 def plot_epsf(local_directory=None):
-    files = glob(f'{local_directory}epsf/*.fits')
+    files = glob(f'{local_directory}epsf/*.npy')
     for i in range(len(files)):
         psf = np.load(files[i])
         plt.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap='bone', origin='lower')
@@ -454,7 +454,7 @@ if __name__ == '__main__':
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=6502407729676435328)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=6502407729676435328)
     plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            type='cal_psf_flux')
