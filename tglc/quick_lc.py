@@ -299,9 +299,9 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
     files = glob(f'{local_directory}lc/*.fits')
     os.makedirs(f'{local_directory}lc/plots/', exist_ok=True)
     for i in range(len(files)):
-        with open(glob(f'{local_directory}source/*.pkl')[0], 'rb') as input_:
-            with fits.open(files[i], mode='denywrite') as hdul:
-                sector = hdul[0].header['SECTOR']
+        with fits.open(files[i], mode='denywrite') as hdul:
+            sector = hdul[0].header['SECTOR']
+            with open(glob(f'{local_directory}source/*_{sector}.pkl'), 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
