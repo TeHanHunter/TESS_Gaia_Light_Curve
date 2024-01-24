@@ -160,8 +160,8 @@ def star_spliter(server=1,  # or 2
     return
 
 
-def plot_lc(local_directory=None, type='cal_aper_flux'):
-    files = glob(f'{local_directory}*.fits')
+def plot_lc(local_directory=None, type='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None):
+    files = glob(f'{local_directory}lc/*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
@@ -169,8 +169,8 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.figure(constrained_layout=False, figsize=(8, 4))
             plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
-            # plt.xlim(2753, 2755)
-            # plt.ylim(0.99, 1.01)
+            plt.xlim(xlow, xhigh)
+            plt.ylim(ylow, yhigh)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
             plt.legend()
             # plt.show()
@@ -297,7 +297,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='c
 
 def plot_contamination(local_directory=None, gaia_dr3=None):
     files = glob(f'{local_directory}lc/*.fits')
-    os.makedirs(f'{local_directory}lc/plots/', exist_ok=True)
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             sector = hdul[0].header['SECTOR']
@@ -394,19 +394,21 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                             hdul[0].data[:, j, k][q]) + 1
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
                         ax_.set_ylim(0.95, 1.05)
-                plt.savefig(f'{local_directory}lc/plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
+                plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
                             dpi=300)
                 plt.show()
 
 
 def plot_epsf(local_directory=None):
     files = glob(f'{local_directory}epsf/*.npy')
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         psf = np.load(files[i])
         plt.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap='bone', origin='lower')
         plt.tick_params(axis='x', bottom=False)
         plt.tick_params(axis='y', left=False)
-        plt.savefig(f'{local_directory}lc/plots/{files[i].split("/")[-1]}.png', bbox_inches='tight', dpi=300)
+        plt.title(f'{files[i].split("/")[-1].split(".")[0]}')
+        plt.savefig(f'{local_directory}plots/{files[i].split("/")[-1]}.png', bbox_inches='tight', dpi=300)
 
 
 def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
@@ -450,10 +452,10 @@ if __name__ == '__main__':
     directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_psf_flux')
+    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=6502407729676435328)
-    plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
+    # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            type='cal_psf_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
