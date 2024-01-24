@@ -74,8 +74,10 @@ def ffi_to_source(sector=1, local_directory=''):
 
 
 if __name__ == '__main__':
-    sector = 45
-    ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
+    sector = 48
+    # only running cam1ccd1
+    cut_ffi_(0, sector=sector, size=150, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
+    # ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
     # files = glob.glob(f'/home/tehan/data/sector{sector:04d}/source/*/source_00_00.pkl')
     # for i in range(len(files)):
     #     with open(files[i], 'rb') as input_:
