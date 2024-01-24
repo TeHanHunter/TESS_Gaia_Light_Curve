@@ -67,7 +67,7 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(f'{local_directory}mask/', exist_ok=True)
 
     with Pool(1) as p:
-        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
+        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(1))
 
     # for i in range(16):
     #     ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
@@ -76,8 +76,7 @@ def ffi_to_source(sector=1, local_directory=''):
 if __name__ == '__main__':
     sector = 48
     # only running cam1ccd1
-    cut_ffi_(0, sector=sector, size=150, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
-    # ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
+    ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
     # files = glob.glob(f'/home/tehan/data/sector{sector:04d}/source/*/source_00_00.pkl')
     # for i in range(len(files)):
     #     with open(files[i], 'rb') as input_:
