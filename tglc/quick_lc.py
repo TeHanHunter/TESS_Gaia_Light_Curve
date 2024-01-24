@@ -404,8 +404,6 @@ def plot_epsf(local_directory=None):
     for i in range(len(files)):
         psf = np.load(files[i])
         plt.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap='bone', origin='lower')
-        plt.set_yticklabels([])
-        plt.set_xticklabels([])
         plt.tick_params(axis='x', bottom=False)
         plt.tick_params(axis='y', left=False)
         plt.savefig(f'{local_directory}lc/plots/{files[i].split("/")[-1]}.png', bbox_inches='tight', dpi=300)
