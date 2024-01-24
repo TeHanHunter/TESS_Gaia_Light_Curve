@@ -408,7 +408,7 @@ def plot_epsf(local_directory=None):
         plt.set_xticklabels([])
         plt.tick_params(axis='x', bottom=False)
         plt.tick_params(axis='y', left=False)
-        plt.savefig(f'{local_directory}lc/plots/{files[i].split('/')[-1]}.png', bbox_inches='tight', dpi=300)
+        plt.savefig(f'{local_directory}lc/plots/{files[i].split("/")[-1]}.png', bbox_inches='tight', dpi=300)
 
 
 def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
