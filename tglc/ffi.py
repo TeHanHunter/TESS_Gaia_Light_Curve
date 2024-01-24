@@ -263,7 +263,6 @@ class Source(object):
                 catalogdata = Gaia.cone_search_async(coord, radius=radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
-                print(catalogdata)
                 return catalogdata
             except:
                 attempt += 1
