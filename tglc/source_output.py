@@ -66,8 +66,8 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(f'{local_directory}log/', exist_ok=True)
     os.makedirs(f'{local_directory}mask/', exist_ok=True)
 
-    with Pool(1) as p:
-        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(1))
+    with Pool(2) as p:
+        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(1,16))
 
     # for i in range(16):
     #     ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)

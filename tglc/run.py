@@ -37,7 +37,7 @@ def lc_per_cut(i, local_directory=''):
 
 def lc_per_ccd(local_directory=''):
     with Pool() as p:
-        p.map(partial(lc_per_cut, local_directory=local_directory), range(196))
+        p.map(partial(lc_per_cut, local_directory=local_directory), range(3136))
 
 
 def plot_epsf(sector=1, camccd='', local_directory=''):
