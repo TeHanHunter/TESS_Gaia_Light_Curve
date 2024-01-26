@@ -35,9 +35,15 @@ def lc_per_cut(i, local_directory=''):
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
          local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
 
-def lc_per_ccd(local_directory=''):
+
+def lc_per_ccd(local_directory='', cam=None, ccd=None):
+    start = 0
+    end = 3136
+    if cam is not None:
+        start = ((cam - 1) * 4 + (ccd - 1)) * 196
+        end = start + 196
     with Pool() as p:
-        p.map(partial(lc_per_cut, local_directory=local_directory), range(3136))
+        p.map(partial(lc_per_cut, local_directory=local_directory), range(start, end))
 
 
 def plot_epsf(sector=1, camccd='', local_directory=''):
@@ -72,7 +78,7 @@ if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 56
     local_directory = f'/pdo/users/tehan/sector{sector:04d}/'
-    lc_per_ccd(local_directory=local_directory)
+    lc_per_ccd(local_directory=local_directory, cam=1,ccd=2)
     for i in range(16):
         name = f'{1 + i // 4}-{1 + i % 4}'
         plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
