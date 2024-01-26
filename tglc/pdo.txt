@@ -4,3 +4,5 @@ export LD_LIBRARY_PATH=/sw/python-versions/python-3.9.2/lib
 pip3 install astroquery==0.4.5
 pip3 install --upgrade numpy
 pip3 install --upgrade numba
+
+scp -r '/home/tehan/data/mast/sector0014/' 'pdo:/pdo/users/jeroena/tglc/'
