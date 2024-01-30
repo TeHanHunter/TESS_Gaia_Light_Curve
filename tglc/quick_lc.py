@@ -429,7 +429,9 @@ def sort_sectors(tics):
         tic_sector[i, 0] = int(hdul[0].header['TICID'])
         tic_sector[i, 1] = int(hdul[0].header['sector'])
     print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
-
+    unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
+    for i in counts:
+        print(i, unique_elements[counts == i])
 
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
     if method == 'query':
