@@ -421,6 +421,16 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.show()
 
 
+def sort_sectors(tics):
+    files = glob('/home/tehan/data/cosmos/transit_depth_validation/*.fits')
+    tic_sector = np.zeros((len(files), 2))
+    for i in range(len(files)):
+        hdul = fits.open(files[i])
+        tic_sector[i, 0] = int(hdul[0].header['TICID'])
+        tic_sector[i, 1] = int(hdul[0].header['sector'])
+    print(f'Stars={len(files)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
+
+
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
     if method == 'query':
         for i in range(len(tics)):
@@ -439,14 +449,14 @@ if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.23_06.34.37.csv'))
     # print(t['tic_id'][:10])
     tics = [int(s[4:]) for s in t['tic_id']]
-
+    sort_sectors
     # for i in range(len(t)):
     #
     # ror = t['pl_ratror']
     # directory = f'/home/tehan/Documents/GEMS/'
-    directory = f'/home/tehan/data/cosmos/transit_depth_validation/'
-    os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='search', server=2, directory=directory)
+    # directory = f'/home/tehan/data/cosmos/transit_depth_validation/'
+    # os.makedirs(directory, exist_ok=True)
+    # get_tglc_lc(tics=tics, method='search', server=2, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
