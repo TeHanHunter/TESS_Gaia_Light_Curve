@@ -421,13 +421,56 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.show()
 
 
-def sort_sectors(tics):
+def produce_config(row=None, sector=1):
+    content = f"""
+    [Stellar]
+    st_mass = {row['st_mass']}
+    st_masserr1 = {(row['st_masserr1'] - row['st_masserr2'])/2}
+    st_rad = {row['st_rad']}
+    st_raderr1 = {(row['st_raderr1'] - row['st_raderr2'])/2}
+
+    [Planet]
+    pl_tranmid = 2663.422584
+    pl_tranmiderr1 = 0.0042523
+    pl_orbper = 2.2054776
+    pl_orbpererr1 = 0.0007857
+    pl_trandep = {1000 * -2.5*np.log10(1-(R_p/R_s)^2)}
+    pl_masse_expected = 1
+    pl_rvamp = 1
+    pl_rvamperr1 = 0.1
+    ###########################################################################
+
+    [Photometry]
+    InstrumentNames = TESS
+    ###########################################################################
+
+    [TESS]
+    FileName = TESS_TIC 119585136_sector_22.csv
+    Delimiter = ,
+    GP_sho = False
+    GP_prot = False
+    run_masked_gp = False
+    subtract_transitmasked_gp = False
+    Dilution = False
+    ExposureTime = {1800 if sector<27 else 600}
+    RestrictEpoch = False
+    SGFilterLen = 101
+    OutlierRejection = True
+    """
+
+    # Write the content to a file
+    with open("output_file.txt", "w") as file:
+        file.write(content)
+
+def sort_sectors(t):
+    tics = [int(s[4:]) for s in t['tic_id']]
     files = glob('/home/tehan/data/cosmos/transit_depth_validation/*.fits')
     tic_sector = np.zeros((len(files), 2))
     for i in range(len(files)):
         hdul = fits.open(files[i])
         tic_sector[i, 0] = int(hdul[0].header['TICID'])
         tic_sector[i, 1] = int(hdul[0].header['sector'])
+    print('All stars produced:', set(tics) <= set(tic_sector[:,0]))
     print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
     unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
     for i in range(56):
@@ -449,9 +492,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.23_06.34.37.csv'))
-    # print(t['tic_id'][:10])
     tics = [int(s[4:]) for s in t['tic_id']]
-    sort_sectors(tics)
+    sort_sectors(t)
     # for i in range(len(t)):
     #
     # ror = t['pl_ratror']
