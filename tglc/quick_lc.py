@@ -428,7 +428,7 @@ def sort_sectors(tics):
         hdul = fits.open(files[i])
         tic_sector[i, 0] = int(hdul[0].header['TICID'])
         tic_sector[i, 1] = int(hdul[0].header['sector'])
-    print(f'Stars={len(files)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
+    print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
 
 
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
