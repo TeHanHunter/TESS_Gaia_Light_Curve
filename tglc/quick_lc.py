@@ -449,7 +449,7 @@ if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.23_06.34.37.csv'))
     # print(t['tic_id'][:10])
     tics = [int(s[4:]) for s in t['tic_id']]
-    sort_sectors
+    sort_sectors(tics)
     # for i in range(len(t)):
     #
     # ror = t['pl_ratror']
