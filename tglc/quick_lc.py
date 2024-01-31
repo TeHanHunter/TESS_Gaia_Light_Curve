@@ -153,6 +153,42 @@ def timebin(time, meas, meas_err, binsize):
     return time_out, meas_out, meas_err_out
 
 
+def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', period=None):
+    output_dir = f'{output_dir}{star_name}/Photometry/'
+    files = glob(f'{dir}*{gaiadr3}*.fits')
+    os.makedirs(output_dir, exist_ok=True)
+    if sector is None:
+        sector = []
+        for i in range(len(files)):
+            sector.append(int(files[i].split('-')[-3][3:5]))
+        print(f'Available sectors: {sector}')
+    error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
+                  'cal_aper_flux': 'CAPE_ERR'}
+    # data = np.empty((3, 0))
+    for file in files:
+        with fits.open(file, mode='denywrite') as hdul:
+            q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+            not_nan = np.invert(np.isnan(hdul[1].data[type][q]))
+            data_ = np.array([hdul[1].data['time'][q][not_nan],
+                              hdul[1].data[type][q][not_nan],
+                              # np.sum(hdul[0].data, axis=(1, 2))[q][not_nan],
+                              np.array([hdul[1].header[error_name[type]]] * len(hdul[1].data['time'][q][not_nan]))
+                              ])
+            if hdul[0].header["SECTOR"] in sector:
+                np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}_{type}.csv', data_,
+                           delimiter=',')
+                # data = np.append(data, data_, axis=1)
+                # plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver')
+                # plt.plot(data_[0], data_[1], '.')
+                # # plt.xlim(0.65, 0.82)
+                # plt.ylim(0.5,1.3)
+                # plt.title(f'{star_name}_sector_{hdul[0].header["SECTOR"]}')
+                # plt.savefig(f'{output_dir}{star_name}_sector_{hdul[0].header["SECTOR"]}.pdf', dpi=300)
+                # plt.close()
+    # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
+    # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
+
+
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     for i in range(server, 56, 2):
@@ -181,260 +217,24 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.close()
 
 
-def plot_aperture(local_directory=None, type='cal_aper_flux'):
-    files = glob(f'{local_directory}*.fits')
-    os.makedirs(f'{local_directory}plots/', exist_ok=True)
-    portion = [0.9361215204370542, 0.9320709087810205]
-    data = np.empty((3, 0))
-
-    for i in range(len(files)):
-        with fits.open(files[i], mode='denywrite') as hdul:
-            print(files[i], portion[i])
-            q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            plt.figure(constrained_layout=False, figsize=(8, 4))
-            plt.plot(hdul[1].data['time'] % 3.79262026, hdul[1].data[type], '.', c='silver', label=type)
-            plt.plot(hdul[1].data['time'][q] % 3.79262026, hdul[1].data[type][q], '.k', label=f'{type}_flagged')
-            aperture_bar = 709.5512462444653 * portion[i]
-            aper_lc = np.nansum(hdul[0].data, axis=(1, 2))
-            local_bg = np.nanmedian(aper_lc) - aperture_bar
-            aper_lc = (aper_lc - local_bg) / portion[i]
-            cal_aper_lc = aper_lc / np.nanmedian(aper_lc)
-            cal_aper_lc[np.where(cal_aper_lc > 100)] = np.nan
-            _, trend = flatten(hdul[1].data['time'], cal_aper_lc - np.nanmin(cal_aper_lc) + 1000,
-                               window_length=1, method='biweight', return_trend=True)
-            cal_aper_lc = (cal_aper_lc - np.nanmin(cal_aper_lc) + 1000 - trend) / np.nanmedian(cal_aper_lc) + 1
-            non_outliers = np.where(cal_aper_lc[q] > 0.6)[0]
-            plt.plot(hdul[1].data['time'][q][non_outliers] % 3.79262026, cal_aper_lc[q][non_outliers], '.r',
-                     label=f'5_5_pixel_flagged')
-            plt.xlim(0.5, 1.0)
-            plt.ylim(0.95, 1.1)
-            plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
-            plt.legend()
-            # plt.show()
-            plt.savefig(
-                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}.png',
-                dpi=300)
-            time = hdul[1].data['time'][q][non_outliers]
-            flux = cal_aper_lc[q][non_outliers]
-            f_err = 1.4826 * np.nanmedian(np.abs(flux - np.nanmedian(flux)))
-            not_nan = np.invert(np.isnan(flux))
-            data_ = np.array([time[not_nan],
-                              flux[not_nan],
-                              np.array([f_err] * len(time[not_nan]))
-                              ])
-            data = np.append(data, data_, axis=1)
-    np.savetxt(f'{local_directory}TESS_TOI-5344_5_5_aper.csv', data, delimiter=',')
-
-
-def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='cal_aper_flux'):
-    files = glob(f'{local_directory}*.fits')
-    os.makedirs(f'{local_directory}plots/', exist_ok=True)
-    fig = plt.figure(figsize=(13, 5))
-    t_all = np.array([])
-    f_all = np.array([])
-    f_err_all = np.array([])
-    for j in range(len(files)):
-        not_plotted_num = 0
-        with fits.open(files[j], mode='denywrite') as hdul:
-            q = [a and b for a, b in
-                 zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            # q = [a and b for a, b in zip(q, list(hdul[1].data[type] > 0.85))]
-            # if hdul[0].header['sector'] == 15:
-            #     q = [a and b for a, b in zip(q, list(hdul[1].data['time'] < 1736))]
-            if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
-                if hdul[0].header["SECTOR"] <= 26:
-                    t = hdul[1].data['time'][q]
-                    f = hdul[1].data[type][q]
-                elif hdul[0].header["SECTOR"] <= 55:
-                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
-                    f = np.mean(
-                        hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 3 * 3].reshape(-1, 3), axis=1)
-                else:
-                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                    f = np.mean(
-                        hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                t_all = np.append(t_all, t)
-                f_all = np.append(f_all, f)
-                f_err_all = np.append(f_err_all, np.array([hdul[1].header['CAPE_ERR']] * len(t)))
-
-                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=1.5,
-                             marker='.', ms=3, zorder=2)
-                # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
-                #                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
-                #                                            binsize=600 / 86400)
-                # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
-                #              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
-            else:
-                not_plotted_num += 1
-            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
-    # PDCSAP_files = glob('/home/tehan/Documents/GEMS/TIC 172370679/PDCSAP/*.txt')
-    # for i in range(len(files)):
-    #     PDCSAP = ascii.read(PDCSAP_files[i])
-    #     t = np.mean(PDCSAP['col1'][:len(PDCSAP['col1']) // 15 * 15].reshape(-1, 15), axis=1)
-    #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
-    #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
-    #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
-    time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
-                                               meas_err=f_err_all,
-                                               binsize=300 / 86400)
-    plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
-                 marker='.', ms=8, zorder=3, label=f'All sectors')
-
-    plt.ylim(0.87, 1.05)
-    # plt.xlim(0.3, 0.43)
-    plt.legend()
-    plt.title(title)
-    plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
-    # plt.ylim(0.9, 1.1)
-    # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
-    # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
-    plt.vlines(x=(mid_transit_tbjd % period), ymin=0, ymax=2, ls='dotted', colors='grey')
-    plt.xlabel('Phase')
-    plt.ylabel('Normalized flux')
-    plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
-    plt.close(fig)
-
-
-def plot_contamination(local_directory=None, gaia_dr3=None):
-    files = glob(f'{local_directory}lc/*.fits')
-    os.makedirs(f'{local_directory}lc/plots/', exist_ok=True)
-    for i in range(len(files)):
-        with open(glob(f'{local_directory}source/*.pkl')[0], 'rb') as input_:
-            with fits.open(files[i], mode='denywrite') as hdul:
-                sector = hdul[0].header['SECTOR']
-                source = pickle.load(input_)
-                source.select_sector(sector=sector)
-                star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
-                # print(source.gaia[891])
-                # print(source.gaia[140])
-                nearby_stars = np.argsort(
-                    (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
-                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[0:5]
-                # print(f'sector = {source.sector}')
-                star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
-                star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
-                max_flux = np.max(
-                    np.median(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
-                              axis=0))
-                fig = plt.figure(constrained_layout=False, figsize=(15, 7))
-                gs = fig.add_gridspec(5, 10)
-                gs.update(wspace=0.5, hspace=0.5)
-                ax0 = fig.add_subplot(gs[:5, :5])
-                ax0.imshow(source.flux[0], cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
-
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][:500], source.gaia[f'sector_{sector}_y'][:500], s=50,
-                            c='r', label='background stars')
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars],
-                            source.gaia[f'sector_{sector}_y'][nearby_stars], s=50,
-                            c='r', label='background stars')
-                for l in range(len(nearby_stars)):
-                    index = np.where(
-                        source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
-                    gaia_targets = source.gaia
-                    median_time = np.median(source.time)
-                    interval = (median_time - 388.5) / 365.25 + 3000
-                    ra = gaia_targets['ra'][nearby_stars[l]]
-                    dec = gaia_targets['dec'][nearby_stars[l]]
-                    if not np.isnan(gaia_targets['pmra'][nearby_stars[l]]):
-                        ra += gaia_targets['pmra'][nearby_stars[l]] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-                    if not np.isnan(gaia_targets['pmdec'][nearby_stars[l]]):
-                        dec += gaia_targets['pmdec'][nearby_stars[l]] * interval / 1000 / 3600
-                    pixel = source.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
-                    x_gaia = pixel[0][0]
-                    y_gaia = pixel[0][1]
-                    ax0.arrow(source.gaia[f'sector_{sector}_x'][nearby_stars[l]],
-                              source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
-                              x_gaia - source.gaia[f'sector_{sector}_x'][nearby_stars[l]],
-                              y_gaia - source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
-                              width=0.02, color='r', edgecolor=None, head_width=0.1)
-                    try:
-                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
-                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90)
-                    except TypeError:
-                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
-                                 f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
-                ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
-
-                # ax0.legend()
-                ax0.set_xlim(round(star_x) - 5.5, round(star_x) + 5.5)
-                ax0.set_ylim(round(star_y) - 5.5, round(star_y) + 5.5)
-                ax0.set_title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
-                ax0.vlines(round(star_x) - 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k')
-                ax0.vlines(round(star_x) + 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k')
-                ax0.hlines(round(star_y) - 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k')
-                ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k')
-                # for j in range(5):
-                #     for k in range(5):
-                #         ax_ = fig.add_subplot(gs[(4 - j), (5 + k)])
-                #         ax_.patch.set_facecolor('C0')
-                #         ax_.patch.set_alpha(max(0, np.median(source.flux[:, round(star_y) - 2 + j, round(star_x) - 2 + k]) / max_flux))
-                #         cal_lc, trend = flatten(hdul[1].data['time'],
-                #                                      source.flux[:, round(star_y) - 2 + j, round(star_x) - 2 + k],
-                #                                      window_length=1, method='biweight', return_trend=True)
-                #         ax_.plot(hdul[1].data['time'], cal_lc, '.k', ms=1, label='center pixel')
-
-                t_, y_, x_ = np.shape(hdul[0].data)
-                max_flux = np.max(
-                    np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
-                for j in range(y_):
-                    for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(4 - j), (5 + k)])
-                        ax_.patch.set_facecolor('C0')
-                        ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        q = [a and b for a, b in
-                             zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-
-                        _, trend = flatten(hdul[1].data['time'][q],
-                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
-                                           window_length=1, method='biweight', return_trend=True)
-                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
-                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
-                            hdul[0].data[:, j, k][q]) + 1
-                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
-                        ax_.set_ylim(0.95, 1.05)
-                plt.savefig(f'{local_directory}lc/plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
-                            dpi=300)
-                plt.show()
-
-
-def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
-    mad = np.zeros((2, 100))
-    for i in trange(len(priors)):
-        resid = get_tglc_lc(tics=tics, method='query', server=1, directory=local_directory, prior=priors[i])
-        print(resid)
-        mad[:, i] = resid
-        # with fits.open(
-        #         '/home/tehan/data/cosmos/GEMS/TIC 16005254/lc/hlsp_tglc_tess_ffi_gaiaid-52359538285081728-s0043-cam3-ccd3_tess_v1_llc.fits',
-        #         mode='denywrite') as hdul:
-        #     mad[0, i] = np.nanmedian(abs(hdul[1].data['cal_psf_flux'] - np.nanmedian(hdul[1].data['cal_psf_flux'])))
-        # with fits.open(
-        #         '/home/tehan/data/cosmos/GEMS/TIC 16005254/lc/hlsp_tglc_tess_ffi_gaiaid-52359538285081728-s0044-cam1-ccd1_tess_v1_llc.fits',
-        #         mode='denywrite') as hdul:
-        #     mad[1, i] = np.nanmedian(abs(hdul[1].data['cal_psf_flux'] - np.nanmedian(hdul[1].data['cal_psf_flux'])))
-    np.save('/home/tehan/Documents/GEMS/TIC 16005254/mad.npy', mad)
-    # plt.plot(priors, mad)
-    # plt.xscale('log')
-    # plt.title(f'best prior = {priors[np.argmin(mad)]:04d}')
-    # plt.show()
-
-
-def produce_config(row=None, sector=1):
+def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
+    name = f'TIC_{tic}'
+    dir = f'/home/tehan/data/cosmos/transit_depth_validation/'
+    output_dir = '/home/tehan/data/pyexofits/Data/'
+    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, type='cal_aper_flux')
     content = f"""
     [Stellar]
-    st_mass = {row['st_mass']}
-    st_masserr1 = {(row['st_masserr1'] - row['st_masserr2']) / 2}
-    st_rad = {row['st_rad']}
-    st_raderr1 = {(row['st_raderr1'] - row['st_raderr2']) / 2}
+    st_mass = {nea['st_mass']}
+    st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2}
+    st_rad = {nea['st_rad']}
+    st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2}
 
     [Planet]
-    pl_tranmid = 2663.422584
-    pl_tranmiderr1 = 0.0042523
-    pl_orbper = 2.2054776
-    pl_orbpererr1 = 0.0007857
-    pl_trandep = {1000 * -2.5 * np.log10(1 - (R_p / R_s) ^ 2)}
+    pl_tranmid = {nea['pl_tranmid']}
+    pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
+    pl_orbper = {nea['pl_orbper']}
+    pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
+    pl_trandep = {1000 * -2.5 * np.log10(1 - (109.076 * nea['pl_rade'] / {nea['st_rad']}) ^ 2)}
     pl_masse_expected = 1
     pl_rvamp = 1
     pl_rvamperr1 = 0.1
@@ -445,7 +245,7 @@ def produce_config(row=None, sector=1):
     ###########################################################################
 
     [TESS]
-    FileName = TESS_TIC 119585136_sector_22.csv
+    FileName = TESS_TIC_{tic}_sector_{sector}.csv
     Delimiter = ,
     GP_sho = False
     GP_prot = False
@@ -466,11 +266,12 @@ def produce_config(row=None, sector=1):
 def sort_sectors(t):
     tics = [int(s[4:]) for s in t['tic_id']]
     files = glob('/home/tehan/data/cosmos/transit_depth_validation/*.fits')
-    tic_sector = np.zeros((len(files), 2))
+    tic_sector = np.zeros((len(files), 3))
     for i in range(len(files)):
         hdul = fits.open(files[i])
         tic_sector[i, 0] = int(hdul[0].header['TICID'])
-        tic_sector[i, 1] = int(hdul[0].header['sector'])
+        tic_sector[i, 1] = int(hdul[0].header['GAIADR3'])
+        tic_sector[i, 2] = int(hdul[0].header['sector'])
     print('All stars produced:', set(tics) <= set(tic_sector[:, 0]))
     difference_set = set(tics) - set(tic_sector[:, 0])
     print("Elements in NEA but not in folder:", list(difference_set))
@@ -478,6 +279,7 @@ def sort_sectors(t):
     unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
     for i in range(56):
         print(i, len(unique_elements[counts == i]))
+    return tic_sector
 
 
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
@@ -496,28 +298,32 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
-    tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
-            422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
-            90605642, 130162252, 297146957, 119262291, 414843476, 187273811, 416136788, 218299481, 53728859, 70412892,
-            49040478, 399155300, 440687723, 422349422, 467929202, 171098231, 106352250, 251018878, 442530946, 370736259,
-            267574918, 153091721, 119605900, 322388624, 91051152, 405673618, 169504920, 102068384, 123362984, 130502317,
-            31244979, 50171060, 257429687, 420814525, 11023038, 417676990, 195193025, 122298563, 413753029, 122605766,
-            301031110, 175265494, 164458714, 46020827, 741596, 288246496, 320636129, 126325985, 110178537, 1635721458,
-            38258419, 159381747, 176966903, 401604346, 270955259, 145368316, 353459965, 741119, 297146115, 49512708,
-            422325510, 121656582, 335102224, 269217040, 188876052, 244089109, 317520667, 220604190, 341694238, 77202722,
-            2468648, 405004589, 335322931, 104866616, 167227214, 71841620, 11439959, 175233369, 26547036, 90090343,
-            130038122, 466884459, 271898990, 271760755, 297373047, 12181371, 68952448, 287333762, 187278212, 158729099,
-            51664268, 432247186, 92449173, 709015, 165297570, 96847781, 56760743, 218299312, 272213425, 270619059,
-            441907126, 158635959, 187309502, 427685831, 291751373, 436478932, 453064665, 164730843, 432261603,
-            276754403, 179012583, 318696424, 37348844, 9385460, 431701493, 49652731]
-    # sort_sectors(t)
-    # for i in range(len(t)):
-    #
+    tics = [int(s[4:]) for s in t['tic_id']]
+    tic_sector = sort_sectors(t)
+    for i in trange(len(tic_sector)):
+        if tic_sector[0, i] in tics:
+            produce_config(tic=tic_sector[i, 0], gaiadr3=tic_sector[i, 1],
+                           nea=t[np.where(t['tic_id'] == f'TIC {tic_sector[i, 0]}')[0][0]], sector=tic_sector[i, 2])
+
+    # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
+    #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
+    #         90605642, 130162252, 297146957, 119262291, 414843476, 187273811, 416136788, 218299481, 53728859, 70412892,
+    #         49040478, 399155300, 440687723, 422349422, 467929202, 171098231, 106352250, 251018878, 442530946, 370736259,
+    #         267574918, 153091721, 119605900, 322388624, 91051152, 405673618, 169504920, 102068384, 123362984, 130502317,
+    #         31244979, 50171060, 257429687, 420814525, 11023038, 417676990, 195193025, 122298563, 413753029, 122605766,
+    #         301031110, 175265494, 164458714, 46020827, 741596, 288246496, 320636129, 126325985, 110178537, 1635721458,
+    #         38258419, 159381747, 176966903, 401604346, 270955259, 145368316, 353459965, 741119, 297146115, 49512708,
+    #         422325510, 121656582, 335102224, 269217040, 188876052, 244089109, 317520667, 220604190, 341694238, 77202722,
+    #         2468648, 405004589, 335322931, 104866616, 167227214, 71841620, 11439959, 175233369, 26547036, 90090343,
+    #         130038122, 466884459, 271898990, 271760755, 297373047, 12181371, 68952448, 287333762, 187278212, 158729099,
+    #         51664268, 432247186, 92449173, 709015, 165297570, 96847781, 56760743, 218299312, 272213425, 270619059,
+    #         441907126, 158635959, 187309502, 427685831, 291751373, 436478932, 453064665, 164730843, 432261603,
+    #         276754403, 179012583, 318696424, 37348844, 9385460, 431701493, 49652731]
     # ror = t['pl_ratror']
     # directory = f'/home/tehan/Documents/GEMS/'
-    directory = f'/home/tehan/data/cosmos/transit_depth_validation_extra/'
-    os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
+    # directory = f'/home/tehan/data/cosmos/transit_depth_validation_extra/'
+    # os.makedirs(directory, exist_ok=True)
+    # get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
 
