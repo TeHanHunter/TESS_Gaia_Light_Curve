@@ -263,9 +263,9 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
         file.write(content)
 
 
-def sort_sectors(t):
+def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     tics = [int(s[4:]) for s in t['tic_id']]
-    files = glob('/home/tehan/data/cosmos/transit_depth_validation/*.fits')
+    files = glob(f'{dir}*.fits')
     tic_sector = np.zeros((len(files), 3))
     for i in range(len(files)):
         hdul = fits.open(files[i])
@@ -299,7 +299,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    tic_sector = sort_sectors(t)
+    tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation_odd/')
     for i in trange(len(tic_sector)):
         if tic_sector[0, i] in tics:
             produce_config(tic=tic_sector[i, 0], gaiadr3=tic_sector[i, 1],
