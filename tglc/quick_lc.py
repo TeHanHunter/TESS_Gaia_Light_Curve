@@ -302,6 +302,7 @@ if __name__ == '__main__':
     tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/')
     for i in trange(len(tic_sector)):
         if tic_sector[i, 0] in tics:
+            print(f'TIC {tic_sector[i, 0]}')
             produce_config(tic=tic_sector[i, 0], gaiadr3=tic_sector[i, 1],
                            nea=t[np.where(t['tic_id'] == f'TIC {tic_sector[i, 0]}')[0][0]], sector=tic_sector[i, 2])
 
