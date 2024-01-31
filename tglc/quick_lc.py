@@ -155,7 +155,7 @@ def timebin(time, meas, meas_err, binsize):
 
 def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', period=None):
     output_dir = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{gaiadr3}*{sector:04d}.fits')
+    files = glob(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
@@ -297,8 +297,6 @@ if __name__ == '__main__':
     tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/')
     for i in trange(len(tic_sector)):
         if tic_sector[i, 0] in tics:
-            print(int(tic_sector[i, 1]))
-            print(int(tic_sector[i, 2]))
             produce_config(tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]], sector=int(tic_sector[i, 2]))
 
