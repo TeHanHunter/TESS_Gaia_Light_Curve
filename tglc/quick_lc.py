@@ -471,6 +471,8 @@ def sort_sectors(t):
         tic_sector[i, 0] = int(hdul[0].header['TICID'])
         tic_sector[i, 1] = int(hdul[0].header['sector'])
     print('All stars produced:', set(tics) <= set(tic_sector[:,0]))
+    difference_set = set(tics) - set(tic_sector[:,0])
+    print("Elements in NEA but not in folder:", list(difference_set))
     print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
     unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
     for i in range(56):
