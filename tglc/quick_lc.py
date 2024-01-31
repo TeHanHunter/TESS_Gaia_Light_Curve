@@ -491,7 +491,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_15.54.52.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.04.43.csv'))
+    print(t['tic_id'])
     # tics = [int(s[4:]) for s in t['tic_id']]
     sort_sectors(t)
     # for i in range(len(t)):
