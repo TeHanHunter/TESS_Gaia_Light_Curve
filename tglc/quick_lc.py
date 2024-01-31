@@ -277,8 +277,9 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     print("Elements in NEA but not in folder:", list(difference_set))
     print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
     unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
-    for i in range(56):
-        print(i, len(unique_elements[counts == i]))
+    for i in range(1, 10):
+        print(f'{len(unique_elements[counts == i])} of stars are observed {i} times. ')
+    print(f'{len(unique_elements[counts >= 10])} of stars are observed at least {10} times. ')
     return tic_sector
 
 
