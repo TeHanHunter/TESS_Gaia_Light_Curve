@@ -153,7 +153,7 @@ def timebin(time, meas, meas_err, binsize):
     return time_out, meas_out, meas_err_out
 
 
-def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', period=None):
+def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', nea=None):
     output_dir = f'{output_dir}{star_name}/Photometry/'
     files = glob(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
@@ -172,16 +172,55 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ty
             print(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
             np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
-                # data = np.append(data, data_, axis=1)
-                # plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver')
-                # plt.plot(data_[0], data_[1], '.')
-                # # plt.xlim(0.65, 0.82)
-                # plt.ylim(0.5,1.3)
-                # plt.title(f'{star_name}_sector_{hdul[0].header["SECTOR"]}')
-                # plt.savefig(f'{output_dir}{star_name}_sector_{hdul[0].header["SECTOR"]}.pdf', dpi=300)
-                # plt.close()
+            # data = np.append(data, data_, axis=1)
+            # plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver')
+            # plt.plot(data_[0], data_[1], '.')
+            # # plt.xlim(0.65, 0.82)
+            # plt.ylim(0.5,1.3)
+            # plt.title(f'{star_name}_sector_{hdul[0].header["SECTOR"]}')
+            # plt.savefig(f'{output_dir}{star_name}_sector_{hdul[0].header["SECTOR"]}.pdf', dpi=300)
+            # plt.close()
     # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
     # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
+    content = f"""
+        [Stellar]
+        st_mass = {nea['st_mass']}
+        st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+        st_rad = {nea['st_rad']}
+        st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+    
+        [Planet]
+        pl_tranmid = {nea['pl_tranmid']}
+        pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
+        pl_orbper = {nea['pl_orbper']}
+        pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
+        pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
+        pl_masse_expected = 1
+        pl_rvamp = 1
+        pl_rvamperr1 = 0.1
+        ###########################################################################
+    
+        [Photometry]
+        InstrumentNames = TESS
+        ###########################################################################
+    
+        [TESS]
+        FileName = TESS_{star_name}_sector_{sector}.csv
+        Delimiter = ,
+        GP_sho = False
+        GP_prot = False
+        run_masked_gp = False
+        subtract_transitmasked_gp = False
+        Dilution = False
+        ExposureTime = {1800 if sector < 27 else 600}
+        RestrictEpoch = False
+        SGFilterLen = 101
+        OutlierRejection = True
+        """
+
+    # Write the content to a file
+    with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
+        file.write(content)
 
 
 def star_spliter(server=1,  # or 2
@@ -216,46 +255,7 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
     name = f'TIC_{tic}'
     dir = f'/home/tehan/data/cosmos/transit_depth_validation/'
     output_dir = '/home/tehan/data/pyexofits/Data/'
-    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, type='cal_aper_flux')
-    content = f"""
-    [Stellar]
-    st_mass = {nea['st_mass']}
-    st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
-    st_rad = {nea['st_rad']}
-    st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
-
-    [Planet]
-    pl_tranmid = {nea['pl_tranmid']}
-    pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
-    pl_orbper = {nea['pl_orbper']}
-    pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
-    pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
-    pl_masse_expected = 1
-    pl_rvamp = 1
-    pl_rvamperr1 = 0.1
-    ###########################################################################
-
-    [Photometry]
-    InstrumentNames = TESS
-    ###########################################################################
-
-    [TESS]
-    FileName = TESS_TIC_{tic}_sector_{sector}.csv
-    Delimiter = ,
-    GP_sho = False
-    GP_prot = False
-    run_masked_gp = False
-    subtract_transitmasked_gp = False
-    Dilution = False
-    ExposureTime = {1800 if sector < 27 else 600}
-    RestrictEpoch = False
-    SGFilterLen = 101
-    OutlierRejection = True
-    """
-
-    # Write the content to a file
-    with open(f"{output_dir}{name}/{name}_config_s{sector:04d}.txt", "w") as file:
-        file.write(content)
+    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, type='cal_aper_flux', nea=nea)
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
@@ -299,7 +299,8 @@ if __name__ == '__main__':
     for i in trange(len(tic_sector)):
         if tic_sector[i, 0] in tics:
             produce_config(tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
-                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]], sector=int(tic_sector[i, 2]))
+                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
+                           sector=int(tic_sector[i, 2]))
 
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
     #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
