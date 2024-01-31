@@ -169,7 +169,8 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ty
                               # np.sum(hdul[0].data, axis=(1, 2))[q][not_nan],
                               np.array([hdul[1].header[error_name[type]]] * len(hdul[1].data['time'][q][not_nan]))
                               ])
-            np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}_{type}.csv', data_,
+            print(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
+            np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
                 # data = np.append(data, data_, axis=1)
                 # plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver')
@@ -219,16 +220,16 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
     content = f"""
     [Stellar]
     st_mass = {nea['st_mass']}
-    st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2}
+    st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
     st_rad = {nea['st_rad']}
-    st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2}
+    st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
 
     [Planet]
     pl_tranmid = {nea['pl_tranmid']}
-    pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
+    pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
     pl_orbper = {nea['pl_orbper']}
-    pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
-    pl_trandep = {1000 * -2.5 * np.log10(1 - (109.076 * nea['pl_rade'] / nea['st_rad']) ** 2)}
+    pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
+    pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
     pl_masse_expected = 1
     pl_rvamp = 1
     pl_rvamperr1 = 0.1
@@ -253,7 +254,7 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
     """
 
     # Write the content to a file
-    with open("output_file.txt", "w") as file:
+    with open(f"{output_dir}{name}/{name}_config_s{sector:04d}.txt", "w") as file:
         file.write(content)
 
 
