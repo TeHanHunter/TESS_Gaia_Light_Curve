@@ -174,7 +174,7 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ty
                               # np.sum(hdul[0].data, axis=(1, 2))[q][not_nan],
                               np.array([hdul[1].header[error_name[type]]] * len(hdul[1].data['time'][q][not_nan]))
                               ])
-            if hdul[0].header["SECTOR"] in sector:
+            if hdul[0].header["SECTOR"] == sector:
                 np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}_{type}.csv', data_,
                            delimiter=',')
                 # data = np.append(data, data_, axis=1)
