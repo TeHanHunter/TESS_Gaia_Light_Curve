@@ -255,7 +255,7 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
     name = f'TIC_{tic}'
     dir = f'/home/tehan/data/cosmos/transit_depth_validation/'
     output_dir = '/home/tehan/data/pyexofits/Data/'
-    fits2csv(dir, star_name=name, output_dir_=output_dir, gaiadr3=gaiadr3, sector=sector, type='cal_aper_flux', nea=nea)
+    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, type='cal_aper_flux', nea=nea)
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
