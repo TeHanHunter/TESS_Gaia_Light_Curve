@@ -234,7 +234,7 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
     pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
     pl_orbper = {nea['pl_orbper']}
     pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
-    pl_trandep = {1000 * -2.5 * np.log10(1 - (109.076 * nea['pl_rade'] / nea['st_rad']) ^ 2)}
+    pl_trandep = {1000 * -2.5 * np.log10(1 - (109.076 * nea['pl_rade'] / nea['st_rad']) ** 2)}
     pl_masse_expected = 1
     pl_rvamp = 1
     pl_rvamperr1 = 0.1
