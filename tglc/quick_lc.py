@@ -299,9 +299,9 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation_odd/')
+    tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/')
     for i in trange(len(tic_sector)):
-        if tic_sector[0, i] in tics:
+        if tic_sector[i, 0] in tics:
             produce_config(tic=tic_sector[i, 0], gaiadr3=tic_sector[i, 1],
                            nea=t[np.where(t['tic_id'] == f'TIC {tic_sector[i, 0]}')[0][0]], sector=tic_sector[i, 2])
 
