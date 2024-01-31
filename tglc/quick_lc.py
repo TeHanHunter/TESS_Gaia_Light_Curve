@@ -156,12 +156,8 @@ def timebin(time, meas, meas_err, binsize):
 def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', period=None):
     output_dir = f'{output_dir}{star_name}/Photometry/'
     files = glob(f'{dir}*{gaiadr3}*{sector:04d}.fits')
+    print(files)
     os.makedirs(output_dir, exist_ok=True)
-    if sector is None:
-        sector = []
-        for i in range(len(files)):
-            sector.append(int(files[i].split('-')[-3][3:5]))
-        print(f'Available sectors: {sector}')
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
