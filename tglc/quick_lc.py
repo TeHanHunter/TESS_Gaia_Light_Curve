@@ -155,7 +155,7 @@ def timebin(time, meas, meas_err, binsize):
 
 def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', period=None):
     output_dir = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{gaiadr3}*.fits')
+    files = glob(f'{dir}*{gaiadr3}*{sector:04d}.fits')
     os.makedirs(output_dir, exist_ok=True)
     if sector is None:
         sector = []
@@ -174,9 +174,8 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ty
                               # np.sum(hdul[0].data, axis=(1, 2))[q][not_nan],
                               np.array([hdul[1].header[error_name[type]]] * len(hdul[1].data['time'][q][not_nan]))
                               ])
-            if hdul[0].header["SECTOR"] == sector:
-                np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}_{type}.csv', data_,
-                           delimiter=',')
+            np.savetxt(f'{output_dir}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}_{type}.csv', data_,
+                       delimiter=',')
                 # data = np.append(data, data_, axis=1)
                 # plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver')
                 # plt.plot(data_[0], data_[1], '.')
