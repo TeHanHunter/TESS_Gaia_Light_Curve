@@ -244,26 +244,18 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             # Write the content to a file
             with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
                 file.write(content)
-    else:
-        print(gaiadr3)
 
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     tics = [int(s[4:]) for s in t['tic_id']]
     files = glob(f'{dir}*.fits')
-    tic_sector = np.zeros((len(files), 3))
+    tic_sector = np.empty(shape=(len(files), 3), dtype='str')
     for i in range(len(files)):
         hdul = fits.open(files[i])
-        tic_sector[i, 0] = int(hdul[0].header['TICID'])
-        tic_sector[i, 1] = int(hdul[0].header['GAIADR3'])
-        tic_sector[i, 2] = int(hdul[0].header['sector'])
-        if int(hdul[0].header['GAIADR3']) == 2129103700534539264:
-            print(tic_sector[i])
-            print(files[i])
-        elif int(hdul[0].header['GAIADR3']) == 2129103700534539136:
-            print(tic_sector[i])
-            print(files[i])
+        tic_sector[i, 0] = str(hdul[0].header['TICID'])
+        tic_sector[i, 1] = str(hdul[0].header['GAIADR3'])
+        tic_sector[i, 2] = str(hdul[0].header['sector'])
     print('All stars produced:', set(tics) <= set(tic_sector[:, 0]))
     difference_set = set(tics) - set(tic_sector[:, 0])
     print("No. of stars in NEA but not in folder:", len(list(difference_set)))
@@ -295,7 +287,7 @@ if __name__ == '__main__':
     dir = '/home/tehan/data/cosmos/transit_depth_validation/'
     tic_sector = sort_sectors(t, dir=dir)
     for i in trange(len(tic_sector)):
-        if tic_sector[i, 0] in tics:
+        if int(tic_sector[i, 0]) in tics:
             produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2]))
