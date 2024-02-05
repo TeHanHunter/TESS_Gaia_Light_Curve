@@ -204,49 +204,50 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
             np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
+            # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
+            # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
+            content = textwrap.dedent(f"""\
+            [Stellar]
+            st_mass = {nea['st_mass']}
+            st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+            st_rad = {nea['st_rad']}
+            st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+
+            [Planet]
+            pl_tranmid = {nea['pl_tranmid']}
+            pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
+            pl_orbper = {nea['pl_orbper']}
+            pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
+            pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
+            pl_masse_expected = 1
+            pl_rvamp = 1
+            pl_rvamperr1 = 0.1
+            ###########################################################################
+
+            [Photometry]
+            InstrumentNames = TESS
+            ###########################################################################
+
+            [TESS]
+            FileName = TESS_{star_name}_sector_{sector}.csv
+            Delimiter = ,
+            GP_sho = False
+            GP_prot = True
+            run_masked_gp = False
+            subtract_transitmasked_gp = False
+            Dilution = False
+            ExposureTime = {1800 if sector < 27 else 600}
+            RestrictEpoch = False
+            SGFilterLen = 101
+            OutlierRejection = True""")
+
+            # Write the content to a file
+            with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
+                file.write(content)
     else:
         print(gaiadr3)
 
-        # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
-        # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
-        content = textwrap.dedent(f"""\
-        [Stellar]
-        st_mass = {nea['st_mass']}
-        st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
-        st_rad = {nea['st_rad']}
-        st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
 
-        [Planet]
-        pl_tranmid = {nea['pl_tranmid']}
-        pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
-        pl_orbper = {nea['pl_orbper']}
-        pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
-        pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
-        pl_masse_expected = 1
-        pl_rvamp = 1
-        pl_rvamperr1 = 0.1
-        ###########################################################################
-
-        [Photometry]
-        InstrumentNames = TESS
-        ###########################################################################
-
-        [TESS]
-        FileName = TESS_{star_name}_sector_{sector}.csv
-        Delimiter = ,
-        GP_sho = False
-        GP_prot = True
-        run_masked_gp = False
-        subtract_transitmasked_gp = False
-        Dilution = False
-        ExposureTime = {1800 if sector < 27 else 600}
-        RestrictEpoch = False
-        SGFilterLen = 101
-        OutlierRejection = True""")
-
-        # Write the content to a file
-        with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
-            file.write(content)
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     tics = [int(s[4:]) for s in t['tic_id']]
