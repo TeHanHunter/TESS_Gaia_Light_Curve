@@ -215,9 +215,9 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
 
             [Planet]
             pl_tranmid = {nea['pl_tranmid']}
-            pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
+            pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
             pl_orbper = {nea['pl_orbper']}
-            pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
+            pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
             pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
             pl_masse_expected = 1
             pl_rvamp = 1
@@ -249,6 +249,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     tics = [int(s[4:]) for s in t['tic_id']]
+    tics_string = [s[4:] for s in t['tic_id']]
     files = glob(f'{dir}*.fits')
     tic_sector = np.empty(shape=(len(files), 3), dtype='object')
     for i in range(len(files)):
@@ -256,10 +257,11 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
         tic_sector[i, 0] = str(hdul[0].header['TICID'])
         tic_sector[i, 1] = str(hdul[0].header['GAIADR3'])
         tic_sector[i, 2] = str(hdul[0].header['sector'])
-    print('All stars produced:', set(tics) <= set(tic_sector[:, 0]))
-    difference_set = set(tics) - set(tic_sector[:, 0])
+    print('All stars produced:', set(tics_string) <= set(tic_sector[:, 0]))
+    difference_set = set(tics_string) - set(tic_sector[:, 0])
     print("No. of stars in NEA but not in folder:", len(list(difference_set)))
-    print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
+    print("Stars in NEA but not in folder:", list(difference_set))
+    print(f'Stars={len(tics_string)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
     unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
     for i in range(1, 10):
         print(f'{len(unique_elements[counts == i])} of stars are observed {i} times. ')
