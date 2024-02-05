@@ -296,6 +296,7 @@ if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
     tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/')
+    print(np.shape(tic_sector))
     for i in trange(len(tic_sector)):
         if tic_sector[i, 0] in tics:
             produce_config(tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
