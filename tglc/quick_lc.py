@@ -173,6 +173,7 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
             np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
+            print(hdul[0].header['TICID'] == int(star_name[4:]))
 
     # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
     # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
@@ -214,8 +215,7 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
         # Write the content to a file
         with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
             file.write(content)
-    else:
-        print(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
+
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
