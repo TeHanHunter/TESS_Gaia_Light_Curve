@@ -171,8 +171,8 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
                               ])
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
             print(data_)
-            print(hdul[1].data['time'])
             print(hdul[1].data['time'][q][not_nan])
+            print(hdul[1].header[error_name[version]])
             np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
 
