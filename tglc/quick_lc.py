@@ -176,7 +176,8 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
 
     # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
     # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
-        content = textwrap.dedent(f"""[Stellar]
+        content = textwrap.dedent(f"""\
+        [Stellar]
         st_mass = {nea['st_mass']}
         st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
         st_rad = {nea['st_rad']}
