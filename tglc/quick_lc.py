@@ -173,8 +173,12 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
             print(type(data_))
             print(type(data_[0,0]))
             print(np.shape(data_))
-            np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
-                       delimiter=',')
+            print(data_[0,0])
+            try:
+                np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
+                           delimiter=',')
+            except:
+                print(data_)
     # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
     # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
         content = f"""[Stellar]
