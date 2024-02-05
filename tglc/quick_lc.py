@@ -154,70 +154,6 @@ def timebin(time, meas, meas_err, binsize):
     return time_out, meas_out, meas_err_out
 
 
-def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, version='cal_aper_flux', nea=None):
-    output_dir_ = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
-    error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
-                  'cal_aper_flux': 'CAPE_ERR'}
-    # data = np.empty((3, 0))
-    if len(files) == 1:
-        os.makedirs(output_dir_, exist_ok=True)
-        with fits.open(files[0], mode='denywrite') as hdul:
-            q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
-            cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
-            data_ = np.array([hdul[1].data['time'][q][not_nan],
-                              hdul[1].data[version][q][not_nan],
-                              np.array([cal_aper_err] * len(hdul[1].data['time'][q][not_nan]))
-                              ])
-            # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
-            np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
-                       delimiter=',')
-    else:
-        print(gaiadr3)
-
-    # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
-    # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
-        content = textwrap.dedent(f"""\
-        [Stellar]
-        st_mass = {nea['st_mass']}
-        st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
-        st_rad = {nea['st_rad']}
-        st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
-    
-        [Planet]
-        pl_tranmid = {nea['pl_tranmid']}
-        pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
-        pl_orbper = {nea['pl_orbper']}
-        pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
-        pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
-        pl_masse_expected = 1
-        pl_rvamp = 1
-        pl_rvamperr1 = 0.1
-        ###########################################################################
-    
-        [Photometry]
-        InstrumentNames = TESS
-        ###########################################################################
-    
-        [TESS]
-        FileName = TESS_{star_name}_sector_{sector}.csv
-        Delimiter = ,
-        GP_sho = False
-        GP_prot = True
-        run_masked_gp = False
-        subtract_transitmasked_gp = False
-        Dilution = False
-        ExposureTime = {1800 if sector < 27 else 600}
-        RestrictEpoch = False
-        SGFilterLen = 101
-        OutlierRejection = True""")
-
-        # Write the content to a file
-        with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
-            file.write(content)
-
-
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     for i in range(server, 56, 2):
@@ -247,10 +183,70 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
 
 
 def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
-    name = f'TIC_{tic}'
+    star_name = f'TIC_{tic}'
     output_dir = '/home/tehan/data/pyexofits/Data/'
-    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, version='cal_aper_flux', nea=nea)
+    version = 'cal_aper_flux'
+    output_dir_ = f'{output_dir}{star_name}/Photometry/'
+    files = glob(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
+    error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
+                  'cal_aper_flux': 'CAPE_ERR'}
+    # data = np.empty((3, 0))
+    if len(files) == 1:
+        os.makedirs(output_dir_, exist_ok=True)
+        with fits.open(files[0], mode='denywrite') as hdul:
+            q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+            not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
+            cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
+            data_ = np.array([hdul[1].data['time'][q][not_nan],
+                              hdul[1].data[version][q][not_nan],
+                              np.array([cal_aper_err] * len(hdul[1].data['time'][q][not_nan]))
+                              ])
+            # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
+            np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
+                       delimiter=',')
+    else:
+        print(gaiadr3)
 
+        # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
+        # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
+        content = textwrap.dedent(f"""\
+        [Stellar]
+        st_mass = {nea['st_mass']}
+        st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+        st_rad = {nea['st_rad']}
+        st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+
+        [Planet]
+        pl_tranmid = {nea['pl_tranmid']}
+        pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2:.3f}
+        pl_orbper = {nea['pl_orbper']}
+        pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2:.3f}
+        pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
+        pl_masse_expected = 1
+        pl_rvamp = 1
+        pl_rvamperr1 = 0.1
+        ###########################################################################
+
+        [Photometry]
+        InstrumentNames = TESS
+        ###########################################################################
+
+        [TESS]
+        FileName = TESS_{star_name}_sector_{sector}.csv
+        Delimiter = ,
+        GP_sho = False
+        GP_prot = True
+        run_masked_gp = False
+        subtract_transitmasked_gp = False
+        Dilution = False
+        ExposureTime = {1800 if sector < 27 else 600}
+        RestrictEpoch = False
+        SGFilterLen = 101
+        OutlierRejection = True""")
+
+        # Write the content to a file
+        with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
+            file.write(content)
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     tics = [int(s[4:]) for s in t['tic_id']]
