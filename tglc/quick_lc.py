@@ -256,7 +256,7 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
         tic_sector[i, 0] = str(hdul[0].header['TICID'])
         tic_sector[i, 1] = str(hdul[0].header['GAIADR3'])
         tic_sector[i, 2] = str(hdul[0].header['sector'])
-    print(tic_sector)
+    print(str(hdul[0].header['TICID']))
     print('All stars produced:', set(tics) <= set(tic_sector[:, 0]))
     difference_set = set(tics) - set(tic_sector[:, 0])
     print("No. of stars in NEA but not in folder:", len(list(difference_set)))
