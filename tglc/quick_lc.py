@@ -261,6 +261,9 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
         if int(hdul[0].header['GAIADR3']) == 2129103700534539264:
             print(tic_sector[i])
             print(files[i])
+        elif int(hdul[0].header['GAIADR3']) == 2129103700534539136:
+            print(tic_sector[i])
+            print(files[i])
     print('All stars produced:', set(tics) <= set(tic_sector[:, 0]))
     difference_set = set(tics) - set(tic_sector[:, 0])
     print("No. of stars in NEA but not in folder:", len(list(difference_set)))
