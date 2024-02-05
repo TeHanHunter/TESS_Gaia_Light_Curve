@@ -67,14 +67,14 @@ def ffi_to_source(sector=1, local_directory=''):
     os.makedirs(f'{local_directory}mask/', exist_ok=True)
 
     with Pool(2) as p:
-        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), [9,11,12,13,14,15])
+        p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
 
     # for i in range(16):
     #     ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
 
 
 if __name__ == '__main__':
-    sector = 60
+    sector = 64
     # only running cam1ccd1
     ffi_to_source(sector=sector, local_directory=f'/pdo/users/tehan/sector{sector:04d}/')
     # files = glob.glob(f'/home/tehan/data/sector{sector:04d}/source/*/source_00_00.pkl')
