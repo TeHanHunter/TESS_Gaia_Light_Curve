@@ -153,7 +153,7 @@ def timebin(time, meas, meas_err, binsize):
     return time_out, meas_out, meas_err_out
 
 
-def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, type='cal_aper_flux', nea=None):
+def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, version='cal_aper_flux', nea=None):
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
     files = glob(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
@@ -163,11 +163,11 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ty
         os.makedirs(output_dir_, exist_ok=True)
         with fits.open(files[0], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            not_nan = np.invert(np.isnan(hdul[1].data[type][q]))
+            not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
             data_ = np.array([hdul[1].data['time'][q][not_nan],
-                              hdul[1].data[type][q][not_nan],
+                              hdul[1].data[version][q][not_nan],
                               # np.sum(hdul[0].data, axis=(1, 2))[q][not_nan],
-                              np.array([hdul[1].header[error_name[type]]] * len(hdul[1].data['time'][q][not_nan]))
+                              np.array([hdul[1].header[error_name[version]]] * len(hdul[1].data['time'][q][not_nan]))
                               ])
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
             print(type(data_))
@@ -249,7 +249,7 @@ def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
     name = f'TIC_{tic}'
     dir = f'/home/tehan/data/cosmos/transit_depth_validation/'
     output_dir = '/home/tehan/data/pyexofits/Data/'
-    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, type='cal_aper_flux', nea=nea)
+    fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, version='cal_aper_flux', nea=nea)
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
