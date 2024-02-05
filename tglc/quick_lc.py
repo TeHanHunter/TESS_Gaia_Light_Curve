@@ -215,7 +215,7 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
         with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
             file.write(content)
     else:
-        print(files)
+        print(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
