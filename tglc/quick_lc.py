@@ -15,6 +15,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
 import pkg_resources
+import textwrap
 
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
@@ -164,21 +165,18 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
         with fits.open(files[0], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
+            cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
             data_ = np.array([hdul[1].data['time'][q][not_nan],
                               hdul[1].data[version][q][not_nan],
-                              # np.sum(hdul[0].data, axis=(1, 2))[q][not_nan],
-                              np.array([hdul[1].header[error_name[version]]] * len(hdul[1].data['time'][q][not_nan]))
+                              np.array([cal_aper_err] * len(hdul[1].data['time'][q][not_nan]))
                               ])
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
-            cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
-            print(np.nanmedian(hdul[1].data[version]))
-            print(cal_aper_err)
             np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
 
     # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
     # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
-        content = f"""[Stellar]
+        content = textwrap.dedent(f"""[Stellar]
         st_mass = {nea['st_mass']}
         st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
         st_rad = {nea['st_rad']}
@@ -210,8 +208,7 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
         ExposureTime = {1800 if sector < 27 else 600}
         RestrictEpoch = False
         SGFilterLen = 101
-        OutlierRejection = True
-        """
+        OutlierRejection = True""")
 
         # Write the content to a file
         with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
