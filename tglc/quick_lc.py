@@ -173,8 +173,8 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
             np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
-            print(hdul[0].header['TICID'])
-            print(int(star_name[4:]))
+    else:
+        print(gaiadr3)
 
     # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
     # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
@@ -246,9 +246,8 @@ def plot_lc(local_directory=None, type='cal_aper_flux'):
             plt.close()
 
 
-def produce_config(tic=None, gaiadr3=None, nea=None, sector=1):
+def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     name = f'TIC_{tic}'
-    dir = f'/home/tehan/data/cosmos/transit_depth_validation/'
     output_dir = '/home/tehan/data/pyexofits/Data/'
     fits2csv(dir, star_name=name, output_dir=output_dir, gaiadr3=gaiadr3, sector=sector, version='cal_aper_flux', nea=nea)
 
@@ -290,10 +289,11 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/')
+    dir = '/home/tehan/data/cosmos/transit_depth_validation/'
+    tic_sector = sort_sectors(t, dir=dir)
     for i in trange(len(tic_sector)):
         if tic_sector[i, 0] in tics:
-            produce_config(tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
+            produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2]))
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
