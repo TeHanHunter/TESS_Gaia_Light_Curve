@@ -202,7 +202,7 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
         FileName = TESS_{star_name}_sector_{sector}.csv
         Delimiter = ,
         GP_sho = False
-        GP_prot = False
+        GP_prot = True
         run_masked_gp = False
         subtract_transitmasked_gp = False
         Dilution = False
@@ -214,7 +214,8 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
         # Write the content to a file
         with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
             file.write(content)
-
+    else:
+        print(files)
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
@@ -262,7 +263,7 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
         tic_sector[i, 2] = int(hdul[0].header['sector'])
     print('All stars produced:', set(tics) <= set(tic_sector[:, 0]))
     difference_set = set(tics) - set(tic_sector[:, 0])
-    print("Elements in NEA but not in folder:", list(difference_set))
+    print("No. of stars in NEA but not in folder:", len(list(difference_set)))
     print(f'Stars={len(tics)}, lightcurves={len(np.unique(tic_sector[:, 0]))}')
     unique_elements, counts = np.unique(tic_sector[:, 0], return_counts=True)
     for i in range(1, 10):
@@ -289,14 +290,11 @@ if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
     tic_sector = sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/')
-    visits=0
     for i in trange(len(tic_sector)):
         if tic_sector[i, 0] in tics:
-            visits +=1
             produce_config(tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2]))
-    print(visits)
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
     #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
     #         90605642, 130162252, 297146957, 119262291, 414843476, 187273811, 416136788, 218299481, 53728859, 70412892,
