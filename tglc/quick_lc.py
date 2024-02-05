@@ -170,9 +170,9 @@ def fits2csv(dir, output_dir=None, gaiadr3=None, star_name=None, sector=None, ve
                               np.array([hdul[1].header[error_name[version]]] * len(hdul[1].data['time'][q][not_nan]))
                               ])
             # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
-            print(data_)
-            print(hdul[1].data['time'][q][not_nan])
-            print(hdul[1].header[error_name[version]])
+            cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
+            print(np.nanmedian(hdul[1].data[version]))
+            print(cal_aper_err)
             np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
                        delimiter=',')
 
