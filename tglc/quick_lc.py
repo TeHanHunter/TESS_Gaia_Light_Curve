@@ -250,15 +250,17 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
-    tics = [int(s[4:]) for s in t['tic_id']]
+    # tics = [int(s[4:]) for s in t['tic_id']]
     tics_string = [s[4:] for s in t['tic_id']]
     files = glob(f'{dir}*.fits')
-    tic_sector = np.empty(shape=(len(files), 3), dtype='object')
+    tic_sector = []
     for i in range(len(files)):
         hdul = fits.open(files[i])
-        tic_sector[i, 0] = str(hdul[0].header['TICID'])
-        tic_sector[i, 1] = str(hdul[0].header['GAIADR3'])
-        tic_sector[i, 2] = str(hdul[0].header['sector'])
+        if str(hdul[0].header['TICID']) in tics_string:
+            tic_sector.append([str(hdul[0].header['TICID']),
+                               str(hdul[0].header['GAIADR3']),
+                               str(hdul[0].header['sector'])])
+    tic_sector = np.array(tic_sector)
     print('All stars produced:', set(tics_string) <= set(tic_sector[:, 0]))
     difference_set = set(tics_string) - set(tic_sector[:, 0])
     print("No. of stars in NEA but not in folder:", len(list(difference_set)))
@@ -288,7 +290,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    dir = '/home/tehan/data/cosmos/transit_depth_validation_even/'
+    dir = '/home/tehan/data/cosmos/transit_depth_validation/'
     tic_sector = sort_sectors(t, dir=dir)
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
