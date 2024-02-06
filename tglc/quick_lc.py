@@ -286,7 +286,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    dir = '/home/tehan/data/cosmos/transit_depth_validation/'
+    dir = '/home/tehan/data/cosmos/transit_depth_validation_even/'
     tic_sector = sort_sectors(t, dir=dir)
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
