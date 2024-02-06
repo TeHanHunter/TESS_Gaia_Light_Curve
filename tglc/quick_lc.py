@@ -215,9 +215,11 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
 
             [Planet]
             pl_tranmid = {nea['pl_tranmid']}
-            pl_tranmiderr1 = {(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
+            pl_tranmiderr1 = 0.01 
+            #{(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
             pl_orbper = {nea['pl_orbper']}
-            pl_orbpererr1 = {(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
+            pl_orbpererr1 = 0.1 
+            #{(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
             pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
             pl_masse_expected = 1
             pl_rvamp = 1
@@ -284,7 +286,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.01.30_16.12.35.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
     dir = '/home/tehan/data/cosmos/transit_depth_validation_even/'
     tic_sector = sort_sectors(t, dir=dir)
