@@ -351,7 +351,7 @@ if __name__ == '__main__':
         if int(tic_sector[i, 0]) in tics:
             produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config
+                           sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
     #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
     #         90605642, 130162252, 297146957, 119262291, 414843476, 187273811, 416136788, 218299481, 53728859, 70412892,
