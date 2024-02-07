@@ -216,10 +216,8 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             [Planet]
             pl_tranmid = {nea['pl_tranmid']}
             pl_tranmiderr1 = 0.01 
-            #{(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
             pl_orbper = {nea['pl_orbper']}
             pl_orbpererr1 = 0.1 
-            #{(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
             pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
             pl_masse_expected = 1
             pl_rvamp = 1
@@ -270,7 +268,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                 ###########################################################################
 
                 [Photometry]
-                InstrumentNames = '{','.join(f'TESS{i}' for i in range(len(files)))}'
+                InstrumentNames = {','.join(f'TESS{i}' for i in range(len(files)))}
                 """)
         for j in range(len(files)):
                 with fits.open(files[j], mode='denywrite') as hdul:
@@ -296,7 +294,8 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                     ExposureTime = {1800 if hdul[0].header['sector'] < 27 else 600}
                     RestrictEpoch = False
                     SGFilterLen = 101
-                    OutlierRejection = True""")
+                    OutlierRejection = True
+                    """)
                     # data = np.append(data, data_, axis=1)
         # Write the content to a file
         with open(f"{output_dir}{star_name}/{star_name}_config.txt", "w") as file:
