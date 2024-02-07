@@ -187,7 +187,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     output_dir = '/home/tehan/data/pyexofits/Data/'
     version = 'cal_aper_flux'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{gaiadr3}*{sector:04d}*.fits')
+    files = glob(f'{dir}*{gaiadr3}*{sector}*.fits')
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
@@ -246,6 +246,61 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             # Write the content to a file
             with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
                 file.write(content)
+    elif len(files) > 1:
+        os.makedirs(output_dir_, exist_ok=True)
+        # data = np.empty((3, 0))
+        content = textwrap.dedent(f"""\
+                [Stellar]
+                st_mass = {nea['st_mass']}
+                st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+                st_rad = {nea['st_rad']}
+                st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+
+                [Planet]
+                pl_tranmid = {nea['pl_tranmid']}
+                pl_tranmiderr1 = 0.01 
+                #{(nea['pl_tranmiderr1'] - nea['pl_tranmiderr2']) / 2}
+                pl_orbper = {nea['pl_orbper']}
+                pl_orbpererr1 = 0.1 
+                #{(nea['pl_orbpererr1'] - nea['pl_orbpererr2']) / 2}
+                pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
+                pl_masse_expected = 1
+                pl_rvamp = 1
+                pl_rvamperr1 = 0.1
+                ###########################################################################
+
+                [Photometry]
+                InstrumentNames = '{','.join(f'TESS{i}' for i in range(len(files)))}'
+                """)
+        for i in range(len(files)):
+                with fits.open(files[i], mode='denywrite') as hdul:
+                    q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+                    not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
+                    cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
+                    data_ = np.array([hdul[1].data['time'][q][not_nan],
+                                      hdul[1].data[version][q][not_nan],
+                                      np.array([cal_aper_err] * len(hdul[1].data['time'][q][not_nan]))
+                                      ])
+                    np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
+                               delimiter=',')
+                    content += textwrap.dedent(f"""\
+                    ###########################################################################
+                    [TESS{i}]
+                    FileName = TESS_{star_name}_sector_{sector}.csv
+                    Delimiter = ,
+                    GP_sho = False
+                    GP_prot = True
+                    run_masked_gp = False
+                    subtract_transitmasked_gp = False
+                    Dilution = False
+                    ExposureTime = {1800 if sector < 27 else 600}
+                    RestrictEpoch = False
+                    SGFilterLen = 101
+                    OutlierRejection = True""")
+                    # data = np.append(data, data_, axis=1)
+        # Write the content to a file
+        with open(f"{output_dir}{star_name}/{star_name}_config.txt", "w") as file:
+            file.write(content)
 
 
 
@@ -296,7 +351,7 @@ if __name__ == '__main__':
         if int(tic_sector[i, 0]) in tics:
             produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-                           sector=int(tic_sector[i, 2]))
+                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
     #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
     #         90605642, 130162252, 297146957, 119262291, 414843476, 187273811, 416136788, 218299481, 53728859, 70412892,
