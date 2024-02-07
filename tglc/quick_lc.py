@@ -231,20 +231,20 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             ###########################################################################
 
             [TESS]
-            FileName = TESS_{star_name}_sector_{sector}.csv
+            FileName = TESS_{star_name}_sector_{hdul[0].header['sector']}.csv
             Delimiter = ,
             GP_sho = False
             GP_prot = True
             run_masked_gp = False
             subtract_transitmasked_gp = False
             Dilution = False
-            ExposureTime = {1800 if sector < 27 else 600}
+            ExposureTime = {1800 if hdul[0].header['sector'] < 27 else 600}
             RestrictEpoch = False
             SGFilterLen = 101
             OutlierRejection = True""")
 
             # Write the content to a file
-            with open(f"{output_dir}{star_name}/{star_name}_config_s{sector:04d}.txt", "w") as file:
+            with open(f"{output_dir}{star_name}/{star_name}_config_s{hdul[0].header['sector']:04d}.txt", "w") as file:
                 file.write(content)
     elif len(files) > 1:
         os.makedirs(output_dir_, exist_ok=True)
@@ -272,8 +272,8 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                 [Photometry]
                 InstrumentNames = '{','.join(f'TESS{i}' for i in range(len(files)))}'
                 """)
-        for i in range(len(files)):
-                with fits.open(files[i], mode='denywrite') as hdul:
+        for j in range(len(files)):
+                with fits.open(files[j], mode='denywrite') as hdul:
                     q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
                     not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
                     cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
@@ -285,15 +285,15 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                                delimiter=',')
                     content += textwrap.dedent(f"""\
                     ###########################################################################
-                    [TESS{i}]
-                    FileName = TESS_{star_name}_sector_{sector}.csv
+                    [TESS{j}]
+                    FileName = TESS_{star_name}_sector_{hdul[0].header['sector']}.csv
                     Delimiter = ,
                     GP_sho = False
                     GP_prot = True
                     run_masked_gp = False
                     subtract_transitmasked_gp = False
                     Dilution = False
-                    ExposureTime = {1800 if sector < 27 else 600}
+                    ExposureTime = {1800 if hdul[0].header['sector'] < 27 else 600}
                     RestrictEpoch = False
                     SGFilterLen = 101
                     OutlierRejection = True""")
