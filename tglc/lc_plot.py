@@ -63,11 +63,12 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade'):
     plt.figure(figsize=(10, 10))
     colormap = cm.viridis
     norm = plt.Normalize(t_['Tmag'].min(), t_['Tmag'].max())
-    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_['Tmag'], cmap=colormap, facecolors='none', s=20)
-    plt.errorbar(t_[f'{param}'], t_['value'],
-                            yerr=[t_['err2'].data * -1, t_['err1'].data],
-                            fmt='o', mec='C1', mfc='none',
-                            ecolor='C1', ms=2, elinewidth=0.1, capsize=0.5)
+    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_['Tmag'], cmap=colormap, facecolors='none', s=0)
+    for k in range(len(t_)):
+        plt.errorbar(t_[f'{param}'][k], t_['value'][k],
+                                yerr=[t_['err2'][k] * -1, t_['err1'][k]],
+                                fmt='o',  mec=colormap(norm(t_['Tmag'][k])),
+                                mfc='none', ecolor=colormap(norm(t_['Tmag'][k])), ms=2, elinewidth=0.1, capsize=0.5)
     plt.colorbar(scatter, label='TESS magnitude')
     plt.plot([0, 40], [0, 40], 'k')
     plt.xlim(0, 25)
