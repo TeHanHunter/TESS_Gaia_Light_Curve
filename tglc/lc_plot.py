@@ -37,7 +37,7 @@ def read_parameter(file=None):
                            float(lines[i].split(',')[1].split('$')[2])])
     return table
 
-def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade'):
+def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
@@ -71,13 +71,13 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade'):
                                 mfc='none', ecolor=colormap(norm(t_['Tmag'][k])), ms=2, elinewidth=0.1, capsize=0.5)
     plt.colorbar(scatter, label='TESS magnitude')
     plt.plot([0, 40], [0, 40], 'k')
-    plt.xlim(0, 25)
-    plt.ylim(0, 25)
+    plt.xlim(0, r)
+    plt.ylim(0, r)
     plt.xlabel(param)
     plt.ylabel(param_dict[f'{param}'])
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
 
 
 if __name__ == '__main__':
-    figure_1(param='pl_ratror')
+    figure_1(param='pl_ratror', r=0.4)
     figure_1()
