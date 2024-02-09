@@ -38,7 +38,7 @@ def read_parameter(file=None):
     return table
 
 
-def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
+def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
@@ -58,7 +58,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
                     table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
                     chain_summary = glob(os.path.join(os.path.dirname(file[j]), 'ChainSummary*.csv'))
                     table_chain = Table.read(chain_summary, format='csv')
-                    table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param]][0:-3] + '[0]'
+                    table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
 
                     if param == 'pl_rade':
                         t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t[f'{param}'][i], t[f'{param}err1'][i],
@@ -72,14 +72,14 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
     print(len(t_))
     plt.figure(figsize=(10, 8))
     colormap = cm.viridis
-    norm = plt.Normalize(t_['Tmag'].min(), t_['Tmag'].max())
-    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_['Tmag'], cmap=colormap, facecolors='none', s=0)
+    norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
+    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
     for k in range(len(t_)):
         plt.errorbar(t_[f'{param}'][k], t_['value'][k],
                      yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
-                     fmt='o', mec=colormap(norm(t_['Tmag'][k])),
-                     mfc='none', ecolor=colormap(norm(t_['Tmag'][k])), ms=2, elinewidth=0.1, capsize=0.5)
-    plt.colorbar(scatter, label='TESS magnitude')
+                     fmt='o', mec=colormap(norm(t_[cmap][k])),
+                     mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=2, elinewidth=0.1, capsize=0.5)
+    plt.colorbar(scatter, label=cmap)
     plt.plot([0.01, 40], [0.01, 40], 'k')
     plt.xlim(0.01, r)
     plt.ylim(0.01, r)
@@ -91,5 +91,5 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
 
 
 if __name__ == '__main__':
-    figure_1(param='pl_ratror', r=0.4)
-    figure_1()
+    figure_1(param='pl_ratror', r=0.4, cmap='rhat')
+    # figure_1()
