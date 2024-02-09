@@ -54,16 +54,16 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
                 star = int(os.path.basename(file[j]).split('_')[2])
                 if star == tics[i]:
                     table = read_parameter(file[j])
-                    table_ror = table[table['Parameter'] == param_dict['pl_rade']]
+                    table_row = table[table['Parameter'] == param_dict[param]]
                     if param == 'pl_rade':
                         t_.add_row(
                             [t['sy_tmag'][i], t[f'{param}'][i], t[f'{param}err1'][i], t[f'{param}err2'][i],
-                             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
+                             table_row['Value'][0], table_row['Upper Error'][0], table_row['Lower Error'][0]])
                     elif param == 'pl_ratror':
                         t_.add_row(
                             [t['sy_tmag'][i], t['pl_rade'][i] / t['st_rad'][i] / 109.076, t['pl_ratrorerr1'][i],
-                             t['pl_ratrorerr2'][i], table_ror['Value'][0], table_ror['Upper Error'][0],
-                             table_ror['Lower Error'][0]])
+                             t['pl_ratrorerr2'][i], table_row['Value'][0], table_row['Upper Error'][0],
+                             table_row['Lower Error'][0]])
     print(len(t_))
     plt.figure(figsize=(10, 8))
     colormap = cm.viridis
