@@ -43,7 +43,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
             pass
         elif len(file) >= 1:
             for j in range(len(file)):
-                star = int(os.path.basename(file[j]).split('_')[1][4:])
+                star = int(os.path.basename(file[j]).split('_')[2])
                 if star == tics[i]:
                     table = read_parameter(file[j])
                     table_ror = table[table['Parameter'] == 'ror__0']
