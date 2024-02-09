@@ -75,9 +75,9 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
                      fmt='o', mec=colormap(norm(t_['Tmag'][k])),
                      mfc='none', ecolor=colormap(norm(t_['Tmag'][k])), ms=2, elinewidth=0.1, capsize=0.5)
     plt.colorbar(scatter, label='TESS magnitude')
-    plt.plot([0.1, 40], [0.1, 40], 'k')
-    plt.xlim(0, r)
-    plt.ylim(0, r)
+    plt.plot([0.01, 40], [0.01, 40], 'k')
+    plt.xlim(0.01, r)
+    plt.ylim(0.01, r)
     plt.xlabel(param)
     plt.ylabel(param_dict[f'{param}'])
     plt.xscale('log')
