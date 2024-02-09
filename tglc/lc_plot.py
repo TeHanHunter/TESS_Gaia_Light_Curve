@@ -106,7 +106,7 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
         file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
         if len(file) == 0:
             missed_stars += 1
-        elif len(file) == 2:
+        elif len(file) == 3:
             for j in range(len(file)):
                 star = int(os.path.basename(file[j]).split('_')[2])
                 if star == tics[i]:
@@ -148,7 +148,7 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     plt.ylabel(param_dict[f'{param}'])
     plt.xscale('log')
     plt.yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_double.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_triple.png'), bbox_inches='tight', dpi=600)
 
 
 if __name__ == '__main__':
