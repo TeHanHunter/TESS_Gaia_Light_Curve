@@ -80,6 +80,8 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
     plt.ylim(0, r)
     plt.xlabel(param)
     plt.ylabel(param_dict[f'{param}'])
+    plt.xscale('log')
+    plt.yscale('log')
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
 
 
