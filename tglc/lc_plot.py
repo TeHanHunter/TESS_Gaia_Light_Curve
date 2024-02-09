@@ -58,6 +58,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
                     table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
                     chain_summary = glob(os.path.join(os.path.dirname(file[j]), 'ChainSummary*.csv'))
                     table_chain = Table.read(chain_summary, format='csv')
+                    print(table_chain)
                     table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
 
                     if param == 'pl_rade':
