@@ -73,8 +73,11 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade'):
     plt.plot([0, 40], [0, 40], 'k')
     plt.xlim(0, 25)
     plt.ylim(0, 25)
+    plt.xlabel(param)
+    plt.ylabel(param_dict[f'{param}'])
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
 
 
 if __name__ == '__main__':
+    figure_1(param='pl_ratror')
     figure_1()
