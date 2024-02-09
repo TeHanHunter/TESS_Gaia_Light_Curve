@@ -43,27 +43,32 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
 
-    t_ = Table(names=['Tmag', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
-               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+    t_ = Table(names=['Tmag', 'rhat', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
+               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+    missed_stars = 0
     for i in trange(len(tics)):
         file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
         if len(file) == 0:
-            pass
+            missed_stars += 1
         elif len(file) >= 1:
             for j in range(len(file)):
                 star = int(os.path.basename(file[j]).split('_')[2])
                 if star == tics[i]:
-                    table = read_parameter(file[j])
-                    table_row = table[table['Parameter'] == param_dict[param]]
+                    table_posterior = read_parameter(file[j])
+                    table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
+                    chain_summary = glob(os.path.join(os.path.dirname(file[j]), 'ChainSummary*.csv'))
+                    table_chain = Table.read(chain_summary, format='csv')
+                    table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param]][0:-3] + '[0]'
+
                     if param == 'pl_rade':
-                        t_.add_row(
-                            [t['sy_tmag'][i], t[f'{param}'][i], t[f'{param}err1'][i], t[f'{param}err2'][i],
-                             table_row['Value'][0], table_row['Upper Error'][0], table_row['Lower Error'][0]])
+                        t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t[f'{param}'][i], t[f'{param}err1'][i],
+                                    t[f'{param}err2'][i], table_posterior_row['Value'][0],
+                                    table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
                     elif param == 'pl_ratror':
                         t_.add_row(
-                            [t['sy_tmag'][i], t['pl_rade'][i] / t['st_rad'][i] / 109.076, t['pl_ratrorerr1'][i],
-                             t['pl_ratrorerr2'][i], table_row['Value'][0], table_row['Upper Error'][0],
-                             table_row['Lower Error'][0]])
+                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_rade'][i] / t['st_rad'][i] / 109.076,
+                             t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i], table_posterior_row['Value'][0],
+                             table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
     plt.figure(figsize=(10, 8))
     colormap = cm.viridis
