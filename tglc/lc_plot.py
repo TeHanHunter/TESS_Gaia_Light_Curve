@@ -30,7 +30,10 @@ def read_parameter(file=None):
                            float(lines[i].split('+')[1].split('}')[0]),
                            float(lines[i].split('{')[2].split('}')[0])])
         except IndexError:
-            print(file)
+            table.add_row([lines[i].split(',')[0],
+                           float(lines[i].split(',')[1].split('$')[0]),
+                           float(lines[i].split(',')[1].split('$')[2]),
+                           float(lines[i].split(',')[1].split('$')[2])])
     return table
 
 
@@ -50,10 +53,13 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
                 if star == tics[i]:
                     table = read_parameter(file[j])
                     table_ror = table[table['Parameter'] == 'ror__0']
-                    t_.add_row([t['pl_ratror'][i], t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
+                    # t_.add_row([t['pl_ratror'][i], t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
+                    #             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
+                    t_.add_row([t['pl_rade'][i] / t['st_rad'][i] /109.076, t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
                                 table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
     print(len(t_))
     plt.figure(figsize=(10, 10))
+    plt.plot([0,1],[0,1], 'k')
     plt.scatter(t_['pl_ratror'], t_['ror'])
     plt.savefig(os.path.join(folder, 'ror_diagonal.png'), bbox_inches='tight', dpi=600)
 
