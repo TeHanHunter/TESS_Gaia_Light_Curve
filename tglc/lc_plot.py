@@ -92,12 +92,12 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', ):
                          table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
     print(len(t_))
     plt.figure(figsize=(10, 10))
-    plt.plot([0, 100], [0, 100], 'k')
+    plt.plot([0, 40], [0, 40], 'k')
     plt.errorbar(t_['pl_rade'], t_['pl_r'],
                  yerr=[t_['pl_r'].data + t_['pl_rerr2'].data, t_['pl_r'].data + t_['pl_rerr1'].data], fmt='o',
                  mec='C2', mfc='none', ecolor='C2', ms=2, elinewidth=0.1, capsize=0.5)
-    # plt.xlim(0, 0.1)
-    # plt.ylim(0, 0.1)
+    plt.xlim(0, 40)
+    plt.ylim(0, 40)
     plt.savefig(os.path.join(folder, 'pl_rade_diagonal.png'), bbox_inches='tight', dpi=600)
 
 if __name__ == '__main__':
