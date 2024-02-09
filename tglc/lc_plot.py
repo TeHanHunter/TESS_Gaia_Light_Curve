@@ -58,7 +58,6 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
                     table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
                     chain_summary = glob(os.path.join(os.path.dirname(file[j]), 'ChainSummary*.csv'))
                     table_chain = Table.read(chain_summary[0], format='csv')
-                    print(table_chain)
                     table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
 
                     if param == 'pl_rade':
@@ -73,7 +72,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     print(len(t_))
     plt.figure(figsize=(10, 8))
     colormap = cm.viridis
-    norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
+    norm = plt.Normalize(t_[cmap].min(), 1.1) # t_[cmap].max()
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
     for k in range(len(t_)):
         plt.errorbar(t_[f'{param}'][k], t_['value'][k],
