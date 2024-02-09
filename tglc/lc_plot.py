@@ -37,6 +37,7 @@ def read_parameter(file=None):
                            float(lines[i].split(',')[1].split('$')[2])])
     return table
 
+
 def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
@@ -60,18 +61,19 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
                              table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
                     elif param == 'pl_ratror':
                         t_.add_row(
-                            [t['pl_rade'][i] / t['st_rad'][i] / 109.076, t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
-                             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
+                            [t['sy_tmag'][i], t['pl_rade'][i] / t['st_rad'][i] / 109.076, t['pl_ratrorerr1'][i],
+                             t['pl_ratrorerr2'][i], table_ror['Value'][0], table_ror['Upper Error'][0],
+                             table_ror['Lower Error'][0]])
     print(len(t_))
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(10, 8))
     colormap = cm.viridis
     norm = plt.Normalize(t_['Tmag'].min(), t_['Tmag'].max())
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_['Tmag'], cmap=colormap, facecolors='none', s=0)
     for k in range(len(t_)):
         plt.errorbar(t_[f'{param}'][k], t_['value'][k],
-                                yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
-                                fmt='o',  mec=colormap(norm(t_['Tmag'][k])),
-                                mfc='none', ecolor=colormap(norm(t_['Tmag'][k])), ms=2, elinewidth=0.1, capsize=0.5)
+                     yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
+                     fmt='o', mec=colormap(norm(t_['Tmag'][k])),
+                     mfc='none', ecolor=colormap(norm(t_['Tmag'][k])), ms=2, elinewidth=0.1, capsize=0.5)
     plt.colorbar(scatter, label='TESS magnitude')
     plt.plot([0, 40], [0, 40], 'k')
     plt.xlim(0, r)
