@@ -71,7 +71,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
     print('missing stars:', missed_stars)
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(20, 8))
     colormap = cm.viridis
     norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
@@ -79,11 +79,11 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
         if t_['rhat'][k] < 1.05:
             plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
                          fmt='o', mec=colormap(norm(t_[cmap][k])), mfc='none', ecolor=colormap(norm(t_[cmap][k])),
-                         ms=5, elinewidth=0.3, capsize=0.7, alpha=0.8, zorder=2)
+                         ms=5, elinewidth=1, capsize=0.7, alpha=0.8, zorder=2)
         else:
             plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
                          fmt='o', mec='silver', mfc='none', ecolor='silver',
-                         ms=5, elinewidth=0.3, capsize=0.5, alpha=0.8, zorder=1)
+                         ms=5, elinewidth=1, capsize=0.7, alpha=0.8, zorder=1)
     plt.colorbar(scatter, label=cmap)
     plt.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
     plt.xlim(0.01, r)
