@@ -70,9 +70,10 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
                              t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i], table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
+    print('missing stars:', missed_stars)
     plt.figure(figsize=(10, 8))
     colormap = cm.viridis
-    norm = plt.Normalize(t_[cmap].min(), 1.1) # t_[cmap].max()
+    norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
     for k in range(len(t_)):
         plt.errorbar(t_[f'{param}'][k], t_['value'][k],
