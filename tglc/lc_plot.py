@@ -79,7 +79,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
         plt.errorbar(t_[f'{param}'][k], t_['value'][k],
                      yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
                      fmt='o', mec=colormap(norm(t_[cmap][k])),
-                     mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=3, elinewidth=0.1, capsize=0.5)
+                     mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=5, elinewidth=0.1, capsize=0.5, alpha=0.5)
     plt.colorbar(scatter, label=cmap)
     plt.plot([0.01, 40], [0.01, 40], 'k')
     plt.xlim(0.01, r)
