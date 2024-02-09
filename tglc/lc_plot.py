@@ -76,7 +76,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
     for k in range(len(t_)):
-        if t_['rhat'][k] < 1.05:
+        if t_['rhat'][k] < 1.02:
             plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
                          fmt='o', mec=colormap(norm(t_[cmap][k])), mfc='none', ecolor=colormap(norm(t_[cmap][k])),
                          ms=10, elinewidth=1, capsize=5, alpha=0.8, zorder=2)
