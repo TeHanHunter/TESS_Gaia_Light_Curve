@@ -61,7 +61,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
     print(len(t_))
     plt.figure(figsize=(10, 10))
     plt.plot([0, 0.4], [0, 0.4], 'k')
-    plt.errorbar(t_['pl_ratror'], t_['ror'], yerr={t_['rorerr1'].data, t_['rorerr2'].data * -1}, fmt='o', ecolor='C2')
+    plt.errorbar(t_['pl_ratror'], t_['ror'], yerr=[t_['rorerr1'].data, t_['rorerr2'].data * -1], fmt='o', ecolor='C2')
     plt.savefig(os.path.join(folder, 'ror_diagonal.png'), bbox_inches='tight', dpi=600)
 
 
