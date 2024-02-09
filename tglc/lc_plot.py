@@ -62,7 +62,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
     plt.figure(figsize=(10, 10))
     plt.plot([0, 0.4], [0, 0.4], 'k')
     plt.errorbar(t_['pl_ratror'], t_['ror'],
-                 yerr=[t_['ror'].data + t_['rorerr2'].data, t_['ror'].data + t_['rorerr1'].data], fmt='o',
+                 yerr=[t_['rorerr2'].data * -1, t_['rorerr1'].data], fmt='o',
                  mec='C2', mfc='none', ecolor='C2', ms=2, elinewidth=0.1, capsize=0.5)
     plt.xlim(0, 0.1)
     plt.ylim(0, 0.1)
@@ -94,11 +94,13 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', ):
     plt.figure(figsize=(10, 10))
     plt.plot([0, 40], [0, 40], 'k')
     plt.errorbar(t_['pl_rade'], t_['pl_r'],
-                 yerr=[t_['pl_rerr2'].data*-1, t_['pl_rerr1'].data], fmt='o',
+                 yerr=[t_['pl_rerr2'].data * -1, t_['pl_rerr1'].data], fmt='o',
                  mec='C2', mfc='none', ecolor='C2', ms=2, elinewidth=0.1, capsize=0.5)
     plt.xlim(0, 25)
     plt.ylim(0, 25)
     plt.savefig(os.path.join(folder, 'pl_rade_diagonal.png'), bbox_inches='tight', dpi=600)
 
+
 if __name__ == '__main__':
+    figure_1()
     figure_2()
