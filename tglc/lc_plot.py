@@ -43,8 +43,8 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
 
-    t_ = Table(names=['Tmag', 'rhat', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
-               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+    t_ = Table(names=['Tmag', 'rhat', 'p', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
+               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
     missed_stars = 0
     for i in trange(len(tics)):
         file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
@@ -61,12 +61,13 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
                     table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
 
                     if param == 'pl_rade':
-                        t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t[f'{param}'][i], t[f'{param}err1'][i],
-                                    t[f'{param}err2'][i], table_posterior_row['Value'][0],
+                        t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], t[f'{param}'][i],
+                                    t[f'{param}err1'][i], t[f'{param}err2'][i], table_posterior_row['Value'][0],
                                     table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
                     elif param == 'pl_ratror':
                         t_.add_row(
-                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_rade'][i] / t['st_rad'][i] / 109.076,
+                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i],
+                             t['pl_rade'][i] / t['st_rad'][i] / 109.076,
                              t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i], table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
@@ -93,6 +94,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     plt.xscale('log')
     plt.yscale('log')
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+
 
 def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
@@ -152,4 +154,4 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
 
 
 if __name__ == '__main__':
-    figure_1(param='pl_ratror', r=0.4)
+    figure_1(param='pl_ratror', r=0.4, cmap='p')
