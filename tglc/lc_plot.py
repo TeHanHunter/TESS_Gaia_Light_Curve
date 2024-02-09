@@ -106,7 +106,7 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
         file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
         if len(file) == 0:
             missed_stars += 1
-        elif len(file) >= 4:
+        elif len(file) == 1:
             for j in range(len(file)):
                 star = int(os.path.basename(file[j]).split('_')[2])
                 if star == tics[i]:
@@ -127,7 +127,7 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
     print('missing stars:', missed_stars)
-    plt.figure(figsize=(20, 8))
+    plt.figure(figsize=(10, 8))
     colormap = cm.viridis
     norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
@@ -148,7 +148,7 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     plt.ylabel(param_dict[f'{param}'])
     plt.xscale('log')
     plt.yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_quadra.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_single.png'), bbox_inches='tight', dpi=600)
 
 
 if __name__ == '__main__':
