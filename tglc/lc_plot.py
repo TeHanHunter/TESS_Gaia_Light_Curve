@@ -24,10 +24,13 @@ def read_parameter(file=None):
     table = Table(names=['Parameter', 'Value', 'Upper Error', 'Lower Error'],
                   dtype=['S50', 'f8', 'f8', 'f8'])
     for i in range(1, len(lines)):
-        table.add_row([lines[i].split(',')[0],
-                       float(lines[i].split(',')[1].split('$')[0]),
-                       float(lines[i].split('+')[1].split('}')[0]),
-                       float(lines[i].split('{')[2].split('}')[0])])
+        try:
+            table.add_row([lines[i].split(',')[0],
+                           float(lines[i].split(',')[1].split('$')[0]),
+                           float(lines[i].split('+')[1].split('}')[0]),
+                           float(lines[i].split('{')[2].split('}')[0])])
+        except IndexError:
+            print(file)
     return table
 
 
