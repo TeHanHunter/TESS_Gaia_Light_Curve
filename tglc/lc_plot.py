@@ -17,6 +17,7 @@ from astropy.table import Table
 import pkg_resources
 import seaborn as sns
 
+
 def read_parameter(file=None):
     with open(file, 'r') as file:
         lines = file.readlines()
@@ -35,7 +36,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
     tics = [int(s[4:]) for s in t['tic_id']]
 
     t_ = Table(names=['pl_ratror', 'pl_ratrorerr1', 'pl_ratrorerr2', 'ror', 'rorerr1', 'rorerr2'],
-                  dtype='f8')
+               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
     for i in trange(len(tics)):
         file = glob(os.path.join(folder, f'*/Photometry/*{tics[i]}.dat'))
         if len(file) == 0:
