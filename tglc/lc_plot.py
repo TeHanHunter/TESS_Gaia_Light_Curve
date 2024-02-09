@@ -38,7 +38,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
     t_ = Table(names=['pl_ratror', 'pl_ratrorerr1', 'pl_ratrorerr2', 'ror', 'rorerr1', 'rorerr2'],
                dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
     for i in trange(len(tics)):
-        file = glob(os.path.join(folder, f'*/Photometry/*{tics[i]}.dat'))
+        file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}.dat'))
         if len(file) == 0:
             pass
         elif len(file) >= 1:
