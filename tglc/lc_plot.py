@@ -36,7 +36,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
 
     t_ = Table(names=['pl_ratror', 'pl_ratrorerr1', 'pl_ratrorerr2', 'ror', 'rorerr1', 'rorerr2'],
                   dtype='f8')
-    for i in range(len(tics)):
+    for i in trange(len(tics)):
         file = glob(os.path.join(folder, f'*/Photometry/*{tics[i]}.dat'))
         if len(file) == 0:
             pass
@@ -48,6 +48,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', ):
                     table_ror = table[table['Parameter'] == 'ror__0']
                     t_.add_row([t['pl_ratror'][i], t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
                                 table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
+    print(len(t_))
     plt.figure(figsize=(10, 10))
     plt.scatter(t_['pl_ratror'], t_['ror'])
     plt.savefig(os.path.join(folder, 'ror_diagonal.png'), bbox_inches='tight', dpi=600)
