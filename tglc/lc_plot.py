@@ -63,7 +63,7 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade'):
     plt.figure(figsize=(10, 10))
     colormap = cm.viridis
     norm = plt.Normalize(t_['Tmag'].min(), t_['Tmag'].max())
-    scatter = plt.scatter(t_[f'{param}'], t_['value'], edgecolors=t_['Tmag'], cmap=colormap, c='none', s=20)
+    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_['Tmag'], cmap=colormap, facecolors='none', s=20)
     plt.errorbar(t_[f'{param}'], t_['value'],
                             yerr=[t_['err2'].data * -1, t_['err1'].data],
                             fmt='o', mec='C1', mfc='none',
