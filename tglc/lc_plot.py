@@ -54,11 +54,14 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25):
                 if star == tics[i]:
                     table = read_parameter(file[j])
                     table_ror = table[table['Parameter'] == param_dict['pl_rade']]
-                    # t_.add_row([t['pl_ratror'][i], t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
-                    #             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
-                    t_.add_row(
-                        [t['sy_tmag'][i], t[f'{param}'][i], t[f'{param}err1'][i], t[f'{param}err2'][i],
-                         table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
+                    if param == 'pl_rade':
+                        t_.add_row(
+                            [t['sy_tmag'][i], t[f'{param}'][i], t[f'{param}err1'][i], t[f'{param}err2'][i],
+                             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
+                    elif param == 'pl_ratror':
+                        t_.add_row(
+                            [t['pl_rade'][i] / t['st_rad'][i] / 109.076, t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
+                             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
     print(len(t_))
     plt.figure(figsize=(10, 10))
     colormap = cm.viridis
