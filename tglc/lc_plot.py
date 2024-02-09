@@ -16,7 +16,7 @@ import matplotlib.patheffects as pe
 from astropy.table import Table
 import pkg_resources
 import seaborn as sns
-
+import matplotlib.cm as cm
 
 def read_parameter(file=None):
     with open(file, 'r') as file:
@@ -73,8 +73,8 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', ):
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
 
-    t_ = Table(names=['pl_rade', 'pl_radeerr1', 'pl_radeerr2', 'pl_r', 'pl_rerr1', 'pl_rerr2'],
-               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+    t_ = Table(names=['Tmag', 'pl_rade', 'pl_radeerr1', 'pl_radeerr2', 'pl_r', 'pl_rerr1', 'pl_rerr2'],
+               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
     for i in trange(len(tics)):
         file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
         if len(file) == 0:
@@ -88,19 +88,22 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', ):
                     # t_.add_row([t['pl_ratror'][i], t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i],
                     #             table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
                     t_.add_row(
-                        [t['pl_rade'][i], t['pl_radeerr1'][i], t['pl_radeerr2'][i],
+                        [t['sy_tmag'][i], t['pl_rade'][i], t['pl_radeerr1'][i], t['pl_radeerr2'][i],
                          table_ror['Value'][0], table_ror['Upper Error'][0], table_ror['Lower Error'][0]])
     print(len(t_))
     plt.figure(figsize=(10, 10))
+    colormap = cm.viridis
+    norm = plt.Normalize(t_['Tmag'].min(), t_['Tmag'].max())
+    errorbar = plt.errorbar(t_['pl_rade'], t_['pl_r'],
+                            yerr=[t_['pl_rerr2'].data * -1, t_['pl_rerr1'].data],
+                            fmt='o', mec=colormap(norm(t_['pl_r'])), mfc='none',
+                            ecolor=colormap(norm(t_['pl_r'])), ms=2, elinewidth=0.1, capsize=0.5)
+    plt.colorbar(errorbar , label='TESS magnitude')
     plt.plot([0, 40], [0, 40], 'k')
-    plt.errorbar(t_['pl_rade'], t_['pl_r'],
-                 yerr=[t_['pl_rerr2'].data * -1, t_['pl_rerr1'].data], fmt='o',
-                 mec='C2', mfc='none', ecolor='C2', ms=2, elinewidth=0.1, capsize=0.5)
     plt.xlim(0, 25)
     plt.ylim(0, 25)
     plt.savefig(os.path.join(folder, 'pl_rade_diagonal.png'), bbox_inches='tight', dpi=600)
 
 
 if __name__ == '__main__':
-    figure_1()
     figure_2()
