@@ -152,5 +152,5 @@ def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
 
 
 if __name__ == '__main__':
-    figure_1(param='pl_ratror', r=0.4)
+    figure_2(param='pl_ratror', r=0.4)
     # figure_1()
