@@ -94,6 +94,62 @@ def figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, c
     plt.yscale('log')
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
 
+def figure_2(folder='/home/tehan/data/pyexofits/Data/', param='pl_rade', r=25, cmap='Tmag'):
+    param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
+    tics = [int(s[4:]) for s in t['tic_id']]
+
+    t_ = Table(names=['Tmag', 'rhat', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
+               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+    missed_stars = 0
+    for i in trange(len(tics)):
+        file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
+        if len(file) == 0:
+            missed_stars += 1
+        elif len(file) >= 2:
+            for j in range(len(file)):
+                star = int(os.path.basename(file[j]).split('_')[2])
+                if star == tics[i]:
+                    table_posterior = read_parameter(file[j])
+                    table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
+                    chain_summary = glob(os.path.join(os.path.dirname(file[j]), 'ChainSummary*.csv'))
+                    table_chain = Table.read(chain_summary[0], format='csv')
+                    table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
+
+                    if param == 'pl_rade':
+                        t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t[f'{param}'][i], t[f'{param}err1'][i],
+                                    t[f'{param}err2'][i], table_posterior_row['Value'][0],
+                                    table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
+                    elif param == 'pl_ratror':
+                        t_.add_row(
+                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_rade'][i] / t['st_rad'][i] / 109.076,
+                             t['pl_ratrorerr1'][i], t['pl_ratrorerr2'][i], table_posterior_row['Value'][0],
+                             table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
+    print(len(t_))
+    print('missing stars:', missed_stars)
+    plt.figure(figsize=(20, 8))
+    colormap = cm.viridis
+    norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
+    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
+    for k in range(len(t_)):
+        if t_['rhat'][k] < 1.05:
+            plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
+                         fmt='o', mec=colormap(norm(t_[cmap][k])), mfc='none', ecolor=colormap(norm(t_[cmap][k])),
+                         ms=5, elinewidth=1, capsize=0.7, alpha=0.8, zorder=2)
+        else:
+            plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
+                         fmt='o', mec='silver', mfc='none', ecolor='silver',
+                         ms=5, elinewidth=1, capsize=0.7, alpha=0.8, zorder=1)
+    plt.colorbar(scatter, label=cmap)
+    plt.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
+    plt.xlim(0.01, r)
+    plt.ylim(0.01, r)
+    plt.xlabel(param)
+    plt.ylabel(param_dict[f'{param}'])
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.savefig(os.path.join(folder, f'{param}_dual.png'), bbox_inches='tight', dpi=600)
+
 
 if __name__ == '__main__':
     figure_1(param='pl_ratror', r=0.4)
