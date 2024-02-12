@@ -271,17 +271,19 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                 InstrumentNames = {','.join(f'TESS{i}' for i in range(len(files)))}
                 """)
         for j in range(len(files)):
-                with fits.open(files[j], mode='denywrite') as hdul:
-                    q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-                    not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
-                    cal_aper_err = 1.4826 * np.nanmedian(np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
-                    data_ = np.array([hdul[1].data['time'][q][not_nan],
-                                      hdul[1].data[version][q][not_nan],
-                                      np.array([cal_aper_err] * len(hdul[1].data['time'][q][not_nan]))
-                                      ])
-                    np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
-                               delimiter=',')
-                    content += textwrap.dedent(f"""\
+            with fits.open(files[j], mode='denywrite') as hdul:
+                q = [a and b for a, b in
+                     zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+                not_nan = np.invert(np.isnan(hdul[1].data[version][q]))
+                cal_aper_err = 1.4826 * np.nanmedian(
+                    np.abs(hdul[1].data[version] - np.nanmedian(hdul[1].data[version])))
+                data_ = np.array([hdul[1].data['time'][q][not_nan],
+                                  hdul[1].data[version][q][not_nan],
+                                  np.array([cal_aper_err] * len(hdul[1].data['time'][q][not_nan]))
+                                  ])
+                np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv', data_,
+                           delimiter=',')
+                content += textwrap.dedent(f"""\
                     ###########################################################################
                     [TESS{j}]
                     FileName = TESS_{star_name}_sector_{hdul[0].header['sector']}.csv
@@ -296,11 +298,10 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                     SGFilterLen = 101
                     OutlierRejection = True
                     """)
-                    # data = np.append(data, data_, axis=1)
+                # data = np.append(data, data_, axis=1)
         # Write the content to a file
         with open(f"{output_dir}{star_name}/{star_name}_config.txt", "w") as file:
             file.write(content)
-
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
@@ -349,7 +350,8 @@ if __name__ == '__main__':
     failed_to_fit = []
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
-            if os.path.isfile(f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 2])}*.pdf'):
+            if len(glob(
+                    f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*{int(tic_sector[i, 2])}*.pdf')) == 1:
                 pass
             else:
                 failed_to_fit.append(tic_sector[i])
