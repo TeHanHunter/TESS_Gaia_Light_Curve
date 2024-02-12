@@ -351,7 +351,7 @@ if __name__ == '__main__':
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
             if len(glob(
-                    f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*{int(tic_sector[i, 2])}*.pdf')) == 1:
+                    f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
                 pass
             else:
                 failed_to_fit.append(tic_sector[i])
