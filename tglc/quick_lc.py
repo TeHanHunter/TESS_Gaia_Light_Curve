@@ -353,7 +353,7 @@ if __name__ == '__main__':
                 pass
             else:
                 failed_to_fit.append(tic_sector[i])
-    print(failed_to_fit)
+    print(len(failed_to_fit))
     #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
     #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
     #                        sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
