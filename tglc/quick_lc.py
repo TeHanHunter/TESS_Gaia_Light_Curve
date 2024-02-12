@@ -354,9 +354,10 @@ if __name__ == '__main__':
                     f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
                 pass
             else:
-                failed_to_fit.append(tic_sector[i].tolist())
+                failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
     print(len(failed_to_fit))
     print(failed_to_fit)
+    np.savetxt('/home/tehan/data/pyexofits/Data/failed.csv', np.array(failed_to_fit), delimiter=',')
     #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
     #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
     #                        sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
