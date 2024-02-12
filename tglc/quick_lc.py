@@ -345,7 +345,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    dir = '/home/tehan/data/cosmos/transit_depth_validation_odd/'
+    dir = '/home/tehan/data/cosmos/transit_depth_validation_even/'
     tic_sector = sort_sectors(t, dir=dir)
     failed_to_fit = []
     for i in trange(len(tic_sector)):
