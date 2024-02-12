@@ -360,7 +360,7 @@ if __name__ == '__main__':
     # np.savetxt('/home/tehan/data/pyexofits/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
             produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-                           sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
     #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
