@@ -300,8 +300,8 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                     """)
                 # data = np.append(data, data_, axis=1)
         # Write the content to a file
-        with open(f"{output_dir}{star_name}/{star_name}_config.txt", "w") as file:
-            file.write(content)
+        # with open(f"{output_dir}{star_name}/{star_name}_config.txt", "w") as file:
+        #     file.write(content)
 
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
