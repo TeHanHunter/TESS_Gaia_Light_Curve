@@ -345,22 +345,22 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
-    dir = '/home/tehan/data/cosmos/transit_depth_validation/'
+    dir = '/home/tehan/data/cosmos/transit_depth_validation_odd/'
     tic_sector = sort_sectors(t, dir=dir)
     failed_to_fit = []
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
-            if len(glob(
-                    f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
-                pass
-            else:
-                failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
-    print(len(failed_to_fit))
-    print(failed_to_fit)
-    np.savetxt('/home/tehan/data/pyexofits/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
-    #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
-    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-    #                        sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+    #         if len(glob(
+    #                 f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
+    #             pass
+    #         else:
+    #             failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
+    # print(len(failed_to_fit))
+    # print(failed_to_fit)
+    # np.savetxt('/home/tehan/data/pyexofits/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
+            produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
+                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
+                           sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
     #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
