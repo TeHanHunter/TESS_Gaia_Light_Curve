@@ -354,7 +354,8 @@ if __name__ == '__main__':
                                                     sequence_number=int(tic_sector[i, 2]))
             data_products = Observations.get_product_list(obs_table)
             product = data_products[0]["dataURI"]
-            result = Observations.download_file(product,local_path='/home/tehan/data/cosmos/transit_depth_validation_qlp/')
+            result = Observations.download_file(product,
+                                                local_path=f'/home/tehan/data/cosmos/transit_depth_validation_qlp/{product.split("/")[-1]})')
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
