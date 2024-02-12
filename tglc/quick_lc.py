@@ -20,6 +20,7 @@ import textwrap
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
+from astroquery.mast import Observations
 
 controller = ThreadpoolController()
 
@@ -347,9 +348,21 @@ if __name__ == '__main__':
     tics = [int(s[4:]) for s in t['tic_id']]
     dir = '/home/tehan/data/cosmos/transit_depth_validation/'
     tic_sector = sort_sectors(t, dir=dir)
-    failed_to_fit = []
+    for i in trange(len(tic_sector)):
+        if int(tic_sector[i, 0]) in tics:
+            obs_table = Observations.query_criteria(provenance_name="QLP", target_name=[tic_sector[i, 0]],
+                                                    sequence_number=int(tic_sector[i, 2]))
+            data_products = Observations.get_product_list(obs_table)
+            product = data_products[0]["dataURI"]
+            result = Observations.download_file(product,local_path='/home/tehan/data/cosmos/transit_depth_validation_qlp/')
+
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
+    #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
+    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
+    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+
+    # failed_to_fit = []
     #         if len(glob(
     #                 f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
     #             pass
@@ -358,33 +371,3 @@ if __name__ == '__main__':
     # print(len(failed_to_fit))
     # print(failed_to_fit)
     # np.savetxt('/home/tehan/data/pyexofits/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
-    #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
-    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
-
-    # tics = [21113347, 73848324, 743941, 323094535, 12611594, 38355468, 2521105, 187273748, 158324245, 706595, 70298662,
-    #         422334505, 108155949, 187960878, 26417717, 11270200, 677945, 94893626, 120103486, 147677253, 610976842,
-    #         90605642, 130162252, 297146957, 119262291, 414843476, 187273811, 416136788, 218299481, 53728859, 70412892,
-    #         49040478, 399155300, 440687723, 422349422, 467929202, 171098231, 106352250, 251018878, 442530946, 370736259,
-    #         267574918, 153091721, 119605900, 322388624, 91051152, 405673618, 169504920, 102068384, 123362984, 130502317,
-    #         31244979, 50171060, 257429687, 420814525, 11023038, 417676990, 195193025, 122298563, 413753029, 122605766,
-    #         301031110, 175265494, 164458714, 46020827, 741596, 288246496, 320636129, 126325985, 110178537, 1635721458,
-    #         38258419, 159381747, 176966903, 401604346, 270955259, 145368316, 353459965, 741119, 297146115, 49512708,
-    #         422325510, 121656582, 335102224, 269217040, 188876052, 244089109, 317520667, 220604190, 341694238, 77202722,
-    #         2468648, 405004589, 335322931, 104866616, 167227214, 71841620, 11439959, 175233369, 26547036, 90090343,
-    #         130038122, 466884459, 271898990, 271760755, 297373047, 12181371, 68952448, 287333762, 187278212, 158729099,
-    #         51664268, 432247186, 92449173, 709015, 165297570, 96847781, 56760743, 218299312, 272213425, 270619059,
-    #         441907126, 158635959, 187309502, 427685831, 291751373, 436478932, 453064665, 164730843, 432261603,
-    #         276754403, 179012583, 318696424, 37348844, 9385460, 431701493, 49652731]
-    # ror = t['pl_ratror']
-    # directory = f'/home/tehan/Documents/GEMS/'
-    # directory = f'/home/tehan/data/cosmos/transit_depth_validation_extra/'
-    # os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-    #            type='cal_psf_flux')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-    #            type='cal_aper_flux')
