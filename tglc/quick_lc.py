@@ -346,8 +346,14 @@ if __name__ == '__main__':
     tics = [int(s[4:]) for s in t['tic_id']]
     dir = '/home/tehan/data/cosmos/transit_depth_validation/'
     tic_sector = sort_sectors(t, dir=dir)
-    # for i in trange(len(tic_sector)):
-    #     if int(tic_sector[i, 0]) in tics:
+    failed_to_fit = []
+    for i in trange(len(tic_sector)):
+        if int(tic_sector[i, 0]) in tics:
+            if os.path.isfile(f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 2])}*.pdf'):
+                pass
+            else:
+                failed_to_fit.append(tic_sector[i])
+    print(failed_to_fit)
     #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
     #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
     #                        sector='') # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
