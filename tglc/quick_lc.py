@@ -352,10 +352,16 @@ if __name__ == '__main__':
         if int(tic_sector[i, 0]) in tics:
             obs_table = Observations.query_criteria(provenance_name="QLP", target_name=[tic_sector[i, 0]],
                                                     sequence_number=int(tic_sector[i, 2]))
-            data_products = Observations.get_product_list(obs_table)
-            product = data_products[0]["dataURI"]
-            result = Observations.download_file(product,
-                                                local_path=f'/home/tehan/data/cosmos/transit_depth_validation_qlp/{product.split("/")[-1]})')
+            try:
+                data_products = Observations.get_product_list(obs_table)
+                product = data_products[0]["dataURI"]
+                result = Observations.download_file(product,
+                                                    local_path=f'/home/tehan/data/cosmos/transit_depth_validation_qlp/{product.split("/")[-1]}')
+            except:
+                if t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])] <= 13.5:
+                    continue
+                else:
+                    print(t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])])
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
