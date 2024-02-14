@@ -313,7 +313,10 @@ def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     if len(files) == 1:
         os.makedirs(output_dir_, exist_ok=True)
         with fits.open(files[0], mode='denywrite') as hdul:
-            q = np.where(hdul[1].data['QUALITY'] == 0)
+            try:
+                q = np.where(hdul[1].data['QUALITY'] == 0)
+            except TypeError:
+                print(hdul[1].data['QUALITY'])
             t = hdul[1].data['TIME'][q]
             flux = hdul[1].data['KSPSAP_FLUX'][q]
             flux_err = hdul[1].data['KSPSAP_FLUX_ERR'][q]
