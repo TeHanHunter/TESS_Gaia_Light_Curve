@@ -410,7 +410,7 @@ if __name__ == '__main__':
     dir = '/home/tehan/data/cosmos/transit_depth_validation/'
     tic_sector = sort_sectors(t, dir=dir)
     np.savetxt('/home/tehan/data/cosmos/transit_depth_validation/tic_sector.csv', tic_sector, fmt='%s', delimiter=',')
-    tic_sector = np.loadtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
+    # tic_sector = np.loadtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
     #         produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
