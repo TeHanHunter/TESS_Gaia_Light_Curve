@@ -316,7 +316,7 @@ def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             try:
                 q = np.where(hdul[1].data['QUALITY'] == 0)
             except TypeError:
-                print(hdul[1].data['QUALITY'])
+                print(files)
             t = hdul[1].data['TIME'][q]
             flux = hdul[1].data['KSPSAP_FLUX'][q]
             flux_err = hdul[1].data['KSPSAP_FLUX_ERR'][q]
