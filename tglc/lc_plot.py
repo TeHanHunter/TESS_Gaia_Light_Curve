@@ -16,6 +16,7 @@ import matplotlib.patheffects as pe
 from astropy.table import Table
 import pkg_resources
 import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 
 def read_parameter(file=None):
@@ -37,7 +38,7 @@ def read_parameter(file=None):
     return table
 
 
-def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
+def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
@@ -70,34 +71,53 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='
                         sigma_ror = ((sigma_rade / t['st_rad'][i] / 109.076) ** 2 +
                                      (t['pl_rade'][i] / t['st_rad'][i] ** 2 / 109.076 * sigma_st_rad) ** 2) ** 0.5
                         t_.add_row(
-                            [t['sy_tmag'][i], table_chain_row['r_hat'],t['pl_orbper'][i], ror,
+                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], ror,
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
     print('missing stars:', missed_stars)
-    plt.figure(figsize=(20, 8))
     colormap = cm.viridis
     norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
     scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
+    fig, ax = plt.subplots(figsize=(12, 8))
     for k in range(len(t_)):
         if t_['rhat'][k] < 1.05:
-            plt.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
-                         yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
-                         mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=20, elinewidth=1, capsize=0.7, alpha=0.5,
-                         zorder=2)
+            ax.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
+                        yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
+                        mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=10, elinewidth=1, capsize=0.7, alpha=0.5,
+                        zorder=2)
         # else:
         #     plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
         #                  fmt='o', mec='silver', mfc='none', ecolor='silver',
         #                  ms=10, elinewidth=1, capsize=5, alpha=0.8, zorder=1)
-    plt.colorbar(scatter, label=cmap)
-    plt.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
-    plt.xlim(0.01, r)
-    plt.ylim(0.01, r)
-    plt.xlabel(param)
-    plt.ylabel(param_dict[f'{param}'])
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+    range_zoom = [0.07, 0.12]
+    axins = inset_axes(ax, width='35%', height='35%', loc='lower right', borderpad=2)
+    for k in range(len(t_)):
+        if t_['rhat'][k] < 1.05:
+            axins.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
+                           yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
+                           mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=5, elinewidth=1, capsize=0.7, alpha=0.5,
+                           zorder=2)
+    axins.set_xlim(range_zoom)
+    axins.set_ylim(range_zoom)
+    axins.set_xscale('log')
+    axins.set_yscale('log')
+    axins.set_xticks([0.07,0.08,0.09, 0.1, 0.12])
+    axins.set_xticklabels(['0.07','','', '0.1', '0.12'])
+    axins.set_yticks([0.07,0.08,0.09, 0.1, 0.12])
+    axins.set_yticklabels(['0.07','','', '0.1', '0.12'])
+    axins.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
+    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5", linestyle='dashed')
+    plt.colorbar(scatter, ax=ax, label=cmap)
+    ax.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
+    ax.set_xlim(r1, r2)
+    ax.set_ylim(r1, r2)
+    ax.set_xlabel(param)
+    ax.set_ylabel(param_dict[f'{param}'])
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_.png'), bbox_inches='tight', dpi=600)
+
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
@@ -132,7 +152,7 @@ def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='
                         sigma_ror = ((sigma_rade / t['st_rad'][i] / 109.076) ** 2 +
                                      (t['pl_rade'][i] / t['st_rad'][i] ** 2 / 109.076 * sigma_st_rad) ** 2) ** 0.5
                         t_.add_row(
-                            [t['sy_tmag'][i], table_chain_row['r_hat'],t['pl_orbper'][i], ror,
+                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], ror,
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
@@ -161,5 +181,6 @@ def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='
     plt.yscale('log')
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
 
+
 if __name__ == '__main__':
-    figure_1(param='pl_ratror', r=0.4, cmap='Tmag')
+    figure_1(param='pl_ratror', cmap='Tmag')

@@ -305,6 +305,65 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
         #     file.write(content)
 
 
+def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
+    star_name = f'TIC_{tic}'
+    output_dir = '/home/tehan/data/pyexofits/Data/'
+    output_dir_ = f'{output_dir}{star_name}/Photometry/'
+    files = glob(f'{dir}*{tic}*{sector}*.fits')
+    if len(files) == 1:
+        os.makedirs(output_dir_, exist_ok=True)
+        with fits.open(files[0], mode='denywrite') as hdul:
+            q = np.where(hdul[1].data['QUALITY'] == 0)
+            t = hdul[1].data['TIME'][q]
+            flux = hdul[1].data['KSPSAP_FLUX'][q]
+            flux_err = hdul[1].data['KSPSAP_FLUX_ERR'][q]
+            not_nan = np.invert(np.isnan(flux))
+            data_ = np.array([t[not_nan], flux[not_nan], flux_err[not_nan]])
+            # print(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}.csv')
+            np.savetxt(f'{output_dir_}TESS_{star_name}_sector_{hdul[0].header["SECTOR"]}_qlp.csv', data_,
+                       delimiter=',')
+            # np.savetxt(f'{output_dir}TESS_{star_name}.csv', data, delimiter=',')
+            # PlotLSPeriodogram(data[0], data[1], dir=f'{dir}lc/', Title=star_name, MakePlots=True)
+            content = textwrap.dedent(f"""\
+            [Stellar]
+            st_mass = {nea['st_mass']}
+            st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+            st_rad = {nea['st_rad']}
+            st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+
+            [Planet]
+            pl_tranmid = {nea['pl_tranmid']}
+            pl_tranmiderr1 = 0.01 
+            pl_orbper = {nea['pl_orbper']}
+            pl_orbpererr1 = 0.1 
+            pl_trandep = {1000 * -2.5 * np.log10(1 - (nea['pl_rade'] / nea['st_rad'] / 109.076) ** 2):.4f}
+            pl_masse_expected = 1
+            pl_rvamp = 1
+            pl_rvamperr1 = 0.1
+            ###########################################################################
+
+            [Photometry]
+            InstrumentNames = TESS
+            ###########################################################################
+
+            [TESS]
+            FileName = TESS_{star_name}_sector_{hdul[0].header['sector']}_qlp.csv
+            Delimiter = ,
+            GP_sho = False
+            GP_prot = True
+            run_masked_gp = False
+            subtract_transitmasked_gp = False
+            Dilution = False
+            ExposureTime = {1800 if hdul[0].header['sector'] < 27 else 600}
+            RestrictEpoch = False
+            SGFilterLen = 101
+            OutlierRejection = True""")
+
+            # Write the content to a file
+            with open(f"{output_dir}{star_name}/{star_name}_config_s{hdul[0].header['sector']:04d}.txt", "w") as file:
+                file.write(content)
+
+
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     # tics = [int(s[4:]) for s in t['tic_id']]
     tics_string = [s[4:] for s in t['tic_id']]
@@ -350,25 +409,24 @@ if __name__ == '__main__':
     tic_sector = sort_sectors(t, dir=dir)
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
-            obs_table = Observations.query_criteria(provenance_name="QLP", target_name=[tic_sector[i, 0]],
-                                                    sequence_number=int(tic_sector[i, 2]))
-            try:
-                data_products = Observations.get_product_list(obs_table)
-                product = data_products[0]["dataURI"]
-                result = Observations.download_file(product,
-                                                    local_path=f'/home/tehan/data/cosmos/transit_depth_validation_qlp/{product.split("/")[-1]}')
-            except:
-                if t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])] <= 13.5:
-                    continue
-                else:
-                    print(t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])])
+            produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
+                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
+                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
-    #         produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
-    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
-
+    #         obs_table = Observations.query_criteria(provenance_name="QLP", target_name=[tic_sector[i, 0]],
+    #                                                 sequence_number=int(tic_sector[i, 2]))
+    #         try:
+    #             data_products = Observations.get_product_list(obs_table)
+    #             product = data_products[0]["dataURI"]
+    #             result = Observations.download_file(product,
+    #                                                 local_path=f'/home/tehan/data/cosmos/transit_depth_validation_qlp/{product.split("/")[-1]}')
+    #         except:
+    #             if t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])] <= 13.5:
+    #                 continue
+    #             else:
+    #                 print(t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])])
     # failed_to_fit = []
     #         if len(glob(
     #                 f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
