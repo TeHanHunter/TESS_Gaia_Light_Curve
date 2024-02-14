@@ -409,11 +409,13 @@ if __name__ == '__main__':
     tics = [int(s[4:]) for s in t['tic_id']]
     dir = '/home/tehan/data/cosmos/transit_depth_validation/'
     tic_sector = sort_sectors(t, dir=dir)
-    for i in trange(len(tic_sector)):
-        if int(tic_sector[i, 0]) in tics:
-            produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
-                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+    np.savetxt('/home/tehan/data/cosmos/transit_depth_validation/tic_sector.csv', tic_sector, fmt='%s', delimiter=',')
+
+    # for i in trange(len(tic_sector)):
+    #     if int(tic_sector[i, 0]) in tics:
+    #         produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
+    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
+    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
@@ -431,11 +433,13 @@ if __name__ == '__main__':
     #                 print(t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])])
 
     # failed_to_fit = []
+    # for i in trange(len(tic_sector)):
+    #     if int(tic_sector[i, 0]) in tics:
     #         if len(glob(
-    #                 f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
+    #                 f'/home/tehan/Downloads/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
     #             pass
     #         else:
     #             failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
     # print(len(failed_to_fit))
     # print(failed_to_fit)
-    # np.savetxt('/home/tehan/data/pyexofits/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
+    # np.savetxt('/home/tehan/Downloads/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
