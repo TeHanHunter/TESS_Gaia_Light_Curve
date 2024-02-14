@@ -309,7 +309,7 @@ def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     star_name = f'TIC_{tic}'
     output_dir = '/home/tehan/data/pyexofits/Data_qlp/'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{tic}*{sector}*.fits')
+    files = glob(f'{dir}*{sector}*{tic}*.fits')
     if len(files) == 1:
         os.makedirs(output_dir_, exist_ok=True)
         with fits.open(files[0], mode='denywrite') as hdul:
