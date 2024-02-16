@@ -92,7 +92,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
         #                  fmt='o', mec='silver', mfc='none', ecolor='silver',
         #                  ms=10, elinewidth=1, capsize=5, alpha=0.8, zorder=1)
     range_zoom = [0.07, 0.12]
-    axins = inset_axes(ax, width='35%', height='35%', loc='upper left', borderpad=2)
+    axins = inset_axes(ax, width='35%', height='35%', loc='lower right', borderpad=2)
     for k in range(len(t_)):
         if t_['rhat'][k] < 1.05:
             axins.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
@@ -131,7 +131,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
     plt.scatter(t_['Tmag'], percent_err, c='k', s=1)
-    plt.plot(np.array(t_['Tmag'])[2:-2], np.convolve(percent_err, np.ones(5)/5, mode='valid'))
+    plt.plot(np.array(t_['Tmag'])[2:-1], np.convolve(percent_err, np.ones(5)/5, mode='valid'))
     plt.ylim(0,1)
     plt.xlabel('Tmag')
     plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
