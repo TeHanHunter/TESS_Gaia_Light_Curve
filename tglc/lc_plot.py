@@ -122,7 +122,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
 
     plt.figure(figsize=(5, 5))
     plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=np.arange(-0.5,0.5,0.05))
-    plt.xlabel(r'Literature $R_p/R_*$ - fit $R_p/R_*$')
+    plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
     difference = np.sort((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
     median_value = np.median(difference)
@@ -132,7 +132,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     print(median_value, lower_bound, upper_bound)
     plt.vlines(lower_bound, ymin=0,ymax=225, color='k', linestyle='dashed')
     plt.vlines(median_value, ymin=0,ymax=225, color='k')
-    plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
+    # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
     plt.vlines(upper_bound, ymin=0,ymax=225, color='k', linestyle='dashed')
     plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
