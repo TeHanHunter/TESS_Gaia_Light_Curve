@@ -154,7 +154,7 @@ def timebin(time, meas, meas_err, binsize):
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
-    for i in range(27, 41, 2):
+    for i in range(28, 40, 2):
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     # directory = f'/home/tehan/Documents/GEMS/'
     directory = f'/home/tehan/data/cosmos/Lares/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
+    get_tglc_lc(tics=tics, method='search', server=2, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
     #
