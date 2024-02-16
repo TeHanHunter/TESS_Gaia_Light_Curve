@@ -126,9 +126,9 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.ylabel(r'Number of stars')
     median_value = np.median((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
     sigma = 1.4826 * np.median(np.abs((t_['value'] - t_[f'{param}'])/t_[f'{param}'] - median_value))
-    plt.vlines(median_value-sigma, ymin=0,ymax=75, color='k', linestyle='dashed')
-    plt.vlines(median_value, ymin=0,ymax=75, color='k')
-    plt.vlines(median_value+sigma, ymin=0,ymax=75, color='k', linestyle='dashed')
+    plt.vlines(median_value-sigma, ymin=0,ymax=225, color='k', linestyle='dashed')
+    plt.vlines(median_value, ymin=0,ymax=225, color='k')
+    plt.vlines(median_value+sigma, ymin=0,ymax=225, color='k', linestyle='dashed')
     plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
@@ -287,4 +287,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
