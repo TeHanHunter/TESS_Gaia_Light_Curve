@@ -121,7 +121,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
 
     plt.close()
     plt.figure(figsize=(5, 5))
-    plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=[-5,-4,-3,-2, -1, 0, 1, 2, 3, 4])
+    plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=[-.5,-.4,-.3,-.2, -.1, 0, .1, .2, .3, .4, .5])
     plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
 
 
