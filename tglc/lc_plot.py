@@ -125,7 +125,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.xlabel(r'Literature $R_p/R_*$ - fit $R_p/R_*$')
     plt.ylabel(r'Number of stars')
     median_value = np.median((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
-    sigma = np.std((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
+    sigma = 1.4826 * np.median(np.abs((t_['value'] - t_[f'{param}'])/t_[f'{param}'] - median_value))
     plt.vlines(median_value-sigma, ymin=0,ymax=75, color='k', linestyle='dashed')
     plt.vlines(median_value, ymin=0,ymax=75, color='k')
     plt.vlines(median_value+sigma, ymin=0,ymax=75, color='k', linestyle='dashed')
