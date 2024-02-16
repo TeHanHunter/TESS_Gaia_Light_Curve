@@ -132,7 +132,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
     plt.scatter(t_['Tmag'], percent_err, c='k', s=1)
     sort = np.argsort(np.array(t_['Tmag']))
-    plt.plot(np.array(t_['Tmag'][sort])[12:-13], np.convolve(percent_err[sort], np.ones(25)/25, mode='valid'))
+    plt.plot(np.array(t_['Tmag'][sort])[12:-11], np.convolve(percent_err[sort], np.ones(25)/25, mode='valid'))
     plt.ylim(0,1)
     plt.xlabel('Tmag')
     plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
