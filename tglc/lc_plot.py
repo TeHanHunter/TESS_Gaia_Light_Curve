@@ -124,7 +124,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=np.arange(-0.5,0.5,0.05))
     plt.xlabel(r'Literature $R_p/R_*$ - fit $R_p/R_*$')
     plt.ylabel(r'Number of stars')
-    plt.vlines(0, ymin=0,ymax=220, color='k', linestyle='dashed')
+    plt.vlines(0, ymin=0,ymax=75, color='k', linestyle='dashed')
     plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
