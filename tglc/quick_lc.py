@@ -18,7 +18,7 @@ from astroquery.mast import Tesscut
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
-
+import pkg_resources
 controller = ThreadpoolController()
 
 
@@ -154,7 +154,7 @@ def timebin(time, meas, meas_err, binsize):
 
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
-    for i in range(server, 27, 2):
+    for i in range(27, 41, 2):
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
@@ -435,15 +435,17 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [376355469]
+    tics = ascii.read(pkg_resources.resource_stream(__name__, 'WB-tics.txt'),
+                      format='no_header', delimiter=' ', data_start=1)['col1'].tolist()
+    # print(tics)
     # directory = f'/home/tehan/Documents/GEMS/'
-    directory = f'/home/tehan/data/cosmos/GEMS/'
+    directory = f'/home/tehan/data/cosmos/Lares/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
-
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-               type='cal_psf_flux')
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-               type='cal_aper_flux')
+    get_tglc_lc(tics=tics, method='search', server=1, directory=directory)
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_psf_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', type='cal_aper_flux')
+    #
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
+    #            type='cal_psf_flux')
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
+    #            type='cal_aper_flux')
