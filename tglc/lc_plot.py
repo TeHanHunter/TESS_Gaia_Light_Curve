@@ -124,14 +124,15 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=np.arange(-0.5,0.5,0.05))
     plt.xlabel(r'Literature $R_p/R_*$ - fit $R_p/R_*$')
     plt.ylabel(r'Number of stars')
-    plt.vlines(0, ymin=0,ymax=220, color='k')
+    plt.vlines(0, ymin=0,ymax=220, color='k', linestyle='dashed')
     plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
+    sort = np.argsort(np.array(t_['Tmag']))
     plt.scatter(t_['Tmag'], percent_err, c='k', s=1)
-    plt.plot(np.array(t_['Tmag'])[2:-1], np.convolve(percent_err, np.ones(5)/5, mode='valid'))
+    plt.plot(np.array(t_['Tmag'][sort])[2:-1], np.convolve(percent_err[sort], np.ones(5)/5, mode='valid'))
     plt.ylim(0,1)
     plt.xlabel('Tmag')
     plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
