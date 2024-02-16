@@ -38,7 +38,7 @@ def read_parameter(file=None):
     return table
 
 
-def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag'):
+def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     # t = ascii.read('/home/tehan/PycharmProjects/TESS_Gaia_Light_Curve/tglc/PSCompPars_2024.02.05_22.52.50.csv')
@@ -114,22 +114,26 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     ax.set_xlim(r1, r2)
     ax.set_ylim(r1, r2)
     ax.set_xlabel(r'Literature $R_p/R_*$')
-    ax.set_ylabel(r'QLP-only fit $R_p/R_*$')
+    ax.set_ylabel(rf'{pipeline}-only fit $R_p/R_*$')
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal_qlp.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     plt.figure(figsize=(5, 5))
-    plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=[-.5,-.4,-.3,-.2, -.1, 0, .1, .2, .3, .4, .5])
-    plt.savefig(os.path.join(folder, f'{param}_hist_qlp.png'), bbox_inches='tight', dpi=600)
+    plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=np.arange(-0.5,0.5,0.025))
+    plt.xlabel(r'Literature $R_p/R_*$ - fit $R_p/R_*$')
+    plt.ylabel(r'Number of stars')
+    plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
     plt.scatter(t_['Tmag'], percent_err, c='k')
-    plt.ylim(0,0.1)
-    plt.savefig(os.path.join(folder, f'{param}_error_qlp.png'), bbox_inches='tight', dpi=600)
+    plt.ylim(0,0.2)
+    plt.xlabel('Tmag')
+    plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
+    plt.savefig(os.path.join(folder, f'{param}_error_{pipeline}.png'), bbox_inches='tight', dpi=600)
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
@@ -276,4 +280,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
