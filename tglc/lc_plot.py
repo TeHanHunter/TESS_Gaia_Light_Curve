@@ -117,7 +117,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     ax.set_ylabel(r'TGLC-only fit $R_p/R_*$')
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal_.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_qlp.png'), bbox_inches='tight', dpi=600)
 
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
@@ -184,4 +184,4 @@ def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/Downloads/Data/', param='pl_ratror', cmap='Tmag')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_ratror', cmap='Tmag')
