@@ -261,8 +261,8 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
     ax.set_ylabel(r'TGLC-only fit transit depth')
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_transit_depth.png'), bbox_inches='tight', dpi=600)
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', param='pl_ratror', cmap='Tmag')
+    figure_3(folder='/home/tehan/data/pyexofits/Data/', param='pl_ratror', cmap='Tmag')
