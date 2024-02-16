@@ -117,19 +117,19 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     ax.set_ylabel(r'QLP-only fit $R_p/R_*$')
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_qlp.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     plt.figure(figsize=(5, 5))
     plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=[-.5,-.4,-.3,-.2, -.1, 0, .1, .2, .3, .4, .5])
-    plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_hist_qlp.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
     plt.scatter(t_['Tmag'], percent_err, c='k')
     plt.ylim(0,0.1)
-    plt.savefig(os.path.join(folder, f'{param}_error.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_error_qlp.png'), bbox_inches='tight', dpi=600)
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
