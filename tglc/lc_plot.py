@@ -130,7 +130,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
     plt.scatter(t_['Tmag'], percent_err, c='k')
-    plt.ylim(0,0.2)
+    plt.ylim(0,0.3)
     plt.xlabel('Tmag')
     plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
     plt.savefig(os.path.join(folder, f'{param}_error_{pipeline}.png'), bbox_inches='tight', dpi=600)
