@@ -131,7 +131,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
     plt.scatter(t_['Tmag'], percent_err, c='k', s=1)
-    plt.plot(t_['Tmag'], np.convolve(percent_err, np.ones(5)/5, mode='valid'))
+    plt.plot(t_['Tmag'][2:-3], np.convolve(percent_err, np.ones(5)/5, mode='valid'))
     plt.ylim(0,1)
     plt.xlabel('Tmag')
     plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
