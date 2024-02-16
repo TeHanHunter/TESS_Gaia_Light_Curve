@@ -127,7 +127,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     difference = np.sort((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
     median_value = np.median(difference)
     print(np.median(np.abs(difference)))
-    print(len(np.where(difference<0))/len(difference))
+    print(len(np.where(difference<0)[0])/len(difference))
     percentage = 68
     lower_bound = np.percentile(difference, (100 - percentage) / 2)
     upper_bound = np.percentile(difference, 100 - (100 - percentage) / 2)
