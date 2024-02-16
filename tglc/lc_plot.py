@@ -107,17 +107,17 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     axins.set_xticklabels(['0.07','','', '0.1', '0.12'])
     axins.set_yticks([0.07,0.08,0.09, 0.1, 0.12])
     axins.set_yticklabels(['0.07','','', '0.1', '0.12'])
-    axins.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
+    axins.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
     mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5", linestyle='dashed')
     plt.colorbar(scatter, ax=ax, label='TESS magnitude')
-    ax.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
+    ax.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
     ax.set_xlim(r1, r2)
     ax.set_ylim(r1, r2)
     ax.set_xlabel(r'Literature $R_p/R_*$')
     ax.set_ylabel(r'TGLC-only fit $R_p/R_*$')
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_qlp.png'), bbox_inches='tight', dpi=600)
 
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
@@ -265,4 +265,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_3(folder='/home/tehan/data/pyexofits/Data/', param='pl_ratror', cmap='Tmag')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=None,r2=None param='pl_ratror', cmap='Tmag')
