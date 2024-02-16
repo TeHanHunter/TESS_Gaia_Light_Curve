@@ -114,15 +114,15 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     ax.set_xlim(r1, r2)
     ax.set_ylim(r1, r2)
     ax.set_xlabel(r'Literature $R_p/R_*$')
-    ax.set_ylabel(r'TGLC-only fit $R_p/R_*$')
+    ax.set_ylabel(r'QLP-only fit $R_p/R_*$')
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_diagonal_qlp.png'), bbox_inches='tight', dpi=600)
 
     plt.close()
     plt.figure(figsize=(5, 5))
     plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=[-.5,-.4,-.3,-.2, -.1, 0, .1, .2, .3, .4, .5])
-    plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_hist_qlp.png'), bbox_inches='tight', dpi=600)
 
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
@@ -270,4 +270,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.001, param='pl_ratror', cmap='Tmag')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag')
