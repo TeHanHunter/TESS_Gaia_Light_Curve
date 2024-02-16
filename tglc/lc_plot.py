@@ -127,7 +127,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
 
     plt.figure(figsize=(5, 5))
     percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
-    plt.scatter(t_['Tmag'], percent_err, s='.', c='k')
+    plt.scatter(t_['Tmag'], percent_err, c='k')
     plt.savefig(os.path.join(folder, f'{param}_error.png'), bbox_inches='tight', dpi=600)
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
