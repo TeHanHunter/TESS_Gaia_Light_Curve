@@ -265,4 +265,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=None,r2=None, param='pl_ratror', cmap='Tmag')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.001, param='pl_ratror', cmap='Tmag')
