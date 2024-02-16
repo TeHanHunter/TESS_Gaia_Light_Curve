@@ -126,7 +126,8 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.ylabel(r'Number of stars')
     difference = np.sort((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
     median_value = np.median(difference)
-    percentage=68
+    print(np.median(np.abs(difference)))
+    percentage = 68
     lower_bound = np.percentile(difference, (100 - percentage) / 2)
     upper_bound = np.percentile(difference, 100 - (100 - percentage) / 2)
     print(median_value, lower_bound, upper_bound)
