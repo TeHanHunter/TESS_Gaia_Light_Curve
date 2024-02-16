@@ -127,14 +127,15 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     difference = np.sort((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
     median_value = np.median(difference)
     print(np.median(np.abs(difference)))
+    print(len(np.where(difference<0))/len(difference))
     percentage = 68
     lower_bound = np.percentile(difference, (100 - percentage) / 2)
     upper_bound = np.percentile(difference, 100 - (100 - percentage) / 2)
     print(median_value, lower_bound, upper_bound)
-    plt.vlines(lower_bound, ymin=0,ymax=80, color='k', linestyle='dashed')
-    plt.vlines(median_value, ymin=0,ymax=80, color='k')
+    plt.vlines(lower_bound, ymin=0,ymax=150, color='k', linestyle='dashed')
+    plt.vlines(median_value, ymin=0,ymax=150, color='k')
     # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
-    plt.vlines(upper_bound, ymin=0,ymax=80, color='k', linestyle='dashed')
+    plt.vlines(upper_bound, ymin=0,ymax=150, color='k', linestyle='dashed')
     plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
