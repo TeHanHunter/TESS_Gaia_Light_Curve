@@ -155,7 +155,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
     # plt.vlines(upper_bound, ymin=0, ymax=250, color='C1', linestyle='dashed')
 
-    # plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     # plt.figure(figsize=(5, 5))
