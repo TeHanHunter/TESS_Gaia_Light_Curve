@@ -121,7 +121,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.close()
 
     plt.figure(figsize=(5, 5))
-    plt.hist((t_['value'] - t_[f'{param}']), bins=np.arange(-0.2,0.2,0.02))
+    plt.hist((t_['value'] - t_[f'{param}']), bins=np.arange(-0.1,0.1,0.01))
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
     difference = np.sort((t_['value'] - t_[f'{param}'])) #/t_[f'{param}']
