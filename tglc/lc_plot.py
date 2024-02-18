@@ -103,10 +103,10 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     axins.set_ylim(range_zoom)
     axins.set_xscale('log')
     axins.set_yscale('log')
-    axins.set_xticks([0.07,0.08,0.09, 0.1, 0.12])
-    axins.set_xticklabels(['0.07','','', '0.1', '0.12'])
-    axins.set_yticks([0.07,0.08,0.09, 0.1, 0.12])
-    axins.set_yticklabels(['0.07','','', '0.1', '0.12'])
+    axins.set_xticks([0.07, 0.08, 0.09, 0.1, 0.12])
+    axins.set_xticklabels(['0.07', '', '', '0.1', '0.12'])
+    axins.set_yticks([0.07, 0.08, 0.09, 0.1, 0.12])
+    axins.set_yticklabels(['0.07', '', '', '0.1', '0.12'])
     axins.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
     mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5", linestyle='dashed')
     plt.colorbar(scatter, ax=ax, label='TESS magnitude')
@@ -121,21 +121,21 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.close()
 
     plt.figure(figsize=(5, 5))
-    plt.hist((t_['value'] - t_[f'{param}']), bins=np.arange(-0.1,0.1,0.01))
+    plt.hist((t_['value'] - t_[f'{param}']), bins=np.arange(-0.1, 0.1, 0.005))
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
-    difference = np.sort((t_['value'] - t_[f'{param}'])) #/t_[f'{param}']
+    difference = np.sort((t_['value'] - t_[f'{param}']))  # /t_[f'{param}']
     median_value = np.median(difference)
     print(np.median(np.abs(difference)))
-    print(len(np.where(difference<0)[0])/len(difference))
+    print(len(np.where(difference < 0)[0]) / len(difference))
     percentage = 68
     lower_bound = np.percentile(difference, (100 - percentage) / 2)
     upper_bound = np.percentile(difference, 100 - (100 - percentage) / 2)
     print(median_value, lower_bound, upper_bound)
-    plt.vlines(lower_bound, ymin=0,ymax=150, color='k', linestyle='dashed')
-    plt.vlines(median_value, ymin=0,ymax=150, color='k')
+    plt.vlines(lower_bound, ymin=0, ymax=150, color='k', linestyle='dashed')
+    plt.vlines(median_value, ymin=0, ymax=150, color='k')
     # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
-    plt.vlines(upper_bound, ymin=0,ymax=150, color='k', linestyle='dashed')
+    plt.vlines(upper_bound, ymin=0, ymax=150, color='k', linestyle='dashed')
     plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
@@ -148,6 +148,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     # plt.xlabel('Tmag')
     # plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
     # plt.savefig(os.path.join(folder, f'{param}_error_{pipeline}.png'), bbox_inches='tight', dpi=600)
+
 
 def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
@@ -210,6 +211,7 @@ def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='
     plt.xscale('log')
     plt.yscale('log')
     plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
+
 
 def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r2=0.16, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
