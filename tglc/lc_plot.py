@@ -121,6 +121,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.close()
 
     plt.figure(figsize=(5, 5))
+    np.save(np.array(t_['value'] - t_[f'{param}']), 'qlp_deviation.npy')
     plt.hist((t_['value'] - t_[f'{param}']), bins=np.arange(-0.1, 0.1, 0.005))
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
