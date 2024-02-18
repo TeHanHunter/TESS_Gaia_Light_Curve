@@ -124,7 +124,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.hist((t_['value'] - t_[f'{param}'])/t_[f'{param}'], bins=np.arange(-0.5,0.5,0.05))
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
-    difference = np.sort((t_['value'] - t_[f'{param}'])/t_[f'{param}'])
+    difference = np.sort((t_['value'] - t_[f'{param}'])) #/t_[f'{param}']
     median_value = np.median(difference)
     print(np.median(np.abs(difference)))
     print(len(np.where(difference<0)[0])/len(difference))
@@ -294,4 +294,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
