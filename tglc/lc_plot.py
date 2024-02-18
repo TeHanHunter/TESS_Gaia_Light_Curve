@@ -121,23 +121,40 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.close()
 
     plt.figure(figsize=(5, 5))
-    np.save('qlp_deviation.npy', np.array(t_['value'] - t_[f'{param}']))
-    plt.hist((t_['value'] - t_[f'{param}']), bins=np.arange(-0.1, 0.1, 0.005))
+    # np.save('qlp_deviation.npy', np.array(t_['value'] - t_[f'{param}']))
+    difference_qlp = np.load('qlp_deviation.npy')
+    difference_tglc = np.sort((t_['value'] - t_[f'{param}']))  # /t_[f'{param}']
+    plt.hist(difference_tglc, edgecolor='black', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
-    difference = np.sort((t_['value'] - t_[f'{param}']))  # /t_[f'{param}']
-    median_value = np.median(difference)
-    print(np.median(np.abs(difference)))
-    print(len(np.where(difference < 0)[0]) / len(difference))
+    median_value = np.median(difference_tglc)
+    print(np.median(np.abs(difference_tglc)))
+    print(len(np.where(difference_tglc < 0)[0]) / len(difference_tglc))
     percentage = 68
-    lower_bound = np.percentile(difference, (100 - percentage) / 2)
-    upper_bound = np.percentile(difference, 100 - (100 - percentage) / 2)
+    lower_bound = np.percentile(difference_tglc, (100 - percentage) / 2)
+    upper_bound = np.percentile(difference_tglc, 100 - (100 - percentage) / 2)
     print(median_value, lower_bound, upper_bound)
-    plt.vlines(lower_bound, ymin=0, ymax=150, color='k', linestyle='dashed')
-    plt.vlines(median_value, ymin=0, ymax=150, color='k')
+    plt.vlines(lower_bound, ymin=0, ymax=250, color='k', linestyle='dashed')
+    plt.vlines(median_value, ymin=0, ymax=250, color='k')
     # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
-    plt.vlines(upper_bound, ymin=0, ymax=150, color='k', linestyle='dashed')
-    plt.savefig(os.path.join(folder, f'{param}_hist_{pipeline}.png'), bbox_inches='tight', dpi=600)
+    plt.vlines(upper_bound, ymin=0, ymax=250, color='k', linestyle='dashed')
+
+    plt.hist(difference_qlp, edgecolor='C1', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
+    plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
+    plt.ylabel(r'Number of stars')
+    median_value = np.median(difference_qlp)
+    print(np.median(np.abs(difference_qlp)))
+    print(len(np.where(difference_qlp < 0)[0]) / len(difference_qlp))
+    percentage = 68
+    lower_bound = np.percentile(difference_qlp, (100 - percentage) / 2)
+    upper_bound = np.percentile(difference_qlp, 100 - (100 - percentage) / 2)
+    print(median_value, lower_bound, upper_bound)
+    plt.vlines(lower_bound, ymin=0, ymax=250, color='C1', linestyle='dashed')
+    plt.vlines(median_value, ymin=0, ymax=250, color='C1')
+    # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
+    plt.vlines(upper_bound, ymin=0, ymax=250, color='C1', linestyle='dashed')
+
+    plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
     plt.close()
 
     # plt.figure(figsize=(5, 5))
@@ -297,4 +314,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
