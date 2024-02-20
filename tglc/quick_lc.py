@@ -313,8 +313,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 # print(f'sector = {source.sector}')
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
-                max_flux = np.max(
-                    np.median(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
+                max_flux = np.nanmax(
+                    np.nanmedian(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                               axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(15, 7))
                 gs = fig.add_gridspec(5, 10)
