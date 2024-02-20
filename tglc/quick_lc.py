@@ -394,9 +394,11 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                             hdul[0].data[:, j, k][q]) + 1
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
                         ax_.set_ylim(0.95, 1.05)
+                        ax_.set_xlabel('')
+                        ax_.set_ylabel('')
                 plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
                             dpi=300)
-                plt.show()
+                plt.close()
 
 
 def plot_epsf(local_directory=None):
@@ -452,10 +454,10 @@ if __name__ == '__main__':
     directory = f'/home/tehan/data/cosmos/Stephen/'
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_psf_flux')
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_psf_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
     plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5975663354131618304)
-    plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
+    # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            type='cal_psf_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
