@@ -210,9 +210,9 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
             content = textwrap.dedent(f"""\
             [Stellar]
             st_mass = {nea['st_mass']}
-            st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+            st_masserr1 = {(((nea['st_masserr1'] - nea['st_masserr2']) / 2) or 0.1):.3f}
             st_rad = {nea['st_rad']}
-            st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+            st_raderr1 = {(((nea['st_raderr1'] - nea['st_raderr2']) / 2) or 0.1):.3f}
 
             [Planet]
             pl_tranmid = {nea['pl_tranmid']}
