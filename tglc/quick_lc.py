@@ -318,7 +318,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                               axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(15, 7))
                 gs = fig.add_gridspec(5, 10)
-                gs.update(wspace=0.5, hspace=0.5)
+                gs.update(wspace=0.1, hspace=0.1)
                 ax0 = fig.add_subplot(gs[:5, :5])
                 ax0.imshow(source.flux[0], cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
 
@@ -395,7 +395,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
                         ax_.set_ylim(0.95, 1.05)
                         ax_.set_xticklabels([])
-                        ax_.set_xticklabels([])
+                        ax_.set_yticklabels([])
                 plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
                             dpi=300)
                 plt.close()
