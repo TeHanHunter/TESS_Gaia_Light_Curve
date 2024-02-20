@@ -441,10 +441,10 @@ if __name__ == '__main__':
     failed_to_fit = []
     for i in trange(len(tic_sector)):
         if len(glob(
-                f'/home/tehan/Downloads/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
+                f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
             pass
         else:
             failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
     print(len(failed_to_fit))
     print(failed_to_fit)
-    np.savetxt('/home/tehan/Downloads/Data/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
+    np.savetxt('/home/tehan/data/TESS_Gaia_Light_Curve/tglc/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
