@@ -121,7 +121,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     plt.close()
 
     plt.figure(figsize=(5, 5))
-    np.save('qlp_deviation.npy', np.array(t_['value'] - t_[f'{param}']))
+    # np.save('qlp_deviation.npy', np.array(t_['value'] - t_[f'{param}']))
     # np.save('qlp_deviation_square.npy', np.array(t_['value'] ** 2 - t_[f'{param}'] ** 2))
     difference_qlp = np.load('qlp_deviation.npy')
     difference_tglc = np.sort((t_['value'] - t_[f'{param}']))  # /t_[f'{param}']
@@ -315,4 +315,4 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
