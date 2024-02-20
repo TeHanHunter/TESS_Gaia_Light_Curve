@@ -394,8 +394,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                             hdul[0].data[:, j, k][q]) + 1
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
                         ax_.set_ylim(0.95, 1.05)
-                        ax_.set_xlabel('')
-                        ax_.set_ylabel('')
+                        ax_.set_xticklabels([])
+                        ax_.set_xticklabels([])
                 plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
                             dpi=300)
                 plt.close()
