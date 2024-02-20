@@ -294,69 +294,76 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 end = 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
-            if type(source) == Source:
-                x_left = 1.5
-                x_right = 2.5
-                y_left = 1.5
-                y_right = 2.5
-            if x_left + 2 <= x_round[i] < source.size - (x_right + 2) and y_left + 2 <= y_round[i] < source.size - (
-                    y_right + 2):
-                near_edge = False
-            else:
-                near_edge = True
-
-            if type(prior) == float or type(prior) == np.float64:
-                aperture, psf_lc, star_y, star_x, portion = \
-                    fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
-                                       near_edge=near_edge, prior=prior)
-            else:
-                aperture, psf_lc, star_y, star_x, portion = \
-                    fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
-                           near_edge=near_edge)
-            aper_lc = np.sum(
-                aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
-                axis=(1, 2))
-            if source.sector < 27:  # primary
-                exposure_time = 1800
-            elif source.sector < 56:  # first extended
-                exposure_time = 600
-            else:  # second extended
-                exposure_time = 200
-            saturated_arg_aper = np.where(aper_lc > 1e5 * 9 * 2e5 / exposure_time)  # saturation is 2e5 e-
-            aper_lc[saturated_arg_aper] = np.nan
-            saturated_arg_psf = np.where(psf_lc > 1e5 * 9 * 2e5 / exposure_time)
-            psf_lc[saturated_arg_psf] = np.nan
-
-            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
-                                                                        psf_lc=psf_lc,
-                                                                        aper_lc=aper_lc,
-                                                                        near_edge=near_edge, star_num=i)
-            background_ = background[x_round[i] + source.size * y_round[i], :]
-            quality = np.zeros(len(source.time), dtype=np.int16)
-            sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
-            quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
-            # if cut_x == 7:
-            #     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}_extra/'
-            #     os.makedirs(lc_directory, exist_ok=True)
-            if np.isnan(aper_lc).all():
+            objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
+            lc_path = (f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd'
+                       f'{source.ccd}_tess_v1_llc.fits')
+            lc_exists = exists(lc_path)
+            if lc_exists and os.path.getsize(lc_path) > 0:
                 continue
             else:
                 if type(source) == Source:
-                    # if cut_x >= 7:
-                    #     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}_extra/'
-                    lc_output(source, local_directory=lc_directory, index=i,
-                              tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
-                              aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
-                              bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
-                              cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
-                              y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                              prior=prior)
+                    x_left = 1.5
+                    x_right = 2.5
+                    y_left = 1.5
+                    y_right = 2.5
+                if x_left + 2 <= x_round[i] < source.size - (x_right + 2) and y_left + 2 <= y_round[i] < source.size - (
+                        y_right + 2):
+                    near_edge = False
                 else:
-                    lc_output(source, local_directory=lc_directory, index=i,
-                              tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
-                              aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i],
-                              tglc_flag=quality,
-                              bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
-                              cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
-                              y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                              prior=prior, transient=source.transient)
+                    near_edge = True
+
+                if type(prior) == float or type(prior) == np.float64:
+                    aperture, psf_lc, star_y, star_x, portion = \
+                        fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i,
+                                           e_psf=e_psf,
+                                           near_edge=near_edge, prior=prior)
+                else:
+                    aperture, psf_lc, star_y, star_x, portion = \
+                        fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
+                               near_edge=near_edge)
+                aper_lc = np.sum(
+                    aperture[:, max(0, star_y - 1):min(5, star_y + 2), max(0, star_x - 1):min(5, star_x + 2)],
+                    axis=(1, 2))
+                if source.sector < 27:  # primary
+                    exposure_time = 1800
+                elif source.sector < 56:  # first extended
+                    exposure_time = 600
+                else:  # second extended
+                    exposure_time = 200
+                saturated_arg_aper = np.where(aper_lc > 1e5 * 9 * 2e5 / exposure_time)  # saturation is 2e5 e-
+                aper_lc[saturated_arg_aper] = np.nan
+                saturated_arg_psf = np.where(psf_lc > 1e5 * 9 * 2e5 / exposure_time)
+                psf_lc[saturated_arg_psf] = np.nan
+
+                local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
+                                                                            psf_lc=psf_lc,
+                                                                            aper_lc=aper_lc,
+                                                                            near_edge=near_edge, star_num=i)
+                background_ = background[x_round[i] + source.size * y_round[i], :]
+                quality = np.zeros(len(source.time), dtype=np.int16)
+                sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
+                quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
+                # if cut_x == 7:
+                #     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}_extra/'
+                #     os.makedirs(lc_directory, exist_ok=True)
+                if np.isnan(aper_lc).all():
+                    continue
+                else:
+                    if type(source) == Source:
+                        # if cut_x >= 7:
+                        #     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}_extra/'
+                        lc_output(source, local_directory=lc_directory, index=i,
+                                  tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+                                  aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i],
+                                  tglc_flag=quality, bg=background_, time=source.time, psf_lc=psf_lc,
+                                  cal_psf_lc=cal_psf_lc, aper_lc=aper_lc, cal_aper_lc=cal_aper_lc, local_bg=local_bg,
+                                  x_aperture=x_aperture[i], y_aperture=y_aperture[i], near_edge=near_edge,
+                                  save_aper=save_aper, portion=portion,prior=prior)
+                    else:
+                        lc_output(source, local_directory=lc_directory, index=i,
+                                  tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+                                  aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i],
+                                  tglc_flag=quality,bg=background_, time=source.time, psf_lc=psf_lc,
+                                  cal_psf_lc=cal_psf_lc,aper_lc=aper_lc, cal_aper_lc=cal_aper_lc, local_bg=local_bg,
+                                  x_aperture=x_aperture[i], y_aperture=y_aperture[i], near_edge=near_edge,
+                                  save_aper=save_aper, portion=portion, prior=prior, transient=source.transient)
