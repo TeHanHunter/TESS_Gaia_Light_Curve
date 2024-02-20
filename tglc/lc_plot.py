@@ -13,11 +13,12 @@ from tglc.target_lightcurve import epsf
 from tglc.ffi_cut import ffi_cut
 from tglc.quick_lc import tglc_lc
 import matplotlib.patheffects as pe
-from astropy.table import Table
+from astropy.table import Table, vstack
 import pkg_resources
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
-
+import pandas as pd
+import seaborn as sns
 
 def read_parameter(file=None):
     with open(file, 'r') as file:
@@ -122,38 +123,23 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
 
     plt.figure(figsize=(5, 5))
     # np.save(f'deviation_{pipeline}.npy', np.array(t_['value'] - t_[f'{param}']))
-    t_.write(f'deviation_{pipeline}.dat', format='ascii.csv')
-    # difference_qlp = np.load('qlp_deviation_QLP.npy')
-    # difference_tglc = np.load('qlp_deviation_TGLC.npy')
-    # plt.hist(difference_tglc, edgecolor='C0', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
-    # plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
-    # plt.ylabel(r'Number of stars')
-    # median_value = np.median(difference_tglc)
-    # print(np.median(np.abs(difference_tglc)))
-    # print(len(np.where(difference_tglc < 0)[0]) / len(difference_tglc))
-    # percentage = 68
-    # lower_bound = np.percentile(difference_tglc, (100 - percentage) / 2)
-    # upper_bound = np.percentile(difference_tglc, 100 - (100 - percentage) / 2)
-    # print(median_value, lower_bound, upper_bound)
-    # # plt.vlines(lower_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
-    # plt.vlines(median_value, ymin=0, ymax=275, color='C0')
-    # # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
-    # # plt.vlines(upper_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
-
-    plt.hist(difference_qlp, edgecolor='C1', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
+    # t_.write(f'deviation_{pipeline}.dat', format='ascii.csv')
+    difference_qlp = ascii.read('deviation_QLP.dat')
+    difference_tglc = ascii.read('deviation_TGLC.dat')
+    plt.hist(difference_tglc, edgecolor='C0', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'Number of stars')
-    median_value = np.median(difference_qlp)
-    print(np.median(np.abs(difference_qlp)))
-    print(len(np.where(difference_qlp < 0)[0]) / len(difference_qlp))
+    median_value = np.median(difference_tglc)
+    print(np.median(np.abs(difference_tglc)))
+    print(len(np.where(difference_tglc < 0)[0]) / len(difference_tglc))
     percentage = 68
-    lower_bound = np.percentile(difference_qlp, (100 - percentage) / 2)
-    upper_bound = np.percentile(difference_qlp, 100 - (100 - percentage) / 2)
+    lower_bound = np.percentile(difference_tglc, (100 - percentage) / 2)
+    upper_bound = np.percentile(difference_tglc, 100 - (100 - percentage) / 2)
     print(median_value, lower_bound, upper_bound)
-    # plt.vlines(lower_bound, ymin=0, ymax=250, color='C1', linestyle='dashed')
-    plt.vlines(median_value, ymin=0, ymax=275, color='C1')
+    # plt.vlines(lower_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
+    plt.vlines(median_value, ymin=0, ymax=275, color='C0')
     # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
-    # plt.vlines(upper_bound, ymin=0, ymax=250, color='C1', linestyle='dashed')
+    # plt.vlines(upper_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
 
     plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
     plt.close()
@@ -169,68 +155,34 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     # plt.savefig(os.path.join(folder, f'{param}_error_{pipeline}.png'), bbox_inches='tight', dpi=600)
 
 
-def figure_2(folder='/home/tehan/Downloads/Data/', param='pl_rade', r=25, cmap='Tmag'):
-    param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
-    tics = [int(s[4:]) for s in t['tic_id']]
+def figure_2(folder='/home/tehan/Downloads/Data/',):
+    difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    difference_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 2.5)]
+    difference_qlp['pipeline'] = ['QLP'] * len(difference_qlp)
+    difference_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 2.5)]
+    difference_tglc['pipeline'] = ['TGLC'] * len(difference_tglc)
+    difference = vstack([difference_tglc, difference_qlp])
+    difference['diff'] = difference['value'] - difference['pl_ratror']
+    difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, '<12.5', '>12.5')
 
-    t_ = Table(names=['Tmag', 'rhat', 'p', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
-               dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
-    missed_stars = 0
-    for i in trange(len(tics)):
-        file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
-        if len(file) == 0:
-            missed_stars += 1
-        elif len(file) >= 1:
-            for j in range(len(file)):
-                star = int(os.path.basename(file[j]).split('_')[2])
-                if star == tics[i]:
-                    table_posterior = read_parameter(file[j])
-                    table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
-                    chain_summary = glob(os.path.join(os.path.dirname(file[j]), 'ChainSummary*.csv'))
-                    table_chain = Table.read(chain_summary[0], format='csv')
-                    table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
+    df = difference.to_pandas()
+    plt.figure(figsize=(8, 6))
+    # sns.violinplot(data=df, x='diff', y='pipeline', bw_adjust=1, palette="Set1")
+    sns.violinplot(data=df, x="diff", y="Tmag_int", hue="pipeline", split=True, bw_adjust=1.5, gap=.1, palette="Set2")
+    plt.vlines(0, ymin=-0.5, ymax=1.5, color='k', ls='dashed')
+    plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
+    plt.ylabel(r'TESS magnitude')
+    plt.xlim(-0.075, 0.075)
+    plt.savefig(os.path.join(folder, f'ror_violin.png'), bbox_inches='tight', dpi=600)
+    plt.show()
 
-                    if param == 'pl_rade':
-                        t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], t[f'{param}'][i],
-                                    t[f'{param}err1'][i], t[f'{param}err2'][i], table_posterior_row['Value'][0],
-                                    table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
-                    elif param == 'pl_ratror':
-                        ror = t['pl_rade'][i] / t['st_rad'][i] / 109.076
-                        sigma_rade = (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2
-                        sigma_st_rad = (t['st_raderr1'][i] - t['st_raderr2'][i]) / 2
-                        sigma_ror = ((sigma_rade / t['st_rad'][i] / 109.076) ** 2 +
-                                     (t['pl_rade'][i] / t['st_rad'][i] ** 2 / 109.076 * sigma_st_rad) ** 2) ** 0.5
-                        t_.add_row(
-                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], ror,
-                             sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
-                             table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
-    print(len(t_))
-    print('missing stars:', missed_stars)
-    plt.figure(figsize=(20, 8))
-    colormap = cm.viridis
-    norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
-    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
-    for k in range(len(t_)):
-        if t_['rhat'][k] < 1.05:
-            plt.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
-                         yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
-                         mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=20, elinewidth=1, capsize=0.7, alpha=0.5,
-                         zorder=2)
-        # else:
-        #     plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
-        #                  fmt='o', mec='silver', mfc='none', ecolor='silver',
-        #                  ms=10, elinewidth=1, capsize=5, alpha=0.8, zorder=1)
-    plt.colorbar(scatter, label=cmap)
-    plt.plot([0.01, 40], [0.01, 40], 'k', zorder=0)
-    plt.xlim(0.01, r)
-    plt.ylim(0.01, r)
-    plt.xlabel(param)
-    plt.ylabel(param_dict[f'{param}'])
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal.png'), bbox_inches='tight', dpi=600)
-
+    median_value = np.median(difference_tglc['value'] - difference_tglc['pl_ratror'])
+    print(median_value)
+    print(len(np.where(difference_tglc['value'] - difference_tglc['pl_ratror'] < 0)[0]) / len(difference_tglc))
+    median_value = np.median(difference_qlp['value'] - difference_qlp['pl_ratror'])
+    print(median_value)
+    print(len(np.where(difference_qlp['value'] - difference_qlp['pl_ratror'] < 0)[0]) / len(difference_qlp))
 
 def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r2=0.16, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
@@ -315,4 +267,5 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
 
 
 if __name__ == '__main__':
-    figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    # figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    figure_2()
