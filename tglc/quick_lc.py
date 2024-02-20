@@ -188,7 +188,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     output_dir = '/home/tehan/data/pyexofits/Data/'
     version = 'cal_aper_flux'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{gaiadr3}*{sector}*.fits')
+    files = glob(f'{dir}*{gaiadr3}*0{sector}-*.fits')
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
@@ -309,7 +309,7 @@ def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     star_name = f'TIC_{tic}'
     output_dir = '/home/tehan/data/pyexofits/Data_qlp/'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
-    files = glob(f'{dir}*{sector}*{tic}*.fits')
+    files = glob(f'{dir}*{sector}*0{tic}-*.fits')
     if len(files) == 1:
         os.makedirs(output_dir_, exist_ok=True)
         try:
@@ -417,11 +417,11 @@ if __name__ == '__main__':
     #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
     #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
-    # for i in trange(len(tic_sector)):
-    #     if int(tic_sector[i, 0]) in tics:
-    #         produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
-    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]], gaiadr3=int(tic_sector[i, 1]),
-    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+    for i in trange(len(tic_sector)):
+        if int(tic_sector[i, 0]) in tics:
+            produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
+                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]], gaiadr3=int(tic_sector[i, 1]),
+                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
@@ -438,13 +438,13 @@ if __name__ == '__main__':
     #             else:
     #                 print(t['sy_tmag'][t['tic_id'] == int(tic_sector[i, 0])])
 
-    failed_to_fit = []
-    for i in trange(len(tic_sector)):
-        if len(glob(
-                f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
-            pass
-        else:
-            failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
-    print(len(failed_to_fit))
-    print(failed_to_fit)
-    np.savetxt('/home/tehan/data/TESS_Gaia_Light_Curve/tglc/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
+    # failed_to_fit = []
+    # for i in trange(len(tic_sector)):
+    #     if len(glob(
+    #             f'/home/tehan/data/pyexofits/Data/*/*/*/Plots_*{int(tic_sector[i, 0])}*_{int(tic_sector[i, 2])}_*.pdf')) == 1:
+    #         pass
+    #     else:
+    #         failed_to_fit.append([int(tic_sector[i,0]), int(tic_sector[i,2])])
+    # print(len(failed_to_fit))
+    # print(failed_to_fit)
+    # np.savetxt('/home/tehan/data/TESS_Gaia_Light_Curve/tglc/failed.csv', np.array(failed_to_fit), fmt='%s', delimiter=',')
