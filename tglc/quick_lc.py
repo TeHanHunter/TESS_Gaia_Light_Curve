@@ -307,7 +307,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
 
 def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     star_name = f'TIC_{tic}'
-    output_dir = '/home/tehan/data/pyexofits/Data_qlp/'
+    output_dir = '/home/tehan/data/pyexofits/Data/'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
     files = glob(f'{dir}*0{sector}-*{tic}*.fits')
     if len(files) == 1:
@@ -328,9 +328,9 @@ def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                 content = textwrap.dedent(f"""\
                 [Stellar]
                 st_mass = {nea['st_mass']}
-                st_masserr1 = {(nea['st_masserr1'] - nea['st_masserr2']) / 2:.3f}
+                st_masserr1 = {(((nea['st_masserr1'] - nea['st_masserr2']) / 2) or 0.1):.3f}
                 st_rad = {nea['st_rad']}
-                st_raderr1 = {(nea['st_raderr1'] - nea['st_raderr2']) / 2:.3f}
+                st_raderr1 = {(((nea['st_raderr1'] - nea['st_raderr2']) / 2) or 0.1):.3f}
     
                 [Planet]
                 pl_tranmid = {nea['pl_tranmid']}
@@ -411,17 +411,17 @@ if __name__ == '__main__':
     tic_sector = sort_sectors(t, dir=dir)
     np.savetxt('/home/tehan/data/cosmos/transit_depth_validation/tic_sector.csv', tic_sector, fmt='%s', delimiter=',')
     # tic_sector = np.loadtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
-    # for i in trange(len(tic_sector)):
-    #     if int(tic_sector[i, 0]) in tics:
-    #         produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
-    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
-
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
-            produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
-                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]], gaiadr3=int(tic_sector[i, 1]),
+            produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
+                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+
+    # for i in trange(len(tic_sector)):
+    #     if int(tic_sector[i, 0]) in tics:
+    #         produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
+    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]], gaiadr3=int(tic_sector[i, 1]),
+    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
