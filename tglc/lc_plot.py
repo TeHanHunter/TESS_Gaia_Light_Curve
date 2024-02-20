@@ -122,7 +122,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
 
     plt.figure(figsize=(5, 5))
     # np.save(f'deviation_{pipeline}.npy', np.array(t_['value'] - t_[f'{param}']))
-    t_.write(f'deviation_{pipeline}.dat')
+    t_.write(f'deviation_{pipeline}.dat', format='ascii.csv')
     difference_qlp = np.load('qlp_deviation_QLP.npy')
     difference_tglc = np.load('qlp_deviation_TGLC.npy')
     plt.hist(difference_tglc, edgecolor='C0', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
