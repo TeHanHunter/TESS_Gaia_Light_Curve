@@ -33,7 +33,7 @@ def lc_per_cut(i, local_directory=''):
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         source = pickle.load(input_)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=13.5, save_aper=False, no_progress_bar=True)
+         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
 
 
 def lc_per_ccd(local_directory='', cam=None, ccd=None):
@@ -76,7 +76,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
-    sector = 57
+    sector = 56
     local_directory = f'/pdo/users/tehan/sector{sector:04d}/'
     lc_per_ccd(local_directory=local_directory, cam=3, ccd=2)
     lc_per_ccd(local_directory=local_directory, cam=3, ccd=4)
