@@ -380,7 +380,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
                 for j in range(y_):
                     for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(4 - j), (5 + 2 * k):(6 + 2 * k)])
+                        ax_ = fig.add_subplot(gs[(4 - j), (5 + 2 * k):(7 + 2 * k)])
                         ax_.patch.set_facecolor('C0')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
                         q = [a and b for a, b in
