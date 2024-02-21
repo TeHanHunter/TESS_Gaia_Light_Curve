@@ -318,7 +318,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                               axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(15, 7))
                 gs = fig.add_gridspec(5, 10)
-                gs.update(wspace=0.1, hspace=0.1)
+                gs.update(wspace=0.1, hspace=0.1, width_ratios=[5]*10)
                 ax0 = fig.add_subplot(gs[:5, :5])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
 
@@ -392,7 +392,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
                             hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
                             hdul[0].data[:, j, k][q]) + 1
-                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=1, label='center pixel')
+                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
                         ax_.set_ylim(0.97, 1.03)
                         if j != 0:
                             ax_.set_xticklabels([])
