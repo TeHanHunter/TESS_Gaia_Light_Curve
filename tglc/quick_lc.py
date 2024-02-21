@@ -317,8 +317,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                     np.nanmedian(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                               axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(15, 7))
-                gs = fig.add_gridspec(5, 10)
-                gs.update(wspace=0.1, hspace=0.1, width_ratios=[5]*10)
+                gs = fig.add_gridspec(5, 10, width_ratios=[5]*10)
+                gs.update(wspace=0.1, hspace=0.1)
                 ax0 = fig.add_subplot(gs[:5, :5])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
 
