@@ -316,8 +316,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 max_flux = np.nanmax(
                     np.nanmedian(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                               axis=0))
-                fig = plt.figure(constrained_layout=False, figsize=(15, 7))
-                gs = fig.add_gridspec(5, 10, width_ratios=[5]*10)
+                fig = plt.figure(constrained_layout=False, figsize=(15, 5))
+                gs = fig.add_gridspec(5, 15)
                 gs.update(wspace=0.1, hspace=0.1)
                 ax0 = fig.add_subplot(gs[:5, :5])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
@@ -380,7 +380,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
                 for j in range(y_):
                     for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(4 - j), (5 + k)])
+                        ax_ = fig.add_subplot(gs[(4 - j), (5 + 2 * k):(6 + 2 * k)])
                         ax_.patch.set_facecolor('C0')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
                         q = [a and b for a, b in
