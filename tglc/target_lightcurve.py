@@ -294,7 +294,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 end = 1
     for i in trange(start, end, desc='Fitting lc', disable=no_progress_bar):
         if x_left <= x_round[i] < source.size - x_right and y_left <= y_round[i] < source.size - y_right:
-            objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
+            objid = [int(s) for s in (source.gaia[i]['DESIGNATION']).split() if s.isdigit()][0]
             lc_path = (f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd'
                        f'{source.ccd}_tess_v1_llc.fits')
             lc_exists = exists(lc_path)
