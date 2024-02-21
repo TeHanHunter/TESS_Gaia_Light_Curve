@@ -76,12 +76,14 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
-    sector = 56
+    sector = 58
     local_directory = f'/pdo/users/tehan/sector{sector:04d}/'
-    lc_per_ccd(local_directory=local_directory, cam=3, ccd=2)
-    lc_per_ccd(local_directory=local_directory, cam=3, ccd=4)
-    lc_per_ccd(local_directory=local_directory, cam=4, ccd=1)
-    lc_per_ccd(local_directory=local_directory, cam=4, ccd=2)
+    lc_per_ccd(local_directory=local_directory, cam=1, ccd=1)
+    lc_per_ccd(local_directory=local_directory, cam=1, ccd=2)
+    lc_per_ccd(local_directory=local_directory, cam=1, ccd=3)
+    lc_per_ccd(local_directory=local_directory, cam=2, ccd=1)
+    lc_per_ccd(local_directory=local_directory, cam=2, ccd=3)
+    lc_per_ccd(local_directory=local_directory, cam=2, ccd=4)
     for i in range(16):
         name = f'{1 + i // 4}-{1 + i % 4}'
         plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
