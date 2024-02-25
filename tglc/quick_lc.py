@@ -469,6 +469,6 @@ if __name__ == '__main__':
     directory = f'/home/tehan/data/cosmos/michelle/'
     local_directory = f'{directory}{target}/'
     os.makedirs(local_directory, exist_ok=True)
-    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=17,
+    tglc_lc(target=target, local_directory=local_directory, size=50, save_aper=True, limit_mag=17,
             get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=39, prior=None,
             transient=['266.489125, -33.8428', 266.489125, -33.8428])
