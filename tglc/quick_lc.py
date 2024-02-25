@@ -470,5 +470,5 @@ if __name__ == '__main__':
     os.makedirs(local_directory, exist_ok=True)
     tglc_lc(target=target, local_directory=local_directory, size=50, save_aper=True, limit_mag=16,
             get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=39, prior=None,
-            transient=True)
+            transient=target)
     plot_lc(local_directory=f'{directory}{target}/lc/', type='cal_aper_flux')
