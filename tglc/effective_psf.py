@@ -466,7 +466,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
         #                       return_trend=False)
     if near_edge:
         cal_psf_lc = psf_lc
-        return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
+        return local_bg, aper_lc_, psf_lc_, cal_aper_lc, cal_psf_lc
     else:
         cal_psf_lc = psf_lc / np.nanmedian(psf_lc)
         cal_psf_lc[np.where(cal_psf_lc > 100)] = np.nan
