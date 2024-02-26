@@ -327,7 +327,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             saturated_arg_psf = np.where(psf_lc > 1e5 * 9 * 2e5 / exposure_time)
             psf_lc[saturated_arg_psf] = np.nan
 
-            local_bg, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
+            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
                                                                         psf_lc=psf_lc,
                                                                         aper_lc=aper_lc,
                                                                         near_edge=near_edge, star_num=i)
