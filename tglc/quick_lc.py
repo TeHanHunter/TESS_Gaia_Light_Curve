@@ -392,8 +392,9 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
                             hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
                             hdul[0].data[:, j, k][q]) + 1
-                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
-                        ax_.set_ylim(0.7, 1.3)
+                        # ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
+                        ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
+                        # ax_.set_ylim(0.7, 1.3)
                         if j != 0:
                             ax_.set_xticklabels([])
                         if k != 0:
