@@ -442,13 +442,11 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     if np.isnan(local_bg):
         local_bg = 0
     aper_lc = aper_lc - local_bg
-    aper_lc_ = aper_lc
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
     if np.isnan(local_bg):
         local_bg = 0
     psf_lc = psf_lc - local_bg
-    psf_lc_ = psf_lc
     negative_arg_aper = np.where(aper_lc <= 0)  # Negative frames
     aper_lc[negative_arg_aper] = np.nan
     negative_arg_psf = np.where(psf_lc <= 0)
@@ -466,7 +464,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
         #                       return_trend=False)
     if near_edge:
         cal_psf_lc = psf_lc
-        return local_bg, aper_lc_, psf_lc_, cal_aper_lc, cal_psf_lc
+        return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
     else:
         cal_psf_lc = psf_lc / np.nanmedian(psf_lc)
         cal_psf_lc[np.where(cal_psf_lc > 100)] = np.nan
@@ -483,4 +481,4 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     #     psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
     #     cal_psf_lc /= psf_mad / aper_mad
     #     cal_psf_lc += 1 - np.median(cal_psf_lc)
-    return local_bg, aper_lc_, psf_lc_, cal_aper_lc, cal_psf_lc
+    return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
