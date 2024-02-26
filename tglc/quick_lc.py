@@ -474,5 +474,5 @@ if __name__ == '__main__':
     #         get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=39, prior=None,
     #         transient=['266.489125, -33.8428', 266.489125, -33.8428])
     plot_lc(local_directory=f'{local_directory}', type='cal_aper_flux')
-    plot_lc(local_directory=f'{local_directory}', type='aperture_flux')
+    plot_lc(local_directory=f'{local_directory}', yhigh=150, type='aperture_flux')
     plot_contamination(local_directory=f'{local_directory}', gaia_dr3=4041831235071242624)
