@@ -751,7 +751,7 @@ def figure_6(mode='psf'):
     phase_fold_mid = (t_0 - 2457000) % period / period
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0009*.fits')[0],
                    mode='denywrite') as hdul:
-        q =  list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
+        q = list(hdul[1].data['TESS_flags'] == 0) and list(hdul[1].data['TGLC_flags'] == 0)
         t_09 = hdul[1].data['time'][q]
         f_09 = hdul[1].data[type][q]
     with fits.open(glob(f'{local_directory}lc/hlsp_tglc_tess_ffi_gaiaid-5400949450924312576-s0010*.fits')[0],
@@ -2656,6 +2656,7 @@ def figure_13():
     plt.savefig(f'/mnt/c/users/tehan/desktop/powers.png', bbox_inches='tight', dpi=300)
     plt.show()
 
+
 def get_MAD():
     files = glob(f'/pdo/users/tehan/sector0056/lc/*/*.fits')
     print(len(files))
@@ -2673,8 +2674,11 @@ def get_MAD():
                     bin = 3
                 else:
                     bin = 9
-                aper_flux = np.mean(hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin), axis=1)
-                psf_flux = np.mean(hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // bin * bin].reshape(-1, bin), axis=1)
+                aper_flux = np.mean(
+                    hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
+                    axis=1)
+                psf_flux = np.mean(
+                    hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // bin * bin].reshape(-1, bin), axis=1)
                 weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
                 weighted_flux = np.mean(weighted_flux[:len(weighted_flux) // bin * bin].reshape(-1, bin), axis=1)
                 aper_flux = aper_flux[~np.isnan(aper_flux)]
@@ -2728,13 +2732,13 @@ def plot_MAD():
     aper_runningmed = ndimage.median_filter(aper_ratio, size=2000, mode='nearest')
 
     ax[1].plot(psf_tglc_mag[:-1000], psf_ratio[:-1000], '.', c='C1', ms=6, alpha=0.01,
-                  label='TGLC PSF Precision/TGLC Weighted Precision')
+               label='TGLC PSF Precision/TGLC Weighted Precision')
     ax[1].plot(aper_tglc_mag[:-1000], aper_ratio[:-1000], '.', c='C0', ms=6, alpha=0.01,
-                  label='TGLC Aperture Precision/TGLC Weighted Precision')
+               label='TGLC Aperture Precision/TGLC Weighted Precision')
     ax[1].plot(psf_tglc_mag[:-1000], psf_runningmed[:-1000], c='C1', label='Median', lw=1.5,
-                  path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
+               path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
     ax[1].plot(aper_tglc_mag[:-1000], aper_runningmed[:-1000], c='C0', label='Median', lw=1.5,
-                  path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
+               path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
 
     ax[1].hlines(y=1, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
     # ax[1].set_yscale('log')
