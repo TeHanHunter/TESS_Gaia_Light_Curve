@@ -2658,7 +2658,7 @@ def figure_13():
 
 
 def get_MAD():
-    files = glob(f'/pdo/users/tehan/sector0056/lc/*/*.fits')
+    files = glob(f'/pdo/users/tehan/s0056/**/*.fits')
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
@@ -2694,7 +2694,7 @@ def get_MAD():
     weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
     print(np.shape(tic))
     print(np.shape(aper_precision))
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy',
+    np.save('/pdo/users/tehan/s0056/mad_qlp_30min.npy',
             np.vstack((tic, aper_precision, psf_precision, weighted_precision)))
     return
 
