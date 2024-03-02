@@ -1,5 +1,5 @@
 import os
-from glob2 import glob
+from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
