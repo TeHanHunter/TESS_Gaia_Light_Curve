@@ -1,5 +1,5 @@
 import os
-from glob import glob
+from glob2 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -2658,7 +2658,7 @@ def figure_13():
 
 
 def get_MAD():
-    files = glob(f'/pdo/users/tehan/s0056/**/*.fits')
+    files = glob(f'/pdo/users/tehan/sector0056/lc/*/*.fits')
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
@@ -2694,8 +2694,33 @@ def get_MAD():
     weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
     print(np.shape(tic))
     print(np.shape(aper_precision))
-    np.save('/pdo/users/tehan/s0056/mad_qlp_30min.npy',
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy',
             np.vstack((tic, aper_precision, psf_precision, weighted_precision)))
+    return
+
+def get_MAD_qlp():
+    files = glob(f'/pdo/users/tehan/s0056/**/*.fits', recursive=True)
+    print(len(files))
+    tic = np.zeros((len(files)))
+    MAD_qlp = np.zeros((len(files)))
+    for i in trange(len(files)):
+        with fits.open(files[i], mode='denywrite') as qlp:
+            try:
+                tic[i] = qlp[0].header['TESSMAG']
+                quality = qlp[1].data['QUALITY']
+                index = np.where(quality == 0)
+                qlp_t = qlp[1].data['TIME'][index]
+                lc = qlp[1].data['KSPSAP_FLUX']
+                qlp_f = flatten(qlp_t, lc[index] / np.nanmedian(lc[index]), window_length=1, method='biweight',
+                                return_trend=False)
+                qlp_t = np.mean(qlp_t[:len(qlp_t) // 9 * 9].reshape(-1, 9), axis=1)
+                qlp_f = np.mean(qlp_f[:len(qlp_f) // 9 * 9].reshape(-1, 9), axis=1)
+
+                MAD_qlp[i] = np.median(np.abs(np.diff(qlp_f)))
+            except:
+                pass
+    qlp_precision = 1.48 * MAD_qlp / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+    np.save('/pdo/users/tehan/s0056/mad_qlp_30min.npy',np.vstack((tic, qlp_precision)))
     return
 
 
@@ -2757,4 +2782,4 @@ def plot_MAD():
 
 
 if __name__ == '__main__':
-    get_MAD()
+    get_MAD_qlp()
