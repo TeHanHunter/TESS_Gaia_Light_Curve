@@ -2662,40 +2662,33 @@ def get_MAD():
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
-    MAD_psf = np.zeros((len(files)))
-    MAD_weighted = np.zeros((len(files)))
+    # MAD_psf = np.zeros((len(files)))
+    # MAD_weighted = np.zeros((len(files)))
     for i in trange(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             try:
-                tic[i] = hdul[0].header['TESSMAG']
-                if hdul[0].header['sector'] <= 26:
-                    bin = 1
-                elif hdul[0].header['sector'] <= 55:
-                    bin = 3
-                else:
-                    bin = 9
+                bin = 9
                 aper_flux = np.mean(
                     hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
                     axis=1)
-                psf_flux = np.mean(
-                    hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // bin * bin].reshape(-1, bin), axis=1)
-                weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
-                weighted_flux = np.mean(weighted_flux[:len(weighted_flux) // bin * bin].reshape(-1, bin), axis=1)
+                # psf_flux = np.mean(
+                #     hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // bin * bin].reshape(-1, bin), axis=1)
+                # weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
+                # weighted_flux = np.mean(weighted_flux[:len(weighted_flux) // bin * bin].reshape(-1, bin), axis=1)
                 aper_flux = aper_flux[~np.isnan(aper_flux)]
-                psf_flux = psf_flux[~np.isnan(psf_flux)]
-                weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
+                # psf_flux = psf_flux[~np.isnan(psf_flux)]
+                # weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
                 MAD_aper[i] = np.median(np.abs(np.diff(aper_flux)))
-                MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
-                MAD_weighted[i] = np.median(np.abs(np.diff(weighted_flux)))
+                # MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
+                # MAD_weighted[i] = np.median(np.abs(np.diff(weighted_flux)))
             except:
                 pass
     aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-    psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-    weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+    # psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+    # weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
     print(np.shape(tic))
     print(np.shape(aper_precision))
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy',
-            np.vstack((tic, aper_precision, psf_precision, weighted_precision)))
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return
 
 def get_MAD_qlp():
