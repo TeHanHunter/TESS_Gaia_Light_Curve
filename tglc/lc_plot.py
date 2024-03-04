@@ -1,4 +1,8 @@
 import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,7 +16,8 @@ from matplotlib.patches import ConnectionPatch
 from tglc.target_lightcurve import epsf
 from tglc.ffi_cut import ffi_cut
 import matplotlib.patheffects as pe
-
+from multiprocessing import Pool
+from functools import partial
 
 def load_eleanor(ld='', tic=1, sector=1):
     eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_corr.npy')
@@ -2657,39 +2662,25 @@ def figure_13():
     plt.show()
 
 
-def get_MAD():
+def get_MAD(i, files=None):
     files = glob(f'/pdo/users/tehan/sector0056/lc/*/*.fits')
     print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
-    # MAD_psf = np.zeros((len(files)))
-    # MAD_weighted = np.zeros((len(files)))
-    for i in trange(len(files)):
-        with fits.open(files[i], mode='denywrite') as hdul:
-            try:
-                bin = 9
-                aper_flux = np.mean(
-                    hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
-                    axis=1)
-                # psf_flux = np.mean(
-                #     hdul[1].data['psf_flux'][:len(hdul[1].data['psf_flux']) // bin * bin].reshape(-1, bin), axis=1)
-                # weighted_flux = 0.6 * hdul[1].data['aperture_flux'] + 0.4 * hdul[1].data['psf_flux']
-                # weighted_flux = np.mean(weighted_flux[:len(weighted_flux) // bin * bin].reshape(-1, bin), axis=1)
-                aper_flux = aper_flux[~np.isnan(aper_flux)]
-                # psf_flux = psf_flux[~np.isnan(psf_flux)]
-                # weighted_flux = weighted_flux[~np.isnan(weighted_flux)]
-                MAD_aper[i] = np.median(np.abs(np.diff(aper_flux)))
-                # MAD_psf[i] = np.median(np.abs(np.diff(psf_flux)))
-                # MAD_weighted[i] = np.median(np.abs(np.diff(weighted_flux)))
-            except:
-                pass
-    aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-    # psf_precision = 1.48 * MAD_psf / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-    # weighted_precision = 1.48 * MAD_weighted / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-    print(np.shape(tic))
-    print(np.shape(aper_precision))
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
-    return
+    with fits.open(files[i], mode='denywrite') as hdul:
+        try:
+            tic = hdul[0].header['TESSMAG']
+            bin = 9
+            aper_flux = np.mean(
+                hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
+                axis=1)
+            aper_flux = aper_flux[~np.isnan(aper_flux)]
+            MAD_aper = np.median(np.abs(np.diff(aper_flux)))
+            aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+        except:
+            pass
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
+    return tic, aper_precision
 
 def get_MAD_qlp():
     files = glob(f'/pdo/users/tehan/s0056/**/*.fits', recursive=True)
@@ -2775,4 +2766,12 @@ def plot_MAD():
 
 
 if __name__ == '__main__':
-    get_MAD()
+    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+
+    with Pool() as p:
+        results = p.map(partial(get_MAD, files=files), range(len(files)))
+
+    tics, aper_precisions = zip(*results)
+    tics = np.array(tics)
+    aper_precisions = np.array(aper_precisions)
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', {'tics': tics, 'aper_precisions': aper_precisions})
