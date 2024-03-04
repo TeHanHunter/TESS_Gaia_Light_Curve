@@ -2775,4 +2775,4 @@ def plot_MAD():
 
 
 if __name__ == '__main__':
-    get_MAD_qlp()
+    get_MAD()
