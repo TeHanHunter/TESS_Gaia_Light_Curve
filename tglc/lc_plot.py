@@ -2663,8 +2663,6 @@ def figure_13():
 
 
 def get_MAD(i, files=None):
-    files = glob(f'/pdo/users/tehan/sector0056/lc/*/*.fits')
-    print(len(files))
     tic = np.zeros((len(files)))
     MAD_aper = np.zeros((len(files)))
     with fits.open(files[i], mode='denywrite') as hdul:
@@ -2767,7 +2765,7 @@ def plot_MAD():
 
 if __name__ == '__main__':
     files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
-
+    print(len(files))
     with Pool() as p:
         results = p.map(partial(get_MAD, files=files), range(len(files)))
 
