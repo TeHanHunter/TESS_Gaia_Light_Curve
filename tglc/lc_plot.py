@@ -2702,14 +2702,14 @@ def get_MAD_qlp():
                 tic[i] = qlp[0].header['TESSMAG']
                 quality = qlp[1].data['QUALITY']
                 index = np.where(quality == 0)
-                qlp_t = qlp[1].data['TIME'][index]
-                lc = qlp[1].data['KSPSAP_FLUX']
-                qlp_f = flatten(qlp_t, lc[index] / np.nanmedian(lc[index]), window_length=1, method='biweight',
-                                return_trend=False)
-                qlp_t = np.mean(qlp_t[:len(qlp_t) // 9 * 9].reshape(-1, 9), axis=1)
-                qlp_f = np.mean(qlp_f[:len(qlp_f) // 9 * 9].reshape(-1, 9), axis=1)
+                # qlp_t = qlp[1].data['TIME'][index]
+                lc = qlp[1].data['KSPSAP_FLUX'][index]
+                # qlp_f = flatten(qlp_t, lc[index] / np.nanmedian(lc[index]), window_length=1, method='biweight',
+                #                 return_trend=False)
+                # qlp_t = np.mean(qlp_t[:len(qlp_t) // 9 * 9].reshape(-1, 9), axis=1)
+                # qlp_f = np.mean(qlp_f[:len(qlp_f) // 9 * 9].reshape(-1, 9), axis=1)
 
-                MAD_qlp[i] = np.median(np.abs(np.diff(qlp_f)))
+                MAD_qlp[i] = np.median(np.abs(np.diff(lc)))
             except:
                 pass
     qlp_precision = 1.48 * MAD_qlp / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
