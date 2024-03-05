@@ -2663,8 +2663,6 @@ def figure_13():
 
 
 def get_MAD(i, files=None):
-    tic = np.zeros((len(files)))
-    MAD_aper = np.zeros((len(files)))
     with fits.open(files[i], mode='denywrite') as hdul:
         try:
             tic = hdul[0].header['TESSMAG']
@@ -2680,31 +2678,20 @@ def get_MAD(i, files=None):
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return tic, aper_precision
 
-def get_MAD_qlp():
-    files = glob(f'/pdo/users/tehan/s0056/**/*.fits', recursive=True)
-    print(len(files))
-    tic = np.zeros((len(files)))
-    MAD_qlp = np.zeros((len(files)))
-    for i in trange(len(files)):
-        with fits.open(files[i], mode='denywrite') as qlp:
-            try:
-                tic[i] = qlp[0].header['TESSMAG']
-                quality = qlp[1].data['QUALITY']
-                index = np.where(quality == 0)
-                # qlp_t = qlp[1].data['TIME'][index]
-                lc = qlp[1].data['KSPSAP_FLUX'][index]
-                # qlp_f = flatten(qlp_t, lc[index] / np.nanmedian(lc[index]), window_length=1, method='biweight',
-                #                 return_trend=False)
-                # qlp_t = np.mean(qlp_t[:len(qlp_t) // 9 * 9].reshape(-1, 9), axis=1)
-                # qlp_f = np.mean(qlp_f[:len(qlp_f) // 9 * 9].reshape(-1, 9), axis=1)
-
-                MAD_qlp[i] = np.median(np.abs(np.diff(lc)))
-            except:
-                pass
-    qlp_precision = 1.48 * MAD_qlp / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-    np.save('/pdo/users/tehan/s0056/mad_qlp_30min.npy',np.vstack((tic, qlp_precision)))
-    return
-
+def get_MAD_qlp(i, files=None):
+    with fits.open(files[i], mode='denywrite') as hdul:
+        try:
+            tic = hdul[0].header['TESSMAG']
+            quality = hdul[1].data['QUALITY']
+            index = np.where(quality == 0)
+            lc = hdul[1].data['KSPSAP_FLUX'][index]
+            qlp_f = np.mean(lc[:len(lc) // 9 * 9].reshape(-1, 9), axis=1)
+            MAD_qlp = np.median(np.abs(np.diff(qlp_f)))
+            qlp_precision = 1.48 * MAD_qlp / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+        except:
+            pass
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
+    return tic, qlp_precision
 
 def plot_MAD():
     mad = np.load('/home/tehan/Downloads/mad_180.npy')
@@ -2764,12 +2751,12 @@ def plot_MAD():
 
 
 if __name__ == '__main__':
-    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+    files = glob('/pdo/users/tehan/qlp_s56/*.fits')
     print(len(files))
     with Pool() as p:
-        results = p.map(partial(get_MAD, files=files), range(len(files)))
+        results = p.map(partial(get_MAD_qlp, files=files), range(len(files)))
 
-    tics, aper_precisions = zip(*results)
+    tics, qlp_precision = zip(*results)
     tics = np.array(tics)
-    aper_precisions = np.array(aper_precisions)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', {'tics': tics, 'aper_precisions': aper_precisions})
+    qlp_precision = np.array(qlp_precision)
+    np.save('/pdo/users/tehan/sector0056/mad_qlp_30min.npy', {'tics': tics, 'qlp_precision': qlp_precision})
