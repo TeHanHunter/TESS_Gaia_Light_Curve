@@ -167,7 +167,10 @@ def figure_2(folder='/home/tehan/Downloads/Data/',):
     difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, '<12.5', '>12.5')
 
     df = difference.to_pandas()
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 6))
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
     # sns.violinplot(data=df, x='diff', y='pipeline', bw_adjust=1, palette="Set1")
     sns.violinplot(data=df, x="diff", y="Tmag_int", hue="pipeline", split=True, bw_adjust=1.5, gap=.1, palette="Set2")
     plt.vlines(0, ymin=-0.5, ymax=1.5, color='k', ls='dashed')
