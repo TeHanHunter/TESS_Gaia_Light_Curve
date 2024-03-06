@@ -2688,6 +2688,7 @@ def get_MAD_qlp(i, files=None):
             qlp_f = np.mean(lc[:len(lc) // 9 * 9].reshape(-1, 9), axis=1)
             MAD_qlp = np.median(np.abs(np.diff(qlp_f)))
             qlp_precision = 1.48 * MAD_qlp / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+            print(tic, qlp_precision)
             return tic, qlp_precision
 
         except:
@@ -2696,7 +2697,7 @@ def get_MAD_qlp(i, files=None):
 
 def plot_MAD():
     # mad = np.load('/home/tehan/Downloads/mad_180.npy')
-    mad = np.load('/mnt/c/users/tehan/Desktop/mad_tglc_30min.npy')
+    mad = np.load('/mnt/c/Users/tehan/Desktop/mad_tglc_30min.npy')
     sorted_indices = np.argsort(mad[0])
     mad = mad[:, sorted_indices]
     # noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
@@ -2748,7 +2749,7 @@ def plot_MAD():
     # for lh in leg.legendHandles:
     #     lh.set_alpha(1)
     plt.xlim(7, 20.5)
-    plt.savefig(f'/mnt/c/users/tehan/Desktop/s56_mad_30min.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'/mnt/c/Users/tehan/Desktop/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # point-to-point scatter
 
 
