@@ -2687,8 +2687,8 @@ def get_MAD_qlp(i, files=None):
             lc = hdul[1].data['SAP_FLUX'][index]
             qlp_f = np.mean(lc[:len(lc) // 9 * 9].reshape(-1, 9), axis=1)
             MAD_qlp = np.median(np.abs(np.diff(qlp_f)))
-            qlp_precision = 1.48 * MAD_qlp / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-            print(tic, qlp_precision)
+            qlp_precision = 1.48 * MAD_qlp # / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+            # print(tic, qlp_precision)
             return tic, qlp_precision
 
         except:
