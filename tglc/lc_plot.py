@@ -1,4 +1,5 @@
 import os
+
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
@@ -18,6 +19,10 @@ from tglc.ffi_cut import ffi_cut
 import matplotlib.patheffects as pe
 from multiprocessing import Pool
 from functools import partial
+from scipy.interpolate import interp1d
+import seaborn as sns
+
+
 
 def load_eleanor(ld='', tic=1, sector=1):
     eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_corr.npy')
@@ -2678,6 +2683,7 @@ def get_MAD(i, files=None):
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return tic, aper_precision
 
+
 def get_MAD_qlp(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
         try:
@@ -2695,20 +2701,28 @@ def get_MAD_qlp(i, files=None):
             pass
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
 
+
 def plot_MAD():
     # mad = np.load('/home/tehan/Downloads/mad_180.npy')
-    mad = np.load('/mnt/c/Users/tehan/Desktop/mad_tglc_30min.npy')
-    sorted_indices = np.argsort(mad[0])
-    mad = mad[:, sorted_indices]
-    # noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+    mad = np.load('/home/tehan/Documents/tglc/mad_tglc_30min.npy', allow_pickle=True)
+    sorted_indices = np.argsort(mad.tolist()['tics'])
+    # mad = mad[:, sorted_indices]
+    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+    noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 2], hspace=0.1, wspace=0.05),
                            figsize=(5, 5))
-    ax[0].plot(mad[0], mad[1], '.', c='tomato', ms=0.1, label='TGLC Weighted', alpha=0.01)
+    ax[0].plot(mad.tolist()['tics'][sorted_indices], mad.tolist()['aper_precisions'][sorted_indices], '.', c='tomato',
+               ms=0.1, label='TGLC Aperture', alpha=0.01)
+    bin = 20000
+    tglc_mag = np.median(mad.tolist()['tics'][sorted_indices][
+                                 :len(mad.tolist()['tics'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+    tglc_binned = np.median(mad.tolist()['aper_precisions'][sorted_indices][
+                                 :len(mad.tolist()['aper_precisions'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+    # ax[0].plot(tglc_mag, tglc_binned, c='tomato', alpha=1)
 
-    # ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
     # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
-    ax[0].hlines(y=.1, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
-    ax[0].hlines(y=.01, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
+    ax[0].hlines(y=.1, xmin=8, xmax=np.max(mad.tolist()['tics']), colors='k', linestyles='dotted')
+    ax[0].hlines(y=.01, xmin=8, xmax=np.max(mad.tolist()['tics']), colors='k', linestyles='dotted')
 
     leg = ax[0].legend(loc=4, markerscale=4, fontsize=8)
     for lh in leg.legendHandles:
@@ -2718,49 +2732,123 @@ def plot_MAD():
     ax[0].set_ylim(1e-4, 1)
     ax[0].set_title('TESSminer 180-min bin')
 
-    # psf_ratio = mad[2] / mad[3]
-    # psf_tglc_mag = mad[0][np.invert(np.isnan(psf_ratio))]
-    # psf_ratio = psf_ratio[np.invert(np.isnan(psf_ratio))]
-    # psf_runningmed = ndimage.median_filter(psf_ratio, size=2000, mode='nearest')
-    #
-    # aper_ratio = mad[1] / mad[3]
-    # aper_tglc_mag = mad[0][np.invert(np.isnan(aper_ratio))]
-    # aper_ratio = aper_ratio[np.invert(np.isnan(aper_ratio))]
-    # aper_runningmed = ndimage.median_filter(aper_ratio, size=2000, mode='nearest')
-    #
-    # ax[1].plot(psf_tglc_mag[:-1000], psf_ratio[:-1000], '.', c='C1', ms=6, alpha=0.01,
-    #            label='TGLC PSF Precision/TGLC Weighted Precision')
-    # ax[1].plot(aper_tglc_mag[:-1000], aper_ratio[:-1000], '.', c='C0', ms=6, alpha=0.01,
-    #            label='TGLC Aperture Precision/TGLC Weighted Precision')
-    # ax[1].plot(psf_tglc_mag[:-1000], psf_runningmed[:-1000], c='C1', label='Median', lw=1.5,
-    #            path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    # ax[1].plot(aper_tglc_mag[:-1000], aper_runningmed[:-1000], c='C0', label='Median', lw=1.5,
-    #            path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    #
-    # ax[1].hlines(y=1, xmin=8, xmax=np.max(mad[0]), colors='k', linestyles='dotted')
-    # # ax[1].set_yscale('log')
-    # ax[1].set_ylim(0.5, 1.5)
-    # ax[1].tick_params(axis='y', which='minor', labelleft=False)
-    # ax[1].set_yticks(ticks=[0.5, 1, 1.5], labels=['0.5', '1', '1.5'])
-    # # ax[1].set_title('Photometric Precision Ratio')
-    # ax[1].set_xlabel('TESS magnitude')
-    # ax[1].set_ylabel('Precision Ratio')
-    # leg = ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
-    # for lh in leg.legendHandles:
-    #     lh.set_alpha(1)
-    plt.xlim(7, 20.5)
-    plt.savefig(f'/mnt/c/Users/tehan/Desktop/s56_mad_30min.png', bbox_inches='tight', dpi=300)
+    mad = np.load('/home/tehan/Documents/tglc/mad_qlp_30min.npy', allow_pickle=True)
+    sorted_indices = np.argsort(mad.tolist()['tics'])
+    ax[0].plot(mad.tolist()['tics'][sorted_indices], mad.tolist()['qlp_precision'][sorted_indices], '.', c='C0', ms=0.1,
+               label='QLP SAP', alpha=0.01)
+    bin = 10000
+    qlp_mag = np.nanmedian(mad.tolist()['tics'][sorted_indices][
+                                 :len(mad.tolist()['tics'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+    qlp_binned = np.nanmedian(mad.tolist()['qlp_precision'][sorted_indices][
+                                 :len(mad.tolist()['qlp_precision'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+    # ax[0].plot(qlp_mag, qlp_binned, c='C0', alpha=1)
+
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
+
+    leg = ax[0].legend(loc=4, markerscale=4, fontsize=8)
+    for lh in leg.legendHandles:
+        lh.set_alpha(1)
+    ax[0].set_ylabel(r'Estimated Photometric Precision')
+    ax[0].set_yscale('log')
+    ax[0].set_ylim(1e-4, 1)
+    ax[0].set_title('S56 30-min bin')
+
+
+    ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), c='tomato', alpha=1)
+    ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), c='C0', alpha=1)
+    ax[1].hlines(y=1, xmin=7, xmax=17, colors='k')
+    # ax[1].set_yscale('log')
+    ax[1].set_ylim(0.5, 2.5)
+    ax[1].tick_params(axis='y', which='minor', labelleft=False)
+    ax[1].set_yticks(ticks=[0.5, 1, 1.5, 2], labels=['0.5', '1', '1.5', '2'])
+    # ax[1].set_title('Photometric Precision Ratio')
+    ax[1].set_xlabel('TESS magnitude')
+    ax[1].set_ylabel('Precision Ratio')
+    leg = ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
+    for lh in leg.legendHandles:
+        lh.set_alpha(1)
+
+    plt.xlim(7, 16.5)
+    plt.savefig(f'/home/tehan/Documents/tglc/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # point-to-point scatter
 
+def plot_MAD_seaborn():
+    # Load data
+    mad_tglc = np.load('/home/tehan/Documents/tglc/mad_tglc_30min.npy', allow_pickle=True)
+    mad_qlp = np.load('/home/tehan/Documents/tglc/mad_qlp_30min.npy', allow_pickle=True)
+    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+
+    # Sort data
+    sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
+    sorted_indices_qlp = np.argsort(mad_qlp.tolist()['tics'])
+
+    # Interpolate noise model
+    noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
+
+    # Bin data
+    bin_size = 40000
+    tglc_mag = np.median(mad_tglc.tolist()['tics'][sorted_indices_tglc][
+                         :len(mad_tglc.tolist()['tics'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1,
+                                                                                                              bin_size),
+                         axis=1)
+    tglc_binned = np.median(mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc][:len(
+        mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1, bin_size),
+                            axis=1)
+
+    bin_size = 10000
+    qlp_mag = np.nanmedian(mad_qlp.tolist()['tics'][sorted_indices_qlp][
+                           :len(mad_qlp.tolist()['tics'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1,
+                                                                                                              bin_size),
+                           axis=1)
+    qlp_binned = np.nanmedian(mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp][:len(
+        mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+
+    # Create Seaborn plot
+    # sns.set_style("whitegrid")
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 6), gridspec_kw={'height_ratios': [3, 2], 'hspace': 0.1})
+
+    # Top panel
+    ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
+                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.01, color='tomato', alpha=0.01)
+    ax[0].scatter(0,0, s=1, color='tomato', alpha=1,label='TGLC Aperture')
+    ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
+                  s=0.01, color='g', alpha=0.01)
+    ax[0].scatter(0,0 ,s=1, color='g', alpha=1, label='QLP SAP')
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
+    # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
+    ax[0].set_ylabel('Estimated Photometric Precision')
+    ax[0].set_yscale('log')
+    ax[0].set_ylim(1e-4, 1)
+    ax[0].set_title('S56 30-min bin')
+    ax[0].legend(loc=4, markerscale=4, fontsize=8)
+
+    # Bottom panel
+    ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color='tomato', label='TGLC Aperture')
+    ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color='g', label='QLP SAP')
+    ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
+    ax[1].set_ylim(0.5, 2.5)
+    ax[1].set_yticks([0.5, 1, 1.5, 2])
+    ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
+    ax[1].set_xlabel('TESS magnitude')
+    ax[1].set_ylabel('Precision Ratio')
+    ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
+
+    plt.xlim(7, 16.5)
+    plt.savefig('/home/tehan/Documents/tglc/s56_mad_30min.png', bbox_inches='tight', dpi=300)
+    # plt.show()
 
 if __name__ == '__main__':
-    # plot_MAD()
-    files = glob('/pdo/users/tehan/qlp_s56/*.fits')
-    print(len(files))
-    with Pool() as p:
-        results = p.map(partial(get_MAD_qlp, files=files), range(len(files)))
-
-    tics, qlp_precision = zip(*results)
-    tics = np.array(tics)
-    qlp_precision = np.array(qlp_precision)
-    np.save('/pdo/users/tehan/sector0056/mad_qlp_30min.npy', {'tics': tics, 'qlp_precision': qlp_precision})
+    plot_MAD_seaborn()
+    # files = glob('/pdo/users/tehan/qlp_s56/*.fits')
+    # print(len(files))
+    # with Pool() as p:
+    #     results = p.map(partial(get_MAD_qlp, files=files), range(len(files)))
+    #
+    # tics, qlp_precision = zip(*results)
+    # tics = np.array(tics)
+    # qlp_precision = np.array(qlp_precision)
+    # np.save('/pdo/users/tehan/sector0056/mad_qlp_30min.npy', {'tics': tics, 'qlp_precision': qlp_precision})
