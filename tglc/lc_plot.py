@@ -20,6 +20,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 import pandas as pd
 import seaborn as sns
 
+
 def read_parameter(file=None):
     with open(file, 'r') as file:
         lines = file.readlines()
@@ -155,7 +156,10 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     # plt.savefig(os.path.join(folder, f'{param}_error_{pipeline}.png'), bbox_inches='tight', dpi=600)
 
 
-def figure_2(folder='/home/tehan/Downloads/Data/',):
+def figure_2(folder='/home/tehan/Downloads/Data/', ):
+    palette = sns.color_palette('colorblind')
+    tglc_color = palette[3]
+    qlp_color = palette[2]
     difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     difference_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 2.5)]
@@ -172,11 +176,13 @@ def figure_2(folder='/home/tehan/Downloads/Data/',):
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.8'})
     # sns.violinplot(data=df, x='diff', y='pipeline', bw_adjust=1, palette="Set1")
-    sns.violinplot(data=df, x="diff", y="Tmag_int", hue="pipeline", split=True, bw_adjust=1.5, gap=.1, palette="Set2")
+    sns.violinplot(data=df, x="diff", y="Tmag_int", hue="pipeline", split=True, bw_adjust=1.5, gap=.1, alpha=0.6,
+                   palette=[tglc_color, qlp_color])
     plt.vlines(0, ymin=-0.5, ymax=1.5, color='k', ls='dashed')
     plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
     plt.ylabel(r'TESS magnitude')
     plt.xlim(-0.075, 0.075)
+    plt.title('Exoplanet radius ratio fit')
     plt.savefig(os.path.join(folder, f'ror_violin.png'), bbox_inches='tight', dpi=600)
     plt.show()
 
@@ -186,6 +192,7 @@ def figure_2(folder='/home/tehan/Downloads/Data/',):
     median_value = np.median(difference_qlp['value'] - difference_qlp['pl_ratror'])
     print(median_value)
     print(len(np.where(difference_qlp['value'] - difference_qlp['pl_ratror'] < 0)[0]) / len(difference_qlp))
+
 
 def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r2=0.16, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
