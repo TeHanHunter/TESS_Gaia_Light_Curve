@@ -44,7 +44,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     elif last_sector_only:
         sector = 'last'
     print(f'Target: {target}')
-    target_ = Catalogs.query_object(target, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+    target_ = Catalogs.query_object(target, radius=42 * 0.707 / 3600, catalog="Gaia", version=2)
     if len(target_) == 0:
         target_ = Catalogs.query_object(target.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
     ra = target_[0]['ra']
@@ -305,8 +305,11 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
+                plt.imshow(source.flux[0], origin='lower')
+                plt.show()
+                plt.close()
                 # print(source.gaia[891])
-                # print(source.gaia[140])
+                print(source.gaia[star_num])
                 nearby_stars = np.argsort(
                     (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
                     (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[0:5]
@@ -453,13 +456,13 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [257392565]
-    # directory = f'/home/tehan/Documents/GEMS/'
+    tics = [252803606]
+    # directory = f'/home/tehan/Documents/tglc/'
     directory = f'/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4041831235071242624)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=778947608243864320)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            type='cal_psf_flux')
