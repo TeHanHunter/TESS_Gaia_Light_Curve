@@ -203,7 +203,7 @@ class Source(object):
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
         median_time = np.median(self.time)
-        interval = (median_time + 388.5) / 365.25
+        interval = (median_time - 388.5) / 365.25
 
         num_gaia = len(catalogdata)
         tic_id = np.zeros(num_gaia)
