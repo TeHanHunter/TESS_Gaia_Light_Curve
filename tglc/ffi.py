@@ -203,7 +203,7 @@ class Source(object):
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
         median_time = np.median(self.time)
-        interval = (median_time + 388.5) / 365.25
+        interval = (median_time - 388.5) / 365.25
         # Julian Day Number:	2457000.0 (TBJD=0)
         # Calendar Date/Time:	2014-12-08 12:00:00 388.5 days before J2016
 
