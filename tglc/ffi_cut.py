@@ -127,7 +127,7 @@ class Source_cut(object):
         self.flux_err = data_flux_err
         self.quality = np.zeros(len(data_time))
         median_time = np.median(data_time)
-        interval = (median_time + 388.5) / 365.25
+        interval = (median_time - 388.5) / 365.25
 
         mask = np.ones(np.shape(data_flux[0]))
         bad_pixels = np.zeros(np.shape(data_flux[0]))
