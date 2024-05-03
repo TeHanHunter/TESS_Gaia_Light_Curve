@@ -213,11 +213,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
-    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
+    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}_{power}.npy'
     if type(source) == Source_cut:
         bg_dof = 3
         lc_directory = f'{local_directory}lc/'
-        epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
+        epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}_{power}.npy'
     else:
         bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
@@ -307,16 +307,17 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             quality[abs(background_ - np.nanmedian(background_)) >= 5 * sigma] += 1
             if np.isnan(aper_lc).all():
                 continue
-            else:
-                lc_output(source, local_directory=lc_directory, index=i,
-                          tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
-                          aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
-                          bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
-                          cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
-                          y_aperture=y_aperture[i],
-                          near_edge=near_edge, save_aper=save_aper, portion=portion)
-    np.save(f'{local_directory}mag.npy', mag)
-    np.save(f'{local_directory}MAD_aper.npy', median_diff_aper)
-    np.save(f'{local_directory}MAD_psf.npy', median_diff_psf)
-    np.save(f'{local_directory}AAD_aper.npy', mean_diff_aper)
-    np.save(f'{local_directory}AAD_psf.npy', mean_diff_psf)
+            # else:
+            #     lc_output(source, local_directory=lc_directory, index=i,
+            #               tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
+            #               aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
+            #               bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
+            #               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
+            #               y_aperture=y_aperture[i],
+            #               near_edge=near_edge, save_aper=save_aper, portion=portion)
+    np.save(f'{local_directory}MAD_{target}_s{sector}_{power}.npy', np.array([mag, median_diff_aper, median_diff_psf]))
+    # np.save(f'{local_directory}mag.npy', mag)
+    # np.save(f'{local_directory}MAD_aper.npy', median_diff_aper)
+    # np.save(f'{local_directory}MAD_psf.npy', median_diff_psf)
+    # np.save(f'{local_directory}AAD_aper.npy', mean_diff_aper)
+    # np.save(f'{local_directory}AAD_psf.npy', mean_diff_psf)
