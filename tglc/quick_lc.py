@@ -459,7 +459,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     tics = [372207328, 4918918, 198153540, 34068865]
     # directory = f'/home/tehan/Downloads/TOI-6255/'
-    directory = f'/home/tehan/data/cosmos/GEMS/Fei/'
+    directory = f'/home/tehan/data/cosmos/Fei/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
