@@ -258,7 +258,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='c
                 f_err_all = np.append(f_err_all, np.array([hdul[1].header['CAPE_ERR']] * len(t)))
 
                 # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=1.5,
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=0.1,
                              marker='.', ms=3, zorder=2)
                 # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
                 #                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
@@ -281,11 +281,11 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='c
     plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
                  marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    plt.ylim(0.87, 1.05)
+    plt.ylim(0.998, 1.001)
     # plt.xlim(0.3, 0.43)
     plt.legend()
     plt.title(title)
-    plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
+    # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
@@ -457,17 +457,18 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [16005254]
-    directory = f'/home/tehan/Documents/tglc/'
-    # directory = f'/home/tehan/data/cosmos/GEMS/'
+    tics = [372207328, 4918918, 198153540, 34068865]
+    # directory = f'/home/tehan/Downloads/TOI-6255/'
+    directory = f'/home/tehan/data/cosmos/GEMS/Fei/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', type='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
+    # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', type='cal_aper_flux', ylow=0.9, yhigh=1.1)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            type='cal_psf_flux')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            type='cal_aper_flux')
 
     # target = f'266.489125, -33.8428'
