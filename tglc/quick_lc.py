@@ -1,12 +1,15 @@
 import os
-from tglc.target_lightcurve import epsf
-from tglc.ffi_cut import ffi_cut
-from astroquery.mast import Catalogs
 
-# warnings.simplefilter('ignore', UserWarning)
-from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
+from astroquery.mast import Catalogs
+# warnings.simplefilter('ignore', UserWarning)
+from threadpoolctl import ThreadpoolController
+
+from tglc.ffi_cut import ffi_cut
+from tglc.target_lightcurve import epsf
+
 controller = ThreadpoolController()
+
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
@@ -34,7 +37,7 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
         # try:
         source.select_sector(sector=source.sector_table['sector'][j])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, power=power)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, power=power)
         if first_sector_only:
             break
         else:
@@ -43,11 +46,16 @@ def tglc_lc(target='NGC 7654', local_directory='', size=90, save_aper=True, limi
 
 
 if __name__ == '__main__':
-    target = []
+    target = [410214986, 370133522, 262530407, 383390264, 394137592, ]
+              # 320004517, 207141131, 290131778, 333657795,
+              # 290348383, 264678534, 266980320, 441462736, 293954617, 267263253, 199376584, 300038935, 201248411,
+              # 166527623, 464646604
+
     local_directory = f'/home/tehan/data/cosmos/MAD_power/{target}/'
     os.makedirs(local_directory, exist_ok=True)
-    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
-                    get_all_lc=True, first_sector_only=False, sector=None, power=1.4)
+    for power in [1.,1.1,1.2,1.3,1.4,1.5]:
+        tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=20,
+                get_all_lc=True, first_sector_only=False, sector=None, power=power)
 
     ####### list of targets example
     # local_directory = '/home/tehan/data/ob_associations/'
