@@ -1,31 +1,32 @@
 import os
 import pickle
+from functools import partial
 from glob import glob
+from multiprocessing import Pool
+
+import astropy.units as u
+import matplotlib.pyplot as plt
+import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astroquery.mast import Catalogs
+from astroquery.mast import Tesscut
+# warnings.simplefilter('ignore', UserWarning)
+from threadpoolctl import ThreadpoolController
 from tqdm import trange
 from wotan import flatten
-from astropy.io import ascii
-from astropy.io import fits
-import matplotlib.pyplot as plt
-from multiprocessing import Pool
-from functools import partial
-from tglc.target_lightcurve import epsf
-from tglc.ffi_cut import ffi_cut
-from astroquery.mast import Catalogs
-import astropy.units as u
-from astropy.coordinates import SkyCoord
-from astroquery.mast import Tesscut
-# Tesscut._service_api_connection.TIMEOUT = 6000
 
-# warnings.simplefilter('ignore', UserWarning)
-from threadpoolctl import ThreadpoolController, threadpool_limits
-import numpy as np
+from tglc.ffi_cut import ffi_cut
+from tglc.target_lightcurve import epsf
+
+# Tesscut._service_api_connection.TIMEOUT = 6000
 
 controller = ThreadpoolController()
 
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None):
+            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None, power=1.4):
     '''
     Generate light curve for a single target.
 
@@ -73,7 +74,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
     elif first_sector_only:
         print(f'Only processing the first sector the target is observed in: Sector {sector_table["sector"][0]}.')
         print('Downloading Data from MAST and Gaia ...')
@@ -82,7 +83,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=source.sector_table['sector'][0])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
     elif last_sector_only:
         print(f'Only processing the last sector the target is observed in: Sector {sector_table["sector"][-1]}.')
         print('Downloading Data from MAST and Gaia ...')
@@ -90,7 +91,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=source.sector_table['sector'][-1])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
     elif sector == None:
         print(f'Processing all available sectors of the target.')
         print('Downloading Data from MAST and Gaia ...')
@@ -101,7 +102,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                              sector=sector_table['sector'][j],
                              limit_mag=limit_mag, transient=transient)
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
     else:
         print(
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
@@ -112,7 +113,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
 
 
 def search_stars(i, sector=1, tics=None, local_directory=None):
@@ -318,8 +319,9 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
                 max_flux = np.nanmax(
-                    np.nanmedian(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
-                              axis=0))
+                    np.nanmedian(
+                        source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
+                        axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(15, 5))
                 gs = fig.add_gridspec(5, 16)
                 gs.update(wspace=0.1, hspace=0.1)
@@ -442,7 +444,7 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.show()
 
 
-def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
+def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None, power=1.4):
     if method == 'query':
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'
@@ -450,34 +452,16 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
-                    transient=None)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', type='cal_aper_flux')
+                    transient=None, power=power)
+            # plot_lc(local_directory=f'{directory}TIC {tics[i]}/', type='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [372207328, 4918918, 198153540, 34068865]
-    # directory = f'/home/tehan/Downloads/TOI-6255/'
-    directory = f'/home/tehan/data/cosmos/Fei/'
-    os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
-    # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', type='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
-    # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-    #            type='cal_psf_flux')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
-    #            type='cal_aper_flux')
-
-    # target = f'266.489125, -33.8428'
-    # directory = f'/home/tehan/data/cosmos/michelle/'
-    # local_directory = f'{directory}{target}/'
-    # os.makedirs(local_directory, exist_ok=True)
-    # tglc_lc(target=target, local_directory=local_directory, size=50, save_aper=True, limit_mag=17,
-    #         get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=39, prior=None,
-    #         transient=['266.489125, -33.8428', 266.489125, -33.8428])
-    # plot_lc(local_directory=f'{local_directory}', type='cal_aper_flux')
-    # plot_lc(local_directory=f'{local_directory}', yhigh=150, type='aperture_flux')
-    # plot_contamination(local_directory=f'{local_directory}', gaia_dr3=4041831235071242624)
+    tics = [410214986, 370133522, 262530407, 383390264, 394137592, ]
+    # 320004517, 207141131, 290131778, 333657795,
+    # 290348383, 264678534, 266980320, 441462736, 293954617, 267263253, 199376584, 300038935, 201248411,
+    # 166527623, 464646604
+    for power in [1., 1.1, 1.2, 1.3, 1.4, 1.5]:
+        get_tglc_lc(tics=tics, directory=f'/home/tehan/data/cosmos/MAD_power/', power=power)
