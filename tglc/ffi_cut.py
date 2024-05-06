@@ -94,7 +94,6 @@ class Source_cut(object):
         else:
             self.select_sector(sector=sector)
 
-
     def select_sector(self, sector=1):
         """
         select sector to use if target is in multi-sectors

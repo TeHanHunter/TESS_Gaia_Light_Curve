@@ -457,9 +457,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [372207328, 4918918, 198153540, 34068865]
-    # directory = f'/home/tehan/Downloads/TOI-6255/'
-    directory = f'/home/tehan/data/cosmos/Fei/'
+    tics = [16005254]
+    directory = f'/home/tehan/data/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
@@ -470,14 +469,3 @@ if __name__ == '__main__':
     #            type='cal_psf_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            type='cal_aper_flux')
-
-    # target = f'266.489125, -33.8428'
-    # directory = f'/home/tehan/data/cosmos/michelle/'
-    # local_directory = f'{directory}{target}/'
-    # os.makedirs(local_directory, exist_ok=True)
-    # tglc_lc(target=target, local_directory=local_directory, size=50, save_aper=True, limit_mag=17,
-    #         get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=39, prior=None,
-    #         transient=['266.489125, -33.8428', 266.489125, -33.8428])
-    # plot_lc(local_directory=f'{local_directory}', type='cal_aper_flux')
-    # plot_lc(local_directory=f'{local_directory}', yhigh=150, type='aperture_flux')
-    # plot_contamination(local_directory=f'{local_directory}', gaia_dr3=4041831235071242624)

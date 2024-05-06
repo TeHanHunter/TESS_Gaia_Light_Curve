@@ -260,7 +260,7 @@ class Source(object):
         attempt = 0
         while attempt < 5:
             try:
-                catalogdata = Gaia.cone_search_async(coord, radius,
+                catalogdata = Gaia.cone_search_async(coord, radius=radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
                 return catalogdata
