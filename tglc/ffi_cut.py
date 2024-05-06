@@ -60,7 +60,7 @@ class Source_cut(object):
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         print(f'Target Gaia: {target[0]["designation"]}')
-        catalogdata = Gaia.cone_search_async(coord, radius,
+        catalogdata = Gaia.cone_search_async(coord, radius=radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
         print(f'Found {len(catalogdata)} Gaia DR3 objects.')
