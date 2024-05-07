@@ -96,13 +96,14 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         print(f'Processing all available sectors of the target.')
         print('Downloading Data from MAST and Gaia ...')
         for j in range(len(sector_table)):
-            print(f'################################################')
-            print(f'Downloading Sector {sector_table["sector"][j]}.')
-            source = ffi_cut(target=target, size=size, local_directory=local_directory,
-                             sector=sector_table['sector'][j],
-                             limit_mag=limit_mag, transient=transient)
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
+            if sector_table['sector'][j] < 56:
+                print(f'################################################')
+                print(f'Downloading Sector {sector_table["sector"][j]}.')
+                source = ffi_cut(target=target, size=size, local_directory=local_directory,
+                                 sector=sector_table['sector'][j],
+                                 limit_mag=limit_mag, transient=transient)
+                epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                     name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, power=power)
     else:
         print(
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
