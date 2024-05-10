@@ -170,10 +170,17 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
         for j in range(len(sector_table)):
             print(f'################################################')
-            print(f'Downloading Sector {sector_table["sector"][j]} (product={ffi}).')
-            source = ffi_cut(target=target, size=size, local_directory=local_directory,
-                             sector=sector_table['sector'][j],
-                             limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout)
+            print(f'Downloading Sector {sector_table["sector"][j]}.')
+            attempt = 0
+            while attempt < 5:
+                try:
+                    source = ffi_cut(target=target, size=size, local_directory=local_directory,
+                                     sector=sector_table['sector'][j],
+                                     limit_mag=limit_mag, transient=transient)
+                    attempt = 5
+                except:
+                    attempt += 1
+
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     else:
@@ -622,17 +629,17 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
-                    transient=None, ffi=ffi, mast_timeout=mast_timeout)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', ffi=ffi)
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=75, prior=prior,
+                    transient=None)
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
     tics = [259172249]
-    # directory = f'/Users/tehan/Documents/TGLC/'
-    directory = '/home/tehan/data/cosmos/GEMS/'
+    directory = f'/Users/tehan/Documents/TGLC/'
+    # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, directory=directory, ffi='SPOC')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
