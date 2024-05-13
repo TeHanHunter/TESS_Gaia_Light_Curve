@@ -20,7 +20,7 @@ def crossmatch(target_list='ListofMdwarfTICs_ForTe.csv', folder='/home/tehan/dat
 
     # Count occurrences using vectorized operations
     occurrences = np.zeros(len(gaia_dr3))
-    for i, designation in enumerate(gaia_dr3):
+    for i, designation in tqdm(enumerate(gaia_dr3)):
         occurrences[i] = sum(designation in j for j in files)
 
     # Add occurrences as a new column
