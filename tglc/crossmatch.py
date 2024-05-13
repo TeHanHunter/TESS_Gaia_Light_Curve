@@ -15,8 +15,8 @@ def crossmatch(target_list='ListofMdwarfTICs_ForTe.csv', folder='/home/tehan/dat
         for j in files:
             if designation == j:
                 occurances[i] += 1
-    targets['occurances_even'] = occurances
-    ascii.write(targets, folder + 'ListofMdwarfTICs_crossmatch.csv', overwrite=True)
+    targets['occurances'] = occurances
+    ascii.write(targets, folder + 'ListofMdwarfTICs_crossmatch_even.csv', overwrite=True)
     return targets
 
 
