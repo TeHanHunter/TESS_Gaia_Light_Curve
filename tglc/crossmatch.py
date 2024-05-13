@@ -5,7 +5,7 @@ from astropy.io import ascii
 
 def crossmatch(target_list='ListofMdwarfTICs_ForTe.csv', folder='/home/tehan/data/cosmos/GEMS/tessminer/'):
     files = glob.glob(folder + '*.fits')
-    files = [file.split('-')[0] for file in files]
+    files = [file.split('-')[1] for file in files]
     targets = ascii.read(folder + target_list)
     gaia_dr3 = [target.split()[-1] for target in targets['designation']]
     occurances = np.zeros(len(gaia_dr3))
