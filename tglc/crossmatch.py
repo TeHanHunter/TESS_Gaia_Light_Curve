@@ -1,5 +1,5 @@
 import glob
-import tqdm
+from tqdm import tqdm
 import numpy as np
 from astropy.io import ascii
 
