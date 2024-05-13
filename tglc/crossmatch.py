@@ -11,7 +11,7 @@ def crossmatch(target_list='ListofMdwarfTICs_ForTe.csv', folder='/home/tehan/dat
     occurances = np.zeros(len(gaia_dr3))
     print(files[:10])
     print(gaia_dr3[:10])
-    for i, designation in enumerate(tqdm(gaia_dr3)):
+    for i, designation in enumerate(tqdm(gaia_dr3[:20])):
         for j in files:
             if designation == j:
                 occurances[i] += 1
