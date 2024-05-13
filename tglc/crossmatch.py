@@ -11,12 +11,11 @@ def crossmatch(target_list='ListofMdwarfTICs_ForTe.csv', folder='/home/tehan/dat
     occurances = np.zeros(len(gaia_dr3))
     print(files[:10])
     print(gaia_dr3[:10])
-    for i, designation in enumerate(tqdm(gaia_dr3[:20])):
+    for i, designation in enumerate(tqdm(gaia_dr3)):
         for j in files:
             if designation == j:
                 occurances[i] += 1
-                print(occurances)
-    targets['occurances'] = occurances
+    targets['occurances_even'] = occurances
     ascii.write(targets, folder + 'ListofMdwarfTICs_crossmatch.csv', overwrite=True)
     return targets
 
