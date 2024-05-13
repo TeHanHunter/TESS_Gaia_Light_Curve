@@ -19,7 +19,13 @@ def crossmatch(target_list='ListofMdwarfTICs_ForTe.csv', folder='/home/tehan/dat
     ascii.write(targets, folder + 'ListofMdwarfTICs_crossmatch_even.csv', overwrite=True)
     return targets
 
+def combine(folder='/Users/tehan/Downloads/'):
+    even = ascii.read(folder + 'ListofMdwarfTICs_crossmatch_even.csv')
+    # odd = ascii.read(folder + 'ListofMdwarfTICs_crossmatch_odd.csv')
+    occurrences = even['occurances'].data # + odd['occurances'].data
+    print(len(np.where(occurrences == 0)[0]))
 
 if __name__ == '__main__':
-    targets = crossmatch()
-    print(targets[:10])
+    # targets = crossmatch()
+    # print(targets[:10])
+    combine()
