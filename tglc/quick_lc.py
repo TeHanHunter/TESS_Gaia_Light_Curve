@@ -452,7 +452,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=True, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None, power=power)
             # plot_lc(local_directory=f'{directory}TIC {tics[i]}/', type='cal_aper_flux')
     if method == 'search':
@@ -460,9 +460,9 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [410214986, 370133522, 262530407, 383390264, 394137592, ]
-    # 320004517, 207141131, 290131778, 333657795,
-    # 290348383, 264678534, 266980320, 441462736, 293954617, 267263253, 199376584, 300038935, 201248411,
+    tics = [410214986, 370133522, 262530407, 383390264, 394137592,
+    320004517, 207141131, 290131778, 333657795,
+    290348383, 264678534, 266980320, 441462736, 293954617, 267263253, 199376584, 300038935, 201248411,]
     # 166527623, 464646604
     for power in [1., 1.1, 1.2, 1.3, 1.4, 1.5]:
         get_tglc_lc(tics=tics, directory=f'/home/tehan/data/cosmos/MAD_power/', power=power)
