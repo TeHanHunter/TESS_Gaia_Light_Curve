@@ -637,7 +637,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [8474795]
+    tics = [60922830]
     directory = f'/Users/tehan/Documents/TGLC/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
