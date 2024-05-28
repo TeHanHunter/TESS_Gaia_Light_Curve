@@ -355,7 +355,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
                                  f'TIC {int(source.tic["TIC"][index])}', rotation=90)
-                    except kindError:
+                    except TypeError:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
                                  f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
