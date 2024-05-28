@@ -30,11 +30,11 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     Generate light curve for a single target.
 
     :param target: target identifier
-    :type target: str, required
+    :kind target: str, required
     :param local_directory: output directory
-    :type local_directory: str, required
+    :kind local_directory: str, required
     :param size: size of the FFI cut, default size is 90. Recommend large number for better quality. Cannot exceed 100.
-    :type size: int, optional
+    :kind size: int, optional
     '''
     os.makedirs(local_directory + f'logs/', exist_ok=True)
     os.makedirs(local_directory + f'lc/', exist_ok=True)
@@ -161,27 +161,27 @@ def star_spliter(server=1,  # or 2
     return
 
 
-def plot_lc(local_directory=None, type='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None):
+def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None):
     files = glob(f'{local_directory}lc/*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             plt.figure(constrained_layout=False, figsize=(8, 4))
-            plt.plot(hdul[1].data['time'], hdul[1].data[type], '.', c='silver', label=type)
-            plt.plot(hdul[1].data['time'][q], hdul[1].data[type][q], '.k', label=f'{type}_flagged')
+            plt.plot(hdul[1].data['time'], hdul[1].data[kind], '.', c='silver', label=kind)
+            plt.plot(hdul[1].data['time'][q], hdul[1].data[kind][q], '.k', label=f'{kind}_flagged')
             plt.xlim(xlow, xhigh)
             plt.ylim(ylow, yhigh)
-            plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}')
+            plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}')
             plt.legend()
             # plt.show()
             plt.savefig(
-                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{type}.png',
+                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}.png',
                 dpi=300)
             plt.close()
 
 
-def plot_aperture(local_directory=None, type='cal_aper_flux'):
+def plot_aperture(local_directory=None, kind='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     portion = [0.9361215204370542, 0.9320709087810205]
@@ -192,8 +192,8 @@ def plot_aperture(local_directory=None, type='cal_aper_flux'):
             print(files[i], portion[i])
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             plt.figure(constrained_layout=False, figsize=(8, 4))
-            plt.plot(hdul[1].data['time'] % 3.79262026, hdul[1].data[type], '.', c='silver', label=type)
-            plt.plot(hdul[1].data['time'][q] % 3.79262026, hdul[1].data[type][q], '.k', label=f'{type}_flagged')
+            plt.plot(hdul[1].data['time'] % 3.79262026, hdul[1].data[kind], '.', c='silver', label=kind)
+            plt.plot(hdul[1].data['time'][q] % 3.79262026, hdul[1].data[kind][q], '.k', label=f'{kind}_flagged')
             aperture_bar = 709.5512462444653 * portion[i]
             aper_lc = np.nansum(hdul[0].data, axis=(1, 2))
             local_bg = np.nanmedian(aper_lc) - aperture_bar
@@ -226,7 +226,7 @@ def plot_aperture(local_directory=None, type='cal_aper_flux'):
     np.savetxt(f'{local_directory}TESS_TOI-5344_5_5_aper.csv', data, delimiter=',')
 
 
-def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='cal_aper_flux'):
+def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     fig = plt.figure(figsize=(13, 5))
@@ -238,26 +238,26 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='c
         with fits.open(files[j], mode='denywrite') as hdul:
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            # q = [a and b for a, b in zip(q, list(hdul[1].data[type] > 0.85))]
+            # q = [a and b for a, b in zip(q, list(hdul[1].data[kind] > 0.85))]
             # if hdul[0].header['sector'] == 15:
             #     q = [a and b for a, b in zip(q, list(hdul[1].data['time'] < 1736))]
             if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
                 if hdul[0].header["SECTOR"] <= 26:
                     t = hdul[1].data['time'][q]
-                    f = hdul[1].data[type][q]
+                    f = hdul[1].data[kind][q]
                 elif hdul[0].header["SECTOR"] <= 55:
                     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
                     f = np.mean(
-                        hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 3 * 3].reshape(-1, 3), axis=1)
+                        hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 3 * 3].reshape(-1, 3), axis=1)
                 else:
                     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
                     f = np.mean(
-                        hdul[1].data[type][q][:len(hdul[1].data[type][q]) // 9 * 9].reshape(-1, 9), axis=1)
+                        hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 9 * 9].reshape(-1, 9), axis=1)
                 t_all = np.append(t_all, t)
                 f_all = np.append(f_all, f)
                 f_err_all = np.append(f_err_all, np.array([hdul[1].header['CAPE_ERR']] * len(t)))
 
-                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[type], '.', c='silver', ms=3)
+                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[kind], '.', c='silver', ms=3)
                 plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=0.1,
                              marker='.', ms=3, zorder=2)
                 # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
@@ -267,7 +267,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, type='c
                 #              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
-            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {type}'
+            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {kind}'
     # PDCSAP_files = glob('/home/tehan/Documents/GEMS/TIC 172370679/PDCSAP/*.txt')
     # for i in range(len(files)):
     #     PDCSAP = ascii.read(PDCSAP_files[i])
@@ -355,7 +355,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
                                  f'TIC {int(source.tic["TIC"][index])}', rotation=90)
-                    except TypeError:
+                    except kindError:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
                                  f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
@@ -451,7 +451,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', type='cal_aper_flux')
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
@@ -461,11 +461,11 @@ if __name__ == '__main__':
     directory = f'/home/tehan/data/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', type='cal_aper_flux')
-    # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', type='cal_aper_flux', ylow=0.9, yhigh=1.1)
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
+    # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-    #            type='cal_psf_flux')
+    #            kind='cal_psf_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
-    #            type='cal_aper_flux')
+    #            kind='cal_aper_flux')
