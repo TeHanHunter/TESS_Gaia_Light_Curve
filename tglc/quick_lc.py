@@ -486,9 +486,14 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                               y_gaia - source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
                               width=0.02, color='r', edgecolor=None, head_width=0.1)
                     try:
-                        txt = ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] + 0.5,
-                                       source.gaia[f'sector_{sector}_y'][nearby_stars[l]] - 0.05,
-                                       f'TIC {int(source.tic["TIC"][index])}', size=7)
+                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
+                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
+                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90)
+                    except TypeError:
+                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
+                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
+                                 f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
+                ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
 
                     except TypeError:
                         designation = source.gaia[f"DESIGNATION"][nearby_stars[l]]
