@@ -43,8 +43,9 @@ def combine(folder='/Users/tehan/Downloads/'):
     # print(even[np.where(sector_num-occurrences > 0)[0][0]], odd[np.where(sector_num-occurrences > 0)[0][0]])
     # print(len(np.where(occurrences == 0)[0]))
     missing = all[np.where(sector_num-occurrences > 0)[0]]
-    print(missing[:10])
+    print(sum(sector_num-occurrences))
     missing.write(folder + 'ListofMdwarfTICs_crossmatch_missing.csv')
+
 if __name__ == '__main__':
     # targets = crossmatch()
     # print(targets[:10])
