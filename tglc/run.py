@@ -99,11 +99,11 @@ if __name__ == '__main__':
     tic_ids = np.array(table['TICID'])
     t, gaia = convert_tic_to_gaia(tic_ids)
     t.write('/home/tehan/data/cosmos/mallory/mdwarfs_s1_gaia.csv', overwrite=True)
-    # sector = 1
-    # local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    # for i in range(16):
-    #     name = f'{1 + i // 4}-{1 + i % 4}'
-    #     lc_per_ccd(camccd=name, local_directory=local_directory, target_list=gaia)
+    sector = 1
+    local_directory = f'/home/tehan/data/sector{sector:04d}/'
+    for i in range(16):
+        name = f'{1 + i // 4}-{1 + i % 4}'
+        lc_per_ccd(camccd=name, local_directory=local_directory, target_list=gaia)
 
     # For TESSminer
     # file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_crossmatch_missing.csv'
