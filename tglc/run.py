@@ -23,6 +23,7 @@ from multiprocessing import Pool
 from functools import partial
 from glob import glob
 from astropy.table import Table
+from astroquery.mast import Catalogs
 
 def lc_per_cut(i, camccd='', local_directory='', target_list=None):
     cut_x = i // 14
@@ -65,25 +66,63 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{camccd}', x=0.5, y=0.92, size=20)
     plt.savefig(f'{local_directory}log/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
 
+def convert_tic_to_gaia(tic_ids):
+    """
+    Convert a list of TIC IDs to Gaia DR3 designations.
+
+    Parameters:
+    tic_ids (np.array): Array of TIC IDs.
+
+    Returns:
+    tuple: (astropy.table.Table, list) containing TIC IDs and corresponding Gaia DR3 designations.
+    """
+    gaia_results = []
+    gaia_designations = []
+
+    for tic_id in tqdm(tic_ids):
+        catalog_data = Catalogs.query_criteria(catalog="TIC", ID=tic_id)
+        if len(catalog_data) > 0:
+            gaia_id = catalog_data[0]["GAIA"]
+            gaia_results.append((tic_id, gaia_id))
+            gaia_designations.append(gaia_id)
+        else:
+            gaia_results.append((tic_id, None))
+            gaia_designations.append(None)
+
+    # Convert results to an astropy Table
+    table = Table(rows=gaia_results, names=('TIC', 'designation'))
+    return table, gaia_designations
 
 if __name__ == '__main__':
-    file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_crossmatch_missing.csv'
+    file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     table = Table.read(file_path, format='csv', delimiter=',')
-    result_dict = {}
-    for row in tqdm(table, desc="Processing data"):
-        designation = row['designation']
-        sectors = row['sectors'].split()
-        for sector in sectors:
-            if sector not in result_dict:
-                result_dict[sector] = []
-            result_dict[sector].append(designation)
-    sorted_keys = sorted(result_dict.keys())
-    print(sorted_keys)
-    for sector in trange(2, 56, 2):
-        target_list = result_dict[str(sector)]
-        print("Number of cpu : ", multiprocessing.cpu_count())
-        sector = sector
-        local_directory = f'/home/tehan/data/sector{sector:04d}/'
-        for i in range(16):
-            name = f'{1 + i // 4}-{1 + i % 4}'
-            lc_per_ccd(camccd=name, local_directory=local_directory, target_list=target_list)
+    tic_ids = np.array(table['TICID'])
+    t, gaia = convert_tic_to_gaia(tic_ids)
+    t.write('/home/tehan/data/cosmos/mallory/mdwarfs_s1_gaia.csv', overwrite=True)
+    # sector = 1
+    # local_directory = f'/home/tehan/data/sector{sector:04d}/'
+    # for i in range(16):
+    #     name = f'{1 + i // 4}-{1 + i % 4}'
+    #     lc_per_ccd(camccd=name, local_directory=local_directory, target_list=gaia)
+
+    # For TESSminer
+    # file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_crossmatch_missing.csv'
+    # table = Table.read(file_path, format='csv', delimiter=',')
+    # result_dict = {}
+    # for row in tqdm(table, desc="Processing data"):
+    #     designation = row['designation']
+    #     sectors = row['sectors'].split()
+    #     for sector in sectors:
+    #         if sector not in result_dict:
+    #             result_dict[sector] = []
+    #         result_dict[sector].append(designation)
+    # sorted_keys = sorted(result_dict.keys())
+    # print(sorted_keys)
+    # for sector in trange(2, 56, 2):
+    #     target_list = result_dict[str(sector)]
+    #     print("Number of cpu : ", multiprocessing.cpu_count())
+    #     sector = sector
+    #     local_directory = f'/home/tehan/data/sector{sector:04d}/'
+    #     for i in range(16):
+    #         name = f'{1 + i // 4}-{1 + i % 4}'
+    #         lc_per_ccd(camccd=name, local_directory=local_directory, target_list=target_list)
