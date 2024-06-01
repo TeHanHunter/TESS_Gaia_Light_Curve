@@ -17,6 +17,7 @@ from tglc.quick_lc import tglc_lc
 import matplotlib.patheffects as pe
 from astropy.table import Table
 from scipy.optimize import curve_fit
+from matplotlib import font_manager
 
 
 def timebin(hdul, q, kind='cal_aper_flux', binsize=1800):
@@ -42,7 +43,7 @@ def timebin(hdul, q, kind='cal_aper_flux', binsize=1800):
     return t, f, ferr
 
 
-def bin_time_series(hdul, q, bin_size=1800/3600/24):
+def bin_time_series(hdul, q, bin_size=1800 / 3600 / 24):
     # Extract time, flux, and error from HDUList
     time = hdul[1].data['time'][q]
     flux = hdul[1].data['cal_aper_flux'][q]
@@ -67,7 +68,8 @@ def bin_time_series(hdul, q, bin_size=1800/3600/24):
         if np.any(in_bin):
             binned_time.append(np.nanmean(time[in_bin]))
             binned_flux.append(np.nanmean(flux[in_bin]))
-            binned_flux_err.append(np.sqrt(np.nansum((flux_error**2) / np.nansum(in_bin))))  # Combined error for the bin
+            binned_flux_err.append(
+                np.sqrt(np.nansum((flux_error ** 2) / np.nansum(in_bin))))  # Combined error for the bin
         else:
             binned_time.append(bin_start + bin_size / 2)
             binned_flux.append(np.nan)
@@ -133,26 +135,35 @@ def fit_rv(file='/Users/tehan/Documents/SURFSUP/GJ_1111_rv_unbin.csv', period=0.
     time_bin = np.mean(data['bjd'][:len(data) // 2 * 2].reshape(-1, 2), axis=1)
     rv_bin = np.mean(data['rv'][:len(data) // 2 * 2].reshape(-1, 2), axis=1)
     e_rv_bin = np.mean(data['e_rv'][:len(data) // 2 * 2].reshape(-1, 2), axis=1)
-    time_bin_pf = (time_bin+0.07) % period / period
+    time_bin_pf = (time_bin + 0.07) % period / period
     arg = np.argsort(time_bin_pf)
     time_bin_pf = time_bin_pf[arg]
     rv_bin = rv_bin[arg]
     popt, pcov = curve_fit(sinusoid, time_bin_pf, rv_bin, p0=[-100, 5, 0.1])  # Initial guess: [amplitude, mean, stddev]
     print(popt)
+    # Define two colors in RGB format
+    font_path = '/Users/tehan/Library/Fonts/CrimsonPro-Regular.ttf'  # Specify the correct path
+    font_manager.fontManager.addfont(font_path)
+    plt.rcParams['font.family'] = 'Crimson Pro'
     # Set Seaborn style with custom font
-    sns.set(style="whitegrid", rc={"axes.edgecolor": "k", "grid.color": "none","font.family": "serif", "font.serif": "Georgia"})
-
+    sns.set(style="whitegrid",
+            rc={"axes.edgecolor": "k", "grid.color": "none", "font.family": "serif", "font.serif": "Crimson Pro",
+                "font.size": 16, "axes.titlesize": 16, "axes.labelsize": 15, "xtick.labelsize": 16,
+                "ytick.labelsize": 16, "legend.fontsize": 12})
     # Plot the data and the fitted curve
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 1], hspace=0.1, wspace=0.05),
-                           figsize=(6, 6))
+                           figsize=(5,4))
 
-    ax[0].errorbar(time_bin_pf, rv_bin, e_rv_bin, fmt='o', color='r', ecolor='r',)
+    ax[0].errorbar(time_bin_pf, rv_bin, e_rv_bin, fmt='o', color='r', ecolor='r', )
     ax[0].plot(np.linspace(0, 1, 100), sinusoid(np.linspace(0, 1, 100), *popt), 'k')
-    ax[0].set_ylabel('GJ 1111 RV (km/s)')
-    ax[1].errorbar(time_bin_pf, rv_bin - sinusoid(time_bin_pf, *popt), e_rv_bin, fmt='o', color='r', ecolor='r',)
+    ax[0].set_ylabel('GJ 1111 RV (m/s)')
+    ax[0].set_ylim(-130, 130)
+
+    ax[1].errorbar(time_bin_pf, rv_bin - sinusoid(time_bin_pf, *popt), e_rv_bin, fmt='o', color='r', ecolor='r', )
     ax[1].hlines(0, xmin=0, xmax=1, color='black')  # Add horizontal line at y=0
     ax[1].set_ylabel('Residual')
-
+    ax[1].set_xlabel('Phase')
+    ax[1].set_ylim(-22, 22)
     # Remove the background, add axes edges, and ticks
     for axis in ax:
         axis.set_facecolor('none')
@@ -162,9 +173,10 @@ def fit_rv(file='/Users/tehan/Documents/SURFSUP/GJ_1111_rv_unbin.csv', period=0.
         axis.spines['left'].set_visible(True)
         axis.tick_params(axis='both', which='both', length=5)
 
-    plt.savefig('/Users/tehan/Documents/SURFSUP/GJ1111_RV.svg', format='svg', transparent=True)
+    plt.savefig('/Users/tehan/Documents/SURFSUP/GJ1111_RV.svg', format='svg', transparent=True,bbox_inches="tight")
     plt.show()
 
+
 if __name__ == '__main__':
-    plot_2d_with_horizontal_arrow()
-    # fit_rv()
+    # plot_2d_with_horizontal_arrow()
+    fit_rv()
