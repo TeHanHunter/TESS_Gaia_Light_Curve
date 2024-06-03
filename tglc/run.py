@@ -104,7 +104,7 @@ if __name__ == '__main__':
     local_directory = f'/home/tehan/data/sector{sector:04d}/'
     for i in range(16):
         name = f'{1 + i // 4}-{1 + i % 4}'
-        lc_per_ccd(camccd=name, local_directory=local_directory, target_list=mdwarf_gaia['designation'])
+        lc_per_ccd(camccd=name, local_directory=local_directory, target_list=mdwarf_gaia['designation'].tolist())
 
     # For TESSminer
     # file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_crossmatch_missing.csv'
