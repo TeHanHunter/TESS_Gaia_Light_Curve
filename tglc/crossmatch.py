@@ -40,13 +40,17 @@ def combine(folder='/Users/tehan/Downloads/'):
     even = ascii.read(folder + 'ListofMdwarfTICs_crossmatch_even.csv')
     odd = ascii.read(folder + 'ListofMdwarfTICs_crossmatch_odd.csv')
     occurrences = even['occurances'].data + odd['occurances'].data
-    # print(len(np.where(sector_num-occurrences != 0)[0]))
+    print(len(np.where(sector_num - occurrences != 0)[0]))
     print(len(np.where(sector_num - occurrences > 0)[0]))
-    old_lcs = np.zeros((len(sector_num)))
+    complete_miss = np.zeros((len(sector_num)))
     for i in range(len(sector_num)):
-        if sector_num[i] - occurrences[i] > 0 and occurrences[i] > 0:
-            old_lcs[i] = occurrences[i]
-    print(np.sum(np.where(old_lcs > 0)[0]))
+        if sector_num[i] > 0 and occurrences[i] == 0:
+            complete_miss[i] = 1
+    print(np.sum(complete_miss))
+    complete_miss_t = all[np.where(complete_miss == 1)[0]]
+    complete_miss_t.write(folder + 'ListofMdwarfTICs_crossmatch_complete_miss.csv')
+
+    # print(np.sum(np.where(old_lcs > 0)[0]))
     # print(len(np.where(sector_num == 0)[0]))
     # print(even[np.where(sector_num-occurrences > 0)[0][0]], odd[np.where(sector_num-occurrences > 0)[0][0]])
     # print(len(np.where(occurrences == 0)[0]))
