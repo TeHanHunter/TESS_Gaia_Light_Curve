@@ -2844,13 +2844,13 @@ def plot_MAD_seaborn():
     # plt.show()
 
 if __name__ == '__main__':
-    plot_MAD_seaborn()
-    # files = glob('/pdo/users/tehan/qlp_s56/*.fits')
-    # print(len(files))
-    # with Pool() as p:
-    #     results = p.map(partial(get_MAD_qlp, files=files), range(len(files)))
-    #
-    # tics, qlp_precision = zip(*results)
-    # tics = np.array(tics)
-    # qlp_precision = np.array(qlp_precision)
-    # np.save('/pdo/users/tehan/sector0056/mad_qlp_30min.npy', {'tics': tics, 'qlp_precision': qlp_precision})
+    # plot_MAD_seaborn()
+    files = glob('/pdo/users/tehan/sector0056/lc/*.fits')
+    print(len(files))
+    with Pool(96) as p:
+        results = p.map(partial(get_MAD, files=files), range(len(files)))
+
+    tics, tglc_precision = zip(*results)
+    tics = np.array(tics)
+    tglc_precision = np.array(tglc_precision)
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_5x5_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
