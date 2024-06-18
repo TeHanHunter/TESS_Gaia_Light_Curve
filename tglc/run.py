@@ -36,7 +36,7 @@ def lc_per_cut(i, local_directory=''):
          local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
 
 
-def lc_per_ccd(local_directory='', cam=None, ccd=None, cores=64):
+def lc_per_ccd(local_directory='', cam=None, ccd=None, cores=96):
     start = 0
     end = 3136
     if cam is not None:
