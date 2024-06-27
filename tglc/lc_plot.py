@@ -2668,8 +2668,8 @@ def figure_13():
 
 
 def get_MAD(i, files=None):
-    with fits.open(files[i], mode='denywrite') as hdul:
-        try:
+    try:
+        with fits.open(files[i], mode='denywrite') as hdul:
             tic = hdul[0].header['TESSMAG']
             bin = 9
             aper_flux = np.mean(
@@ -2678,8 +2678,9 @@ def get_MAD(i, files=None):
             aper_flux = aper_flux[~np.isnan(aper_flux)]
             MAD_aper = np.median(np.abs(np.diff(aper_flux)))
             aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-        except:
-            pass
+    except:
+        tic = np.nan
+        aper_precision = np.nan
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return tic, aper_precision
 
@@ -2700,7 +2701,6 @@ def get_MAD_qlp(i, files=None):
         except:
             pass
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
-
 
 def plot_MAD():
     # mad = np.load('/home/tehan/Downloads/mad_180.npy')
