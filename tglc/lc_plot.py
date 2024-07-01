@@ -2777,10 +2777,10 @@ def plot_MAD_seaborn():
     tglc_color = palette[3]
     tglc_color_5x5 = palette[1]
     qlp_color = palette[2]
-    mad_tglc = np.load('/home/tehan/Documents/tglc/mad_tglc_30min.npy', allow_pickle=True)
-    mad_tglc_5x5 = np.load('/home/tehan/Documents/tglc/mad_tglc_5x5_30min.npy', allow_pickle=True)
-    mad_qlp = np.load('/home/tehan/Documents/tglc/mad_qlp_30min.npy', allow_pickle=True)
-    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
+    mad_tglc_5x5 = np.load('/Users/tehan/Documents/TGLC/mad_tglc_5x5_30min.npy', allow_pickle=True)
+    mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
+    noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
 
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
@@ -2805,8 +2805,8 @@ def plot_MAD_seaborn():
                          :len(mad_tglc_5x5.tolist()['tics'][sorted_indices_tglc_5x5]) // bin_size * bin_size].reshape(-1,
                                                                                                               bin_size),
                          axis=1)
-    tglc_binned_5x5 = np.median(mad_tglc_5x5.tolist()['aper_precisions'][sorted_indices_tglc_5x5][:len(
-        mad_tglc_5x5.tolist()['aper_precisions'][sorted_indices_tglc_5x5]) // bin_size * bin_size].reshape(-1, bin_size),
+    tglc_binned_5x5 = np.median(mad_tglc_5x5.tolist()['tglc_precision'][sorted_indices_tglc_5x5][:len(
+        mad_tglc_5x5.tolist()['tglc_precision'][sorted_indices_tglc_5x5]) // bin_size * bin_size].reshape(-1, bin_size),
                             axis=1)
 
     bin_size = 10000
@@ -2830,7 +2830,7 @@ def plot_MAD_seaborn():
                   mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.01, color=tglc_color, alpha=0.01)
     ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
     ax[0].scatter(mad_tglc_5x5.tolist()['tics'][sorted_indices_tglc_5x5],
-                  mad_tglc_5x5.tolist()['aper_precisions'][sorted_indices_tglc_5x5], s=0.01, color=tglc_color_5x5, alpha=0.01)
+                  mad_tglc_5x5.tolist()['tglc_precision'][sorted_indices_tglc_5x5], s=0.01, color=tglc_color_5x5, alpha=0.01)
     ax[0].scatter(0,0, s=1, color=tglc_color_5x5, alpha=1,label='TGLC Aperture')
     ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
                   s=0.01, color=qlp_color, alpha=0.01)
@@ -2854,19 +2854,20 @@ def plot_MAD_seaborn():
     ax[1].set_xlabel('TESS magnitude')
     ax[1].set_ylabel('Precision Ratio')
     ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
-
+    print(tglc_binned[:10])
+    print(tglc_binned_5x5[:10])
     plt.xlim(7, 16.5)
-    plt.savefig('/home/tehan/Documents/tglc/s56_mad_30min.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
 if __name__ == '__main__':
-    # plot_MAD_seaborn()
-    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
-    print(len(files))
-    with Pool(96) as p:
-        results = p.map(partial(get_MAD, files=files), range(len(files)))
-
-    tics, tglc_precision = zip(*results)
-    tics = np.array(tics)
-    tglc_precision = np.array(tglc_precision)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_5x5_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
+    plot_MAD_seaborn()
+    # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+    # print(len(files))
+    # with Pool(96) as p:
+    #     results = p.map(partial(get_MAD, files=files), range(len(files)))
+    #
+    # tics, tglc_precision = zip(*results)
+    # tics = np.array(tics)
+    # tglc_precision = np.array(tglc_precision)
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_5x5_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
