@@ -2871,7 +2871,7 @@ def get_aperture_qlp(i, files=None):
         except:
             pass
 if __name__ == '__main__':
-    plot_MAD_seaborn()
+    # plot_MAD_seaborn()
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
     # with Pool(96) as p:
