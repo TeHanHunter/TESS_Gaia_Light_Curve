@@ -2831,7 +2831,7 @@ def plot_MAD_seaborn():
     ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
     ax[0].scatter(mad_tglc_5x5.tolist()['tics'][sorted_indices_tglc_5x5],
                   mad_tglc_5x5.tolist()['tglc_precision'][sorted_indices_tglc_5x5], s=0.01, color=tglc_color_5x5, alpha=0.01)
-    ax[0].scatter(0,0, s=1, color=tglc_color_5x5, alpha=1,label='TGLC Aperture')
+    ax[0].scatter(0,0, s=1, color=tglc_color_5x5, alpha=1,label=r'TGLC $5 \times 5$')
     ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
                   s=0.01, color=qlp_color, alpha=0.01)
     ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
@@ -2860,6 +2860,16 @@ def plot_MAD_seaborn():
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
+def get_aperture_qlp(i, files=None):
+    with fits.open(files[i], mode='denywrite') as hdul:
+        try:
+            tic = hdul[0].header['TESSMAG']
+            qlp_aperture = float(hdul[1].header['BESTAP'].split(':')[0])
+            # print(tic, qlp_precision)
+            return tic, qlp_aperture
+
+        except:
+            pass
 if __name__ == '__main__':
     plot_MAD_seaborn()
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
@@ -2871,3 +2881,13 @@ if __name__ == '__main__':
     # tics = np.array(tics)
     # tglc_precision = np.array(tglc_precision)
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_5x5_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
+
+    files = glob('/pdo/users/tehan/qlp_s56/*.fits')
+    print(len(files))
+    with Pool() as p:
+        results = p.map(partial(get_aperture_qlp, files=files), range(len(files)))
+
+    tics, qlp_aperture = zip(*results)
+    tics = np.array(tics)
+    qlp_aperture = np.array(qlp_aperture)
+    np.save('/pdo/users/tehan/sector0056/aperture_qlp_30min.npy', {'tics': tics, 'qlp_aperture': qlp_aperture})
