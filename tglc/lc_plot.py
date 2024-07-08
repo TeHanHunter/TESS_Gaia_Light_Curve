@@ -2840,7 +2840,7 @@ def plot_MAD_seaborn():
     ax[0].set_ylabel('Estimated Photometric Precision')
     ax[0].set_yscale('log')
     ax[0].set_ylim(1e-4, 1)
-    ax[0].set_title('S56 30-min bin')
+    ax[0].set_title('Sector 56, 30-min bin')
     ax[0].legend(loc=4, markerscale=4, fontsize=8)
 
     # Bottom panel
@@ -2871,7 +2871,7 @@ def get_aperture_qlp(i, files=None):
         except:
             pass
 if __name__ == '__main__':
-    # plot_MAD_seaborn()
+    plot_MAD_seaborn()
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
     # with Pool(96) as p:
@@ -2882,12 +2882,12 @@ if __name__ == '__main__':
     # tglc_precision = np.array(tglc_precision)
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_5x5_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
 
-    files = glob('/pdo/users/tehan/qlp_s56/*.fits')
-    print(len(files))
-    with Pool() as p:
-        results = p.map(partial(get_aperture_qlp, files=files), range(len(files)))
-
-    tics, qlp_aperture = zip(*results)
-    tics = np.array(tics)
-    qlp_aperture = np.array(qlp_aperture)
-    np.save('/pdo/users/tehan/sector0056/aperture_qlp_30min.npy', {'tics': tics, 'qlp_aperture': qlp_aperture})
+    # files = glob('/pdo/users/tehan/qlp_s56/*.fits')
+    # print(len(files))
+    # with Pool() as p:
+    #     results = p.map(partial(get_aperture_qlp, files=files), range(len(files)))
+    #
+    # tics, qlp_aperture = zip(*results)
+    # tics = np.array(tics)
+    # qlp_aperture = np.array(qlp_aperture)
+    # np.save('/pdo/users/tehan/sector0056/aperture_qlp_30min.npy', {'tics': tics, 'qlp_aperture': qlp_aperture})
