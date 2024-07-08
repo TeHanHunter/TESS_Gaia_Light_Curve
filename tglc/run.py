@@ -99,13 +99,34 @@ if __name__ == '__main__':
     # tic_ids = np.array(table['TICID'])
     # t, gaia = convert_tic_to_gaia(tic_ids)
     # t.write('/home/tehan/data/cosmos/mallory/mdwarfs_s1_gaia.csv', overwrite=True)
-    mdwarf_gaia = Table.read("/home/tehan/data/cosmos/mallory/mdwarfs_s1_gaia.csv", format="csv")
-    sector = 1
-    local_directory = f'/home/tehan/data/sector{sector:04d}/'
-    for i in range(16):
-        name = f'{1 + i // 4}-{1 + i % 4}'
-        lc_per_ccd(camccd=name, local_directory=local_directory, target_list=mdwarf_gaia['designation'].tolist())
+    # mdwarf_gaia = Table.read("/home/tehan/data/cosmos/mallory/mdwarfs_s1_gaia.csv", format="csv")
+    # sector = 1
+    # local_directory = f'/home/tehan/data/sector{sector:04d}/'
+    # for i in range(16):
+    #     name = f'{1 + i // 4}-{1 + i % 4}'
+    #     lc_per_ccd(camccd=name, local_directory=local_directory, target_list=mdwarf_gaia['designation'].tolist())
 
+    # For TESSminer
+    file_path = '/home/tehan/data/cosmos/oddo/dataframe_for_Te.csv'
+    table = Table.read(file_path, format='csv', delimiter=',')
+    result_dict = {}
+    for row in tqdm(table, desc="Processing data"):
+        designation = row['GAIADR3']
+        sectors = row['sectors'].split(',')
+        for sector in sectors:
+            if sector not in result_dict:
+                result_dict[sector] = []
+            result_dict[sector].append(int(designation))
+    sorted_keys = sorted(result_dict.keys())
+    print(sorted_keys)
+    for sector in trange(1, 56, 2):
+        target_list = result_dict[str(sector)]
+        print("Number of cpu : ", multiprocessing.cpu_count())
+        sector = sector
+        local_directory = f'/home/tehan/data/sector{sector:04d}/'
+        for i in range(16):
+            name = f'{1 + i // 4}-{1 + i % 4}'
+            lc_per_ccd(camccd=name, local_directory=local_directory, target_list=target_list)
     # For TESSminer
     # file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_crossmatch_missing.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
