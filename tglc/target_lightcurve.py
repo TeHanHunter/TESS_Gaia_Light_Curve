@@ -322,7 +322,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                         fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
                                near_edge=near_edge)
                 aper_lc = np.sum(
-                    aperture[:, max(0, star_y - 2):min(5, star_y + 3), max(0, star_x - 2):min(5, star_x + 3)],
+                    aperture[:, max(0, star_y - 3):min(7, star_y + 4), max(0, star_x - 3):min(7, star_x + 4)],
                     axis=(1, 2))
                 if source.sector < 27:  # primary
                     exposure_time = 1800

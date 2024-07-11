@@ -182,7 +182,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     size = source.size  # TODO: must be even?
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
-    cut_size = 5
+    cut_size = 7
     in_frame = np.where(np.invert(np.isnan(source.flux[0])))
     left = np.maximum(np.min(in_frame[1]), x - cut_size // 2)
     right = np.minimum(np.max(in_frame[1]), x + cut_size // 2 + 1)
@@ -259,7 +259,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             a = np.delete(A_, edge_pixel[outliers], 0)
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 3:8, 3:8]) / np.nansum(psf_shape)
+    portion = np.nansum(psf_shape[:, 2:9, 2:9]) / np.nansum(psf_shape)
     # print(np.nansum(psf_shape[:, 5, 5]) / np.nansum(psf_shape))
     # np.save(f'toi-5344_psf_{source.sector}.npy', psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
