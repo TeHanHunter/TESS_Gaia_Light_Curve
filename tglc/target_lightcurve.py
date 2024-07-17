@@ -192,7 +192,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
     hdul = fits.HDUList([primary_hdu, table_hdu])
     hdul.writeto(
-        f'/home/tehan/data/cosmos/oddo/lc/hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits',
+        f'/home/tehan/data/cosmos/oddo/lc_extra/hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits',
         overwrite=True)
     return
 

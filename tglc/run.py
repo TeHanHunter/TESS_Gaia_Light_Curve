@@ -107,7 +107,7 @@ if __name__ == '__main__':
     #     lc_per_ccd(camccd=name, local_directory=local_directory, target_list=mdwarf_gaia['designation'].tolist())
 
     # For TESSminer
-    file_path = '/home/tehan/data/cosmos/oddo/dataframe_for_Te.csv'
+    file_path = '/home/tehan/data/cosmos/oddo/small_dataframe_for_Te.csv'
     table = Table.read(file_path, format='csv', delimiter=',')
     result_dict = {}
     for row in tqdm(table, desc="Processing data"):
@@ -119,7 +119,7 @@ if __name__ == '__main__':
             result_dict[sector].append(int(designation))
     sorted_keys = sorted(result_dict.keys())
     print(sorted_keys)
-    for sector in trange(2, 56, 2):
+    for sector in trange(1, 56, 2):
         target_list = result_dict[str(sector)]
         print("Number of cpu : ", multiprocessing.cpu_count())
         sector = sector
