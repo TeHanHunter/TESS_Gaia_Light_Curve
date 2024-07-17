@@ -119,7 +119,7 @@ if __name__ == '__main__':
             result_dict[sector].append(int(designation))
     sorted_keys = sorted(result_dict.keys())
     print(sorted_keys)
-    for sector in trange(1, 56, 2):
+    for sector in trange(2, 56, 2):
         target_list = result_dict[str(sector)]
         print("Number of cpu : ", multiprocessing.cpu_count())
         sector = sector
