@@ -2871,16 +2871,16 @@ def get_aperture_qlp(i, files=None):
         except:
             pass
 if __name__ == '__main__':
-    # plot_MAD_seaborn()
-    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
-    print(len(files))
-    with Pool(120) as p:
-        results = p.map(partial(get_MAD, files=files), range(len(files)))
-
-    tics, tglc_precision = zip(*results)
-    tics = np.array(tics)
-    tglc_precision = np.array(tglc_precision)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_7x7_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
+    plot_MAD_seaborn()
+    # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+    # print(len(files))
+    # with Pool(120) as p:
+    #     results = p.map(partial(get_MAD, files=files), range(len(files)))
+    # 
+    # tics, tglc_precision = zip(*results)
+    # tics = np.array(tics)
+    # tglc_precision = np.array(tglc_precision)
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_5x5_30min.npy', {'tics': tics, 'tglc_precision': tglc_precision})
 
     # files = glob('/pdo/users/tehan/qlp_s56/*.fits')
     # print(len(files))
