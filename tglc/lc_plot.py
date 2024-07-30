@@ -2700,7 +2700,7 @@ def get_MAD_qlp(i, files=None):
 
             MAD_qlp = np.median(np.abs(np.diff(qlp_f)))
             qlp_precision = 1.48 * MAD_qlp / np.sqrt(2)
-            if 13.2 < tic < 13.5 and 0.003 < qlp_precision < 0.005:
+            if 13.2 < tic < 13.5 and 0.007 < qlp_precision < 0.008:
                 print(files[i])
             # print(tic, qlp_precision)
             return tic, qlp_precision
