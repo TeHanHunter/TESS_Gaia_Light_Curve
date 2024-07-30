@@ -82,7 +82,7 @@ def plot_MAD_seaborn(qlp_tic, qlp_precision, tglc_tic, tglc_precision):
 
     plt.xlim(7, 16.5)
     # plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min_example.png', bbox_inches='tight', dpi=300)
-    plt.savefig('/home/tehan/Documents/tglc/s56_mad_30min_example.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/home/tehan/data/cosmos/s56_mad_30min_example.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
 if __name__ == '__main__':
