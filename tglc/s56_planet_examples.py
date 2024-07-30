@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from scipy.interpolate import interp1d
-from tglc.lc_plot import get_MAD_qlp
+from tglc.lc_plot import get_MAD, get_MAD_qlp
 from astropy.io import ascii
 from tqdm import trange
 
@@ -70,7 +70,7 @@ def plot_MAD_seaborn(qlp_tic, qlp_precision, tglc_tic, tglc_precision):
     ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, label='TGLC Aperture')
     ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, label='QLP SAP')
     ax[1].plot(qlp_tic, qlp_precision / noise_interp(qlp_tic), color=qlp_color, ls='', marker='o', ms=4)
-    # ax[1].plot(tglc_tic, tglc_precision / noise_interp(tglc_tic), color=tglc_color, ls='', marker='o', ms=10)
+    ax[1].plot(tglc_tic, tglc_precision / noise_interp(tglc_tic), color=tglc_color, ls='', marker='o', ms=4)
 
     ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
     ax[1].set_ylim(0.5, 2.5)
@@ -94,11 +94,11 @@ if __name__ == '__main__':
         t,q = get_MAD_qlp(i,files)
         qlp_tic.append(t)
         qlp_precision.append(q)
-    # files = glob('/Users/tehan/Documents/TGLC/s56_mad_tglc/*.fits')
+    files = glob('/Users/tehan/Documents/TGLC/s56_mad_tglc/*.fits')
     tglc_tic = []
     tglc_precision = []
-    # for i in range(len(files)):
-    #     t,q = get_MAD(i,files)
-    #     tglc_tic.append(t)
-    #     tglc_precision.append(q)
+    for i in range(len(files)):
+        t,q = get_MAD(i,files)
+        tglc_tic.append(t)
+        tglc_precision.append(q)
     plot_MAD_seaborn(qlp_tic, qlp_precision, tglc_tic, tglc_precision)
