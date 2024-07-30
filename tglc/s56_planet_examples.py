@@ -14,9 +14,9 @@ def plot_MAD_seaborn(qlp_tic, qlp_precision, tglc_tic, tglc_precision):
     # mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
     # mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
     # noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
-    mad_tglc = np.load('/home/tehan/Documents/tglc/mad_tglc_30min.npy', allow_pickle=True)
-    mad_qlp = np.load('/home/tehan/Documents/tglc/mad_qlp_30min.npy', allow_pickle=True)
-    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+    mad_tglc = np.load('/home/tehan/data/cosmos/mad_tglc_30min.npy', allow_pickle=True)
+    mad_qlp = np.load('/home/tehan/data/cosmos/mad_qlp_30min.npy', allow_pickle=True)
+    noise_2015 = ascii.read('/home/tehan/data/cosmos/prior_mad/noisemodel.dat')
 
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
