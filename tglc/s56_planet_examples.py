@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from scipy.interpolate import interp1d
-from tglc.lc_plot import get_MAD, get_MAD_qlp
-from astropy.io import fits, ascii
+from tglc.lc_plot import get_MAD_qlp
+from astropy.io import ascii
+from tqdm import trange
 
 def plot_MAD_seaborn(qlp_tic, qlp_precision, tglc_tic, tglc_precision):
     palette = sns.color_palette('colorblind')
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     files = glob('/home/tehan/data/cosmos/transit_depth_validation_qlp/*.fits')
     qlp_tic = []
     qlp_precision = []
-    for i in range(len(files)):
+    for i in trange(len(files)):
         t,q = get_MAD_qlp(i,files)
         qlp_tic.append(t)
         qlp_precision.append(q)
