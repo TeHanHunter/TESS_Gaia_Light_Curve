@@ -86,8 +86,8 @@ def plot_MAD_seaborn(qlp_tic, qlp_precision, tglc_tic, tglc_precision):
     # plt.show()
 
 if __name__ == '__main__':
-    files = glob('/home/tehan/data/cosmos/transit_depth_validation_qlp/*.fits')
-    # files = glob('/Users/tehan/Documents/TGLC/s56_mad_qlp/*.fits')
+    # files = glob('/home/tehan/data/cosmos/transit_depth_validation_qlp/*.fits')
+    files = glob('/Users/tehan/Documents/TGLC/s56_mad_qlp/*.fits')
     qlp_tic = []
     qlp_precision = []
     for i in trange(len(files)):
