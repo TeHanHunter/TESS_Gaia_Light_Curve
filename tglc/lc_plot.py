@@ -2776,9 +2776,9 @@ def plot_MAD_seaborn():
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
     qlp_color = palette[2]
-    mad_tglc = np.load('/home/tehan/Documents/tglc/mad_tglc_30min.npy', allow_pickle=True)
-    mad_qlp = np.load('/home/tehan/Documents/tglc/mad_qlp_30min.npy', allow_pickle=True)
-    noise_2015 = ascii.read('/home/tehan/Documents/tglc/prior_mad/noisemodel.dat')
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
+    mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
+    noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
 
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
@@ -2840,7 +2840,7 @@ def plot_MAD_seaborn():
     ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
 
     plt.xlim(7, 16.5)
-    plt.savefig('/home/tehan/Documents/tglc/s56_mad_30min.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
 if __name__ == '__main__':
