@@ -2691,7 +2691,13 @@ def get_MAD_qlp(i, files=None):
             quality = hdul[1].data['QUALITY']
             index = np.where(quality == 0)
             lc = hdul[1].data['SAP_FLUX'][index]
-            qlp_f = np.mean(lc[:len(lc) // 9 * 9].reshape(-1, 9), axis=1)
+            if hdul[0].header['SECTOR'] > 55:
+                qlp_f = np.mean(lc[:len(lc) // 9 * 9].reshape(-1, 9), axis=1)
+            elif hdul[0].header['SECTOR'] > 26:
+                qlp_f = np.mean(lc[:len(lc) // 3 * 3].reshape(-1, 3), axis=1)
+            else:
+                qlp_f = lc
+
             MAD_qlp = np.median(np.abs(np.diff(qlp_f)))
             qlp_precision = 1.48 * MAD_qlp / np.sqrt(2)
             # print(tic, qlp_precision)
