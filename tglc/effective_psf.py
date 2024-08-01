@@ -208,7 +208,9 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         psf_lc = np.zeros(len(source.time))
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
-        portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
+        e_psf_2d = e_psf[:, :over_size ** 2].reshape(np.shape(e_psf)[0], over_size, over_size)
+        portion = (36 / 49) * np.nansum(e_psf_2d[:, 8:15, 8:15], axis=0) / np.nansum(e_psf_2d,axis=0)  # only valid for factor = 2
+        # portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
         return aperture, psf_lc, y - down, x - left, portion
     left_ = left - x + 5
     right_ = right - x + 5
@@ -259,7 +261,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
             a = np.delete(A_, edge_pixel[outliers], 0)
             aper_flat = np.delete(aper_flat, edge_pixel[outliers])
             psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+    portion = np.nansum(psf_shape[:, 4:7, 4:7], axis=(1,2)) / np.nansum(psf_shape, axis=(1,2))
     # print(np.nansum(psf_shape[:, 5, 5]) / np.nansum(psf_shape))
     # np.save(f'toi-5344_psf_{source.sector}.npy', psf_shape)
     return aperture, psf_lc, y - down, x - left, portion
@@ -438,10 +440,14 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     # flux_bar = aperture_bar * centroid_to_aper_ratio
     # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
     aperture_bar = bar * portion
+    import matplotlib.pyplot as plt
+    plt.plot(portion,'.')
+    plt.show()
     # print(bar)
     local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
-    if np.isnan(local_bg):
-        local_bg = 0
+    print(len(local_bg))
+    # if np.isnan(local_bg):
+    #     local_bg = 0
     aper_lc = aper_lc - local_bg
     psf_bar = bar
     local_bg = np.nanmedian(psf_lc[q]) - psf_bar
