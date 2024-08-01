@@ -324,7 +324,8 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
         psf_lc = np.zeros(len(source.time))
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
-        portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
+        e_psf_2d = e_psf[:, :over_size ** 2].reshape(np.shape(e_psf)[0],over_size, over_size)
+        portion = (36 / 49) * np.nansum(e_psf_2d[:, 8:15, 8:15], axis=0) /np.nansum(e_psf_2d, axis=0)  # only valid for factor = 2
         return aperture, psf_lc, y[star_num] - down, x[star_num] - left, portion
     # left_ = left - x[star_num] + 5
     # right_ = right - x[star_num] + 5
@@ -383,7 +384,7 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
             psf_sim[:, 11 ** 2 + j, j] = np.ones(len(source.time)) / (
                     prior * 1.5e4 * 10 ** ((10 - source.gaia[star]['tess_mag']) / 2.5))
         else:
-            portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+            portion = np.nansum(psf_shape[:, 4:7, 4:7], axis=0) / np.nansum(psf_shape, axis=0)
 
     star_index = np.where(np.array(field_star_num) == star_num)[0]
     field_star = psf_sim[0, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8], :].reshape(cut_size ** 2,
