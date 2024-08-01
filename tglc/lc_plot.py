@@ -275,6 +275,92 @@ def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
     plt.savefig(os.path.join(folder, f'{param}_diagonal_transit_depth.png'), bbox_inches='tight', dpi=600)
 
 
+def figure_4(type='all'):
+    palette = sns.color_palette('colorblind')
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '1', 'grid.color': '1'})
+    data17 = np.loadtxt('/Users/tehan/Downloads/TIC-269820902/Photometry/TESS_Eleanorlarge_S17.csv', delimiter=',')
+    data18 = np.loadtxt('/Users/tehan/Downloads/TIC-269820902/Photometry/TESS_Eleanorlarge_S18.csv', delimiter=',')
+    data24 = np.loadtxt('/Users/tehan/Downloads/TIC-269820902/Photometry/TESS_Eleanorlarge_S24.csv', delimiter=',')
+    t17 = data17[:, 0] - 2457000
+    f17 = data17[:, 1]
+    # _, trend = flatten(t17, f17, window_length=1, method='biweight', return_trend=True)
+    # f17 = (f17 - trend) / np.nanmedian(f17) + 1
+    t18 = data18[:, 0][70:]- 2457000
+    f18 = data18[:, 1][70:]
+    _, trend = flatten(t18, f18, window_length=1, method='biweight', return_trend=True)
+    f18 = (f18 - trend) / np.nanmedian(f18) + 1
+    t24 = data24[:, 0]- 2457000
+    f24 = data24[:, 1]
+    _, trend = flatten(t24, f24, window_length=1, method='biweight', return_trend=True)
+    f24 = (f24 - trend) / np.nanmedian(f24) + 1
+
+    if type == 'all':
+        plt.figure(figsize=(10,3))
+        plt.plot(t17, f17, '.', ms=4, c=palette[0])
+        plt.plot(t18, f18, '.', ms=4, c=palette[3])
+        plt.plot(t24-138, f24, '.', ms=4, c=palette[2])
+        plt.ylabel('Flux e-/s')
+        plt.xticks([1777, 1803, 1831],['Sector 17', 'Sector 18', 'Sector 24'])
+        plt.savefig('/Users/tehan/Documents/TGLC/eb_eleanor.png', dpi=600)
+        plt.show()
+    elif type == 'phase-fold':
+        plt.figure(figsize=(4,3), constrained_layout=True)
+        plt.plot(t17 % 1.01968/1.01968, f17, '.', ms=4, c=palette[0])
+        # plt.plot(t18 % 1.01968/1.01968, f18, '.', ms=4, c=palette[3])
+        # plt.plot(t24 % 1.01968/1.01968, f24, '.', ms=4, c=palette[2])
+        plt.ylabel('Flux e-/s')
+        plt.xlabel('Phase')
+        # plt.xticks([1777],['Sector 17'])
+        plt.savefig('/Users/tehan/Documents/TGLC/eb_eleanor_17_pf.png', dpi=600)
+        plt.show()
+
+def figure_5(type='all'):
+    palette = sns.color_palette('colorblind')
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '1', 'grid.color': '1'})
+    hdul17 = fits.open('/Users/tehan/Downloads/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0017-cam3-ccd2_tess_v1_llc.fits')
+    hdul18 = fits.open('/Users/tehan/Downloads/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0018-cam3-ccd1_tess_v1_llc.fits')
+    hdul24 = fits.open('/Users/tehan/Downloads/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0024-cam4-ccd3_tess_v1_llc.fits')
+    q = [a and b for a, b in zip(list(hdul17[1].data['TESS_flags'] == 0), list(hdul17[1].data['TGLC_flags'] == 0))]
+    t17 = hdul17[1].data['time'][q]
+    f17 = hdul17[1].data['cal_aper_flux'][q]
+    f17_aperture = hdul17[1].data['aperture_flux'][q]
+    f17_psf = hdul17[1].data['psf_flux'][q]
+    q = [a and b for a, b in zip(list(hdul18[1].data['TESS_flags'] == 0), list(hdul18[1].data['TGLC_flags'] == 0))]
+    t18 = hdul18[1].data['time'][q][70:]
+    f18 = hdul18[1].data['cal_aper_flux'][q][70:]
+    f18_aperture = hdul18[1].data['aperture_flux'][q][70:]
+    f18_psf = hdul18[1].data['psf_flux'][q][70:]
+    q = [a and b for a, b in zip(list(hdul24[1].data['TESS_flags'] == 0), list(hdul24[1].data['TGLC_flags'] == 0))]
+    t24 = hdul24[1].data['time'][q]
+    f24 = hdul24[1].data['cal_aper_flux'][q]
+    f24_aperture = hdul24[1].data['aperture_flux'][q]
+    f24_psf = hdul24[1].data['psf_flux'][q]
+
+    if type == 'all':
+        plt.figure(figsize=(10, 3))
+        plt.plot(t17, f17_aperture, '.', ms=4, c=palette[0])
+        plt.plot(t18, f18_aperture, '.', ms=4, c=palette[3])
+        plt.plot(t24 - 138, f24_aperture, '.', ms=4, c=palette[2])
+        plt.ylabel('Flux e-/s')
+        plt.xticks([1777, 1803, 1831], ['Sector 17', 'Sector 18', 'Sector 24'])
+        plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_aperture.png', dpi=600)
+        plt.show()
+    elif type == 'phase-fold':
+        plt.figure(figsize=(4,3), constrained_layout=True)
+        plt.plot(t17 % 1.01968/1.01968, f17, '.', ms=4, c=palette[0])
+        plt.plot(t18 % 1.01968/1.01968, f18, '.', ms=4, c=palette[3])
+        plt.plot(t24 % 1.01968/1.01968, f24, '.', ms=4, c=palette[2])
+        plt.ylabel('Flux e-/s')
+        plt.xlabel('Phase')
+        # plt.xticks([1777],['Sector 17'])
+        plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_pf.png', dpi=600)
+        plt.show()
+
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
-    figure_2()
+    # figure_4(type='phase-fold')
+    figure_5(type='all')
