@@ -321,9 +321,9 @@ def figure_5(type='all'):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '1'})
-    hdul17 = fits.open('/Users/tehan/Downloads/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0017-cam3-ccd2_tess_v1_llc.fits')
-    hdul18 = fits.open('/Users/tehan/Downloads/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0018-cam3-ccd1_tess_v1_llc.fits')
-    hdul24 = fits.open('/Users/tehan/Downloads/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0024-cam4-ccd3_tess_v1_llc.fits')
+    hdul17 = fits.open('/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0017-cam3-ccd2_tess_v1_llc.fits')
+    hdul18 = fits.open('/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0018-cam3-ccd1_tess_v1_llc.fits')
+    hdul24 = fits.open('/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0024-cam4-ccd3_tess_v1_llc.fits')
     q = [a and b for a, b in zip(list(hdul17[1].data['TESS_flags'] == 0), list(hdul17[1].data['TGLC_flags'] == 0))]
     t17 = hdul17[1].data['time'][q]
     f17 = hdul17[1].data['cal_aper_flux'][q]
@@ -347,7 +347,7 @@ def figure_5(type='all'):
         plt.plot(t24 - 138, f24_aperture, '.', ms=4, c=palette[2])
         plt.ylabel('Flux e-/s')
         plt.xticks([1777, 1803, 1831], ['Sector 17', 'Sector 18', 'Sector 24'])
-        plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_aperture.png', dpi=600)
+        plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_aperture_portion.png', dpi=600)
         plt.show()
     elif type == 'phase-fold':
         plt.figure(figsize=(4,3), constrained_layout=True)
@@ -357,10 +357,10 @@ def figure_5(type='all'):
         plt.ylabel('Flux e-/s')
         plt.xlabel('Phase')
         # plt.xticks([1777],['Sector 17'])
-        plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_pf.png', dpi=600)
+        plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_pf_portion.png', dpi=600)
         plt.show()
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_4(type='phase-fold')
-    figure_5(type='all')
+    figure_5(type='phase-fold')
