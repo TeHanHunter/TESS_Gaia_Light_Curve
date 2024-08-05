@@ -117,14 +117,14 @@ def get_file_name(tic_ids):
             elif sector_table['sector'][j] % 2 == 1:
                 file_names_odd.append(file_name)
     table = Table([file_names_odd], names=('files',))
-    table.write('odd_files', format='csv', overwrite=True)
+    table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
     table = Table([file_names_even], names=('files',))
-    table.write('even_files', format='csv', overwrite=True)
+    table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
     return file_names_odd, file_names_even
 
 if __name__ == '__main__':
     file_path = '/home/tehan/data/cosmos/Jeroen/targets.ecsv'
-    table = Table.read(file_path, format='ecsv', delimiter=',')
+    table = Table.read(file_path)
     get_file_name(table['starname'])
     # file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
