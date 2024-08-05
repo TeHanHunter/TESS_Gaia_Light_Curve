@@ -24,6 +24,10 @@ from functools import partial
 from glob import glob
 from astropy.table import Table
 from astroquery.mast import Catalogs
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astroquery.mast import Tesscut
+
 
 def lc_per_cut(i, camccd='', local_directory='', target_list=None):
     cut_x = i // 14
@@ -32,6 +36,7 @@ def lc_per_cut(i, camccd='', local_directory='', target_list=None):
         source = pickle.load(input_)
     epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
          local_directory=local_directory, limit_mag=20, save_aper=False, no_progress_bar=True, target_list=target_list)
+
 
 def lc_per_ccd(camccd='1-1', local_directory='', target_list=None):
     os.makedirs(f'{local_directory}epsf/{camccd}/', exist_ok=True)
@@ -66,6 +71,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     fig.suptitle(f'ePSF for sector:{sector} camera-ccd:{camccd}', x=0.5, y=0.92, size=20)
     plt.savefig(f'{local_directory}log/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
 
+
 def convert_tic_to_gaia(tic_ids):
     """
     Convert a list of TIC IDs to Gaia DR3 designations.
@@ -77,23 +83,49 @@ def convert_tic_to_gaia(tic_ids):
     tuple: (astropy.table.Table, list) containing TIC IDs and corresponding Gaia DR3 designations.
     """
     gaia_results = []
-    gaia_designations = []
+    # gaia_designations = []
 
     for tic_id in tqdm(tic_ids):
         catalog_data = Catalogs.query_criteria(catalog="TIC", ID=tic_id)
         if len(catalog_data) > 0:
             gaia_id = catalog_data[0]["GAIA"]
-            gaia_results.append((tic_id, gaia_id))
-            gaia_designations.append(gaia_id)
+            ra = catalog_data[0]["ra"]
+            dec = catalog_data[0]["dec"]
+            gaia_results.append((tic_id, gaia_id, ra, dec))
+            # gaia_designations.append(gaia_id)
         else:
-            gaia_results.append((tic_id, None))
-            gaia_designations.append(None)
+            gaia_results.append((tic_id, None, None, None))
+            # gaia_designations.append(None)
 
     # Convert results to an astropy Table
-    table = Table(rows=gaia_results, names=('TIC', 'designation'))
-    return table, gaia_designations
+    table = Table(rows=gaia_results, names=('TIC', 'designation', 'ra', 'dec'))
+    return table
+
+
+def get_file_name(tic_ids):
+    table = convert_tic_to_gaia(tic_ids)
+    file_names_odd = []
+    file_names_even = []
+    for i in trange(len(table)):
+        coord = SkyCoord(ra=table['ra'][i], dec=table['dec'][i], unit=(u.degree, u.degree), frame='icrs')
+        sector_table = Tesscut.get_sectors(coordinates=coord)
+        for j in range(len(sector_table)):
+            file_name = (f"hlsp_tglc_tess_ffi_gaiaid-{table['designation'][i]}-s{sector_table['sector'][j]:04d}-"
+                         f"cam{sector_table['camera'][j]}-ccd{sector_table['ccd'][j]}_tess_v1_llc.fits")
+            if sector_table['sector'][j] % 2 == 0:
+                file_names_even.append(file_name)
+            elif sector_table['sector'][j] % 2 == 1:
+                file_names_odd.append(file_name)
+    table = Table([file_names_odd], names=('files',))
+    table.write('odd_files', format='csv', overwrite=True)
+    table = Table([file_names_even], names=('files',))
+    table.write('even_files', format='csv', overwrite=True)
+    return file_names_odd, file_names_even
 
 if __name__ == '__main__':
+    file_path = '/home/tehan/data/cosmos/Jeroen/targets.ecsv'
+    table = Table.read(file_path, format='ecsv', delimiter=',')
+    get_file_name(table['starname'])
     # file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
     # tic_ids = np.array(table['TICID'])
@@ -106,27 +138,28 @@ if __name__ == '__main__':
     #     name = f'{1 + i // 4}-{1 + i % 4}'
     #     lc_per_ccd(camccd=name, local_directory=local_directory, target_list=mdwarf_gaia['designation'].tolist())
 
-    # For TESSminer
-    file_path = '/home/tehan/data/cosmos/oddo/small_dataframe_for_Te.csv'
-    table = Table.read(file_path, format='csv', delimiter=',')
-    result_dict = {}
-    for row in tqdm(table, desc="Processing data"):
-        designation = row['GAIADR3']
-        sectors = row['sectors'].split(',')
-        for sector in sectors:
-            if sector not in result_dict:
-                result_dict[sector] = []
-            result_dict[sector].append(int(designation))
-    sorted_keys = sorted(result_dict.keys())
-    print(sorted_keys)
-    for sector in trange(2, 56, 2):
-        target_list = result_dict[str(sector)]
-        print("Number of cpu : ", multiprocessing.cpu_count())
-        sector = sector
-        local_directory = f'/home/tehan/data/sector{sector:04d}/'
-        for i in range(16):
-            name = f'{1 + i // 4}-{1 + i % 4}'
-            lc_per_ccd(camccd=name, local_directory=local_directory, target_list=target_list)
+    # For Oddo
+    # file_path = '/home/tehan/data/cosmos/oddo/small_dataframe_for_Te.csv'
+    # table = Table.read(file_path, format='csv', delimiter=',')
+    # result_dict = {}
+    # for row in tqdm(table, desc="Processing data"):
+    #     designation = row['GAIADR3']
+    #     sectors = row['sectors'].split(',')
+    #     for sector in sectors:
+    #         if sector not in result_dict:
+    #             result_dict[sector] = []
+    #         result_dict[sector].append(int(designation))
+    # sorted_keys = sorted(result_dict.keys())
+    # print(sorted_keys)
+    # for sector in trange(2, 56, 2):
+    #     target_list = result_dict[str(sector)]
+    #     print("Number of cpu : ", multiprocessing.cpu_count())
+    #     sector = sector
+    #     local_directory = f'/home/tehan/data/sector{sector:04d}/'
+    #     for i in range(16):
+    #         name = f'{1 + i // 4}-{1 + i % 4}'
+    #         lc_per_ccd(camccd=name, local_directory=local_directory, target_list=target_list)
+
     # For TESSminer
     # file_path = '/home/tehan/data/cosmos/GEMS/ListofMdwarfTICs_crossmatch_missing.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
