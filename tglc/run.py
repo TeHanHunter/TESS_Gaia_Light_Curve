@@ -86,16 +86,14 @@ def convert_tic_to_gaia(tic_ids):
     # gaia_designations = []
 
     for tic_id in tqdm(tic_ids):
-        catalog_data = Catalogs.query_criteria(catalog="TIC", ID=tic_id)
-        if len(catalog_data) > 0:
+        try:
+            catalog_data = Catalogs.query_criteria(catalog="TIC", ID=tic_id)
             gaia_id = catalog_data[0]["GAIA"]
             ra = catalog_data[0]["ra"]
             dec = catalog_data[0]["dec"]
             gaia_results.append((tic_id, gaia_id, ra, dec))
-            # gaia_designations.append(gaia_id)
-        else:
-            gaia_results.append((tic_id, None, None, None))
-            # gaia_designations.append(None)
+        except:
+            continue
 
     # Convert results to an astropy Table
     table = Table(rows=gaia_results, names=('TIC', 'designation', 'ra', 'dec'))
