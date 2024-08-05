@@ -9,7 +9,7 @@ import tglc
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from tqdm import trange
-from os.path import exists
+from os.path import exists, getsize
 from tglc.effective_psf import get_psf, fit_psf, fit_lc, fit_lc_float_field, bg_mod
 from tglc.ffi import Source
 from tglc.ffi_cut import Source_cut
@@ -237,7 +237,9 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     # return residual.reshape((source.size, source.size))
 
     epsf_exists = exists(epsf_loc)
-    if epsf_exists:
+    epsf_not_empty = getsize(epsf_loc) == 0
+
+    if epsf_exists and epsf_not_empty:
         e_psf = np.load(epsf_loc)
         print(f'Loaded ePSF {target} from directory. ')
     else:
