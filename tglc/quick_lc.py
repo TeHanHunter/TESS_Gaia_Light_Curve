@@ -325,8 +325,9 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
                 max_flux = np.nanmax(
-                    np.nanmedian(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
-                              axis=0))
+                    np.nanmedian(
+                        source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
+                        axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(15, 5))
                 gs = fig.add_gridspec(5, 16)
                 gs.update(wspace=0.1, hspace=0.1)
@@ -464,8 +465,9 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [915110182,1425441246]
-    directory = f'/home/tehan/data/cosmos/tests/'
+    tics = [144440290, 47525799, 47484268, 2760710, 70797900, 47316976, 63698669, 303317324, 303586471, 313889049,
+            206361691, 434100688]
+    directory = f'/home/tehan/data/cosmos/leo_vetter/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
