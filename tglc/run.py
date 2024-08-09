@@ -5,6 +5,8 @@
 # https://dev.to/kapilgorve/set-environment-variable-in-windows-and-wsl-linux-in-terminal-3mg4
 
 import os
+import time
+import requests
 
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -100,13 +102,32 @@ def convert_tic_to_gaia(tic_ids):
     return table
 
 
-def get_file_name(tic_ids):
+def get_file_name(tic_ids, max_retries=5, delay=10):
     table = convert_tic_to_gaia(tic_ids)
     file_names_odd = []
     file_names_even = []
+
     for i in trange(len(table)):
         coord = SkyCoord(ra=table['ra'][i], dec=table['dec'][i], unit=(u.degree, u.degree), frame='icrs')
-        sector_table = Tesscut.get_sectors(coordinates=coord)
+
+        for attempt in range(max_retries):
+            try:
+                sector_table = Tesscut.get_sectors(coordinates=coord)
+                break
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429:
+                    print(
+                        f"Rate limit exceeded. Retrying in {delay} seconds... (Attempt {attempt + 1} of {max_retries})")
+                    time.sleep(delay)
+                else:
+                    raise
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                break
+        else:
+            print("Max retries exceeded. Could not get sectors for this coordinate.")
+            continue
+
         for j in range(len(sector_table)):
             file_name = (f"hlsp_tglc_tess_ffi_gaiaid-{table['designation'][i]}-s{sector_table['sector'][j]:04d}-"
                          f"cam{sector_table['camera'][j]}-ccd{sector_table['ccd'][j]}_tess_v1_llc.fits")
@@ -114,10 +135,13 @@ def get_file_name(tic_ids):
                 file_names_even.append(file_name)
             elif sector_table['sector'][j] % 2 == 1:
                 file_names_odd.append(file_name)
-    table = Table([file_names_odd], names=('files',))
-    table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
-    table = Table([file_names_even], names=('files',))
-    table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
+
+    odd_table = Table([file_names_odd], names=('files',))
+    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
+
+    even_table = Table([file_names_even], names=('files',))
+    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
+
     return file_names_odd, file_names_even
 
 if __name__ == '__main__':
