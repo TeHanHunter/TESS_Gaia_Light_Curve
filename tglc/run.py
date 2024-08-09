@@ -166,7 +166,7 @@ file_names_odd, file_names_even = get_file_name(tic_ids)
 if __name__ == '__main__':
     file_path = '/home/tehan/data/cosmos/Jeroen/targets.ecsv'
     table = Table.read(file_path)
-    file_names_odd, file_names_even = get_file_name(table['starname'])
+    file_names_odd, file_names_even = get_file_name(table['starname'].tolist())
     odd_table = Table([file_names_odd], names=('files',))
     odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
     even_table = Table([file_names_even], names=('files',))
