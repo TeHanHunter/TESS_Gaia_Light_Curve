@@ -21,6 +21,7 @@ from multiprocessing import Pool
 from functools import partial
 from scipy.interpolate import interp1d
 import seaborn as sns
+import matplotlib.patches as patches
 
 
 
@@ -2783,6 +2784,7 @@ def plot_MAD_seaborn():
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
     qlp_color = palette[2]
+    print(qlp_color)
     mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
     mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
     noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
@@ -2822,12 +2824,19 @@ def plot_MAD_seaborn():
 
     # Top panel
     ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
-                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.01, color=tglc_color, alpha=0.01)
+                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
     ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
     ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
-                  s=0.01, color=qlp_color, alpha=0.01)
+                  s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
     ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
+
+    rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
+    ax[0].add_patch(rect)
+
+    ax[0].plot(qlp_mag, qlp_binned, color=qlp_color, ls='-', lw=2)
+    ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
+
     # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
     ax[0].set_ylabel('Estimated Photometric Precision')
     ax[0].set_yscale('log')
@@ -2836,8 +2845,8 @@ def plot_MAD_seaborn():
     ax[0].legend(loc=4, markerscale=4, fontsize=8)
 
     # Bottom panel
-    ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, label='TGLC Aperture')
-    ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, label='QLP SAP')
+    ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2, label='TGLC Aperture')
+    ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, ls='-', lw=2, label='QLP SAP')
     ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
     ax[1].set_ylim(0.5, 2.5)
     ax[1].set_yticks([0.5, 1, 1.5, 2])
