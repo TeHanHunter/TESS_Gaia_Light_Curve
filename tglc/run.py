@@ -29,6 +29,7 @@ from astroquery.mast import Catalogs
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
+import multiprocessing as mp
 
 
 def lc_per_cut(i, camccd='', local_directory='', target_list=None):
@@ -102,32 +103,30 @@ def convert_tic_to_gaia(tic_ids):
     return table
 
 
-def get_file_name(tic_ids, max_retries=5, delay=10):
-    table = convert_tic_to_gaia(tic_ids)
-    file_names_odd = []
-    file_names_even = []
+def get_sectors_for_star(i, table, max_retries=5, delay=10):
+    coord = SkyCoord(ra=table['ra'][i], dec=table['dec'][i], unit=(u.degree, u.degree), frame='icrs')
 
-    for i in trange(len(table)):
-        coord = SkyCoord(ra=table['ra'][i], dec=table['dec'][i], unit=(u.degree, u.degree), frame='icrs')
+    for attempt in range(max_retries):
+        try:
+            sector_table = Tesscut.get_sectors(coordinates=coord)
+            return i, sector_table
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                print(f"Rate limit exceeded. Retrying in {delay} seconds... (Attempt {attempt + 1} of {max_retries})")
+                time.sleep(delay)
+            else:
+                raise
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return i, None
 
-        for attempt in range(max_retries):
-            try:
-                sector_table = Tesscut.get_sectors(coordinates=coord)
-                break
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 429:
-                    print(
-                        f"Rate limit exceeded. Retrying in {delay} seconds... (Attempt {attempt + 1} of {max_retries})")
-                    time.sleep(delay)
-                else:
-                    raise
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                break
-        else:
-            print("Max retries exceeded. Could not get sectors for this coordinate.")
-            continue
+    print("Max retries exceeded. Could not get sectors for this coordinate.")
+    return i, None
 
+
+def process_star_results(result, table, file_names_odd, file_names_even):
+    i, sector_table = result
+    if sector_table is not None:
         for j in range(len(sector_table)):
             file_name = (f"hlsp_tglc_tess_ffi_gaiaid-{table['designation'][i]}-s{sector_table['sector'][j]:04d}-"
                          f"cam{sector_table['camera'][j]}-ccd{sector_table['ccd'][j]}_tess_v1_llc.fits")
@@ -136,18 +135,43 @@ def get_file_name(tic_ids, max_retries=5, delay=10):
             elif sector_table['sector'][j] % 2 == 1:
                 file_names_odd.append(file_name)
 
-    odd_table = Table([file_names_odd], names=('files',))
+
+def get_file_name(tic_ids, max_retries=5, delay=10):
+    table = convert_tic_to_gaia(tic_ids)
+    file_names_odd = mp.Manager().list()
+    file_names_even = mp.Manager().list()
+
+    pool = mp.Pool(mp.cpu_count())
+    results = [pool.apply_async(get_sectors_for_star, args=(i, table, max_retries, delay)) for i in range(len(table))]
+
+    for result in tqdm(results):
+        process_star_results(result.get(), table, file_names_odd, file_names_even)
+
+    pool.close()
+    pool.join()
+
+    odd_table = Table([list(file_names_odd)], names=('files',))
     odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
 
-    even_table = Table([file_names_even], names=('files',))
+    even_table = Table([list(file_names_even)], names=('files',))
     even_table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
 
-    return file_names_odd, file_names_even
+    return list(file_names_odd), list(file_names_even)
+
+
+# Example usage
+tic_ids = [...]  # Your list of TIC IDs
+file_names_odd, file_names_even = get_file_name(tic_ids)
 
 if __name__ == '__main__':
     file_path = '/home/tehan/data/cosmos/Jeroen/targets.ecsv'
     table = Table.read(file_path)
-    get_file_name(table['starname'])
+    file_names_odd, file_names_even = get_file_name(table['starname'])
+    odd_table = Table([file_names_odd], names=('files',))
+    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
+    even_table = Table([file_names_even], names=('files',))
+    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
+
     # file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
     # tic_ids = np.array(table['TICID'])
