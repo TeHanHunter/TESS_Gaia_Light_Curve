@@ -159,10 +159,6 @@ def get_file_name(tic_ids, max_retries=5, delay=10):
     return list(file_names_odd), list(file_names_even)
 
 
-# Example usage
-tic_ids = [...]  # Your list of TIC IDs
-file_names_odd, file_names_even = get_file_name(tic_ids)
-
 if __name__ == '__main__':
     file_path = '/home/tehan/data/cosmos/Jeroen/targets.ecsv'
     table = Table.read(file_path)
