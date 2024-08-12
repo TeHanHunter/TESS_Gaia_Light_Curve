@@ -14,7 +14,7 @@ base_dir = '/home/tehan/data'
 def construct_full_path(file_name):
     parts = file_name.split('-')
     sector = parts[2][1:5]  # Extract the sector number
-    cam_ccd = parts[3][-1] + '-' + parts[4][-1]
+    cam_ccd = parts[3][3] + '-' + parts[4][3]
     return os.path.join(base_dir, f'sector{sector}', 'lc', cam_ccd, file_name)
 
 # Destination folder
