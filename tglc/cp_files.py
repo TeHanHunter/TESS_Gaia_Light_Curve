@@ -1,0 +1,33 @@
+import pandas as pd
+import shutil
+import os
+
+# Read the CSV file
+csv_file = '/home/tehan/data/cosmos/Jeroen/odd_files.csv'  # replace with your CSV file path
+df = pd.read_csv(csv_file, header=None)  # Assuming the CSV does not have a header
+file_names = df[0]  # Assuming the file names are in the first column
+
+# Base directory
+base_dir = '/home/tehan/data'
+
+# Function to construct full path based on file name
+def construct_full_path(file_name):
+    parts = file_name.split('-')
+    sector = parts[4][1:5]  # Extract the sector number
+    cam_ccd = parts[5].replace('_tess_v1_llc.fits', '').replace('cam', '').replace('ccd', '-')  # Extract the cam and ccd
+    return os.path.join(base_dir, f'sector{sector}', 'lc', cam_ccd, file_name)
+
+# Destination folder
+destination_folder = '/home/tehan/data/cosmos/Jeroen/lc/'  # replace with your destination folder path
+
+# Ensure the destination folder exists
+os.makedirs(destination_folder, exist_ok=True)
+
+# Copy each file to the destination folder
+for file_name in file_names:
+    full_path = construct_full_path(file_name)
+    if os.path.isfile(full_path):
+        shutil.copy(full_path, destination_folder)
+        print(f'Copied {full_path} to {destination_folder}')
+    else:
+        print(f'File not found: {full_path}')

@@ -151,10 +151,10 @@ def get_file_name(tic_ids, max_retries=5, delay=10):
     pool.join()
 
     odd_table = Table([list(file_names_odd)], names=('files',))
-    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
+    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files.csv', format='csv', overwrite=True)
 
     even_table = Table([list(file_names_even)], names=('files',))
-    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
+    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files.csv', format='csv', overwrite=True)
 
     return list(file_names_odd), list(file_names_even)
 
@@ -164,9 +164,9 @@ if __name__ == '__main__':
     table = Table.read(file_path)
     file_names_odd, file_names_even = get_file_name(table['starname'].tolist())
     odd_table = Table([file_names_odd], names=('files',))
-    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files', format='csv', overwrite=True)
+    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files.csv', format='csv', overwrite=True)
     even_table = Table([file_names_even], names=('files',))
-    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files', format='csv', overwrite=True)
+    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files.csv', format='csv', overwrite=True)
 
     # file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
