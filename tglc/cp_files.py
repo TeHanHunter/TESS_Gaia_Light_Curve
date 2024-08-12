@@ -30,7 +30,6 @@ for file_name in file_names:
         full_path = construct_full_path(file_name)
     except:
         print(file_name)
-        time.sleep(10)
         continue
     if os.path.isfile(full_path):
         shutil.copy(full_path, destination_folder)
