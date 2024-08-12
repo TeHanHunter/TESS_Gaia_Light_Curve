@@ -27,7 +27,10 @@ os.makedirs(destination_folder, exist_ok=True)
 for file_name in file_names:
     full_path = construct_full_path(file_name)
     if os.path.isfile(full_path):
-        shutil.copy(full_path, destination_folder)
-        print(f'Copied {full_path} to {destination_folder}')
+        try:
+            shutil.copy(full_path, destination_folder)
+            print(f'Copied {full_path} to {destination_folder}')
+        except:
+            continue
     else:
         print(f'File not found: {full_path}')
