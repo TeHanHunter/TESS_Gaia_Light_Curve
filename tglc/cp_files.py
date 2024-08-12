@@ -11,10 +11,11 @@ print(file_names[0])
 base_dir = '/home/tehan/data'
 
 # Function to construct full path based on file name
+hlsp_tglc_tess_ffi_gaiaid-2129294981198328576-s0015-cam2-ccd3_tess_v1_llc.fits
 def construct_full_path(file_name):
     parts = file_name.split('-')
-    sector = parts[4][1:5]  # Extract the sector number
-    cam_ccd = parts[5].replace('_tess_v1_llc.fits', '').replace('cam', '').replace('ccd', '-')  # Extract the cam and ccd
+    sector = parts[2][1:5]  # Extract the sector number
+    cam_ccd = parts[3][-1] + '-' + parts[4][-1]
     return os.path.join(base_dir, f'sector{sector}', 'lc', cam_ccd, file_name)
 
 # Destination folder
