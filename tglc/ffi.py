@@ -267,7 +267,8 @@ class Source(object):
             except:
                 attempt += 1
                 time.sleep(10)
-                print(f'Trying Gaia search again. Coord = {coord}, radius = {radius}')
+                print(f'Trying Gaia search again. Coord = {coord}, radius = {radius}, '
+                      f'{self.wcs.pixel_to_world([x + co1 + 44], [y + co2])}, {self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[1]}')
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
