@@ -1,6 +1,7 @@
 import pandas as pd
 import shutil
 import os
+import time
 
 # Read the CSV file
 csv_file = '/home/tehan/data/cosmos/Jeroen/odd_files.csv'  # replace with your CSV file path
@@ -25,12 +26,14 @@ os.makedirs(destination_folder, exist_ok=True)
 
 # Copy each file to the destination folder
 for file_name in file_names:
-    full_path = construct_full_path(file_name)
+    try:
+        full_path = construct_full_path(file_name)
+    except:
+        print(file_name)
+        time.sleep(10)
+        continue
     if os.path.isfile(full_path):
-        try:
-            shutil.copy(full_path, destination_folder)
-            print(f'Copied {full_path} to {destination_folder}')
-        except:
-            continue
+        shutil.copy(full_path, destination_folder)
+        print(f'Copied {full_path} to {destination_folder}')
     else:
         print(f'File not found: {full_path}')
