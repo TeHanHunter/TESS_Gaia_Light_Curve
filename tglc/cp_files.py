@@ -4,8 +4,8 @@ import os
 
 # Read the CSV file
 csv_file = '/home/tehan/data/cosmos/Jeroen/odd_files.csv'  # replace with your CSV file path
-df = pd.read_csv(csv_file, header=None)  # Assuming the CSV does not have a header
-file_names = df[0]  # Assuming the file names are in the first column
+df = pd.read_csv(csv_file)  # Assuming the CSV does not have a header
+file_names = df['files']  # Assuming the file names are in the first column
 print(file_names[0])
 # Base directory
 base_dir = '/home/tehan/data'
