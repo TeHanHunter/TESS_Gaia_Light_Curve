@@ -263,12 +263,12 @@ class Source(object):
                 catalogdata = Gaia.cone_search_async(coord, radius=radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
+                print(f'{self.wcs.pixel_to_world([x + co1 + 44], [y + co2])}, {self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[1]}')
                 return catalogdata
             except:
                 attempt += 1
                 time.sleep(10)
-                print(f'Trying Gaia search again. Coord = {coord}, radius = {radius}, '
-                      f'{self.wcs.pixel_to_world([x + co1 + 44], [y + co2])}, {self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[1]}')
+                print(f'Trying Gaia search again. Coord = {coord}, radius = {radius}')
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
