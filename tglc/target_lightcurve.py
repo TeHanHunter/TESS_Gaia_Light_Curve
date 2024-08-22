@@ -237,11 +237,11 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     # return residual.reshape((source.size, source.size))
 
     epsf_exists = exists(epsf_loc)
-    epsf_not_empty = getsize(epsf_loc) != 0
-
-    if epsf_exists and epsf_not_empty:
-        e_psf = np.load(epsf_loc)
-        print(f'Loaded ePSF {target} from directory. ')
+    if epsf_exists:
+        epsf_not_empty = getsize(epsf_loc) != 0
+        if epsf_not_empty:
+            e_psf = np.load(epsf_loc)
+            print(f'Loaded ePSF {target} from directory. ')
     else:
         e_psf = np.zeros((len(source.time), over_size ** 2 + bg_dof))
         for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):
