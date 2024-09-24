@@ -2709,6 +2709,28 @@ def get_MAD_qlp(i, files=None):
             pass
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
 
+def get_MAD_spoc(i, files=None):
+    with fits.open(files[i], mode='denywrite') as hdul:
+        try:
+            tic = hdul[0].header['TESSMAG']
+            quality = hdul[1].data['QUALITY']
+            index = np.where(quality == 0)
+            lc = hdul[1].data['PDCSAP_FLUX'][index]
+            if hdul[0].header['SECTOR'] > 55:
+                spoc_f = np.mean(lc[:len(lc) // 9 * 9].reshape(-1, 9), axis=1)
+            elif hdul[0].header['SECTOR'] > 26:
+                spoc_f = np.mean(lc[:len(lc) // 3 * 3].reshape(-1, 3), axis=1)
+            else:
+                spoc_f = lc
+
+            MAD_spoc = np.median(np.abs(np.diff(spoc_f)))
+            spoc_precision = 1.48 * MAD_spoc / np.sqrt(2)
+            print(spoc_precision, files[i])
+            # print(tic, qlp_precision)
+            return tic, spoc_precision
+
+        except:
+            pass
 
 def plot_MAD():
     # mad = np.load('/home/tehan/Downloads/mad_180.npy')
@@ -2860,13 +2882,13 @@ def plot_MAD_seaborn():
     # plt.show()
 
 if __name__ == '__main__':
-    plot_MAD_seaborn()
-    # files = glob('/pdo/users/tehan/qlp_s56/*.fits')
-    # print(len(files))
-    # with Pool() as p:
-    #     results = p.map(partial(get_MAD_qlp, files=files), range(len(files)))
-    #
-    # tics, qlp_precision = zip(*results)
-    # tics = np.array(tics)
-    # qlp_precision = np.array(qlp_precision)
-    # np.save('/pdo/users/tehan/sector0056/mad_qlp_30min.npy', {'tics': tics, 'qlp_precision': qlp_precision})
+    # plot_MAD_seaborn()
+    files = glob('/home/tehan/data/cosmos/tess-spoc/s0056/lc/*.fits')
+    print(len(files))
+    with Pool() as p:
+        results = p.map(partial(get_MAD_spoc, files=files), range(len(files)))
+
+    tics, spoc_precision = zip(*results)
+    tics = np.array(tics)
+    spoc_precision = np.array(spoc_precision)
+    np.save('/home/tehan/data/cosmos/tess-spoc/s0056/mad_spoc_30min.npy', {'tics': tics, 'spoc_precision': spoc_precision})
