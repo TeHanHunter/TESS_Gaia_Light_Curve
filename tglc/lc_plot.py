@@ -2724,7 +2724,7 @@ def get_MAD_spoc(i, files=None):
                 spoc_f = lc
 
             MAD_spoc = np.median(np.abs(np.diff(spoc_f)))
-            spoc_precision = 1.48 * MAD_spoc / np.sqrt(2)
+            spoc_precision = 1.48 * MAD_spoc / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
             print(spoc_precision, files[i])
             # print(tic, qlp_precision)
             return tic, spoc_precision
