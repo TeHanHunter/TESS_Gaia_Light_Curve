@@ -1,5 +1,4 @@
 import os
-
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
@@ -8,6 +7,7 @@ from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from tqdm import tqdm
 from wotan import flatten
 from scipy import ndimage
 from astropy.io import ascii
@@ -2999,7 +2999,9 @@ if __name__ == '__main__':
     target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     print(len(files))
     with Pool() as p:
-        results = p.map(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files)))
+        results = list(
+            tqdm(p.imap(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files))),
+                 total=len(files)))
 
     filtered_results = [res for res in results if res is not None]
     # Now unpack safely
