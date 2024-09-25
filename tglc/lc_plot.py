@@ -2697,9 +2697,11 @@ def get_MAD_tglc_v_spoc(i, files=None, target_list=None):
                 aper_flux = aper_flux[~np.isnan(aper_flux)]
                 MAD_aper = np.median(np.abs(np.diff(aper_flux)))
                 aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+                return tic, aper_precision  # Return valid data
             except:
-                pass
-            return tic, aper_precision
+                return None  # Handle case where an exception is raised
+        else:
+            return None  # Skip when tic_id not in target_list
 
 def get_MAD_qlp(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
@@ -2999,7 +3001,12 @@ if __name__ == '__main__':
     with Pool() as p:
         results = p.map(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files)))
 
-    tics, precision = zip(*results)
+    filtered_results = [res for res in results if res is not None]
+    # Now unpack safely
+    if filtered_results:  # Only unpack if there are valid results
+        tics, precision = zip(*filtered_results)
+    else:
+        tics, precision = [], []  # Handle case with no valid results
     tics = np.array(tics)
     precision = np.array(precision)
     print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
