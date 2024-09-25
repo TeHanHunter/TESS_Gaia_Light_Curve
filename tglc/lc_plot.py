@@ -2998,7 +2998,7 @@ if __name__ == '__main__':
     target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     print(len(files))
     with Pool() as p:
-        results = p.map(partial(get_MAD_tglc_v_spoc(), files=files, target_list=target_list), range(len(files)))
+        results = p.map(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files)))
 
     tics, precision = zip(*results)
     tics = np.array(tics)
