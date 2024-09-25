@@ -3004,4 +3004,4 @@ if __name__ == '__main__':
     tics = np.array(tics)
     precision = np.array(precision)
     print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
-    np.save('/home/tehan/data/cosmos/tess-spoc/s0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision})
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision})
