@@ -2699,8 +2699,7 @@ def get_MAD_tglc_v_spoc(i, files=None, target_list=None):
                 aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
             except:
                 pass
-    # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
-    return tic, aper_precision
+            return tic, aper_precision
 
 def get_MAD_qlp(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
