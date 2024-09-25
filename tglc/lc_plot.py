@@ -2995,7 +2995,7 @@ def plot_MAD_3_seaborn():
 
 if __name__ == '__main__':
     # plot_MAD_3_seaborn()
-    files = glob('/pdo/users/tehan/sector0056/lc/*.fits')
+    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     print(len(files))
     with Pool() as p:
