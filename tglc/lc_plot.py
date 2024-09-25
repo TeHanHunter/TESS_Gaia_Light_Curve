@@ -2687,21 +2687,21 @@ def get_MAD(i, files=None):
 def get_MAD_tglc_v_spoc(i, files=None, target_list=None):
     with fits.open(files[i], mode='denywrite') as hdul:
         tic_id = int(hdul[0].header['TICID'])
-        if tic_id in target_list:
-            try:
-                tic = hdul[0].header['TESSMAG']
-                bin = 9
-                aper_flux = np.mean(
-                    hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
-                    axis=1)
-                aper_flux = aper_flux[~np.isnan(aper_flux)]
-                MAD_aper = np.median(np.abs(np.diff(aper_flux)))
-                aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
-                return tic, aper_precision  # Return valid data
-            except:
-                return None  # Handle case where an exception is raised
-        else:
-            return None  # Skip when tic_id not in target_list
+        # if tic_id in target_list:
+        try:
+            tic = hdul[0].header['TESSMAG']
+            bin = 9
+            aper_flux = np.mean(
+                hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
+                axis=1)
+            aper_flux = aper_flux[~np.isnan(aper_flux)]
+            MAD_aper = np.median(np.abs(np.diff(aper_flux)))
+            aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+            return tic, aper_precision, tic_id  # Return valid data
+        except:
+            return None  # Handle case where an exception is raised
+        # else:
+        #     return None  # Skip when tic_id not in target_list
 
 def get_MAD_qlp(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
@@ -3006,10 +3006,10 @@ if __name__ == '__main__':
     filtered_results = [res for res in results if res is not None]
     # Now unpack safely
     if filtered_results:  # Only unpack if there are valid results
-        tics, precision = zip(*filtered_results)
+        tics, precision, tic_id = zip(*filtered_results)
     else:
-        tics, precision = [], []  # Handle case with no valid results
+        tics, precision, tic_id = [], [], []  # Handle case with no valid results
     tics = np.array(tics)
     precision = np.array(precision)
     print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision})
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
