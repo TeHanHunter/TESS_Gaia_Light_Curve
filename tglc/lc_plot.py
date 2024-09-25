@@ -2684,6 +2684,23 @@ def get_MAD(i, files=None):
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return tic, aper_precision
 
+def get_MAD_tglc_v_spoc(i, files=None, target_list=None):
+    with fits.open(files[i], mode='denywrite') as hdul:
+        tic_id = int(hdul[0].header['TICID'])
+        if tic_id in target_list:
+            try:
+                tic = hdul[0].header['TESSMAG']
+                bin = 9
+                aper_flux = np.mean(
+                    hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
+                    axis=1)
+                aper_flux = aper_flux[~np.isnan(aper_flux)]
+                MAD_aper = np.median(np.abs(np.diff(aper_flux)))
+                aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+            except:
+                pass
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
+    return tic, aper_precision
 
 def get_MAD_qlp(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
@@ -2881,14 +2898,110 @@ def plot_MAD_seaborn():
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
+def plot_MAD_3_seaborn():
+    palette = sns.color_palette('colorblind')
+    tglc_color = palette[3]
+    qlp_color = palette[2]
+    spoc_color = palette[0]
+    print(qlp_color)
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
+    mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
+    mad_spoc = np.load('/Users/tehan/Documents/TGLC/mad_spoc_30min.npy', allow_pickle=True)
+    noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
+
+    # Sort data
+    sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
+    sorted_indices_qlp = np.argsort(mad_qlp.tolist()['tics'])
+    sorted_indices_spoc = np.argsort(mad_spoc.tolist()['tics'])
+
+    # Interpolate noise model
+    noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
+
+    # Bin data
+    bin_size = 40000
+    tglc_mag = np.median(mad_tglc.tolist()['tics'][sorted_indices_tglc][
+                         :len(mad_tglc.tolist()['tics'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1,
+                                                                                                              bin_size),
+                         axis=1)
+    tglc_binned = np.median(mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc][:len(
+        mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1, bin_size),
+                            axis=1)
+
+    bin_size = 10000
+    qlp_mag = np.nanmedian(mad_qlp.tolist()['tics'][sorted_indices_qlp][
+                           :len(mad_qlp.tolist()['tics'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1,
+                                                                                                              bin_size),
+                           axis=1)
+    qlp_binned = np.nanmedian(mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp][:len(
+        mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+
+    bin_size = 10000
+    spoc_mag = np.nanmedian(mad_spoc.tolist()['tics'][sorted_indices_spoc][
+                           :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
+                                                                                                              bin_size),
+                           axis=1)
+    spoc_binned = np.nanmedian(mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc][:len(
+        mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+
+    # Create Seaborn plot
+    # sns.set_style("whitegrid")
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 6), gridspec_kw={'height_ratios': [3, 2], 'hspace': 0.1})
+
+    # Top panel
+    ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
+                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
+    ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
+    ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
+                  s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
+    ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
+    ax[0].scatter(mad_spoc.tolist()['tics'][sorted_indices_spoc], mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc],
+                  s=0.15, linewidths=0, color=spoc_color, alpha=0.01)
+    ax[0].scatter(0,0 ,s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
+    rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
+    ax[0].add_patch(rect)
+
+    ax[0].plot(qlp_mag, qlp_binned, color=qlp_color, ls='-', lw=2)
+    ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
+    ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='-', lw=2)
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
+
+    # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
+    ax[0].set_ylabel('Estimated Photometric Precision')
+    ax[0].set_yscale('log')
+    ax[0].set_ylim(1e-4, 1)
+    ax[0].set_title('S56 30-min bin')
+    ax[0].legend(loc=4, markerscale=4, fontsize=8)
+
+    # Bottom panel
+    ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2, label='TGLC Aperture')
+    ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, ls='-', lw=2, label='QLP SAP')
+    ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='-', lw=2, label='TESS-SPOC PDCSAP')
+    ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
+    ax[1].set_ylim(0.5, 2.5)
+    ax[1].set_yticks([0.5, 1, 1.5, 2])
+    ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
+    ax[1].set_xlabel('TESS magnitude')
+    ax[1].set_ylabel('Precision Ratio')
+    ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
+
+    plt.xlim(7, 16.5)
+    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_3_30min.png', bbox_inches='tight', dpi=300)
+    # plt.show()
+
 if __name__ == '__main__':
-    # plot_MAD_seaborn()
-    files = glob('/home/tehan/data/cosmos/tess-spoc/s0056/lc/*.fits')
+    # plot_MAD_3_seaborn()
+    files = glob('/pdo/users/tehan/sector0056/lc/*.fits')
+    target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     print(len(files))
     with Pool() as p:
-        results = p.map(partial(get_MAD_spoc, files=files), range(len(files)))
+        results = p.map(partial(get_MAD_tglc_v_spoc(), files=files, target_list=target_list), range(len(files)))
 
-    tics, spoc_precision = zip(*results)
+    tics, precision = zip(*results)
     tics = np.array(tics)
-    spoc_precision = np.array(spoc_precision)
-    np.save('/home/tehan/data/cosmos/tess-spoc/s0056/mad_spoc_30min.npy', {'tics': tics, 'spoc_precision': spoc_precision})
+    precision = np.array(precision)
+    print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
+    np.save('/home/tehan/data/cosmos/tess-spoc/s0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision})
