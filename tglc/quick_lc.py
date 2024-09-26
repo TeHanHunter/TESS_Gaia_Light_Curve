@@ -15,7 +15,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
 # Tesscut._service_api_connection.TIMEOUT = 6000
-
+import seaborn as sns
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
@@ -304,6 +304,10 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
 
 
 def plot_contamination(local_directory=None, gaia_dr3=None):
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', "axes.grid": False})
+
     files = glob(f'{local_directory}lc/*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
@@ -362,11 +366,13 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                     try:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
-                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90)
+                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90, size=4)
                     except TypeError:
                         ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
                                  source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
-                                 f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
+                                 '\n'.join([f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}'[i:i + 15] for i in
+                                            range(0, len(f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}'), 15)]),
+                                 rotation=90, size=4)
                 ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
 
                 # ax0.legend()
@@ -390,6 +396,9 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 t_, y_, x_ = np.shape(hdul[0].data)
                 max_flux = np.max(
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
+                sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                            'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                            'axes.facecolor': '0.95', 'grid.color': '0.9'})
                 for j in range(y_):
                     for k in range(x_):
                         ax_ = fig.add_subplot(gs[(4 - j), (6 + 2 * k):(8 + 2 * k)])
