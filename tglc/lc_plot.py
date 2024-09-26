@@ -2998,9 +2998,9 @@ if __name__ == '__main__':
     files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     print(len(files))
     with Pool() as p:
-        results = list(
-            tqdm(p.imap(partial(get_MAD_tglc_v_spoc, files=files), range(len(files))),
-                 total=len(files)))
+        results = list(tqdm(
+            p.imap_unordered(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files))),
+            total=len(files)))
 
     filtered_results = [res for res in results if res is not None]
     # Now unpack safely
