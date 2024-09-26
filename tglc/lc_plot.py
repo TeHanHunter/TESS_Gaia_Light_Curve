@@ -2688,6 +2688,7 @@ def get_MAD_tglc_v_spoc(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
         # if tic_id in target_list:
         try:
+            print(i)
             tic_id = int(hdul[0].header['TICID'])
             tic = hdul[0].header['TESSMAG']
             bin = 9
@@ -2998,9 +2999,7 @@ if __name__ == '__main__':
     files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     print(len(files))
     with Pool() as p:
-        results = list(tqdm(
-            p.imap_unordered(partial(get_MAD_tglc_v_spoc, files=files), range(len(files))),
-            total=len(files)))
+        results = p.map(partial(get_MAD_tglc_v_spoc, files=files), range(len(files)))
 
     filtered_results = [res for res in results if res is not None]
     # Now unpack safely
