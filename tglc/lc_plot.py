@@ -2684,11 +2684,11 @@ def get_MAD(i, files=None):
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return tic, aper_precision
 
-def get_MAD_tglc_v_spoc(i, files=None, target_list=None):
+def get_MAD_tglc_v_spoc(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
-        tic_id = int(hdul[0].header['TICID'])
         # if tic_id in target_list:
         try:
+            tic_id = int(hdul[0].header['TICID'])
             tic = hdul[0].header['TESSMAG']
             bin = 9
             aper_flux = np.mean(
@@ -2996,11 +2996,10 @@ def plot_MAD_3_seaborn():
 if __name__ == '__main__':
     # plot_MAD_3_seaborn()
     files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
-    target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     print(len(files))
     with Pool() as p:
         results = list(
-            tqdm(p.imap(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files))),
+            tqdm(p.imap(partial(get_MAD_tglc_v_spoc, files=files), range(len(files))),
                  total=len(files)))
 
     filtered_results = [res for res in results if res is not None]
@@ -3011,5 +3010,6 @@ if __name__ == '__main__':
         tics, precision, tic_id = [], [], []  # Handle case with no valid results
     tics = np.array(tics)
     precision = np.array(precision)
+    target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
     np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
