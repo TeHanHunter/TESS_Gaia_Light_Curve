@@ -2999,7 +2999,7 @@ if __name__ == '__main__':
     print(len(files))
     with Pool() as p:
         results = list(tqdm(
-            p.imap_unordered(partial(get_MAD_tglc_v_spoc, files=files, target_list=target_list), range(len(files))),
+            p.imap_unordered(partial(get_MAD_tglc_v_spoc, files=files), range(len(files))),
             total=len(files)))
 
     filtered_results = [res for res in results if res is not None]
