@@ -23,10 +23,8 @@ import seaborn as sns
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
-import seaborn as sns
-import itertools
-from astropy import units
-from astroquery.utils.tap.core import TapPlus
+import matplotlib.patheffects as path_effects
+
 controller = ThreadpoolController()
 
 
@@ -439,34 +437,37 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
-
+                plt.imshow(source.flux[0], origin='lower')
+                plt.show()
+                plt.close()
+                # print(source.gaia[891])
+                # print(source.gaia[star_num])
                 distances = np.sqrt(
                     (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
                     (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)
 
-                # Find closest 5 stars (6-self) or those within 5 pixels
-                nearby_stars = np.argsort(distances)[:6]
-                nearby_stars = nearby_stars[distances[nearby_stars] <= 5]
+                # Find closest 5 stars or those within 4.5 pixels
+                nearby_stars = np.argsort(distances)[:5]
+                nearby_stars = nearby_stars[distances[nearby_stars] <=5]
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
                 max_flux = np.nanmax(
                     np.nanmedian(
                         source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                         axis=0))
-                fig = plt.figure(constrained_layout=False, figsize=(15, 5))
-                gs = fig.add_gridspec(5, 16)
+                fig = plt.figure(constrained_layout=False, figsize=(20, 15))
+                gs = fig.add_gridspec(11, 10)
                 gs.update(wspace=0.1, hspace=0.1)
-                ax0 = fig.add_subplot(gs[:5, :5])
+                ax0 = fig.add_subplot(gs[:5, :3])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
-                ax0.set_xlabel('x pixel')
-                ax0.set_ylabel('y pixel')
+
                 ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
                 ax0.scatter(source.gaia[f'sector_{sector}_x'][:500], source.gaia[f'sector_{sector}_y'][:500], s=30,
                             c='r', label='background stars')
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars[nearby_stars != star_num[0][0]]],
-                            source.gaia[f'sector_{sector}_y'][nearby_stars[nearby_stars != star_num[0][0]]],
+                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars],
+                            source.gaia[f'sector_{sector}_y'][nearby_stars],
                             s=30, c='r', edgecolor='black', linewidth=1, label='background stars')
-                ax0.grid(False)
+
                 for l in range(len(nearby_stars)):
                     index = np.where(
                         source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
@@ -488,24 +489,24 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                               y_gaia - source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
                               width=0.02, color='r', edgecolor=None, head_width=0.1)
                     try:
-                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
-                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90, size=4)
-                    except TypeError:
-                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
-                                 '\n'.join([f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}'[i:i + 15] for i in
-                                            range(0, len(f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}'), 15)]),
-                                 rotation=90, size=4)
-                ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
+                        # Attempt to add text for TIC if available
+                        txt = ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] + 0.5,
+                                       source.gaia[f'sector_{sector}_y'][nearby_stars[l]] - 0.05,
+                                       f'TIC {int(source.tic["TIC"][index])}', size=7)
 
                     except TypeError:
+                        # Fallback to DESIGNATION text, split into lines of 15 characters
                         designation = source.gaia[f"DESIGNATION"][nearby_stars[l]]
                         formatted_text = '\n'.join([designation[i:i + 15] for i in range(0, len(designation), 15)])
 
                         txt = ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] + 0.5,
                                        source.gaia[f'sector_{sector}_y'][nearby_stars[l]] - 0.05,
                                        formatted_text, size=7)
+
+                    # Add black border around the text
+                    # txt.set_path_effects([path_effects.Stroke(linewidth=0.5, foreground='white'),
+                    #                       path_effects.Normal()])
+                # ax0.legend()
                 ax0.set_xlim(round(star_x) - 5.5, round(star_x) + 5.5)
                 ax0.set_ylim(round(star_y) - 5.5, round(star_y) + 5.5)
                 ax0.set_title(f'TIC_{hdul[0].header["TICID"]}_Sector_{hdul[0].header["SECTOR"]:04d}')
@@ -525,25 +526,21 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                             'axes.facecolor': '0.95', 'grid.color': '0.9'})
                 for j in range(y_):
                     for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
-                        ax_.patch.set_facecolor('#4682B4')
+                        ax_ = fig.add_subplot(gs[(10 - j), (2 * k):(2 + 2 * k)])
+                        ax_.patch.set_facecolor('C0')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        if detrend:
-                            _, trend = flatten(hdul[1].data['time'][q],
-                                               hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
-                                               window_length=1, method='biweight', return_trend=True)
-                            cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
-                                hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
-                                hdul[0].data[:, j, k][q]) + 1
-                        else:
-                            cal_aper = (hdul[0].data[:, j, k][q]) / np.nanmedian(hdul[0].data[:, j, k][q])
-                        if 1 <= j <= 3 and 1 <= k <= 3:
-                            arrays.append(cal_aper)
+                        q = [a and b for a, b in
+                             zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+
+                        _, trend = flatten(hdul[1].data['time'][q],
+                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
+                                           window_length=1, method='biweight', return_trend=True)
+                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
+                            hdul[0].data[:, j, k][q]) + 1
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
                         # ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
-                        ax_.set_ylim(ymin, ymax)
-                        ax_.set_xlabel('TBJD')
-                        ax_.set_ylabel('')
+                        ax_.set_ylim(0.7, 1.3)
                         if j != 0:
                             ax_.set_xticklabels([])
                             ax_.set_xlabel('')
@@ -640,7 +637,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=52, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
@@ -648,13 +645,13 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [60922830]
+    tics = [10400181]
     directory = f'/Users/tehan/Documents/TGLC/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=95445207088679424)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=1.4079405, mid_transit_tbjd=1779.3750828,
                kind='cal_aper_flux')
