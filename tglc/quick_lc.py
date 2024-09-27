@@ -24,6 +24,7 @@ import seaborn as sns
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
 import matplotlib.patheffects as path_effects
+import itertools
 
 controller = ThreadpoolController()
 
@@ -418,12 +419,13 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.close(fig)
 
 
-def plot_contamination(local_directory=None, gaia_dr3=None):
+def plot_contamination(local_directory=None, gaia_dr3=None,ymin=0.5,ymax=1.2):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', "axes.grid": False})
 
-    files = glob(f'{local_directory}lc/*.fits')
+    files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
+    # gaia_dr3 = files[0].split('gaiaid-')[1].split('-')[0]
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
@@ -446,8 +448,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                     (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
                     (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)
 
-                # Find closest 5 stars or those within 4.5 pixels
-                nearby_stars = np.argsort(distances)[:5]
+                # Find closest 5 stars (6-self) or those within 5 pixels
+                nearby_stars = np.argsort(distances)[:6]
                 nearby_stars = nearby_stars[distances[nearby_stars] <=5]
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
@@ -456,16 +458,17 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                         axis=0))
                 fig = plt.figure(constrained_layout=False, figsize=(20, 15))
-                gs = fig.add_gridspec(11, 10)
+                gs = fig.add_gridspec(10, 10)
                 gs.update(wspace=0.1, hspace=0.1)
                 ax0 = fig.add_subplot(gs[:5, :3])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
-
+                ax0.set_xlabel('x pixel')
+                ax0.set_ylabel('y pixel')
                 ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
                 ax0.scatter(source.gaia[f'sector_{sector}_x'][:500], source.gaia[f'sector_{sector}_y'][:500], s=30,
-                            c='r', label='background stars')
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars],
-                            source.gaia[f'sector_{sector}_y'][nearby_stars],
+                            c='r', edgecolor='black', label='background stars')
+                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars[nearby_stars != star_num[0][0]]],
+                            source.gaia[f'sector_{sector}_y'][nearby_stars[nearby_stars != star_num[0][0]]],
                             s=30, c='r', edgecolor='black', linewidth=1, label='background stars')
 
                 for l in range(len(nearby_stars)):
@@ -524,10 +527,11 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                 sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                             'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                             'axes.facecolor': '0.95', 'grid.color': '0.9'})
+                arrays = []
                 for j in range(y_):
                     for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(10 - j), (2 * k):(2 + 2 * k)])
-                        ax_.patch.set_facecolor('C0')
+                        ax_ = fig.add_subplot(gs[(9 - j), (2 * k):(2 + 2 * k)])
+                        ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
                         q = [a and b for a, b in
                              zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
@@ -538,63 +542,50 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
                             hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
                             hdul[0].data[:, j, k][q]) + 1
+                        if 1 <= j <= 3 and 1 <= k <= 3:
+                            arrays.append(cal_aper)
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
                         # ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
-                        ax_.set_ylim(0.7, 1.3)
+                        ax_.set_ylim(ymin,ymax)
+                        ax_.set_ylabel('Norm Flux')
+                        ax_.set_xlabel('TBJD')
                         if j != 0:
                             ax_.set_xticklabels([])
                             ax_.set_xlabel('')
                         if k != 0:
                             ax_.set_yticklabels([])
-                        if j == 2 and k == 0:
-                            ax_.set_ylabel('Normalized and detrended Flux of each pixel')
-
+                            ax_.set_ylabel('')
+                # Get all unique combinations of 2 arrays from the list
                 combinations = itertools.combinations(arrays, 2)
+                # List to store median absolute differences for each combination
                 median_abs_diffs = []
+                # Loop through each pair of arrays
                 for arr_a, arr_b in combinations:
+                    # Compute the absolute difference
                     abs_diff = np.abs(arr_a - arr_b)
+                    # Compute the median of the absolute differences
                     median_diff = np.median(abs_diff)
+                    # Store the result
                     median_abs_diffs.append(median_diff)
+                # Convert to a NumPy array for further processing if needed
                 median_abs_diffs = np.array(median_abs_diffs)
                 iqr = np.percentile(median_abs_diffs, 75) - np.percentile(median_abs_diffs, 25)
                 print(f"Interquartile Range (IQR): {iqr}")
                 std_dev = np.std(median_abs_diffs)
                 print(f"Standard Deviation: {std_dev}")
-                ax1 = fig.add_subplot(gs[:9, 3:6])
-                ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
+                ax1 = fig.add_subplot(gs[:5, 4:7])
+                ax1.hist(median_abs_diffs, color='k')
                 ax1.set_box_aspect(1)
-                # ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
-                ax1.set_xlabel('MAD between combinations of fluxes')
-                ax1.set_ylabel('Counts')
-                text_ax = fig.add_axes([0.6, 0.95, 0.3, 0.3])  # [left, bottom, width, height] in figure coordinates
+                ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
+                ax1.set_xlabel('MAD between combinations of center 3*3 pixel fluxes')
+                ax1.set_ylabel('Number')
+                text_ax = fig.add_axes([0.7, 0.85, 0.3, 0.3])  # [left, bottom, width, height] in figure coordinates
                 text_ax.axis('off')  # Turn off axis lines, ticks, etc.
-                text_ax.text(0., 0., f"Gaia DR3 {gaia_dr3} \n"
-                                     f" ←← TESS SPOC FFI and TIC/Gaia stars with proper motions. \n"
-                                     f"        Arrows show Gaia proper motion after {pm_years} years. \n"
-                                     f" ←  Histogram of the MADs between 3*3 pixel fluxes. \n"
-                                     f" ↓  Fluxes of each pixels after contaminations are removed. \n"
-                                     f"      The fluxes are normalized and detrended. The background \n"
-                                     f"      color shows the pixel brightness after the decontamination. \n"
-                                     f"How to interpret these plots: \n"
-                                     f"     If the signals you are interested in (i.e. transits, \n"
-                                     f"     eclipses, variable stars) show similar amplitudes in \n"
-                                     f"     all (especially the center 3*3) pixels, then the star \n"
-                                     f"     is likely to be the source. The median absolute \n"
-                                     f"     differences (MADs) taken between all combinations \n"
-                                     f"     of the center pixel fluxes are shown in the histogram \n"
-                                     f"     for a quantititive comparison to other possible sources. \n"
-                                     f"     The star with smaller distribution width (IQR or \n"
-                                     f"     STD) is more likely to be the source of the signal. \n"
-                                     f"\n"
-                                     f"Interquartile Range (IQR): {iqr:05f} \n"
-                                     f"Standard Deviation: {std_dev:05f}", transform=text_ax.transAxes, ha='left',
-                             va='top')
-                plt.subplots_adjust(top=.97, bottom=0.06, left=0.05, right=0.95)
-                plt.savefig(
-                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
-                    dpi=300,)
-                # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
-                #             dpi=600)
+                text_ax.text(0., 0., f"Interquartile Range (IQR): {iqr:05f} \n"
+                                     f"Standard Deviation: {std_dev:05f}", transform=text_ax.transAxes, ha='left', va='top')
+
+                plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                            dpi=300)
                 plt.close()
 
 def plot_epsf(local_directory=None):
@@ -637,7 +628,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=52, prior=prior,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
@@ -648,9 +639,10 @@ if __name__ == '__main__':
     tics = [10400181]
     directory = f'/Users/tehan/Documents/TGLC/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059111424)
     plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=1.4079405, mid_transit_tbjd=1779.3750828,
