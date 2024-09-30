@@ -2685,9 +2685,9 @@ def get_MAD(i, files=None):
     return tic, aper_precision
 
 def get_MAD_tglc_v_spoc(i, files=None):
-    with fits.open(files[i], mode='denywrite') as hdul:
-        # if tic_id in target_list:
-        try:
+    try:
+        with fits.open(files[i], mode='denywrite') as hdul:
+            # if tic_id in target_list:
             print(i)
             tic_id = int(hdul[0].header['TICID'])
             tic = hdul[0].header['TESSMAG']
@@ -2699,8 +2699,8 @@ def get_MAD_tglc_v_spoc(i, files=None):
             MAD_aper = np.median(np.abs(np.diff(aper_flux)))
             aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
             return tic, aper_precision, tic_id  # Return valid data
-        except:
-            return None  # Handle case where an exception is raised
+    except:
+        return None  # Handle case where an exception is raised
         # else:
         #     return None  # Skip when tic_id not in target_list
 
