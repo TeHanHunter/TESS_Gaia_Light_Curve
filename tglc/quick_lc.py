@@ -40,10 +40,6 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
-    if first_sector_only:
-        sector = 'first'
-    elif last_sector_only:
-        sector = 'last'
     print(f'Target: {target}')
     target_ = Catalogs.query_object(target, radius=42 * 0.707 / 3600, catalog="Gaia", version=2)
     if len(target_) == 0:
@@ -77,7 +73,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     elif first_sector_only:
         print(f'Only processing the first sector the target is observed in: Sector {sector_table["sector"][0]}.')
         print('Downloading Data from MAST and Gaia ...')
-
+        sector = sector_table["sector"][0]
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
                          limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=source.sector_table['sector'][0])
@@ -86,6 +82,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     elif last_sector_only:
         print(f'Only processing the last sector the target is observed in: Sector {sector_table["sector"][-1]}.')
         print('Downloading Data from MAST and Gaia ...')
+        sector = sector_table["sector"][-1]
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
                          limit_mag=limit_mag, transient=transient)  # sector
         source.select_sector(sector=source.sector_table['sector'][-1])
