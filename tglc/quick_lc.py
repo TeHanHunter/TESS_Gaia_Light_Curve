@@ -19,7 +19,8 @@ from astroquery.mast import Tesscut
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
-
+import seaborn as sns
+import itertools
 controller = ThreadpoolController()
 
 
@@ -293,47 +294,59 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.close(fig)
 
 
-def plot_contamination(local_directory=None, gaia_dr3=None):
-    files = glob(f'{local_directory}lc/*.fits')
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', "axes.grid": False})
+
+    files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             sector = hdul[0].header['SECTOR']
+            q = [a and b for a, b in
+                 zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+            if ymin is None and ymax is None:
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
-                plt.imshow(source.flux[0], origin='lower')
-                plt.show()
-                plt.close()
-                # print(source.gaia[891])
-                # print(source.gaia[star_num])
-                nearby_stars = np.argsort(
+
+                distances = np.sqrt(
                     (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
-                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)[0:5]
-                # print(f'sector = {source.sector}')
+                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)
+
+                # Find closest 5 stars (6-self) or those within 5 pixels
+                nearby_stars = np.argsort(distances)[:6]
+                nearby_stars = nearby_stars[distances[nearby_stars] <= 5]
                 star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
                 star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
                 max_flux = np.nanmax(
-                    np.nanmedian(source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
-                              axis=0))
-                fig = plt.figure(constrained_layout=False, figsize=(15, 5))
-                gs = fig.add_gridspec(5, 16)
-                gs.update(wspace=0.1, hspace=0.1)
-                ax0 = fig.add_subplot(gs[:5, :5])
+                    np.nanmedian(
+                        source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
+                        axis=0))
+                fig = plt.figure(constrained_layout=False, figsize=(20, 12))
+                gs = fig.add_gridspec(21, 10)
+                gs.update(wspace=0.03, hspace=0.1)
+                ax0 = fig.add_subplot(gs[:10, :3])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
+                ax0.set_xlabel('x pixel')
+                ax0.set_ylabel('y pixel')
+                ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
+                ax0.scatter(source.gaia[f'sector_{sector}_x'][:500], source.gaia[f'sector_{sector}_y'][:500], s=30,
+                            c='r', label='background stars')
+                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars[nearby_stars != star_num[0][0]]],
+                            source.gaia[f'sector_{sector}_y'][nearby_stars[nearby_stars != star_num[0][0]]],
+                            s=30, c='r', edgecolor='black', linewidth=1, label='background stars')
 
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][:500], source.gaia[f'sector_{sector}_y'][:500], s=50,
-                            c='r', label='background stars')
-                ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars],
-                            source.gaia[f'sector_{sector}_y'][nearby_stars], s=50,
-                            c='r', label='background stars')
                 for l in range(len(nearby_stars)):
                     index = np.where(
                         source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
                     gaia_targets = source.gaia
                     median_time = np.median(source.time)
-                    interval = (median_time - 388.5) / 365.25 + 3000
+                    interval = (median_time - 388.5) / 365.25 + pm_years
                     ra = gaia_targets['ra'][nearby_stars[l]]
                     dec = gaia_targets['dec'][nearby_stars[l]]
                     if not np.isnan(gaia_targets['pmra'][nearby_stars[l]]):
@@ -349,43 +362,36 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                               y_gaia - source.gaia[f'sector_{sector}_y'][nearby_stars[l]],
                               width=0.02, color='r', edgecolor=None, head_width=0.1)
                     try:
-                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.3,
-                                 f'TIC {int(source.tic["TIC"][index])}', rotation=90)
-                    except TypeError:
-                        ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] - 0.1,
-                                 source.gaia[f'sector_{sector}_y'][nearby_stars[l]] + 0.2,
-                                 f'{source.gaia[f"DESIGNATION"][nearby_stars[l]]}', rotation=90)
-                ax0.scatter(star_x, star_y, s=300, c='r', marker='*', label='target star')
+                        txt = ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] + 0.5,
+                                       source.gaia[f'sector_{sector}_y'][nearby_stars[l]] - 0.05,
+                                       f'TIC {int(source.tic["TIC"][index])}', size=7)
 
-                # ax0.legend()
+                    except TypeError:
+                        designation = source.gaia[f"DESIGNATION"][nearby_stars[l]]
+                        formatted_text = '\n'.join([designation[i:i + 15] for i in range(0, len(designation), 15)])
+
+                        txt = ax0.text(source.gaia[f'sector_{sector}_x'][nearby_stars[l]] + 0.5,
+                                       source.gaia[f'sector_{sector}_y'][nearby_stars[l]] - 0.05,
+                                       formatted_text, size=7)
                 ax0.set_xlim(round(star_x) - 5.5, round(star_x) + 5.5)
                 ax0.set_ylim(round(star_y) - 5.5, round(star_y) + 5.5)
-                ax0.set_title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}')
-                ax0.vlines(round(star_x) - 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k')
-                ax0.vlines(round(star_x) + 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k')
-                ax0.hlines(round(star_y) - 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k')
-                ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k')
-                # for j in range(5):
-                #     for k in range(5):
-                #         ax_ = fig.add_subplot(gs[(4 - j), (5 + k)])
-                #         ax_.patch.set_facecolor('C0')
-                #         ax_.patch.set_alpha(max(0, np.median(source.flux[:, round(star_y) - 2 + j, round(star_x) - 2 + k]) / max_flux))
-                #         cal_lc, trend = flatten(hdul[1].data['time'],
-                #                                      source.flux[:, round(star_y) - 2 + j, round(star_x) - 2 + k],
-                #                                      window_length=1, method='biweight', return_trend=True)
-                #         ax_.plot(hdul[1].data['time'], cal_lc, '.k', ms=1, label='center pixel')
-
+                ax0.set_title(f'TIC_{hdul[0].header["TICID"]}_Sector_{hdul[0].header["SECTOR"]:04d}')
+                ax0.vlines(round(star_x) - 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k', lw=1.2)
+                ax0.vlines(round(star_x) + 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k', lw=1.2)
+                ax0.hlines(round(star_y) - 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
+                ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
                 t_, y_, x_ = np.shape(hdul[0].data)
                 max_flux = np.max(
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
+                sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                            'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                            'axes.facecolor': '0.95', 'grid.color': '0.9'})
+                arrays = []
                 for j in range(y_):
                     for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(4 - j), (6 + 2 * k):(8 + 2 * k)])
-                        ax_.patch.set_facecolor('C0')
+                        ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
+                        ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        q = [a and b for a, b in
-                             zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
 
                         _, trend = flatten(hdul[1].data['time'][q],
                                            hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
@@ -393,16 +399,68 @@ def plot_contamination(local_directory=None, gaia_dr3=None):
                         cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
                             hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
                             hdul[0].data[:, j, k][q]) + 1
-                        # ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
-                        ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
-                        # ax_.set_ylim(0.7, 1.3)
+                        if 1 <= j <= 3 and 1 <= k <= 3:
+                            arrays.append(cal_aper)
+                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
+                        # ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
+                        ax_.set_ylim(ymin, ymax)
+                        ax_.set_xlabel('TBJD')
+                        ax_.set_ylabel('')
                         if j != 0:
                             ax_.set_xticklabels([])
+                            ax_.set_xlabel('')
                         if k != 0:
                             ax_.set_yticklabels([])
+                        if j == 2 and k == 0:
+                            ax_.set_ylabel('Normalized and detrended Flux of each pixel')
 
-                plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}.pdf',
-                            dpi=300)
+                combinations = itertools.combinations(arrays, 2)
+                median_abs_diffs = []
+                for arr_a, arr_b in combinations:
+                    abs_diff = np.abs(arr_a - arr_b)
+                    median_diff = np.median(abs_diff)
+                    median_abs_diffs.append(median_diff)
+                median_abs_diffs = np.array(median_abs_diffs)
+                iqr = np.percentile(median_abs_diffs, 75) - np.percentile(median_abs_diffs, 25)
+                print(f"Interquartile Range (IQR): {iqr}")
+                std_dev = np.std(median_abs_diffs)
+                print(f"Standard Deviation: {std_dev}")
+                ax1 = fig.add_subplot(gs[:10, 4:7])
+                ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
+                ax1.set_box_aspect(1)
+                ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
+                ax1.set_xlabel('MAD between combinations of center 3*3 pixel fluxes')
+                ax1.set_ylabel('Counts')
+                text_ax = fig.add_axes([0.71, 0.9, 0.3, 0.3])  # [left, bottom, width, height] in figure coordinates
+                text_ax.axis('off')  # Turn off axis lines, ticks, etc.
+                text_ax.text(0., 0., f"Gaia DR3 {gaia_dr3} \n"
+                                     f" ←← TESS SPOC FFI and TIC/Gaia stars with proper motions. \n"
+                                     f"        Arrows show Gaia proper motion after {pm_years} years. \n"
+                                     f" ←  Histogram of the MADs between 3*3 pixel fluxes. \n"
+                                     f" ↓  Fluxes of each pixels after contaminations are removed. \n"
+                                     f"      The fluxes are normalized and detrended. The background \n"
+                                     f"      color shows the pixel brightness after the decontamination. \n"
+                                     f"\n"
+                                     f"How to interpret these plots: \n"
+                                     f"     If the signals you are interested in (i.e. transits, \n"
+                                     f"     eclipses, variable stars) show similar amplitudes in \n"
+                                     f"     all (especially the center 3*3) pixels, then the star \n"
+                                     f"     is likely to be the source. The median absolute \n"
+                                     f"     differences (MADs) taken between all combinations \n"
+                                     f"     of the center pixel fluxes are shown in the histogram \n"
+                                     f"     for a quantititive comparison to other possible sources. \n"
+                                     f"     The star with smaller distribution width (IQR or \n"
+                                     f"     STD) is more likely to be the source of the signal. \n"
+                                     f"\n"
+                                     f"Interquartile Range (IQR): {iqr:05f} \n"
+                                     f"Standard Deviation: {std_dev:05f}", transform=text_ax.transAxes, ha='left',
+                             va='top')
+                plt.subplots_adjust(top=.98, bottom=0.05, left=0.05, right=0.95)
+                plt.savefig(
+                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                    dpi=300)
+                # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
+                #             dpi=600)
                 plt.close()
 
 
