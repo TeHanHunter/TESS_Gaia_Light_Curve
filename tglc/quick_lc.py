@@ -362,10 +362,12 @@ def produce_config_qlp(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                 OutlierRejection = True""")
 
                 # Write the content to a file
-                with open(f"{output_dir}{star_name}/{star_name}_config_s{hdul[0].header['sector']:04d}.txt", "w") as file:
+                with open(f"{output_dir}{star_name}/{star_name}_config_s{hdul[0].header['sector']:04d}.txt",
+                          "w") as file:
                     file.write(content)
         except:
             print(files)
+
 
 def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     # tics = [int(s[4:]) for s in t['tic_id']]
@@ -390,6 +392,7 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     print(f'{len(unique_elements[counts >= 10])} of stars are observed at least {10} times. ')
     return tic_sector
 
+
 def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
@@ -403,8 +406,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             if ymin is None and ymax is None:
-                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q])-0.05
-                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q])+0.05
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
@@ -489,7 +492,6 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                         ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
 
-
                         _, trend = flatten(hdul[1].data['time'][q],
                                            hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
                                            window_length=1, method='biweight', return_trend=True)
@@ -560,6 +562,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 #             dpi=600)
                 plt.close()
 
+
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
     if method == 'query':
         for i in range(len(tics)):
@@ -572,6 +575,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             # plot_lc(local_directory=f'{directory}TIC {tics[i]}/lc/', type='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
+
 
 if __name__ == '__main__':
     # t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
@@ -591,8 +595,9 @@ if __name__ == '__main__':
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
     # get_tglc_lc(tics=tics, directory=dir,)
     for i in range(len(tics)):
-        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/',gaia_dr3=t['planet_host_gaia'][i])
-        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/',gaia_dr3=t['neighbor_gaia'][i])
+        print(t['planet_host_gaia'][i])
+        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
+        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
 
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
