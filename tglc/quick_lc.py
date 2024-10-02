@@ -583,7 +583,7 @@ if __name__ == '__main__':
     #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
     t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
-    tics = [int(s[4:]) for s in t['planet_host']]
+    tics = [int(s) for s in t['planet_host']]
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
     get_tglc_lc(tics=tics, directory=dir,)
     # for i in trange(len(tic_sector)):
