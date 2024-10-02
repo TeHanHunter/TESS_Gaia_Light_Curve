@@ -390,7 +390,7 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     print(f'{len(unique_elements[counts >= 10])} of stars are observed at least {10} times. ')
     return tic_sector
 
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, pm_years=3000):
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', "axes.grid": False})
@@ -400,6 +400,11 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, 
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             sector = hdul[0].header['SECTOR']
+            q = [a and b for a, b in
+                 zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+            if ymin is None and ymax is None:
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q])-0.05
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q])+0.05
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
@@ -483,8 +488,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, 
                         ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
                         ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        q = [a and b for a, b in
-                             zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+
 
                         _, trend = flatten(hdul[1].data['time'][q],
                                            hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
@@ -585,7 +589,11 @@ if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
     tics = [int(s) for s in t['planet_host']]
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
-    get_tglc_lc(tics=tics, directory=dir,)
+    # get_tglc_lc(tics=tics, directory=dir,)
+    for i in range(len(tics)):
+        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/',gaia_dr3=t['planet_host_gaia'][i])
+        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/',gaia_dr3=t['neighbor_gaia'][i])
+
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
     #         produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
