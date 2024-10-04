@@ -2903,42 +2903,41 @@ def plot_MAD_seaborn():
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
-def plot_MAD_3_seaborn():
+def plot_MAD_tglc_v_spoc():
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
-    qlp_color = palette[2]
+    # qlp_color = palette[2]
     spoc_color = palette[0]
-    print(qlp_color)
-    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
-    mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_v_spoc.npy', allow_pickle=True)
+    # mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
     mad_spoc = np.load('/Users/tehan/Documents/TGLC/mad_spoc_30min.npy', allow_pickle=True)
     noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
-
+    print(type(mad_tglc.tolist()['tics']))
+    print(type(mad_spoc.tolist()['tics']))
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
-    sorted_indices_qlp = np.argsort(mad_qlp.tolist()['tics'])
+    # sorted_indices_qlp = np.argsort(mad_qlp.tolist()['tics'])
     sorted_indices_spoc = np.argsort(mad_spoc.tolist()['tics'])
-
     # Interpolate noise model
     noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
 
     # Bin data
-    bin_size = 40000
+    bin_size = 10000
     tglc_mag = np.median(mad_tglc.tolist()['tics'][sorted_indices_tglc][
                          :len(mad_tglc.tolist()['tics'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1,
                                                                                                               bin_size),
                          axis=1)
-    tglc_binned = np.median(mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc][:len(
-        mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1, bin_size),
+    tglc_binned = np.median(mad_tglc.tolist()['tglc_precision'][sorted_indices_tglc][:len(
+        mad_tglc.tolist()['tglc_precision'][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1, bin_size),
                             axis=1)
 
-    bin_size = 10000
-    qlp_mag = np.nanmedian(mad_qlp.tolist()['tics'][sorted_indices_qlp][
-                           :len(mad_qlp.tolist()['tics'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1,
-                                                                                                              bin_size),
-                           axis=1)
-    qlp_binned = np.nanmedian(mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp][:len(
-        mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+    # bin_size = 10000
+    # qlp_mag = np.nanmedian(mad_qlp.tolist()['tics'][sorted_indices_qlp][
+    #                        :len(mad_qlp.tolist()['tics'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1,
+    #                                                                                                           bin_size),
+    #                        axis=1)
+    # qlp_binned = np.nanmedian(mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp][:len(
+    #     mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
     bin_size = 10000
     spoc_mag = np.nanmedian(mad_spoc.tolist()['tics'][sorted_indices_spoc][
@@ -2960,16 +2959,16 @@ def plot_MAD_3_seaborn():
     ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
                   mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
     ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
-    ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
-                  s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
-    ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
+    # ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
+    #               s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
+    # ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
     ax[0].scatter(mad_spoc.tolist()['tics'][sorted_indices_spoc], mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc],
                   s=0.15, linewidths=0, color=spoc_color, alpha=0.01)
     ax[0].scatter(0,0 ,s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
     rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
     ax[0].add_patch(rect)
 
-    ax[0].plot(qlp_mag, qlp_binned, color=qlp_color, ls='-', lw=2)
+    # ax[0].plot(qlp_mag, qlp_binned, color=qlp_color, ls='-', lw=2)
     ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
     ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='-', lw=2)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
@@ -2983,7 +2982,7 @@ def plot_MAD_3_seaborn():
 
     # Bottom panel
     ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2, label='TGLC Aperture')
-    ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, ls='-', lw=2, label='QLP SAP')
+    # ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, ls='-', lw=2, label='QLP SAP')
     ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='-', lw=2, label='TESS-SPOC PDCSAP')
     ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
     ax[1].set_ylim(0.5, 2.5)
@@ -2998,7 +2997,7 @@ def plot_MAD_3_seaborn():
     # plt.show()
 
 if __name__ == '__main__':
-    # plot_MAD_3_seaborn()
+    # plot_MAD_tglc_v_spoc()
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
     # with Pool() as p:
@@ -3026,5 +3025,5 @@ if __name__ == '__main__':
         if tic_id[i] in target_list:
             chosen_mag.append(tics[i])
             chosen_precision.append(tglc_precision[i])
-    np.save('/pdo/users/tehan/sector0056/chosen_data.npy',
-            {'tics': chosen_mag, 'tglc_precision': chosen_precision})
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc.npy',
+            {'tics': np.array(chosen_mag), 'tglc_precision': np.array(chosen_precision)})
