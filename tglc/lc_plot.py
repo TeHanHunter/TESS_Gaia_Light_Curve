@@ -2908,12 +2908,12 @@ def plot_MAD_tglc_v_spoc():
     tglc_color = palette[3]
     # qlp_color = palette[2]
     spoc_color = palette[0]
-    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_v_spoc.npy', allow_pickle=True)
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_v_spoc_30min.npy', allow_pickle=True)
     # mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
     mad_spoc = np.load('/Users/tehan/Documents/TGLC/mad_spoc_30min.npy', allow_pickle=True)
     noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
-    print(type(mad_tglc.tolist()['tics']))
-    print(type(mad_spoc.tolist()['tics']))
+    # print(type(mad_tglc.tolist()['tics']))
+    # print(type(mad_spoc.tolist()['tics']))
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()['tics'])
     # sorted_indices_qlp = np.argsort(mad_qlp.tolist()['tics'])
@@ -2939,7 +2939,7 @@ def plot_MAD_tglc_v_spoc():
     # qlp_binned = np.nanmedian(mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp][:len(
     #     mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
-    bin_size = 10000
+    bin_size = 40000
     spoc_mag = np.nanmedian(mad_spoc.tolist()['tics'][sorted_indices_spoc][
                            :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
                                                                                                               bin_size),
@@ -2957,7 +2957,7 @@ def plot_MAD_tglc_v_spoc():
 
     # Top panel
     ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
-                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
+                  mad_tglc.tolist()['tglc_precision'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
     ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
     # ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
     #               s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
@@ -2993,7 +2993,7 @@ def plot_MAD_tglc_v_spoc():
     ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
 
     plt.xlim(7, 16.5)
-    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_3_30min.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_tglc_v_spoc.png', bbox_inches='tight', dpi=300)
     # plt.show()
 
 if __name__ == '__main__':
@@ -3012,6 +3012,7 @@ if __name__ == '__main__':
     # tics = np.array(tics)
     # precision = np.array(precision)
     target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
+    mad_tglc = np.load('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', allow_pickle=True)
     # print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
     data = np.load('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', allow_pickle=True)
@@ -3024,6 +3025,6 @@ if __name__ == '__main__':
     for i in trange(len(tic_id)):
         if tic_id[i] in target_list:
             chosen_mag.append(tics[i])
-            chosen_precision.append(tglc_precision[i])
+            chosen_precision.append(mad_tglc.tolist()['aper_precisions'][np.where(mad_tglc.tolist()['tics'] == tics[i])])
     np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc.npy',
             {'tics': np.array(chosen_mag), 'tglc_precision': np.array(chosen_precision)})
