@@ -2996,19 +2996,22 @@ def plot_MAD_3_seaborn():
 
 if __name__ == '__main__':
     # plot_MAD_3_seaborn()
-    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
-    print(len(files))
-    with Pool() as p:
-        results = p.map(partial(get_MAD_tglc_v_spoc, files=files), range(len(files)))
-
-    filtered_results = [res for res in results if res is not None]
-    # Now unpack safely
-    if filtered_results:  # Only unpack if there are valid results
-        tics, precision, tic_id = zip(*filtered_results)
-    else:
-        tics, precision, tic_id = [], [], []  # Handle case with no valid results
-    tics = np.array(tics)
-    precision = np.array(precision)
+    # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+    # print(len(files))
+    # with Pool() as p:
+    #     results = p.map(partial(get_MAD_tglc_v_spoc, files=files), range(len(files)))
+    #
+    # filtered_results = [res for res in results if res is not None]
+    # # Now unpack safely
+    # if filtered_results:  # Only unpack if there are valid results
+    #     tics, precision, tic_id = zip(*filtered_results)
+    # else:
+    #     tics, precision, tic_id = [], [], []  # Handle case with no valid results
+    # tics = np.array(tics)
+    # precision = np.array(precision)
     target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
-    print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
+    # print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
+    data = np.loadtxt('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy')
+    print(data['tics'])
+    # for i in range()
