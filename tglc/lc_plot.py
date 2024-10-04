@@ -1,4 +1,7 @@
 import os
+
+from astropy.table import Table
+
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
@@ -3012,6 +3015,16 @@ if __name__ == '__main__':
     target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
     # print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
-    data = np.loadtxt('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy')
-    print(data['tics'])
-    # for i in range()
+    data = np.load('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', allow_pickle=True)
+    tics = data.item().get('tics')
+    tglc_precision = data.item().get('tglc_precision')
+    tic_id = data.item().get('tic_id')
+    tbl = Table([tics, tglc_precision, tic_id], names=('tics', 'tglc_precision', 'tic_id'))
+    chosen_mag=[]
+    chosen_precision=[]
+    for i in trange(len(tic_id)):
+        if tic_id[i] in target_list:
+            chosen_mag.append(tics[i])
+            chosen_precision.append(tglc_precision[i])
+    np.save('/pdo/users/tehan/sector0056/chosen_data.npy',
+            {'tics': chosen_mag, 'tglc_precision': chosen_precision})
