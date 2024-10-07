@@ -436,7 +436,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars[nearby_stars != star_num[0][0]]],
                             source.gaia[f'sector_{sector}_y'][nearby_stars[nearby_stars != star_num[0][0]]],
                             s=30, c='r', edgecolor='black', linewidth=1, label='background stars')
-
+                ax0.grid(False)
                 for l in range(len(nearby_stars)):
                     index = np.where(
                         source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
