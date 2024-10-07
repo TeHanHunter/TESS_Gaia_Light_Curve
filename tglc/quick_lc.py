@@ -591,7 +591,7 @@ if __name__ == '__main__':
     # tics = [int(s) for s in t['planet_host']]
     tics=[198008005]
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
-    get_tglc_lc(tics=tics, directory=dir,)
+    # get_tglc_lc(tics=tics, directory=dir,)
     for i in range(len(tics)):
         # print(t['planet_host_gaia'][i])
         try:
@@ -599,7 +599,7 @@ if __name__ == '__main__':
         except:
             continue
         try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=4683737294568479104)
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=4683737294570307968)
         except:
             continue
     # for i in trange(len(tic_sector)):
