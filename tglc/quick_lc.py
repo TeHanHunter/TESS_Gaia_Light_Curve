@@ -567,7 +567,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=True, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             # plot_lc(local_directory=f'{directory}TIC {tics[i]}/lc/', type='cal_aper_flux')
     if method == 'search':
@@ -587,12 +587,13 @@ if __name__ == '__main__':
     #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
     #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
-    tics = [int(s) for s in t['planet_host']]
+    # t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
+    # tics = [int(s) for s in t['planet_host']]
+    tics=[198008005]
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
-    # get_tglc_lc(tics=tics, directory=dir,)
+    get_tglc_lc(tics=tics, directory=dir,)
     for i in range(len(tics)):
-        print(t['planet_host_gaia'][i])
+        # print(t['planet_host_gaia'][i])
         try:
             plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
         except:
