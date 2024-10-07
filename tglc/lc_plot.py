@@ -3015,11 +3015,11 @@ if __name__ == '__main__':
     mad_tglc = np.load('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', allow_pickle=True)
     # print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
-    data = np.load('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', allow_pickle=True)
+    data = np.load('/pdo/users/tehan/sector0056/mad_tglc_v_spoc.npy', allow_pickle=True)
     tics = data.item().get('tics')
     tglc_precision = data.item().get('tglc_precision')
     tic_id = data.item().get('tic_id')
-    tbl = Table([tics, tglc_precision, tic_id], names=('tics', 'tglc_precision', 'tic_id'))
+    # tbl = Table([tics, tglc_precision, tic_id], names=('tics', 'tglc_precision', 'tic_id'))
     chosen_mag=[]
     chosen_precision=[]
     for i in trange(len(tic_id)):
