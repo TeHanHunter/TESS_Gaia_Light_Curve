@@ -595,11 +595,11 @@ if __name__ == '__main__':
     for i in range(len(tics)):
         # print(t['planet_host_gaia'][i])
         try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=4683737294569921664)
         except:
             continue
         try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=4683737294568479104)
         except:
             continue
     # for i in trange(len(tic_sector)):
