@@ -593,9 +593,14 @@ if __name__ == '__main__':
     # get_tglc_lc(tics=tics, directory=dir,)
     for i in range(len(tics)):
         print(t['planet_host_gaia'][i])
-        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
-        plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
-
+        try:
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
+        except:
+            continue
+        try:
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
+        except:
+            continue
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
     #         produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
