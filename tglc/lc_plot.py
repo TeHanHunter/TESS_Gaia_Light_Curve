@@ -2908,7 +2908,7 @@ def plot_MAD_tglc_v_spoc():
     tglc_color = palette[3]
     # qlp_color = palette[2]
     spoc_color = palette[0]
-    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_v_spoc_30min.npy', allow_pickle=True)
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_v_tessspoc.npy', allow_pickle=True)
     # mad_qlp = np.load('/Users/tehan/Documents/TGLC/mad_qlp_30min.npy', allow_pickle=True)
     mad_spoc = np.load('/Users/tehan/Documents/TGLC/mad_spoc_30min.npy', allow_pickle=True)
     noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
@@ -2939,7 +2939,6 @@ def plot_MAD_tglc_v_spoc():
     # qlp_binned = np.nanmedian(mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp][:len(
     #     mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
-    bin_size = 40000
     spoc_mag = np.nanmedian(mad_spoc.tolist()['tics'][sorted_indices_spoc][
                            :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
                                                                                                               bin_size),
@@ -3011,20 +3010,17 @@ if __name__ == '__main__':
     #     tics, precision, tic_id = [], [], []  # Handle case with no valid results
     # tics = np.array(tics)
     # precision = np.array(precision)
-    target_list = np.loadtxt('/pdo/users/tehan/sector0056/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
-    mad_tglc = np.load('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', allow_pickle=True)
-    # print(f'Number of stars found: {len(precision)} / {len(target_list)}.')
-    # np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc_30min.npy', {'tics': tics, 'tglc_precision': precision, 'tic_id': tic_id})
-    data = np.load('/pdo/users/tehan/sector0056/mad_tglc_v_spoc.npy', allow_pickle=True)
-    tics = data.item().get('tics')
-    tglc_precision = data.item().get('tglc_precision')
-    tic_id = data.item().get('tic_id')
-    # tbl = Table([tics, tglc_precision, tic_id], names=('tics', 'tglc_precision', 'tic_id'))
+    target_list = np.loadtxt('/Users/tehan/Documents/TGLC/tess-spoc_s0056.csv', delimiter=',')[:,0].astype(int)
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/mad_tglc_30min.npy', allow_pickle=True)
+    data = np.load('/Users/tehan/Documents/TGLC/mad_tglc_v_spoc.npy', allow_pickle=True)
+    tics_ref = data.item().get('tics')
+    tics = mad_tglc.tolist()['tics']
+    precision = mad_tglc.tolist()['aper_precisions']
     chosen_mag=[]
     chosen_precision=[]
-    for i in trange(len(tic_id)):
-        if tic_id[i] in target_list:
-            chosen_mag.append(tics[i])
-            chosen_precision.append(mad_tglc.tolist()['aper_precisions'][np.where(mad_tglc.tolist()['tics'] == tics[i])])
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_tessspoc.npy',
+    for i in trange(len(tics_ref)):
+        if tics_ref[i] in tics:
+            chosen_mag.append(tics_ref[i])
+            chosen_precision.append(precision[np.where(tics == tics_ref[i])[0][0]])
+    np.save('/Users/tehan/Documents/TGLC/mad_tglc_v_tessspoc.npy',
             {'tics': np.array(chosen_mag), 'tglc_precision': np.array(chosen_precision)})
