@@ -391,6 +391,9 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
 
 
 def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, t0=None, period=None):
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.9'})
     files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
@@ -399,8 +402,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             if ymin is None and ymax is None:
-                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
-                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.01
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.01
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
@@ -419,10 +422,6 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                     np.nanmedian(
                         source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                         axis=0))
-                sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
-                            'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                            'axes.facecolor': '0.95', "axes.grid": False})
-
                 fig = plt.figure(constrained_layout=False, figsize=(20, 12))
                 gs = fig.add_gridspec(21, 10)
                 gs.update(wspace=0.03, hspace=0.1)
@@ -479,9 +478,6 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 t_, y_, x_ = np.shape(hdul[0].data)
                 max_flux = np.max(
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
-                sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
-                            'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                            'axes.facecolor': '0.95', 'grid.color': '0.9'})
                 arrays = []
                 for j in range(y_):
                     for k in range(x_):
