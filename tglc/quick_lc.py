@@ -590,7 +590,7 @@ if __name__ == '__main__':
     t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
     tics = [int(s) for s in t['planet_host']]
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
-    get_tglc_lc(tics=tics, directory=dir,)
+    # get_tglc_lc(tics=tics, directory=dir,)
     for i in range(len(tics)):
         print(t['planet_host_gaia'][i])
         plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
