@@ -3026,5 +3026,5 @@ if __name__ == '__main__':
         if tic_id[i] in target_list:
             chosen_mag.append(tics[i])
             chosen_precision.append(mad_tglc.tolist()['aper_precisions'][np.where(mad_tglc.tolist()['tics'] == tics[i])])
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_spoc.npy',
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_v_tessspoc.npy',
             {'tics': np.array(chosen_mag), 'tglc_precision': np.array(chosen_precision)})
