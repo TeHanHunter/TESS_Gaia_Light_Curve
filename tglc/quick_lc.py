@@ -567,7 +567,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=True, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             # plot_lc(local_directory=f'{directory}TIC {tics[i]}/lc/', type='cal_aper_flux')
     if method == 'search':
