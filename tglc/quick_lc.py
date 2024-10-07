@@ -583,19 +583,19 @@ if __name__ == '__main__':
     #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
     #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
-    # t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
-    # tics = [int(s) for s in t['planet_host']]
-    tics=[198008005]
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
+    tics = [int(s) for s in t['planet_host']]
+    # tics=[198008005]
     dir = '/home/tehan/data/cosmos/planet_host_companion/'
     # get_tglc_lc(tics=tics, directory=dir,)
     for i in range(len(tics)):
-        # print(t['planet_host_gaia'][i])
+        print(t['planet_host_gaia'][i])
         try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=4683737294569921664)
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
         except:
             continue
         try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=4683737294570307968)
+            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
         except:
             continue
     # for i in trange(len(tic_sector)):
