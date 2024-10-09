@@ -25,7 +25,7 @@ from functools import partial
 from scipy.interpolate import interp1d
 import seaborn as sns
 import matplotlib.patches as patches
-
+from matplotlib.legend_handler import HandlerLine2D, HandlerTuple
 
 
 def load_eleanor(ld='', tic=1, sector=1):
@@ -2687,6 +2687,7 @@ def get_MAD(i, files=None):
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
     return tic, aper_precision
 
+
 def get_MAD_tglc_v_spoc(i, files=None):
     try:
         with fits.open(files[i], mode='denywrite') as hdul:
@@ -2706,6 +2707,7 @@ def get_MAD_tglc_v_spoc(i, files=None):
         return None  # Handle case where an exception is raised
         # else:
         #     return None  # Skip when tic_id not in target_list
+
 
 def get_MAD_qlp(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
@@ -2731,6 +2733,7 @@ def get_MAD_qlp(i, files=None):
             pass
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
 
+
 def get_MAD_spoc(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
         try:
@@ -2754,6 +2757,7 @@ def get_MAD_spoc(i, files=None):
         except:
             pass
 
+
 def plot_MAD():
     # mad = np.load('/home/tehan/Downloads/mad_180.npy')
     mad = np.load('/home/tehan/Documents/tglc/mad_tglc_30min.npy', allow_pickle=True)
@@ -2767,9 +2771,10 @@ def plot_MAD():
                ms=0.1, label='TGLC Aperture', alpha=0.01)
     bin = 20000
     tglc_mag = np.median(mad.tolist()['tics'][sorted_indices][
-                                 :len(mad.tolist()['tics'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+                         :len(mad.tolist()['tics'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
     tglc_binned = np.median(mad.tolist()['aper_precisions'][sorted_indices][
-                                 :len(mad.tolist()['aper_precisions'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+                            :len(mad.tolist()['aper_precisions'][sorted_indices]) // bin * bin].reshape(-1, bin),
+                            axis=1)
     # ax[0].plot(tglc_mag, tglc_binned, c='tomato', alpha=1)
 
     # # ax[0].plot(mean_diff_aper[0], aper_precision, 'D', c='r', ms=1, label='TGLC Aper', alpha=0.8)
@@ -2790,9 +2795,10 @@ def plot_MAD():
                label='QLP SAP', alpha=0.01)
     bin = 10000
     qlp_mag = np.nanmedian(mad.tolist()['tics'][sorted_indices][
-                                 :len(mad.tolist()['tics'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+                           :len(mad.tolist()['tics'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
     qlp_binned = np.nanmedian(mad.tolist()['qlp_precision'][sorted_indices][
-                                 :len(mad.tolist()['qlp_precision'][sorted_indices]) // bin * bin].reshape(-1, bin), axis=1)
+                              :len(mad.tolist()['qlp_precision'][sorted_indices]) // bin * bin].reshape(-1, bin),
+                              axis=1)
     # ax[0].plot(qlp_mag, qlp_binned, c='C0', alpha=1)
 
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], c='k', ms=1.5, label='Sullivan (2015)', alpha=1)
@@ -2804,7 +2810,6 @@ def plot_MAD():
     ax[0].set_yscale('log')
     ax[0].set_ylim(1e-4, 1)
     ax[0].set_title('S56 30-min bin')
-
 
     ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), c='tomato', alpha=1)
     ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), c='C0', alpha=1)
@@ -2823,6 +2828,7 @@ def plot_MAD():
     plt.xlim(7, 16.5)
     plt.savefig(f'/home/tehan/Documents/tglc/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # point-to-point scatter
+
 
 def plot_MAD_seaborn():
     palette = sns.color_palette('colorblind')
@@ -2868,11 +2874,12 @@ def plot_MAD_seaborn():
 
     # Top panel
     ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
-                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
-    ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
+                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color,
+                  alpha=0.01)
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='TGLC Aperture')
     ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
                   s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
-    ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
+    ax[0].scatter(0, 0, s=1, color=qlp_color, alpha=1, label='QLP SAP')
 
     rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
     ax[0].add_patch(rect)
@@ -2902,6 +2909,7 @@ def plot_MAD_seaborn():
     plt.xlim(7, 16.5)
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_30min.png', bbox_inches='tight', dpi=300)
     # plt.show()
+
 
 def plot_MAD_tglc_v_spoc():
     palette = sns.color_palette('colorblind')
@@ -2940,9 +2948,9 @@ def plot_MAD_tglc_v_spoc():
     #     mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
     spoc_mag = np.nanmedian(mad_spoc.tolist()['tics'][sorted_indices_spoc][
-                           :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
-                                                                                                              bin_size),
-                           axis=1)
+                            :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
+                                                                                                                 bin_size),
+                            axis=1)
     spoc_binned = np.nanmedian(mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc][:len(
         mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
@@ -2956,14 +2964,16 @@ def plot_MAD_tglc_v_spoc():
 
     # Top panel
     ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
-                  mad_tglc.tolist()['tglc_precision'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
-    ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
+                  mad_tglc.tolist()['tglc_precision'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color,
+                  alpha=0.01)
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='TGLC Aperture')
     # ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
     #               s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
     # ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
-    ax[0].scatter(mad_spoc.tolist()['tics'][sorted_indices_spoc], mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc],
+    ax[0].scatter(mad_spoc.tolist()['tics'][sorted_indices_spoc],
+                  mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc],
                   s=0.15, linewidths=0, color=spoc_color, alpha=0.01)
-    ax[0].scatter(0,0 ,s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
+    ax[0].scatter(0, 0, s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
     rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
     ax[0].add_patch(rect)
 
@@ -2994,6 +3004,8 @@ def plot_MAD_tglc_v_spoc():
     plt.xlim(7, 16.5)
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_tglc_v_spoc.png', bbox_inches='tight', dpi=300)
     # plt.show()
+
+
 def plot_MAD_all():
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
@@ -3026,12 +3038,12 @@ def plot_MAD_all():
 
     bin_size = 10000
     tglc_mag_ = np.median(mad_tglc_.tolist()['tics'][sorted_indices_tglc_][
-                         :len(mad_tglc_.tolist()['tics'][sorted_indices_tglc_]) // bin_size * bin_size].reshape(-1,
-                                                                                                              bin_size),
-                         axis=1)
+                          :len(mad_tglc_.tolist()['tics'][sorted_indices_tglc_]) // bin_size * bin_size].reshape(-1,
+                                                                                                                 bin_size),
+                          axis=1)
     tglc_binned_ = np.median(mad_tglc_.tolist()['tglc_precision'][sorted_indices_tglc_][:len(
         mad_tglc_.tolist()['tglc_precision'][sorted_indices_tglc_]) // bin_size * bin_size].reshape(-1, bin_size),
-                            axis=1)
+                             axis=1)
 
     bin_size = 10000
     qlp_mag = np.nanmedian(mad_qlp.tolist()['tics'][sorted_indices_qlp][
@@ -3043,9 +3055,9 @@ def plot_MAD_all():
 
     bin_size = 10000
     spoc_mag = np.nanmedian(mad_spoc.tolist()['tics'][sorted_indices_spoc][
-                           :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
-                                                                                                              bin_size),
-                           axis=1)
+                            :len(mad_spoc.tolist()['tics'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1,
+                                                                                                                 bin_size),
+                            axis=1)
     spoc_binned = np.nanmedian(mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc][:len(
         mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
@@ -3059,25 +3071,28 @@ def plot_MAD_all():
 
     # Top panel
     ax[0].scatter(mad_tglc.tolist()['tics'][sorted_indices_tglc],
-                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
-    ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1,label='TGLC Aperture')
+                  mad_tglc.tolist()['aper_precisions'][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color,
+                  alpha=0.01)
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='TGLC Aperture')
     ax[0].scatter(mad_tglc_.tolist()['tics'][sorted_indices_tglc_],
-                  mad_tglc_.tolist()['tglc_precision'][sorted_indices_tglc_], s=0.15, linewidths=0, color=tglc_color, alpha=0.01)
-    ax[0].scatter(0,0, s=1, color=tglc_color, alpha=1)
+                  mad_tglc_.tolist()['tglc_precision'][sorted_indices_tglc_], s=0.15, linewidths=0, color=tglc_color,
+                  alpha=0.01)
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1)
     ax[0].scatter(mad_qlp.tolist()['tics'][sorted_indices_qlp], mad_qlp.tolist()['qlp_precision'][sorted_indices_qlp],
                   s=0.15, linewidths=0, color=qlp_color, alpha=0.01)
-    ax[0].scatter(0,0 ,s=1, color=qlp_color, alpha=1, label='QLP SAP')
-    ax[0].scatter(mad_spoc.tolist()['tics'][sorted_indices_spoc], mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc],
+    ax[0].scatter(0, 0, s=1, color=qlp_color, alpha=1, label='QLP SAP')
+    ax[0].scatter(mad_spoc.tolist()['tics'][sorted_indices_spoc],
+                  mad_spoc.tolist()['spoc_precision'][sorted_indices_spoc],
                   s=0.15, linewidths=0, color=spoc_color, alpha=0.01)
-    ax[0].scatter(0,0 ,s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
+    ax[0].scatter(0, 0, s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
     rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
     ax[0].add_patch(rect)
     # print(np.min(np.where(qlp_mag>13.5)[0]))
     ax[0].plot(qlp_mag[:107], qlp_binned[:107], color=qlp_color, ls='-', lw=2)
-    ax[0].plot(qlp_mag[107:], qlp_binned[107:], color=qlp_color, ls='--', lw=1)
+    ax[0].plot(qlp_mag[108:], qlp_binned[108:], color=qlp_color, ls='--', lw=1.5)
     ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
-    ax[0].plot(tglc_mag_, tglc_binned_, color=tglc_color, ls='--', lw=1)
-    ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='--', lw=1)
+    ax[0].plot(tglc_mag_, tglc_binned_, color=tglc_color, ls='--', lw=1.5)
+    ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='--', lw=1.5)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
 
     # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
@@ -3085,25 +3100,32 @@ def plot_MAD_all():
     ax[0].set_yscale('log')
     ax[0].set_ylim(1e-4, 1)
     ax[0].set_title('S56 30-min bin')
-    ax[0].legend(loc=4, markerscale=4, fontsize=8)
+    ax[0].legend(loc=4, markerscale=2, fontsize=7.5, framealpha=1)
 
     # Bottom panel
-    ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2, label='TGLC Aperture')
-    ax[1].plot(tglc_mag_, tglc_binned_ / noise_interp(tglc_mag_), color=tglc_color, ls='--', lw=1)
-    ax[1].plot(qlp_mag[:107], qlp_binned[:107] / noise_interp(qlp_mag[:107]), color=qlp_color, ls='-', lw=2, label='QLP SAP')
-    ax[1].plot(qlp_mag[107:], qlp_binned[107:] / noise_interp(qlp_mag[107:]), color=qlp_color, ls='--', lw=1)
-    ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='--', lw=1, label='TESS-SPOC PDCSAP')
-    ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
+    p1, = ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2,
+                     label='TGLC Aperture')
+    p2, = ax[1].plot(tglc_mag_, tglc_binned_ / noise_interp(tglc_mag_), color=tglc_color, ls='--', lw=1.5)
+    p3, = ax[1].plot(qlp_mag[:107], qlp_binned[:107] / noise_interp(qlp_mag[:107]), color=qlp_color, ls='-', lw=2,
+                     label='QLP SAP')
+    p4, = ax[1].plot(qlp_mag[108:], qlp_binned[108:] / noise_interp(qlp_mag[108:]), color=qlp_color, ls='--', lw=1.5)
+    p5, = ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='--', lw=1.5,
+                     label='TESS-SPOC PDCSAP')
+    p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
     ax[1].set_ylim(0.5, 2.5)
     ax[1].set_yticks([0.5, 1, 1.5, 2])
     ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
     ax[1].set_xlabel('TESS magnitude')
     ax[1].set_ylabel('Precision Ratio')
-    ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
+    ax[1].legend([(p1, p2), (p3, p4), p5, p6], ['TGLC Aperture', 'QLP SAP', 'TESS-SPOC PDCSAP', 'Sullivan (2015)'],
+                 numpoints=1, loc=4, markerscale=1, ncol=2, handlelength=4.5, framealpha=1,
+                 columnspacing=1, fontsize=7.5, handler_map={tuple: HandlerTuple(ndivide=None)})
+    # ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
 
     plt.xlim(7, 16.5)
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_all.png', bbox_inches='tight', dpi=300)
     # plt.show()
+
 
 if __name__ == '__main__':
     plot_MAD_all()
