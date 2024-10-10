@@ -136,8 +136,9 @@ def process_star_results(result, table, file_names_odd, file_names_even):
                 file_names_odd.append(file_name)
 
 
-def get_file_name(tic_ids, max_retries=5, delay=10):
+def get_file_name(tic_ids, max_retries=5, delay=10, dir='/Users/tehan/Documents/TGLC/'):
     table = convert_tic_to_gaia(tic_ids)
+    table.write(f'{dir}Jeroen_VAR_tic_to_gaia.csv', format='csv', overwrite=True)
     file_names_odd = mp.Manager().list()
     file_names_even = mp.Manager().list()
 
@@ -149,24 +150,19 @@ def get_file_name(tic_ids, max_retries=5, delay=10):
 
     pool.close()
     pool.join()
-
-    odd_table = Table([list(file_names_odd)], names=('files',))
-    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files.csv', format='csv', overwrite=True)
-
-    even_table = Table([list(file_names_even)], names=('files',))
-    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files.csv', format='csv', overwrite=True)
+    odd_table = Table([file_names_odd], names=('files',))
+    odd_table.write(f'{dir}Jeroen_VAR_odd_files.csv', format='csv', overwrite=True)
+    even_table = Table([file_names_even], names=('files',))
+    even_table.write(f'{dir}Jeroen_VAR_even_files.csv', format='csv', overwrite=True)
 
     return list(file_names_odd), list(file_names_even)
 
 
 if __name__ == '__main__':
-    file_path = '/home/tehan/data/cosmos/Jeroen/targets.ecsv'
+    file_path = '/Users/tehan/Documents/TGLC/VAR_Final_Classification.csv'
     table = Table.read(file_path)
-    file_names_odd, file_names_even = get_file_name(table['starname'].tolist())
-    odd_table = Table([file_names_odd], names=('files',))
-    odd_table.write('/home/tehan/data/cosmos/Jeroen/odd_files.csv', format='csv', overwrite=True)
-    even_table = Table([file_names_even], names=('files',))
-    even_table.write('/home/tehan/data/cosmos/Jeroen/even_files.csv', format='csv', overwrite=True)
+    file_names_odd, file_names_even = get_file_name(table['TIC'].tolist())
+    # run cp_files next
 
     # file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
