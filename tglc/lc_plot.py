@@ -3089,10 +3089,10 @@ def plot_MAD_all():
     ax[0].add_patch(rect)
     # print(np.min(np.where(qlp_mag>13.5)[0]))
     ax[0].plot(qlp_mag[:107], qlp_binned[:107], color=qlp_color, ls='-', lw=2)
-    ax[0].plot(qlp_mag[108:], qlp_binned[108:], color=qlp_color, ls='--', lw=1.5)
+    ax[0].plot(qlp_mag[108:], qlp_binned[108:], color=qlp_color, ls='--', lw=1)
     ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
-    ax[0].plot(tglc_mag_, tglc_binned_, color=tglc_color, ls='--', lw=1.5)
-    ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='--', lw=1.5)
+    ax[0].plot(tglc_mag_, tglc_binned_, color=tglc_color, ls='--', lw=1)
+    ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='--', lw=1)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
 
     # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
@@ -3105,11 +3105,11 @@ def plot_MAD_all():
     # Bottom panel
     p1, = ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2,
                      label='TGLC Aperture')
-    p2, = ax[1].plot(tglc_mag_, tglc_binned_ / noise_interp(tglc_mag_), color=tglc_color, ls='--', lw=1.5)
+    p2, = ax[1].plot(tglc_mag_, tglc_binned_ / noise_interp(tglc_mag_), color=tglc_color, ls='--', lw=1)
     p3, = ax[1].plot(qlp_mag[:107], qlp_binned[:107] / noise_interp(qlp_mag[:107]), color=qlp_color, ls='-', lw=2,
                      label='QLP SAP')
-    p4, = ax[1].plot(qlp_mag[108:], qlp_binned[108:] / noise_interp(qlp_mag[108:]), color=qlp_color, ls='--', lw=1.5)
-    p5, = ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='--', lw=1.5,
+    p4, = ax[1].plot(qlp_mag[108:], qlp_binned[108:] / noise_interp(qlp_mag[108:]), color=qlp_color, ls='--', lw=1)
+    p5, = ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='--', lw=1,
                      label='TESS-SPOC PDCSAP')
     p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
     ax[1].set_ylim(0.5, 2.5)
