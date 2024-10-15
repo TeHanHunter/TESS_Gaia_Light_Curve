@@ -287,20 +287,40 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
                                                meas_err=f_err_all,
                                                binsize=300 / 86400)
-    plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
+    plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
                  marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    plt.ylim(0.998, 1.001)
+    plt.ylim(0.9, 1.1)
     # plt.xlim(0.3, 0.43)
-    plt.legend()
     plt.title(title)
     # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
-    plt.vlines(x=(mid_transit_tbjd % period), ymin=0, ymax=2, ls='dotted', colors='grey')
+    plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
     plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
+    # from astropy.table import Table
+    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s19_raw.csv', delimiter=',')
+    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
+    #                                            meas_err=s19_csv['flux_err'],
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C0', ls='', elinewidth=0.5,
+    #              marker='.', ms=8, zorder=3, label='S19')
+    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s43_raw.csv', delimiter=',')
+    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
+    #                                            meas_err=s19_csv['flux_err'],
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C1', ls='', elinewidth=0.1,
+    #              marker='.', ms=8, zorder=3, label='S43')
+    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s44_raw.csv', delimiter=',')
+    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
+    #                                            meas_err=s19_csv['flux_err'],
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C2', ls='', elinewidth=0.1,
+    #              marker='.', ms=8, zorder=3, label='S44')
+    plt.legend()
+
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
     plt.close(fig)
 
@@ -514,23 +534,23 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [372207328]
-    # directory = f'/Users/tehan/Documents/TGLC/'
-    directory = '/home/tehan/data/cosmos/Fei/'
+    tics = [56658270]
+    directory = f'/Users/tehan/Documents/TGLC/'
+    # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059111424)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-    #            kind='cal_psf_flux')
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=8.835, mid_transit_tbjd=1830.6529981,
+               kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
-    #            kind='cal_aper_flux')
+    #            kind='cal_psf_flux')
