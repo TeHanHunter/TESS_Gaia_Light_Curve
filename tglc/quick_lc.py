@@ -1,5 +1,6 @@
 import os
 import pickle
+import warnings
 from glob import glob
 from tqdm import trange
 from wotan import flatten
@@ -25,7 +26,7 @@ from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
 import matplotlib.patheffects as path_effects
 import itertools
-
+import sys
 controller = ThreadpoolController()
 
 
@@ -423,11 +424,10 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.close(fig)
 
 
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, pm_years=3000):
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                'axes.facecolor': '0.95', "axes.grid": False})
-
+                'axes.facecolor': '0.95', 'grid.color': '0.9'})
     files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
@@ -436,8 +436,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, 
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             if ymin is None and ymax is None:
-                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
-                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.01
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.01
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
@@ -469,7 +469,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, 
                 ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars[nearby_stars != star_num[0][0]]],
                             source.gaia[f'sector_{sector}_y'][nearby_stars[nearby_stars != star_num[0][0]]],
                             s=30, c='r', edgecolor='black', linewidth=1, label='background stars')
-
+                ax0.grid(False)
                 for l in range(len(nearby_stars)):
                     index = np.where(
                         source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
@@ -509,20 +509,19 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=0.5, ymax=1.2, 
                 ax0.vlines(round(star_x) + 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k', lw=1.2)
                 ax0.hlines(round(star_y) - 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
                 ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
-                t_, y_, x_ = np.shape(hdul[0].data)
+                try:
+                    t_, y_, x_ = np.shape(hdul[0].data)
+                except ValueError:
+                    warnings.warn('Light curves need to have the primary hdu. Set save_aperture=True when producing the light curve to enable this plot.')
+                    sys.exit()
                 max_flux = np.max(
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
-                sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
-                            'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                            'axes.facecolor': '0.95', 'grid.color': '0.9'})
                 arrays = []
                 for j in range(y_):
                     for k in range(x_):
                         ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
                         ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        q = [a and b for a, b in
-                             zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
 
                         _, trend = flatten(hdul[1].data['time'][q],
                                            hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
@@ -633,8 +632,8 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
-            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=19, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
     if method == 'search':
@@ -646,13 +645,13 @@ if __name__ == '__main__':
     directory = f'/Users/tehan/Documents/TGLC/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059111424)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=164800235906366976)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=8.835, mid_transit_tbjd=1830.6529981,
-               kind='cal_aper_flux')
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=8.835, mid_transit_tbjd=1830.6529981,
+    #            kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
