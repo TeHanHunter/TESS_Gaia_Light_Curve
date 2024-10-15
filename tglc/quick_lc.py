@@ -389,8 +389,8 @@ def sort_sectors(t, dir='/home/tehan/data/cosmos/transit_depth_validation/'):
     print(f'{len(unique_elements[counts >= 10])} of stars are observed at least {10} times. ')
     return tic_sector
 
-
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, t0=None, period=None):
+# the newest version
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
@@ -475,7 +475,12 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 ax0.vlines(round(star_x) + 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k', lw=1.2)
                 ax0.hlines(round(star_y) - 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
                 ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
-                t_, y_, x_ = np.shape(hdul[0].data)
+                try:
+                    t_, y_, x_ = np.shape(hdul[0].data)
+                except TypeError:
+                    print('Light curves need to have the primary hdu. Set save_aperture=True when producing the light '
+                          'curve to enable this plot.')
+                    break
                 max_flux = np.max(
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
                 arrays = []
