@@ -423,7 +423,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
     plt.close(fig)
 
-
+# newest
 def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
