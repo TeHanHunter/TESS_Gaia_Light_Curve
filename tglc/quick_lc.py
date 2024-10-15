@@ -364,57 +364,61 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     ticid = None
     n_used = 0
 
-    for path in files:
-        with fits.open(path, mode='denywrite') as hdul:
-            hdr = hdul[0].header
-            dat = hdul[1].data
-            ticid = hdr.get("TICID", ticid)
+                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[kind], '.', c='silver', ms=3)
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=0.1,
+                             marker='.', ms=3, zorder=2)
+                # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
+                #                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
+                #                                            binsize=600 / 86400)
+                # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
+                #              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
+            else:
+                not_plotted_num += 1
+            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {kind}'
+    # PDCSAP_files = glob('/home/tehan/Documents/GEMS/TIC 172370679/PDCSAP/*.txt')
+    # for i in range(len(files)):
+    #     PDCSAP = ascii.read(PDCSAP_files[i])
+    #     t = np.mean(PDCSAP['col1'][:len(PDCSAP['col1']) // 15 * 15].reshape(-1, 15), axis=1)
+    #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
+    #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
+    #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
+    time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
+                                               meas_err=f_err_all,
+                                               binsize=300 / 86400)
+    plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
+                 marker='.', ms=8, zorder=3, label=f'All sectors')
 
-            # Good-time mask
-            q = (dat['TESS_flags'] == 0) & (dat['TGLC_flags'] == 0)
-
-            if len(dat[kind]) == len(dat['time']):
-                t = dat['time'][q]
-                f = dat[kind][q]
-                ferr = np.full(len(t), hdul[1].header['CAPE_ERR'], dtype=float)
-
-                # Scatter (phase-folded, centered on mid-transit)
-                ph = _phase_centered(t, period, mid_transit_tbjd)
-                # plt.errorbar(ph, f, ferr, c='silver', ls='', elinewidth=0.1,
-                #              marker='.', ms=3, zorder=2)
-                plt.scatter(ph, f, c='silver', s=20, marker='.', zorder=2)  # s ~ ms^2
-                t_all.append(t); f_all.append(f); f_err_all.append(ferr)
-                n_used += 1
-
-    if n_used == 0:
-        plt.close(fig)
-        raise RuntimeError("No valid data to plot.")
-
-    t_all = np.concatenate(t_all)
-    f_all = np.concatenate(f_all)
-    f_err_all = np.concatenate(f_err_all)
-    print(f_err_all)
-    # Phase-bin AFTER fold
-    ph_c, f_c, f_cerr = phasebin_centered(
-        time=t_all, meas=f_all, meas_err=f_err_all,
-        period=period, t0=mid_transit_tbjd,
-        binsize_days=binsize_days, nbins=nbins
-    )
-    plt.errorbar(ph_c, f_c, f_cerr, c='r', ls='', elinewidth=1.5,
-                 marker='.', ms=8, zorder=3, label='All sectors (binned)')
-    plt.ylim(0., 2.)
-    plt.legend()
-    title = f'TIC_{ticid} with {n_used} sector(s) of data, {kind}'
+    plt.ylim(0.9, 1.1)
+    # plt.xlim(0.3, 0.43)
     plt.title(title)
-
-    # Zoom ±1% of period around transit (now at phase 0)
-    dphi = 0.05  # = 1% of phase since centered
-    plt.xlim(-dphi, dphi)
-    plt.vlines(x=0.0, ymin=0, ymax=2, ls='dotted', colors='grey')
-
-    plt.xlabel('Phase (centered at mid-transit)')
+    # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
+    # plt.ylim(0.9, 1.1)
+    # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
+    # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
+    plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
+    plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
-    plt.tight_layout()
+    # from astropy.table import Table
+    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s19_raw.csv', delimiter=',')
+    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
+    #                                            meas_err=s19_csv['flux_err'],
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C0', ls='', elinewidth=0.5,
+    #              marker='.', ms=8, zorder=3, label='S19')
+    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s43_raw.csv', delimiter=',')
+    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
+    #                                            meas_err=s19_csv['flux_err'],
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C1', ls='', elinewidth=0.1,
+    #              marker='.', ms=8, zorder=3, label='S43')
+    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s44_raw.csv', delimiter=',')
+    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
+    #                                            meas_err=s19_csv['flux_err'],
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C2', ls='', elinewidth=0.1,
+    #              marker='.', ms=8, zorder=3, label='S44')
+    plt.legend()
+
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
     plt.close(fig)
 
@@ -632,23 +636,23 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [372207328]
-    # directory = f'/Users/tehan/Documents/TGLC/'
-    directory = '/home/tehan/data/cosmos/Fei/'
+    tics = [56658270]
+    directory = f'/Users/tehan/Documents/TGLC/'
+    # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059111424)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=1.4079405, mid_transit_tbjd=1779.3750828,
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=8.835, mid_transit_tbjd=1830.6529981,
                kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
-    #            kind='cal_aper_flux')
+    #            kind='cal_psf_flux')
