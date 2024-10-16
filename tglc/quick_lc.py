@@ -14,8 +14,9 @@ from astroquery.mast import Catalogs
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
+import sys
+import warnings
 # Tesscut._service_api_connection.TIMEOUT = 6000
-
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
@@ -297,8 +298,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
 def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                'axes.facecolor': '0.95', "axes.grid": False})
-
+                'axes.facecolor': '0.95', 'grid.color': '0.9'})
     files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
@@ -307,8 +307,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             if ymin is None and ymax is None:
-                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
-                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.01
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.01
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
@@ -340,7 +340,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 ax0.scatter(source.gaia[f'sector_{sector}_x'][nearby_stars[nearby_stars != star_num[0][0]]],
                             source.gaia[f'sector_{sector}_y'][nearby_stars[nearby_stars != star_num[0][0]]],
                             s=30, c='r', edgecolor='black', linewidth=1, label='background stars')
-
+                ax0.grid(False)
                 for l in range(len(nearby_stars)):
                     index = np.where(
                         source.tic['dr3_source_id'] == int(source.gaia['DESIGNATION'][nearby_stars[l]].split(' ')[-1]))
@@ -380,12 +380,13 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 ax0.vlines(round(star_x) + 2.5, round(star_y) - 2.5, round(star_y) + 2.5, colors='k', lw=1.2)
                 ax0.hlines(round(star_y) - 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
                 ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
-                t_, y_, x_ = np.shape(hdul[0].data)
+                try:
+                    t_, y_, x_ = np.shape(hdul[0].data)
+                except ValueError:
+                    warnings.warn('Light curves need to have the primary hdu. Set save_aperture=True when producing the light curve to enable this plot.')
+                    sys.exit()
                 max_flux = np.max(
                     np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
-                sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
-                            'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                            'axes.facecolor': '0.95', 'grid.color': '0.9'})
                 arrays = []
                 for j in range(y_):
                     for k in range(x_):
@@ -461,8 +462,6 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                     dpi=300)
                 # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
                 #             dpi=600)
-                plt.close()
-
 
 def plot_epsf(local_directory=None):
     files = glob(f'{local_directory}epsf/*.npy')
