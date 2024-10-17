@@ -5,7 +5,8 @@
    :target: https://zenodo.org/badge/latestdoi/420868490
 .. image:: https://static.pepy.tech/personalized-badge/tglc?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Total%20Downloads
    :target: https://pepy.tech/project/tglc
-
+.. image:: https://img.shields.io/badge/Cite-TGLC-blue
+   :target: https://www.tomwagg.com/software-citation-station/?auto-select=tglc
 ==================================
 Introduction
 ==================================
