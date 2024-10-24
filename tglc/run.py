@@ -33,12 +33,11 @@ def lc_per_cut(i, local_directory=''):
     with open(f'{local_directory}source/{camccd}/source_{cut_x:02d}_{cut_y:02d}.pkl', 'rb') as input_:
         try:
             source = pickle.load(input_)
-        except EOFError:
-            print(f'{camccd}/source_{cut_x:02d}_{cut_y:02d} - EOFError')
+            epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
+                 local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
         except Exception as e:
             print(f'{camccd}/source_{cut_x:02d}_{cut_y:02d} - Exception: {e}')
-    epsf(source, psf_size=11, factor=2, cut_x=cut_x, cut_y=cut_y, sector=source.sector, power=1.4,
-         local_directory=local_directory, limit_mag=16, save_aper=False, no_progress_bar=True)
+
 
 
 def lc_per_ccd(local_directory='', cam=None, ccd=None, cores=128):
