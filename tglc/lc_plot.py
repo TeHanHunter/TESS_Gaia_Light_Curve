@@ -19,6 +19,8 @@ import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 import pandas as pd
 import seaborn as sns
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['mathtext.fontset'] = 'dejavuserif'  # Use Computer Modern (serif font)
 
 
 def read_parameter(file=None):
@@ -165,10 +167,10 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
     difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
-    d_qlp['pipeline'] = ['QLP'] * len(d_qlp)
+    d_qlp['Photometry'] = ['QLP'] * len(d_qlp)
     print(len(d_qlp))
     d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
-    d_tglc['pipeline'] = ['TGLC'] * len(d_tglc)
+    d_tglc['Photometry'] = ['TGLC'] * len(d_tglc)
     print(len(d_tglc))
     difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
@@ -181,22 +183,23 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
     print(len(difference_qlp))
     difference = vstack([difference_tglc, difference_qlp])
     difference['diff'] = difference['value'] - difference['pl_ratror']
-    difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, '<12.5', '>12.5')
+    difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, r'$T<12.5$', r'$T>12.5$')
     print(len(np.where(difference['Tmag'] < 12.5)[0])/2)
     df = difference.to_pandas()
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(5,5))
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.8'})
     # sns.violinplot(data=df, x='diff', y='pipeline', bw_adjust=1, palette="Set1")
-    sns.violinplot(data=df, x="diff", y="Tmag_int", hue="pipeline", split=True, bw_adjust=1.5, gap=.1, alpha=0.6,
+    sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Photometry", split=True, bw_adjust=1.5, gap=.1, alpha=0.6,
                    palette=[tglc_color, qlp_color])
     plt.vlines(0, ymin=-0.5, ymax=1.5, color='k', ls='dashed')
-    plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
-    plt.ylabel(r'TESS magnitude')
+    plt.xlabel(r'fit $R_{\text{p}} /R_*$ - Literature $R_{\text{p}}/R_*$')
+    plt.ylabel('')
+    plt.yticks(rotation=90)
     plt.xlim(-0.075, 0.075)
     plt.title('Exoplanet radius ratio fit')
-    plt.savefig(os.path.join(folder, f'ror_violin.png'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'ror_violin.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
     # TGLC data
@@ -400,5 +403,5 @@ def figure_5(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    figure_2()
+    figure_2(folder='/Users/tehan/Documents/TGLC/')
     # figure_5(type='phase-fold')
