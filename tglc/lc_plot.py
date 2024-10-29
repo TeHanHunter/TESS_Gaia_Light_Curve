@@ -181,12 +181,16 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
             difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     print(len(difference_tglc))
     print(len(difference_qlp))
+    #average 491 lcs
+    print(np.mean(difference_tglc['pl_ratrorerr1']))
+    #average 154 hosts
+    print(np.mean(list(set(difference_tglc['pl_ratrorerr1'].tolist()))))
     difference = vstack([difference_tglc, difference_qlp])
     difference['diff'] = difference['value'] - difference['pl_ratror']
     difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, r'$T<12.5$', r'$T>12.5$')
     print(len(np.where(difference['Tmag'] < 12.5)[0])/2)
     df = difference.to_pandas()
-    plt.figure(figsize=(5,5))
+    plt.figure(figsize=(6,6))
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.8'})
@@ -194,7 +198,7 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
     sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Photometry", split=True, bw_adjust=1.5, gap=.1, alpha=0.6,
                    palette=[tglc_color, qlp_color])
     plt.vlines(0, ymin=-0.5, ymax=1.5, color='k', ls='dashed')
-    plt.xlabel(r'fit $R_{\text{p}} /R_*$ - Literature $R_{\text{p}}/R_*$')
+    plt.xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
     plt.ylabel('')
     plt.yticks(rotation=90)
     plt.xlim(-0.075, 0.075)
