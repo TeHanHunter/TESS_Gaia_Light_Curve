@@ -46,7 +46,9 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
     # t = ascii.read('/home/tehan/PycharmProjects/TESS_Gaia_Light_Curve/tglc/PSCompPars_2024.02.05_22.52.50.csv')
     tics = [int(s[4:]) for s in t['tic_id']]
 
-    t_ = Table(names=['Tmag', 'rhat', 'p', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'], dtype=['f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+    t_ = Table(
+        names=['Star_sector', 'Tmag', 'rhat', 'p', f'{param}', f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
+        dtype=['S20', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
     missed_stars = 0
     for i in trange(len(tics)):
         file = glob(os.path.join(folder, f'*/Photometry/*/*{tics[i]}*.dat'))
@@ -55,6 +57,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
         elif len(file) >= 1:
             for j in range(len(file)):
                 star = int(os.path.basename(file[j]).split('_')[2])
+                sector = int(os.path.basename(file[j]).split('_')[5])
                 if star == tics[i]:
                     table_posterior = read_parameter(file[j])
                     table_posterior_row = table_posterior[table_posterior['Parameter'] == param_dict[param]]
@@ -63,7 +66,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
                     table_chain_row = table_chain[table_chain['Parameter'] == param_dict[param][0:-3] + '[0]']
 
                     if param == 'pl_rade':
-                        t_.add_row([t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], t[f'{param}'][i],
+                        t_.add_row([f'TIC_{star}_{sector}', t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], t[f'{param}'][i],
                                     t[f'{param}err1'][i], t[f'{param}err2'][i], table_posterior_row['Value'][0],
                                     table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
                     elif param == 'pl_ratror':
@@ -73,7 +76,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
                         sigma_ror = ((sigma_rade / t['st_rad'][i] / 109.076) ** 2 +
                                      (t['pl_rade'][i] / t['st_rad'][i] ** 2 / 109.076 * sigma_st_rad) ** 2) ** 0.5
                         t_.add_row(
-                            [t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], ror,
+                            [f'TIC_{star}_{sector}', t['sy_tmag'][i], table_chain_row['r_hat'], t['pl_orbper'][i], ror,
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
@@ -161,14 +164,25 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
     qlp_color = palette[2]
     difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
-    difference_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 2.5)]
-    difference_qlp['pipeline'] = ['QLP'] * len(difference_qlp)
-    difference_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 2.5)]
-    difference_tglc['pipeline'] = ['TGLC'] * len(difference_tglc)
+    d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
+    d_qlp['pipeline'] = ['QLP'] * len(d_qlp)
+    print(len(d_qlp))
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
+    d_tglc['pipeline'] = ['TGLC'] * len(d_tglc)
+    print(len(d_tglc))
+    difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+    for i in range(len(d_tglc)):
+        star_sector=d_tglc['Star_sector'][i]
+        if star_sector in d_qlp['Star_sector']:
+            difference_tglc.add_row(d_tglc[i])
+            difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+    print(len(difference_tglc))
+    print(len(difference_qlp))
     difference = vstack([difference_tglc, difference_qlp])
     difference['diff'] = difference['value'] - difference['pl_ratror']
     difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, '<12.5', '>12.5')
-
+    print(len(np.where(difference['Tmag'] < 12.5)[0])/2)
     df = difference.to_pandas()
     plt.figure(figsize=(6, 6))
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
@@ -185,12 +199,31 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
     plt.savefig(os.path.join(folder, f'ror_violin.png'), bbox_inches='tight', dpi=600)
     plt.show()
 
-    median_value = np.median(difference_tglc['value'] - difference_tglc['pl_ratror'])
-    print(median_value)
-    print(len(np.where(difference_tglc['value'] - difference_tglc['pl_ratror'] < 0)[0]) / len(difference_tglc))
-    median_value = np.median(difference_qlp['value'] - difference_qlp['pl_ratror'])
-    print(median_value)
-    print(len(np.where(difference_qlp['value'] - difference_qlp['pl_ratror'] < 0)[0]) / len(difference_qlp))
+    # TGLC data
+    rows=np.where(difference_tglc['Tmag'] > 12.5)[0]
+    difference_tglc_values = difference_tglc['value'][rows] - difference_tglc['pl_ratror'][rows]
+    median_value_tglc = np.median(difference_tglc_values)
+    q1_tglc = np.percentile(difference_tglc_values, 25)
+    q3_tglc = np.percentile(difference_tglc_values, 75)
+    iqr_tglc = (median_value_tglc - q1_tglc, q3_tglc - median_value_tglc)
+    negative_ratio_tglc = len(np.where(difference_tglc_values < 0)[0]) / len(difference_tglc)
+
+    print("TGLC Median:", median_value_tglc)
+    print("TGLC IQR:", f"{median_value_tglc} - {iqr_tglc[0]} + {iqr_tglc[1]}")
+    print("TGLC Negative Ratio:", negative_ratio_tglc)
+
+    # QLP data
+    rows=np.where(difference_tglc['Tmag'] > 12.5)[0]
+    difference_qlp_values = difference_qlp['value'][rows] - difference_qlp['pl_ratror'][rows]
+    median_value_qlp = np.median(difference_qlp_values)
+    q1_qlp = np.percentile(difference_qlp_values, 25)
+    q3_qlp = np.percentile(difference_qlp_values, 75)
+    iqr_qlp = (median_value_qlp - q1_qlp, q3_qlp - median_value_qlp)
+    negative_ratio_qlp = len(np.where(difference_qlp_values < 0)[0]) / len(difference_qlp)
+
+    print("QLP Median:", median_value_qlp)
+    print("QLP IQR:", f"{median_value_qlp} - {iqr_qlp[0]} + {iqr_qlp[1]}")
+    print("QLP Negative Ratio:", negative_ratio_qlp)
 
 
 def figure_3(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r2=0.16, cmap='Tmag'):
@@ -287,27 +320,27 @@ def figure_4(type='all'):
     f17 = data17[:, 1]
     # _, trend = flatten(t17, f17, window_length=1, method='biweight', return_trend=True)
     # f17 = (f17 - trend) / np.nanmedian(f17) + 1
-    t18 = data18[:, 0][70:]- 2457000
+    t18 = data18[:, 0][70:] - 2457000
     f18 = data18[:, 1][70:]
     _, trend = flatten(t18, f18, window_length=1, method='biweight', return_trend=True)
     f18 = (f18 - trend) / np.nanmedian(f18) + 1
-    t24 = data24[:, 0]- 2457000
+    t24 = data24[:, 0] - 2457000
     f24 = data24[:, 1]
     _, trend = flatten(t24, f24, window_length=1, method='biweight', return_trend=True)
     f24 = (f24 - trend) / np.nanmedian(f24) + 1
 
     if type == 'all':
-        plt.figure(figsize=(10,3))
+        plt.figure(figsize=(10, 3))
         plt.plot(t17, f17, '.', ms=4, c=palette[0])
         plt.plot(t18, f18, '.', ms=4, c=palette[3])
-        plt.plot(t24-138, f24, '.', ms=4, c=palette[2])
+        plt.plot(t24 - 138, f24, '.', ms=4, c=palette[2])
         plt.ylabel('Flux e-/s')
-        plt.xticks([1777, 1803, 1831],['Sector 17', 'Sector 18', 'Sector 24'])
+        plt.xticks([1777, 1803, 1831], ['Sector 17', 'Sector 18', 'Sector 24'])
         plt.savefig('/Users/tehan/Documents/TGLC/eb_eleanor.png', dpi=600)
         plt.show()
     elif type == 'phase-fold':
-        plt.figure(figsize=(4,3), constrained_layout=True)
-        plt.plot(t17 % 1.01968/1.01968, f17, '.', ms=4, c=palette[0])
+        plt.figure(figsize=(4, 3), constrained_layout=True)
+        plt.plot(t17 % 1.01968 / 1.01968, f17, '.', ms=4, c=palette[0])
         # plt.plot(t18 % 1.01968/1.01968, f18, '.', ms=4, c=palette[3])
         # plt.plot(t24 % 1.01968/1.01968, f24, '.', ms=4, c=palette[2])
         plt.ylabel('Flux e-/s')
@@ -316,14 +349,18 @@ def figure_4(type='all'):
         plt.savefig('/Users/tehan/Documents/TGLC/eb_eleanor_17_pf.png', dpi=600)
         plt.show()
 
+
 def figure_5(type='all'):
     palette = sns.color_palette('colorblind')
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '1'})
-    hdul17 = fits.open('/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0017-cam3-ccd2_tess_v1_llc.fits')
-    hdul18 = fits.open('/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0018-cam3-ccd1_tess_v1_llc.fits')
-    hdul24 = fits.open('/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0024-cam4-ccd3_tess_v1_llc.fits')
+    hdul17 = fits.open(
+        '/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0017-cam3-ccd2_tess_v1_llc.fits')
+    hdul18 = fits.open(
+        '/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0018-cam3-ccd1_tess_v1_llc.fits')
+    hdul24 = fits.open(
+        '/Users/tehan/Documents/TGLC/TIC 269820902/lc/hlsp_tglc_tess_ffi_gaiaid-2015648943960251008-s0024-cam4-ccd3_tess_v1_llc.fits')
     q = [a and b for a, b in zip(list(hdul17[1].data['TESS_flags'] == 0), list(hdul17[1].data['TGLC_flags'] == 0))]
     t17 = hdul17[1].data['time'][q]
     f17 = hdul17[1].data['cal_aper_flux'][q]
@@ -350,17 +387,18 @@ def figure_5(type='all'):
         plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_aperture_portion.png', dpi=600)
         plt.show()
     elif type == 'phase-fold':
-        plt.figure(figsize=(4,3), constrained_layout=True)
-        plt.plot(t17 % 1.01968/1.01968, f17, '.', ms=4, c=palette[0])
-        plt.plot(t18 % 1.01968/1.01968, f18, '.', ms=4, c=palette[3])
-        plt.plot(t24 % 1.01968/1.01968, f24, '.', ms=4, c=palette[2])
+        plt.figure(figsize=(4, 3), constrained_layout=True)
+        plt.plot(t17 % 1.01968 / 1.01968, f17, '.', ms=4, c=palette[0])
+        plt.plot(t18 % 1.01968 / 1.01968, f18, '.', ms=4, c=palette[3])
+        plt.plot(t24 % 1.01968 / 1.01968, f24, '.', ms=4, c=palette[2])
         plt.ylabel('Flux e-/s')
         plt.xlabel('Phase')
         # plt.xticks([1777],['Sector 17'])
         plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_pf_portion.png', dpi=600)
         plt.show()
 
+
 if __name__ == '__main__':
-    # figure_1(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
-    # figure_4(type='phase-fold')
-    figure_5(type='phase-fold')
+    # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_2()
+    # figure_5(type='phase-fold')
