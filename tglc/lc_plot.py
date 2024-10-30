@@ -27,6 +27,9 @@ import seaborn as sns
 import matplotlib.patches as patches
 from matplotlib.legend_handler import HandlerLine2D, HandlerTuple
 
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+
 
 def load_eleanor(ld='', tic=1, sector=1):
     eleanor_pca = np.load(ld + f'eleanor/TIC {tic}_{sector}_corr.npy')
@@ -3093,7 +3096,7 @@ def plot_MAD_all():
     ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
     ax[0].plot(tglc_mag_, tglc_binned_, color=tglc_color, ls='--', lw=1)
     ax[0].plot(spoc_mag, spoc_binned, color=spoc_color, ls='--', lw=1)
-    ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label='Sullivan (2015)')
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label=r'$\sigma_\mathrm{base}(T)$')
 
     # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
     ax[0].set_ylabel('Estimated Photometric Precision')
@@ -3111,19 +3114,23 @@ def plot_MAD_all():
     p4, = ax[1].plot(qlp_mag[108:], qlp_binned[108:] / noise_interp(qlp_mag[108:]), color=qlp_color, ls='--', lw=1)
     p5, = ax[1].plot(spoc_mag, spoc_binned / noise_interp(spoc_mag), color=spoc_color, ls='--', lw=1,
                      label='TESS-SPOC PDCSAP')
-    p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label='Sullivan (2015)')
+    p5_, = ax[1].plot([0], [0], '.', c='white', alpha=0)
+    p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label=r'$\sigma_\mathrm{base}(T)$')
+    p6_, = ax[1].plot([0], [0], '.', c='white', alpha=0)
+
     ax[1].set_ylim(0.5, 2.5)
     ax[1].set_yticks([0.5, 1, 1.5, 2])
     ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
     ax[1].set_xlabel('TESS magnitude')
     ax[1].set_ylabel('Precision Ratio')
-    ax[1].legend([(p1, p2), (p3, p4), p5, p6], ['TGLC Aperture', 'QLP SAP', 'TESS-SPOC PDCSAP', 'Sullivan (2015)'],
+    ax[1].legend([(p1, p2), (p3, p4), (p5_, p5), (p6_, p6)],
+                 ['TGLC Aperture', 'QLP SAP', 'TESS-SPOC PDCSAP', r'$\sigma_\mathrm{base}(T)$'],
                  numpoints=1, loc=4, markerscale=1, ncol=2, handlelength=4.5, framealpha=1,
-                 columnspacing=1, fontsize=7.5, handler_map={tuple: HandlerTuple(ndivide=None)})
+                 columnspacing=0, fontsize=7.5, handler_map={tuple: HandlerTuple(ndivide=None)})
     # ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
 
     plt.xlim(7, 16.5)
-    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_all.png', bbox_inches='tight', dpi=300)
+    plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_all.png', bbox_inches='tight', dpi=600)
     # plt.show()
 
 
