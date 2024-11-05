@@ -3,6 +3,8 @@ from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+
+from jedi.inference import param
 from wotan import flatten
 from scipy import ndimage
 from astropy.io import ascii
@@ -179,11 +181,13 @@ def figure_2(folder='/home/tehan/Downloads/Data/', ):
         if star_sector in d_qlp['Star_sector']:
             difference_tglc.add_row(d_tglc[i])
             difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+    # difference_qlp.write(f'deviation_QLP_common.dat', format='ascii.csv')
+    # difference_tglc.write(f'deviation_TGLC_common.dat', format='ascii.csv')
     print(len(difference_tglc))
     print(len(difference_qlp))
     #average 491 lcs
     print(np.mean(difference_tglc['pl_ratrorerr1']))
-    #average 154 hosts
+    #average 160 hosts
     print(np.mean(list(set(difference_tglc['pl_ratrorerr1'].tolist()))))
     difference = vstack([difference_tglc, difference_qlp])
     difference['diff'] = difference['value'] - difference['pl_ratror']
