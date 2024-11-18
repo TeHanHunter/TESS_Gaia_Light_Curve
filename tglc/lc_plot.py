@@ -310,8 +310,8 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
             # if int(star_sector.split('_')[1]) in lozenge + blacklozenge:
             difference_tglc.add_row(d_tglc[i])
             difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
-    # difference_qlp.write(f'deviation_QLP_common.dat', format='ascii.csv')
-    # difference_tglc.write(f'deviation_TGLC_common.dat', format='ascii.csv')
+    difference_qlp.write(f'{folder}deviation_QLP_common.dat', format='ascii.csv', overwrite=True)
+    difference_tglc.write(f'{folder}deviation_TGLC_common.dat', format='ascii.csv', overwrite=True)
     print(len(difference_tglc))
     print(len(difference_qlp))
     # plt.hist((difference_tglc['value'] - difference_tglc['pl_ratror']) / difference_tglc['pl_ratror'], bins=np.linspace(-0.2, 0.2, 51))
