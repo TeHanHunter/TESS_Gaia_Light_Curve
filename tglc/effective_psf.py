@@ -202,17 +202,8 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     for j in range(len(source.time)):
         aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((len(source.time), up - down, right - left))
-    target_5x5 = (np.dot(A_target, np.nanmedian(e_psf, axis=0)).reshape(cut_size, cut_size))
-    field_stars_5x5 = (np.dot(A_cut, np.nanmedian(e_psf, axis=0)).reshape(cut_size, cut_size))
-    if target_5x5.shape != (cut_size, cut_size):
-        # Pad with nans to get to 5x5 shape
-        # Pad amount in a direction is (expected_num_pix) - (actual_num_pix)
-        pad_left = (cut_size // 2) - (x - left)
-        pad_right = (cut_size // 2 + 1) - (right - x)
-        pad_down = (cut_size // 2) - (y - down)
-        pad_up = (cut_size // 2 + 1) - (up - y)
-        target_5x5 = np.pad(target_5x5, [(pad_down, pad_up), (pad_left, pad_right)], constant_values=np.nan)
-        field_stars_5x5 = np.pad(field_stars_5x5, [(pad_down, pad_up), (pad_left, pad_right)], constant_values=np.nan)
+    target_5x5 = (np.dot(A_target, np.median(e_psf, axis=0)).reshape(cut_size, cut_size))
+    field_stars_5x5 = (np.dot(A_cut, np.median(e_psf, axis=0)).reshape(cut_size, cut_size))
 
     # psf_lc
     over_size = psf_size * factor + 1
@@ -470,7 +461,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
         print('Calibrated aperture flux are not accessible or processed incorrectly. ')
     else:
         _, trend = flatten(source.time, cal_aper_lc - np.nanmin(cal_aper_lc) + 1000,
-                                    window_length=1, method='biweight', return_trend=True)
+                           window_length=1, method='biweight', return_trend=True)
         cal_aper_lc = (cal_aper_lc - np.nanmin(cal_aper_lc) + 1000 - trend) / np.nanmedian(cal_aper_lc) + 1
         # cal_aper_lc = flatten(source.time, cal_aper_lc, window_length=1, method='biweight',
         #                       return_trend=False)
@@ -484,7 +475,7 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
             print('Calibrated PSF flux are not accessible or processed incorrectly. ')
         else:
             _, trend = flatten(source.time, cal_psf_lc - np.nanmin(cal_psf_lc) + 1000,
-                                         window_length=1, method='biweight', return_trend=True)
+                               window_length=1, method='biweight', return_trend=True)
             cal_psf_lc = (cal_psf_lc - np.nanmin(cal_psf_lc) + 1000 - trend) / np.nanmedian(cal_psf_lc) + 1
             # cal_psf_lc = flatten(source.time, cal_psf_lc, window_length=1, method='biweight',
             #                      return_trend=False)
