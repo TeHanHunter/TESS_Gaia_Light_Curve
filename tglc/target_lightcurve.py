@@ -90,7 +90,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     image_data = np.zeros((3, 5, 5))
     image_data[0] = target_5x5
     image_data[1] = field_stars_5x5
-    # This is the contamination ratio
+    # This is the pixel-wise contamination ratio
     image_data[2] = field_stars_5x5/target_5x5
     image_hdu = fits.ImageHDU(data=image_data)
 
@@ -129,7 +129,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('GAIA_bp', gaia_bp, 'Gaia DR3 bp band magnitude'),
         fits.Card('GAIA_rp', gaia_rp, 'Gaia DR3 rp band magnitude'),
         fits.Card('RAWFLUX', raw_flux, 'median flux of raw FFI'),
-        fits.Card('CONTAMRT', round(np.nansum(image_data[2,1:4,1:4]), 9), 'contamination ratio of default 3*3 aperture'),
+        fits.Card('CONTAMRT', round(np.nansum(field_stars_5x5[1:4,1:4])/np.nansum(target_5x5[1:4,1:4]), 9), 'contamination ratio of default 3*3 aperture'),
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
     if save_aper:
         primary_hdu.header.comments['NAXIS1'] = "Time (hdul[1].data['time'])"

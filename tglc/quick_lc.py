@@ -649,14 +649,18 @@ if __name__ == '__main__':
         sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
 
     for i in range(len(tics)):
-        target = f'TIC {tics[i]}'
-        local_directory = f'{directory}{target}/'
-        os.makedirs(local_directory, exist_ok=True)
-        tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None,
-                transient=None)
-        plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97,
-                yhigh=1.03)
+        try:
+            target = f'TIC {tics[i]}'
+            local_directory = f'{directory}{target}/'
+            os.makedirs(local_directory, exist_ok=True)
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None,
+                    transient=None)
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97,
+                    yhigh=1.03)
+        except Exception as e:
+            with open(f"{directory}error_log.txt", "w") as file:
+                file.write(f"An error occurred for {target}: {e}\n")
 
     # tics = [419411415]
     # directory = f'/Users/tehan/Documents/TGLC/'
