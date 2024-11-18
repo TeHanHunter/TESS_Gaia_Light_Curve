@@ -10,7 +10,7 @@ import requests
 # Load data
 t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
 tics = [int(s[4:]) for s in t['tic_id']]
-html = t['disc_refname']
+html = t['pl_rade_reflink']
 
 difference_tglc = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_common.dat')
 used_tics = list(set([int(s.split('_')[1]) for s in difference_tglc['Star_sector']]))
