@@ -646,7 +646,7 @@ if __name__ == '__main__':
     sectors=[]
     for i in range(len(tic_sector)):
         tics.append(tic_sector[i]['Star_sector'].split('_')[1])
-        sectors.append(tic_sector[i]['Star_sector'].split('_')[2])
+        sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
 
     for i in range(len(tics)):
         target = f'TIC {tics[i]}'
