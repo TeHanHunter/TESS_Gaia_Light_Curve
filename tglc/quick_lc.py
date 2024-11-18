@@ -641,7 +641,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 if __name__ == '__main__':
     directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
-    tic_sector = ascii.read(f'{directory}deviation_TGLC_common*.dat')
+    tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_common*.dat')[0])
     tics=[]
     sectors=[]
     for i in range(len(tic_sector)):
