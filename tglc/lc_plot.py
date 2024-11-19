@@ -47,6 +47,17 @@ def read_parameter(file=None):
                            float(lines[i].split(',')[1].split('$')[2])])
     return table
 
+def fetch_contamrt(folder=None):
+    files = glob(os.path.join(folder, 'lc/*.fits'))
+    tic_sec=[]
+    contamrt=[]
+    for i in range(len(files)):
+        with fits.open(files[i]) as hdul:
+            tic_sec.append(f'TIC_{hdul[0].header["TICID"]}_{hdul[0].header["SECTOR"]}')
+            contamrt.append(hdul[0].header['CONTAMRT'])
+    table = Table([tic_sec, contamrt], names=('tic_sec', 'contamrt'))
+    table.write('contamination_ratio.dat', format='ascii', overwrite=True)
+    return table
 
 def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
@@ -295,40 +306,19 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
     # print(len(d_tglc))
     difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    blacksquare = [271893367, 285048486, 88992642, 193641523, 396562848, 447061717, 155867025, 243641947, 419411415,
-                   376524552,
-                   394050135, 335590096, 20182780, 179317684, 409794137, 281408474, 460984940, 458419328, 147977348,
-                   144700903,
-                   16005254]
-    blacklozenge = [156648452, 124379043, 7548817, 454248975, 289661991, 151483286, 178162579, 70524163, 17865622,
-                    39414571,
-                    8599009, 95660472, 310002617, 240823272, 417646390, 258920431, 279947414, 361343239, 336128819,
-                    198008005,
-                    124029677, 68007716, 375506058, 239816546]
-    square = [201248411, 157698565, 237922465, 29857954, 24358417, 206541859, 169249234, 393831507, 207110080,
-              339672028]
-    lozenge = [428699140, 201248411, 172518755, 119584412, 262530407, 219854185, 140691463, 271478281, 198485881,
-               332558858,
-               376637093, 126606859, 231702397, 460205581, 351601843, 144193715, 219016883, 445805961, 103633434,
-               70899085,
-               147950620, 219854519, 333657795, 200322593, 287256467, 420112589, 261867566, 70513361, 148673433,
-               229510866,
-               321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941, 29960110, 141488193,
-               106402532,
-               392476080, 158588995, 49428710, 410214986, 220479565, 172370679, 350153977, 37770169, 162802770,
-               212957629,
-               439456714, 394137592, 267263253, 192790476, 300038935, 159873822, 394561119, 142394656, 318753380,
-               422756130,
-               176956893, 348835438, 62483237, 266980320, 151825527, 466206508, 288735205, 237104103, 437856897,
-               73540072,
-               229742722, 1003831, 83092282, 264678534, 271971130, 321857016, 290348383, 436873727, 372172128]
-
+    ground = [156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+              445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 289661991, 464300749, 151483286, 335590096,
+              17865622, 193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+              395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
+              419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
+              240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
+              239816546, 361343239]
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         if star_sector in d_qlp['Star_sector']:
-            # if int(star_sector.split('_')[1]) in square + lozenge:
-            difference_tglc.add_row(d_tglc[i])
-            difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+            if int(star_sector.split('_')[1]) in ground:
+                difference_tglc.add_row(d_tglc[i])
+                difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     difference_qlp.write(f'{folder}deviation_QLP_common.dat', format='ascii.csv', overwrite=True)
     difference_tglc.write(f'{folder}deviation_TGLC_common.dat', format='ascii.csv', overwrite=True)
     print(len(difference_tglc))
@@ -360,8 +350,8 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
 
     difference = vstack([difference_tglc, difference_qlp])
     difference['diff'] = difference['value'] - difference['pl_ratror']
-    difference['Tmag_int'] = np.where(difference['Tmag'] < 12.5, r'$T<12.5$', r'$T>12.5$')
-    print(len(np.where(difference['Tmag'] < 12.5)[0]) / 2)
+    difference['Tmag_int'] = np.where(difference['Tmag'] < 11.5, r'$T<11.5$', r'$T>11.5$')
+    print(len(np.where(difference['Tmag'] < 11.5)[0]) / 2)
     # An outlier of TGLC for <12.5 is making the plot looks clumpy. That single point is removed, but will not affect the statistics.
     # print(difference[np.where(difference['diff'] == np.max(difference['diff']))[0][0]])
     difference.remove_row(np.where(difference['diff'] == np.max(difference['diff']))[0][0])
@@ -392,7 +382,7 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
     plt.xlim(-0.06, 0.06)
     # plt.ylim(-1,2)
     plt.title('Exoplanet radius ratio fit')
-    plt.savefig(os.path.join(folder, f'ror_violin.pdf'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'ror_violin_ground.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
 
@@ -419,11 +409,14 @@ def compute_weighted_mean_all(data):
 
 
 def figure_4(folder='/home/tehan/Downloads/Data/', ):
-    palette = sns.color_palette('colorblind')
-    tglc_color = palette[3]
-    qlp_color = palette[2]
-    plt.figure(figsize=(6, 6))
-
+    palette = sns.color_palette('bright')
+    tglc_color = 'C1'
+    qlp_color = 'C0'
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'hspace': 0.1})
+    # ground
     difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
@@ -434,23 +427,13 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
     # print(len(d_tglc))
     difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    no_ground = [28699140, 201248411, 72518755, 157698565, 19584412, 262530407, 19854185, 140691463, 37922465, 71478281,
-                 29857954, 98485881, 332558858, 76637093, 54002556, 26606859, 31702397, 460205581, 51601843, 24358417,
-                 44193715, 219016883, 45805961, 103633434, 30001847, 70899085, 47950620, 219854519, 33657795, 322593,
-                 87256467, 206541859, 20112589, 261867566, 837041, 70513361, 48673433, 29510866, 21669174, 183120439,
-                 149845414, 93954617, 256722647, 280206394, 68574941, 29960110, 41488193, 106402532, 92476080,
-                 158588995, 9428710, 10214986, 441738827, 20479565, 172370679, 16483514, 50153977, 37770169, 62802770,
-                 12957629, 393831507, 207110080, 190496853, 404505029, 207141131, 39456714, 394137592, 67263253,
-                 192790476, 300038935, 69249234, 59873822, 94561119, 142394656, 318753380, 22756130, 339672028,
-                 76956893, 348835438, 2483237, 266980320, 51825527, 66206508, 288735205, 37104103, 437856897, 73540072,
-                 29742722, 1003831, 3092282, 64678534, 271971130, 204650483, 394918211, 21857016, 90348383, 436873727,
-                 62249359, 372172128]
-    ground = [56648452, 154293917, 271893367, 285048486, 88992642, 54248975, 428787891, 94722182, 395171208, 45751830,
-              548817, 86263325, 155867025, 198008005, 178162579, 89661991, 464300749, 51483286, 35590096, 17865622,
-              193641523, 396562848, 447061717, 24379043, 4792534, 50098860, 179317684, 124029677, 5660472, 95393265,
-              310002617, 220076110, 20182780, 524163, 5057860, 76524552, 94050135, 9794137, 243641947, 419411415,
-              81408474, 60984940, 68007716, 39414571, 599009, 33595516, 58419328, 336128819, 17646390, 40823272,
-              147977348, 144700903, 58920431, 280655495, 6561343, 6005254, 375506058, 79947414, 239816546, 61343239]
+    ground = [156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+              445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 289661991, 464300749, 151483286, 335590096,
+              17865622, 193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+              395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
+              419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
+              240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
+              239816546, 361343239]
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         if star_sector in d_qlp['Star_sector']:
@@ -464,31 +447,89 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
     diff_qlp, errors_qlp, weighted_mean_qlp, weighted_mean_error_qlp = compute_weighted_mean_all(difference_qlp)
     print("QLP Weighted Mean:", weighted_mean_qlp)
     print("QLP Weighted Mean Error:", weighted_mean_error_qlp)
-    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
-                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+    print(len(difference_tglc))
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
-    plt.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 21), color=qlp_color,
-             weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2), alpha=0.5,
-             edgecolor='black')
-    plt.hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 21), color=tglc_color,
-             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2), alpha=0.5,
-             edgecolor='black')
+    ax[0].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
+               weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
+               color=qlp_color, alpha=0.6, edgecolor=None)
 
-    plt.scatter(weighted_mean_tglc, 1, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=100, zorder=2)
-    plt.scatter(weighted_mean_qlp, 1, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=100, zorder=2)
-    # plt.vlines(0, ymin=-0.7, ymax=1.7, color='k', ls='dashed', lw=1, zorder=1)
-    plt.xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
-    plt.ylabel('')
-    plt.xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
-               [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
-    plt.yticks(rotation=90)
+    ax[0].hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 41),
+               weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+               color=tglc_color, alpha=0.6, edgecolor=None)
+    ax[0].set_title('Ground-based-only radius')
+    ax[0].scatter(weighted_mean_tglc, 1.6, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=100, zorder=2,
+                  label='TGLC')
+    ax[0].scatter(weighted_mean_qlp, 1.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=100, zorder=2,
+                  label='QLP')
+    ax[0].vlines(0, ymin=0, ymax=55, color='k', ls='dashed', lw=1, zorder=3)
+    ax[0].set_xlabel('')
+    ax[0].set_ylabel('Error Weighted Counts')
+    ax[0].legend(loc='upper right')
+    # ax[0].set_xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
+    #            [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
     # plt.xlim(-0.05, 0.05)
-    plt.xlim(-0.05, 0.05)
     # plt.ylim(-1,2)
+    # no-ground
+    difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
+    d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
+    # print(len(d_qlp))
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
+    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # print(len(d_tglc))
+    difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+    no_ground = [428699140, 201248411, 172518755, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+                 271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
+                 351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
+                 219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
+                 148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
+                 29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
+                 172370679, 116483514, 350153977, 37770169, 162802770, 212957629, 393831507, 207110080, 190496853,
+                 404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
+                 394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
+                 151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 1003831, 83092282,
+                 264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128]
+    for i in range(len(d_tglc)):
+        star_sector = d_tglc['Star_sector'][i]
+        if star_sector in d_qlp['Star_sector']:
+            if int(star_sector.split('_')[1]) in no_ground:
+                difference_tglc.add_row(d_tglc[i])
+                difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    print("TGLC Weighted Mean:", weighted_mean_tglc)
+    print("TGLC Weighted Mean Error:", weighted_mean_error_tglc)
+    # QLP data (dim)
+    diff_qlp, errors_qlp, weighted_mean_qlp, weighted_mean_error_qlp = compute_weighted_mean_all(difference_qlp)
+    print("QLP Weighted Mean:", weighted_mean_qlp)
+    print("QLP Weighted Mean Error:", weighted_mean_error_qlp)
+    print(len(difference_tglc))
+    # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
+    #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
+    ax[1].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
+               weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
+               color=qlp_color, alpha=0.6, edgecolor=None)
 
-    plt.title('Exoplanet radius ratio fit')
+    ax[1].hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 41),
+               weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+               color=tglc_color, alpha=0.6, edgecolor=None)
+    ax[1].set_title('TESS and Ground-based radius')
+    ax[1].scatter(weighted_mean_tglc, 4, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=100, zorder=2,
+                  label='TGLC')
+    ax[1].scatter(weighted_mean_qlp, 4, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=100, zorder=2,
+                  label='QLP')
+    ax[1].vlines(0, ymin=0, ymax=145, color='k', ls='dashed', lw=1, zorder=3)
+    ax[1].set_xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
+    ax[1].set_ylabel('Error Weighted Counts')
+    ax[1].legend(loc='upper right')
+
+    # ax[1].set_xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
+    #                  [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
+
+    plt.xlim(-0.03, 0.03)
+
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
@@ -667,5 +708,5 @@ def figure_7(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    figure_4(folder='/Users/tehan/Documents/TGLC/')
+    figure_3(folder='/Users/tehan/Documents/TGLC/')
     # figure_5(type='phase-fold')
