@@ -47,6 +47,7 @@ def read_parameter(file=None):
                            float(lines[i].split(',')[1].split('$')[2])])
     return table
 
+
 def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
@@ -277,8 +278,8 @@ def compute_weighted_mean(data, tmag_cutoff):
     weights = 1 / (errors_ratio ** 2)
     weighted_mean = np.sum(difference_values * weights) / np.sum(weights)
     weighted_mean_error = np.sqrt(1 / np.sum(weights))
-
     return weighted_mean, weighted_mean_error
+
 
 def figure_3(folder='/home/tehan/Downloads/Data/', ):
     palette = sns.color_palette('colorblind')
@@ -294,20 +295,38 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
     # print(len(d_tglc))
     difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    square = [156648452, 154293917, 454248975, 7548817, 198008005, 178162579, 289661991, 151483286, 124379043, 95660472,
-              310002617, 220076110, 68007716, 39414571, 8599009, 280655495, 375506058, 279947414, 361343239]
-    blacksquare=[285048486, 88992642, 428787891, 395171208, 445751830, 86263325, 464300749, 335590096, 193641523,
-                 376524552, 394050135, 409794137, 243641947, 281408474, 460984940, 33595516, 458419328, 147977348, 16005254]
-    lozenge=[428699140, 201248411, 140691463, 271478281, 376637093, 126606859, 460205581, 144193715, 219016883, 103633434,
-             147950620, 219854519, 333657795, 200322593, 420112589, 261867566, 70513361, 148673433, 229510866, 321669174,
-             149845414, 293954617, 280206394, 468574941, 141488193, 158588995, 49428710, 410214986, 220479565, 37770169,
-             162802770, 394137592, 192790476, 190496853, 318753380, 437856897, 229742722, 1003831, 83092282, 264678534,
-             62483237, 151825527]
-    blacklozenge=[157698565, 237922465, 29857954, 332558858, 206541859, 393831507, 169249234]
+    blacksquare = [271893367, 285048486, 88992642, 193641523, 396562848, 447061717, 155867025, 243641947, 419411415,
+                   376524552,
+                   394050135, 335590096, 20182780, 179317684, 409794137, 281408474, 460984940, 458419328, 147977348,
+                   144700903,
+                   16005254]
+    blacklozenge = [156648452, 124379043, 7548817, 454248975, 289661991, 151483286, 178162579, 70524163, 17865622,
+                    39414571,
+                    8599009, 95660472, 310002617, 240823272, 417646390, 258920431, 279947414, 361343239, 336128819,
+                    198008005,
+                    124029677, 68007716, 375506058, 239816546]
+    square = [201248411, 157698565, 237922465, 29857954, 24358417, 206541859, 169249234, 393831507, 207110080,
+              339672028]
+    lozenge = [428699140, 201248411, 172518755, 119584412, 262530407, 219854185, 140691463, 271478281, 198485881,
+               332558858,
+               376637093, 126606859, 231702397, 460205581, 351601843, 144193715, 219016883, 445805961, 103633434,
+               70899085,
+               147950620, 219854519, 333657795, 200322593, 287256467, 420112589, 261867566, 70513361, 148673433,
+               229510866,
+               321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941, 29960110, 141488193,
+               106402532,
+               392476080, 158588995, 49428710, 410214986, 220479565, 172370679, 350153977, 37770169, 162802770,
+               212957629,
+               439456714, 394137592, 267263253, 192790476, 300038935, 159873822, 394561119, 142394656, 318753380,
+               422756130,
+               176956893, 348835438, 62483237, 266980320, 151825527, 466206508, 288735205, 237104103, 437856897,
+               73540072,
+               229742722, 1003831, 83092282, 264678534, 271971130, 321857016, 290348383, 436873727, 372172128]
+
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         if star_sector in d_qlp['Star_sector']:
-            # if int(star_sector.split('_')[1]) in lozenge + blacklozenge:
+            # if int(star_sector.split('_')[1]) in square + lozenge:
             difference_tglc.add_row(d_tglc[i])
             difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     difference_qlp.write(f'{folder}deviation_QLP_common.dat', format='ascii.csv', overwrite=True)
@@ -355,10 +374,14 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
     # print(np.sort(difference['diff'][(difference['Tmag_int'] == '$T<12.5$') & (difference['Photometry'] == 'TGLC')]))
     sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
                    gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
-    plt.scatter(weighted_mean_tglc_bright, -0.08, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=30, zorder=2)
-    plt.scatter(weighted_mean_qlp_bright, 0.08, marker='^', color=qlp_color, edgecolors='k', linewidths=0.7, s=30, zorder=2)
-    plt.scatter(weighted_mean_tglc_dim, 0.92, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=30, zorder=2)
-    plt.scatter(weighted_mean_qlp_dim, 1.08, marker='^', color=qlp_color, edgecolors='k', linewidths=0.7, s=30, zorder=2)
+    plt.scatter(weighted_mean_tglc_bright, -0.08, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=30,
+                zorder=2)
+    plt.scatter(weighted_mean_qlp_bright, 0.08, marker='^', color=qlp_color, edgecolors='k', linewidths=0.7, s=30,
+                zorder=2)
+    plt.scatter(weighted_mean_tglc_dim, 0.92, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=30,
+                zorder=2)
+    plt.scatter(weighted_mean_qlp_dim, 1.08, marker='^', color=qlp_color, edgecolors='k', linewidths=0.7, s=30,
+                zorder=2)
     plt.vlines(0, ymin=-0.7, ymax=1.7, color='k', ls='dashed', lw=1, zorder=1)
     plt.xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
     plt.ylabel('')
@@ -372,7 +395,105 @@ def figure_3(folder='/home/tehan/Downloads/Data/', ):
     plt.savefig(os.path.join(folder, f'ror_violin.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
-def figure_4(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r2=0.16, cmap='Tmag'):
+
+def compute_weighted_mean_all(data):
+    values = data['value']
+    pl_ratror = data['pl_ratror']
+    errors_value = (data['err1'] - data['err2']) / 2
+    errors_pl_ratror = (data['pl_ratrorerr1'] - data['pl_ratrorerr2']) / 2
+
+    # correct literature with 0 error
+    for i in range(len(errors_pl_ratror)):
+        if errors_pl_ratror[i] == 0:
+            errors_pl_ratror[i] = errors_value[i]
+            # print(errors_pl_ratror[i])
+    # Compute the ratio and its propagated error
+    difference_values = values - pl_ratror
+    errors_ratio = np.sqrt(errors_value ** 2 + errors_pl_ratror ** 2)
+
+    # Compute inverse variance weighted mean
+    weights = 1 / (errors_ratio ** 2)
+    weighted_mean = np.sum(difference_values * weights) / np.sum(weights)
+    weighted_mean_error = np.sqrt(1 / np.sum(weights))
+    return difference_values, errors_ratio, weighted_mean, weighted_mean_error
+
+
+def figure_4(folder='/home/tehan/Downloads/Data/', ):
+    palette = sns.color_palette('colorblind')
+    tglc_color = palette[3]
+    qlp_color = palette[2]
+    plt.figure(figsize=(6, 6))
+
+    difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
+    d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
+    # print(len(d_qlp))
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
+    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # print(len(d_tglc))
+    difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+    no_ground = [28699140, 201248411, 72518755, 157698565, 19584412, 262530407, 19854185, 140691463, 37922465, 71478281,
+                 29857954, 98485881, 332558858, 76637093, 54002556, 26606859, 31702397, 460205581, 51601843, 24358417,
+                 44193715, 219016883, 45805961, 103633434, 30001847, 70899085, 47950620, 219854519, 33657795, 322593,
+                 87256467, 206541859, 20112589, 261867566, 837041, 70513361, 48673433, 29510866, 21669174, 183120439,
+                 149845414, 93954617, 256722647, 280206394, 68574941, 29960110, 41488193, 106402532, 92476080,
+                 158588995, 9428710, 10214986, 441738827, 20479565, 172370679, 16483514, 50153977, 37770169, 62802770,
+                 12957629, 393831507, 207110080, 190496853, 404505029, 207141131, 39456714, 394137592, 67263253,
+                 192790476, 300038935, 69249234, 59873822, 94561119, 142394656, 318753380, 22756130, 339672028,
+                 76956893, 348835438, 2483237, 266980320, 51825527, 66206508, 288735205, 37104103, 437856897, 73540072,
+                 29742722, 1003831, 3092282, 64678534, 271971130, 204650483, 394918211, 21857016, 90348383, 436873727,
+                 62249359, 372172128]
+    ground = [56648452, 154293917, 271893367, 285048486, 88992642, 54248975, 428787891, 94722182, 395171208, 45751830,
+              548817, 86263325, 155867025, 198008005, 178162579, 89661991, 464300749, 51483286, 35590096, 17865622,
+              193641523, 396562848, 447061717, 24379043, 4792534, 50098860, 179317684, 124029677, 5660472, 95393265,
+              310002617, 220076110, 20182780, 524163, 5057860, 76524552, 94050135, 9794137, 243641947, 419411415,
+              81408474, 60984940, 68007716, 39414571, 599009, 33595516, 58419328, 336128819, 17646390, 40823272,
+              147977348, 144700903, 58920431, 280655495, 6561343, 6005254, 375506058, 79947414, 239816546, 61343239]
+    for i in range(len(d_tglc)):
+        star_sector = d_tglc['Star_sector'][i]
+        if star_sector in d_qlp['Star_sector']:
+            if int(star_sector.split('_')[1]) in ground:
+                difference_tglc.add_row(d_tglc[i])
+                difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    print("TGLC Weighted Mean:", weighted_mean_tglc)
+    print("TGLC Weighted Mean Error:", weighted_mean_error_tglc)
+    # QLP data (dim)
+    diff_qlp, errors_qlp, weighted_mean_qlp, weighted_mean_error_qlp = compute_weighted_mean_all(difference_qlp)
+    print("QLP Weighted Mean:", weighted_mean_qlp)
+    print("QLP Weighted Mean Error:", weighted_mean_error_qlp)
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+    # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
+    #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
+    plt.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 21), color=qlp_color,
+             weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2), alpha=0.5,
+             edgecolor='black')
+    plt.hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 21), color=tglc_color,
+             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2), alpha=0.5,
+             edgecolor='black')
+
+    plt.scatter(weighted_mean_tglc, 1, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=100, zorder=2)
+    plt.scatter(weighted_mean_qlp, 1, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=100, zorder=2)
+    # plt.vlines(0, ymin=-0.7, ymax=1.7, color='k', ls='dashed', lw=1, zorder=1)
+    plt.xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
+    plt.ylabel('')
+    plt.xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
+               [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
+    plt.yticks(rotation=90)
+    # plt.xlim(-0.05, 0.05)
+    plt.xlim(-0.05, 0.05)
+    # plt.ylim(-1,2)
+
+    plt.title('Exoplanet radius ratio fit')
+    plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground.pdf'), bbox_inches='tight', dpi=600)
+    plt.show()
+
+
+def figure_5(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r2=0.16, cmap='Tmag'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     # t = ascii.read('/home/tehan/PycharmProjects/TESS_Gaia_Light_Curve/tglc/PSCompPars_2024.02.05_22.52.50.csv')
@@ -454,7 +575,7 @@ def figure_4(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.0001, r
     plt.savefig(os.path.join(folder, f'{param}_diagonal_transit_depth.png'), bbox_inches='tight', dpi=600)
 
 
-def figure_5(type='all'):
+def figure_6(type='all'):
     palette = sns.color_palette('colorblind')
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
@@ -496,7 +617,7 @@ def figure_5(type='all'):
         plt.show()
 
 
-def figure_6(type='all'):
+def figure_7(type='all'):
     palette = sns.color_palette('colorblind')
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
@@ -546,5 +667,5 @@ def figure_6(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    figure_3(folder='/Users/tehan/Documents/TGLC/')
+    figure_4(folder='/Users/tehan/Documents/TGLC/')
     # figure_5(type='phase-fold')
