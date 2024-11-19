@@ -48,7 +48,7 @@ def read_parameter(file=None):
     return table
 
 def fetch_contamrt(folder=None):
-    files = glob(os.path.join(folder, 'lc/*.fits'))
+    files = glob(os.path.join(folder, '*/lc/*.fits'))
     tic_sec=[]
     contamrt=[]
     for i in range(len(files)):
@@ -56,7 +56,7 @@ def fetch_contamrt(folder=None):
             tic_sec.append(f'TIC_{hdul[0].header["TICID"]}_{hdul[0].header["SECTOR"]}')
             contamrt.append(hdul[0].header['CONTAMRT'])
     table = Table([tic_sec, contamrt], names=('tic_sec', 'contamrt'))
-    table.write('contamination_ratio.dat', format='ascii', overwrite=True)
+    table.write(f'{folder}contamination_ratio.dat', format='ascii', overwrite=True)
     return table
 
 def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
@@ -708,5 +708,6 @@ def figure_7(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    figure_3(folder='/Users/tehan/Documents/TGLC/')
+    fetch_contamrt(folder='/data/cosmos/transit_depth_validation_contamrt/')
+    # figure_3(folder='/Users/tehan/Documents/TGLC/')
     # figure_5(type='phase-fold')
