@@ -88,6 +88,10 @@ def convert_gaia_id(catalogdata_tic):
             """
     gaia_array = np.array(catalogdata_tic['GAIA'])
     gaia_array = gaia_array[gaia_array != 'None']
+    new_array = []
+    for value in gaia_array:
+        new_array.append(str(value))
+    gaia_array = new_array
     # np.save('gaia_array.npy', gaia_array)
     segment = (len(gaia_array) - 1) // 10000
     gaia_tuple = tuple(gaia_array[:10000])
