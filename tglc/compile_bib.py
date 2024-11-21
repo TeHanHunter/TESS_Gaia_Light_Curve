@@ -12,8 +12,17 @@ t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22
 tics = [int(s[4:]) for s in t['tic_id']]
 html = t['pl_rade_reflink']
 
-difference_tglc = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_common.dat')
-used_tics = list(set([int(s.split('_')[1]) for s in difference_tglc['Star_sector']]))
+difference_tglc = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_676.dat')
+print(len(difference_tglc))
+difference_tglc_common = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_common.dat')
+print(len(difference_tglc_common))
+used_tics = []
+for s in difference_tglc['Star_sector']:
+    if s not in difference_tglc_common['Star_sector']:
+        tic = int(s.split('_')[1])
+        if tic not in used_tics:
+            used_tics.append(tic)
+print(len(used_tics))
 idx = [np.where(np.array(tics) == used_tics[i])[0][0] for i in range(len(used_tics)) if used_tics[i] in tics]
 
 # Prepare lists for star names and URLs
@@ -39,7 +48,7 @@ entries = []
 successful_entries = 0
 bibcode_used = []
 tic_used = []
-with open("citations.bib", "w") as bibfile:
+with open("citations_extra.bib", "w") as bibfile:
     for star_name, url in zip(star_names, paper_urls):
         bibcode = extract_bibcode(url)
         if bibcode:
@@ -65,29 +74,27 @@ print(len(tic_used))
 total_entries = len(star_names)
 success_rate = (successful_entries / total_entries) * 100
 
-# Generate three-column LaTeX table with longtable environment
-num_rows = math.ceil(len(entries) / 3)
+num_rows = math.ceil(len(entries) / 2)
 latex_table = "\\begin{longtable}{llllll}\n\\caption{Star citations} \\\\\n\\hline\n"
-latex_table += "TIC & Citation & TIC & Citation & TIC & Citation \\\\\n\\hline\n\\endfirsthead\n"
-latex_table += "\\hline\nTIC & Citation & TIC & Citation & TIC & Citation \\\\\n\\hline\n\\endhead\n\\hline\\endfoot\n"
+latex_table += "TIC & & Citation & TIC & & Citation \\\\\n\\hline\n\\endfirsthead\n"
+latex_table += "\\hline\nTIC & & Citation & TIC & & Citation \\\\\n\\hline\n\\endhead\n\\hline\\endfoot\n"
 
-# Fill the table in three columns
+# Fill the table in two columns with an extra column between TIC and Citation
 for i in range(num_rows):
     row = ""
-    for j in range(3):
+    for j in range(2):
         idx = i + j * num_rows
         if idx < len(entries):
             star_name, cite_key = entries[idx]
             citation = f"\\cite{{{cite_key}}}" if cite_key else ""
-            row += f"{star_name} & {citation} & "
+            row += f"{star_name} & & {citation} & "
         else:
-            row += " & & "  # Empty cell if no more entries
+            row += " & & & "  # Empty cell if no more entries
     latex_table += row.rstrip(" & ") + " \\\\\n"  # Remove trailing "&" and add newline
 
 latex_table += "\\hline\n\\end{longtable}"
-
 # Save the LaTeX table to a .tex file
-with open("citations_table.tex", "w") as texfile:
+with open("citations_table_extra.tex", "w") as texfile:
     texfile.write(latex_table)
 
 # Output success rate
