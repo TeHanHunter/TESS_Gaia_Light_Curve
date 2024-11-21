@@ -21,6 +21,6 @@ setuptools.setup(
     install_requires=['astropy>=5.1', 'astroquery==0.4.7', 'matplotlib', 'numpy', 'oauthlib', 'requests', 'scipy',
                       'threadpoolctl', 'tqdm', 'wheel', 'wotan', 'seaborn'],
     packages=setuptools.find_packages(include=['tglc', 'tglc.*']),
-    python_requires=">=3.8, <=3.12",
+    python_requires=">=3.8, <3.13",
     include_package_data=True
 )
