@@ -632,7 +632,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=82, prior=prior,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
     if method == 'search':
@@ -640,33 +640,11 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
-    tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_common*.dat')[0])
-    tics=[]
-    sectors=[]
-    for i in range(len(tic_sector)):
-        tics.append(tic_sector[i]['Star_sector'].split('_')[1])
-        sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
-
-    for i in range(len(tics)):
-        try:
-            target = f'TIC {tics[i]}'
-            local_directory = f'{directory}{target}/'
-            os.makedirs(local_directory, exist_ok=True)
-            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None,
-                    transient=None)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97,
-                    yhigh=1.03)
-        except Exception as e:
-            with open(f"{directory}error_log.txt", "w") as file:
-                file.write(f"An error occurred for {target}: {e}\n")
-
-    # tics = [419411415]
-    # directory = f'/Users/tehan/Documents/TGLC/'
+    tics = [298130822]
+    directory = f'/Users/tehan/Documents/TGLC/'
     # # directory = '/home/tehan/data/cosmos/GEMS/'
-    # os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    os.makedirs(directory, exist_ok=True)
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
@@ -677,3 +655,25 @@ if __name__ == '__main__':
     #            kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
+
+    # directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
+    # tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_common*.dat')[0])
+    # tics=[]
+    # sectors=[]
+    # for i in range(len(tic_sector)):
+    #     tics.append(tic_sector[i]['Star_sector'].split('_')[1])
+    #     sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
+    #
+    # for i in range(len(tics)):
+    #     try:
+    #         target = f'TIC {tics[i]}'
+    #         local_directory = f'{directory}{target}/'
+    #         os.makedirs(local_directory, exist_ok=True)
+    #         tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+    #                 get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None,
+    #                 transient=None)
+    #         plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97,
+    #                 yhigh=1.03)
+    #     except Exception as e:
+    #         with open(f"{directory}error_log.txt", "w") as file:
+    #             file.write(f"An error occurred for {target}: {e}\n")
