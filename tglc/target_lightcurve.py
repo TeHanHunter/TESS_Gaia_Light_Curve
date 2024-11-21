@@ -20,7 +20,7 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False, portion=1, prior=None, transient=None):
+              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -82,6 +82,13 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         primary_hdu = fits.PrimaryHDU(aperture)
     else:
         primary_hdu = fits.PrimaryHDU()
+    # Simulated star images based on ePSF, used to estimate contamination ratio and others
+    image_data = np.zeros((3, 5, 5))
+    image_data[0] = target_5x5
+    image_data[1] = field_stars_5x5
+    # This is the pixel-wise contamination ratio
+    image_data[2] = field_stars_5x5/target_5x5
+    image_hdu = fits.ImageHDU(data=image_data)
 
     primary_hdu.header = fits.Header(cards=[
         fits.Card('SIMPLE', True, 'conforms to FITS standard'),
@@ -116,6 +123,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('GAIA_bp', gaia_bp, 'Gaia DR3 bp band magnitude'),
         fits.Card('GAIA_rp', gaia_rp, 'Gaia DR3 rp band magnitude'),
         fits.Card('RAWFLUX', raw_flux, 'median flux of raw FFI'),
+        fits.Card('CONTAMRT', round(np.nansum(field_stars_5x5[1:4,1:4])/np.nansum(target_5x5[1:4,1:4]), 9), 'contamination ratio of default 3*3 aperture'),
         fits.Card('CALIB', 'TGLC', 'pipeline used for image calibration')])
     if save_aper:
         primary_hdu.header.comments['NAXIS1'] = "Time (hdul[1].data['time'])"
@@ -190,11 +198,12 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     if type(prior) == float:
         table_hdu.header.append(('PRIOR', prior, 'prior of field stars'), end=True)
 
-    hdul = fits.HDUList([primary_hdu, table_hdu])
+    hdul = fits.HDUList([primary_hdu, table_hdu, image_hdu])
     hdul.writeto(
-        f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits',
+        f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v2_llc.fits',
         overwrite=True)
     return
+
 
 
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
@@ -310,7 +319,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                     fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                                        near_edge=near_edge, prior=prior)
             else:
-                aperture, psf_lc, star_y, star_x, portion = \
+                aperture, psf_lc, star_y, star_x, portion, target_5x5, field_stars_5x5 = \
                     fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
                            near_edge=near_edge)
             aper_lc = np.sum(
@@ -359,4 +368,4 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                               bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                              prior=prior, transient=source.transient)
+                              prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5)

@@ -86,7 +86,7 @@ def convert_gaia_id(catalogdata_tic):
             FROM gaiadr3.dr2_neighbourhood
             WHERE dr2_source_id IN {gaia_ids}
             """
-    gaia_array = np.array(catalogdata_tic['GAIA'])
+    gaia_array = np.array([str(item) for item in catalogdata_tic['GAIA']], dtype=object)
     gaia_array = gaia_array[gaia_array != 'None']
     # np.save('gaia_array.npy', gaia_array)
     segment = (len(gaia_array) - 1) // 10000
