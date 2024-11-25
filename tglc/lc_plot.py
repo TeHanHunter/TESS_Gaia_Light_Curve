@@ -425,6 +425,7 @@ def compute_weighted_mean_bootstrap(data):
     # Compute the ratio and its propagated error
     difference_values = fit_values - pl_ratror
     errors_ratio = np.sqrt(errors_value ** 2)
+
     # errors_ratio = np.sqrt(errors_value ** 2 + errors_pl_ratror ** 2)
     # errors_ratio = np.ones(len(errors_pl_ratror))
     # errors_ratio = errors_value
@@ -437,6 +438,7 @@ def compute_weighted_mean_bootstrap(data):
 
     def weighted_mean_stat(values_):
         return weighted_mean(values_, weights)
+
     # plt.figure()
     # plt.plot(np.sort(weights), '.')
     # plt.show()
@@ -612,8 +614,8 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
               395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
-              239816546, 361343239] + [90850770, 97568467, 263179590, 258920431, 194795551, 139375960, 100389539,
-                                       250111245, 268301217]
+              239816546, 361343239] + [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
+                                       268301217, 455784423]
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         # if star_sector in d_qlp['Star_sector']:
@@ -678,7 +680,7 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
                     464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
                     320004517, 163539739, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
                     408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
-                    407126408, 55650590, 335630746, 55525572, 362249359, 342642208]
+                    407126408, 55650590, 335630746, 55525572, 342642208, 394357918]
 
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
@@ -718,13 +720,15 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
-
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
 
 def figure_5(folder='/home/tehan/Downloads/Data/', ):
     contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio.dat')
+    # plt.plot(np.sort(contamrt['contamrt'].tolist()), '.')
+    # plt.yscale('log')
+    # plt.show()
     palette = sns.color_palette('bright')
     tglc_color = 'C1'
     qlp_color = 'C0'
@@ -854,8 +858,8 @@ def figure_5(folder='/home/tehan/Downloads/Data/', ):
     # plt.xlim(-0.03, 1)
     ax[0].set_ylim(-0.05, 0.05)
     ax[1].set_ylim(-0.05, 0.05)
-    ax[0].set_xscale('log')
-    ax[1].set_xscale('log')
+    # ax[0].set_xscale('log')
+    # ax[1].set_xscale('log')
     plt.savefig(os.path.join(folder, f'ror_contamrt.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
