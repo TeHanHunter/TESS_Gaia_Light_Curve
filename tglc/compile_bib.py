@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import ascii
 token = 'EJaIdttWb1wgv0A3AQnJSbNvftJiKHBkaqCIQ0PI'
 import requests
-
+from astropy.table import Table
 # Load data
 t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
 tics = [int(s[4:]) for s in t['tic_id']]
@@ -17,12 +17,15 @@ print(len(difference_tglc))
 difference_tglc_common = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_common.dat')
 print(len(difference_tglc_common))
 used_tics = []
+difference_tglc_extra=[]
 for s in difference_tglc['Star_sector']:
     if s not in difference_tglc_common['Star_sector']:
+        difference_tglc_extra.append(s)
         tic = int(s.split('_')[1])
         if tic not in used_tics:
             used_tics.append(tic)
 print(len(used_tics))
+ascii.write(Table([difference_tglc_extra], names=['Star_sector']), '/Users/tehan/Documents/TGLC/deviation_TGLC_extra.dat')
 idx = [np.where(np.array(tics) == used_tics[i])[0][0] for i in range(len(used_tics)) if used_tics[i] in tics]
 
 # Prepare lists for star names and URLs
