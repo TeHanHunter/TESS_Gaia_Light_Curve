@@ -80,17 +80,46 @@ table = r"""
 279947414 & $\blacklozenge$ QLP & \cite{TIC_156648452} & 239816546 &$\blacklozenge$ SPOC & \cite{TIC_70524163} \\
 361343239 & $\blacklozenge$ QLP & \cite{TIC_156648452}"""
 
+table=r"""
+370133522 & $\lozenge$ SPOC & \cite{TIC_103633434} & 298663873 & $\lozenge$ SPOC & \cite{TIC_298663873} \\
+383390264 & $\lozenge$ SPOC & \cite{TIC_383390264} & 90850770 & $\blacklozenge$ SPOC & \cite{TIC_70524163} \\
+329148988 & $\lozenge$ SPOC & \cite{TIC_329148988} & 441462736 & $\lozenge$ TASOC$^a$ & \cite{TIC_441462736} \\ 
+199376584 & $\lozenge^\dagger$ & \cite{TIC_199376584} & 257527578 & $\lozenge$ QLP+$\lozenge$ SPOC & \cite{TIC_124029677} \\
+166527623 & $\lozenge$ SPOC & \cite{TIC_166527623} & 142937186 & $\lozenge^\dagger$ SPOC$^b$ & \cite{TIC_10837041} \\
+464646604 & $\lozenge$ SPOC & \cite{TIC_464646604} & 118327550 & $\lozenge$ SPOC & \cite{TIC_118327550} \\
+234994474 & $\lozenge$ SPOC & \cite{TIC_234994474} & 97568467 & $\blacksquare^\dagger$+$\blacksquare$ SPOC & \cite{TIC_428787891} \\ 
+263179590 & $\blacklozenge$ SPOC & \cite{TIC_263179590} & 260004324 & $\lozenge$ SPOC & \cite{TIC_103633434} \\ 
+258920431 & $\blacklozenge$ SPOC & \cite{TIC_70524163} & 183985250 & $\lozenge$ SPOC & \cite{TIC_183985250} \\
+349095149 & $\lozenge$ SPOC & \cite{TIC_349095149} & 139285832 & $\lozenge$ SPOC & \cite{TIC_139285832} \\
+360156606 & $\square$ SPOC & \cite{TIC_360156606} & 194795551 & $\blacklozenge$ QLP & \cite{TIC_70524163} \\
+200723869 & $\lozenge$ SPOC & \cite{TIC_200723869} &  320004517 & $\lozenge$ SPOC & \cite{TIC_320004517} \\
+163539739 & $\lozenge$ SPOC & \cite{TIC_163539739} & 89020549 & $\lozenge$ SPOC & \cite{TIC_89020549} \\
+179034327 & $\lozenge$ SPOC & \cite{TIC_70513361} & 158025009 & $\lozenge$ SPOC & \cite{TIC_158025009} \\
+333473672 & $\lozenge$ SPOC & \cite{TIC_333473672} & 349576261 & $\lozenge$ QLP+$\lozenge$ SPOC & \cite{TIC_349576261} \\
+139375960 & $\blacklozenge$ QLP & \cite{TIC_409794137} &  100389539 & $\blacklozenge$ QLP & \cite{TIC_156648452} \\
+470381900 & $\lozenge$ SPOC & \cite{TIC_470381900} & 218795833 & $\square$ SPOC & \cite{TIC_218795833} \\
+408636441 & $\lozenge$ SPOC & \cite{TIC_408636441} & 76923707 & $\lozenge$ SPOC & \cite{TIC_76923707} \\
+353475866 & $\lozenge^\dagger$ SPOC$^b$ & \cite{TIC_10837041} &  250111245 & $\blacksquare$ $\texttt{eleanor}$ & \cite{TIC_20182780} \\
+202426247 & $\lozenge^\dagger$ SPOC$^b$ & \cite{TIC_10837041} & 387690507 & $\lozenge$ SPOC & \cite{TIC_387690507} \\
+268301217 & $\blacklozenge$ QLP+$\blacklozenge$ SPOC & \cite{TIC_156648452} & 209464063 & $\lozenge$ SPOC & \cite{TIC_209464063} \\
+12421862 & $\lozenge$ SPOC & \cite{TIC_70513361} & 296739893 & $\lozenge$ SPOC & \cite{TIC_296739893} \\
+350618622 & $\lozenge$ SPOC & \cite{TIC_350618622} & 407126408 & $\lozenge$ SPOC & \cite{TIC_428699140} \\
+55650590 & $\lozenge^\dagger$ SPOC$^b$ & \cite{TIC_10837041} & 335630746 & $\lozenge$ SPOC & \cite{TIC_335630746} \\
+55525572 & $\lozenge$ SPOC & \cite{TIC_55525572} & 362249359 & $\lozenge^\dagger$ SPOC$^b$ & \cite{TIC_10837041} \\
+342642208 & $\lozenge$ QLP+$\lozenge$ SPOC & \cite{TIC_393831507} \\
+"""
+
 stars = []
 tablist=table.split(r'\\')
-for i in range(79):
+for i in range(25):
     t = tablist[i].split(r'&')
     stars.append([t[0],t[1]])
     stars.append([t[3],t[4]])
-stars.append([tablist[79].split(r'&')[0], tablist[79].split(r'&')[1]])
+stars.append([tablist[25].split(r'&')[0], tablist[25].split(r'&')[1]])
 
 no_ground=[]
 ground=[]
-for i in range(159):
+for i in range(51):
     if '\lozenge' in stars[i][1] or '\square' in stars[i][1]:
         no_ground.append(int(stars[i][0]))
     else:

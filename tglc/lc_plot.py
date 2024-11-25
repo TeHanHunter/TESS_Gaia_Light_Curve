@@ -24,7 +24,7 @@ import seaborn as sns
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astroquery.mast import Catalogs
-from scipy.stats import bootstrap
+from scipy.stats import bootstrap, ks_2samp
 
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['mathtext.fontset'] = 'dejavuserif'  # Use Computer Modern (serif font)
@@ -424,7 +424,8 @@ def compute_weighted_mean_bootstrap(data):
             # print(errors_pl_ratror[i])
     # Compute the ratio and its propagated error
     difference_values = fit_values - pl_ratror
-    errors_ratio = np.sqrt(errors_value ** 2 + errors_pl_ratror ** 2)
+    errors_ratio = np.sqrt(errors_value ** 2)
+    # errors_ratio = np.sqrt(errors_value ** 2 + errors_pl_ratror ** 2)
     # errors_ratio = np.ones(len(errors_pl_ratror))
     # errors_ratio = errors_value
 
@@ -433,19 +434,23 @@ def compute_weighted_mean_bootstrap(data):
         return np.sum(values_ * weights_) / np.sum(weights_)
 
     weights = 1 / (errors_ratio ** 2)
+
     def weighted_mean_stat(values_):
         return weighted_mean(values_, weights)
+    # plt.figure()
     # plt.plot(np.sort(weights), '.')
     # plt.show()
     # weighted_mean = np.sum(difference_values * weights) / np.sum(weights)
     # weighted_mean_error = np.sqrt(1 / np.sum(weights))
-    res = bootstrap((difference_values,), weighted_mean_stat, confidence_level=.95, n_resamples=10000, method='percentile')
+    res = bootstrap((difference_values,), weighted_mean_stat, confidence_level=.95, n_resamples=10000,
+                    method='percentile')
     iw_mean = weighted_mean(difference_values, weights)
     ci_low, ci_high = res.confidence_interval.low, res.confidence_interval.high
     print(f"Inverse-Variance Weighted Mean: {iw_mean}")
     print(f"95% Confidence Interval: ({ci_low}, {ci_high})")
     print(res.standard_error)
-    return iw_mean, ci_low+(iw_mean-ci_low)/2, iw_mean+(ci_high-iw_mean)/2
+    return iw_mean, res.standard_error, res.standard_error
+    # return iw_mean, (iw_mean - ci_low)/2, (ci_high - iw_mean)/2
 
 
 def figure_4(folder='/home/tehan/Downloads/Data/', ):
@@ -496,15 +501,18 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
     ax[0].hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 41),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
+    stat, p_value = ks_2samp(diff_qlp, diff_tglc)
+    print(f"K-S Statistic: {stat}")
+    print(f"P-value: {p_value}")
     ax[0].set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax[0].scatter(iw_mean_tglc, 2.6, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=3, label='TGLC')
-    ax[0].errorbar(iw_mean_tglc, 1.6, xerr=[[iw_mean_tglc-ci_low_tglc], [ci_high_tglc-iw_mean_tglc]], ecolor='k',
-                   elinewidth=1,capsize=3, zorder=2,)
+                  zorder=4, label='TGLC')
+    ax[0].errorbar(iw_mean_tglc, 1.6, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                   elinewidth=1, capsize=3, zorder=2, )
     ax[0].scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=3, label='QLP')
-    ax[0].errorbar(iw_mean_qlp, 1.6, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
-                   elinewidth=1,capsize=3, zorder=2,)
+                  zorder=4, label='QLP')
+    ax[0].errorbar(iw_mean_qlp, 1.6, xerr=[[ci_low_qlp], [ci_high_qlp]], ecolor='k',
+                   elinewidth=1, capsize=3, zorder=2, )
 
     ax[0].vlines(0, ymin=0, ymax=52.5, color='k', ls='dashed', lw=1, zorder=3)
     ax[0].set_xlabel('')
@@ -559,13 +567,13 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
                color=tglc_color, alpha=0.6, edgecolor=None)
     ax[1].set_title(f'TESS and Ground-based radius ({len(difference_tglc)} light curves)')
     ax[1].scatter(iw_mean_tglc, 6.8, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=3, label='TGLC')
-    ax[1].errorbar(iw_mean_tglc, 4, xerr=[[iw_mean_tglc-ci_low_tglc], [ci_high_tglc-iw_mean_tglc]], ecolor='k',
-                   elinewidth=1,capsize=3, zorder=2,)
+                  zorder=4, label='TGLC')
+    ax[1].errorbar(iw_mean_tglc, 4, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                   elinewidth=1, capsize=3, zorder=2, )
     ax[1].scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=3, label='QLP')
-    ax[1].errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
-                   elinewidth=1,capsize=3, zorder=2,)
+                  zorder=4, label='QLP')
+    ax[1].errorbar(iw_mean_qlp, 4, xerr=[[ci_low_qlp], [ci_high_qlp]], ecolor='k',
+                   elinewidth=1, capsize=3, zorder=2, )
     ax[1].vlines(0, ymin=0, ymax=145, color='k', ls='dashed', lw=1, zorder=3)
     ax[1].set_xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
     ax[1].set_ylabel('Error Weighted Counts')
@@ -577,6 +585,7 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
 
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
+
 
 def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
     palette = sns.color_palette('bright')
@@ -603,7 +612,8 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
               395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
-              239816546, 361343239]
+              239816546, 361343239] + [90850770, 97568467, 263179590, 258920431, 194795551, 139375960, 100389539,
+                                       250111245, 268301217]
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         # if star_sector in d_qlp['Star_sector']:
@@ -613,9 +623,7 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
     # difference_tglc.write(f'deviation_TGLC_677.dat', format='ascii.csv')
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
-    # QLP data (dim)
-    # diff_qlp, errors_qlp, weighted_mean_qlp, weighted_mean_error_qlp = compute_weighted_mean_all(difference_qlp)
-    # iw_mean_qlp, ci_low_qlp, ci_high_qlp = compute_weighted_mean_bootstrap(difference_qlp)
+    diff_tglc_ground = diff_tglc
     print(len(difference_tglc))
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
@@ -627,16 +635,16 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
     ax[0].set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
-    ax[0].scatter(iw_mean_tglc, 2.6, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=3, label='TGLC')
-    ax[0].errorbar(iw_mean_tglc, 1.6, xerr=[[iw_mean_tglc-ci_low_tglc], [ci_high_tglc-iw_mean_tglc]], ecolor='k',
-                   elinewidth=1,capsize=3, zorder=2,)
+    ax[0].scatter(iw_mean_tglc, 2.75, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
+                  zorder=4, label='TGLC')
+    ax[0].errorbar(iw_mean_tglc, 1.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                   elinewidth=1, capsize=3, zorder=2, )
     # ax[0].scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
     # ax[0].errorbar(iw_mean_qlp, 1.6, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
 
-    ax[0].vlines(0, ymin=0, ymax=52.5, color='k', ls='dashed', lw=1, zorder=3)
+    ax[0].vlines(0, ymin=0, ymax=60, color='k', ls='dashed', lw=1, zorder=3)
     ax[0].set_xlabel('')
     ax[0].set_ylabel('Error Weighted Counts')
     ax[0].legend(loc='upper right')
@@ -665,7 +673,13 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 1003831, 83092282,
-                 264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128]
+                 264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] + [
+                    370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
+                    464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
+                    320004517, 163539739, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                    408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
+                    407126408, 55650590, 335630746, 55525572, 362249359, 342642208]
+
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         # if star_sector in d_qlp['Star_sector']:
@@ -674,9 +688,7 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
             # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
-    # QLP data (dim)
-    # diff_qlp, errors_qlp, weighted_mean_qlp, weighted_mean_error_qlp = compute_weighted_mean_all(difference_qlp)
-    # iw_mean_qlp, ci_low_qlp, ci_high_qlp = compute_weighted_mean_bootstrap(difference_qlp)
+    diff_tglc_no_ground = diff_tglc
     print(len(difference_tglc))
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
@@ -688,25 +700,29 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', ):
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
     ax[1].set_title(f'TESS and Ground-based radius ({len(difference_tglc)} light curves)')
-    ax[1].scatter(iw_mean_tglc, 6.8, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=3, label='TGLC')
-    ax[1].errorbar(iw_mean_tglc, 4, xerr=[[iw_mean_tglc-ci_low_tglc], [ci_high_tglc-iw_mean_tglc]], ecolor='k',
-                   elinewidth=1,capsize=3, zorder=2,)
+    ax[1].scatter(iw_mean_tglc, 5.5, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
+                  zorder=4, label='TGLC')
+    ax[1].errorbar(iw_mean_tglc, 3, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                   elinewidth=1, capsize=3, zorder=2, )
     # ax[1].scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
     # ax[1].errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
-    ax[1].vlines(0, ymin=0, ymax=145, color='k', ls='dashed', lw=1, zorder=3)
+    ax[1].vlines(0, ymin=0, ymax=120, color='k', ls='dashed', lw=1, zorder=3)
     ax[1].set_xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
     ax[1].set_ylabel('Error Weighted Counts')
     ax[1].legend(loc='upper right')
-    # ax[1].set_xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
-    #                  [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
-
+    ax[1].set_xticks([-0.01, 0, 0.01, 0.02, 0.06], )
     plt.xlim(-0.025, 0.025)
+
+    stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
+    print(f"K-S Statistic: {stat}")
+    print(f"P-value: {p_value}")
 
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
+
+
 def figure_5(folder='/home/tehan/Downloads/Data/', ):
     contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio.dat')
     palette = sns.color_palette('bright')
