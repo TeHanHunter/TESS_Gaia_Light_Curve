@@ -656,14 +656,17 @@ if __name__ == '__main__':
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
 
-    directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
-    tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_extra.dat')[0])
-    print(len(tic_sector))
-    tics=[]
-    sectors=[]
-    for i in range(len(tic_sector)):
-        tics.append(tic_sector[i]['Star_sector'].split('_')[1])
-        sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
+    # directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
+    # tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_extra.dat')[0])
+    # print(len(tic_sector))
+    # TIC_183985250_2
+    # TIC_288735205_20
+    # TIC_339672028_9
+    tics=[183985250,288735205,339672028]
+    sectors=[2,20,9]
+    # for i in range(len(tic_sector)):
+    #     tics.append(tic_sector[i]['Star_sector'].split('_')[1])
+    #     sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
 
     for i in range(len(tics)):
         try:
