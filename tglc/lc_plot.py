@@ -591,6 +591,7 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
 
 def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio.dat')
+    print(len(set(contamrt['tic_sec'])))
     palette = sns.color_palette('bright')
     tglc_color = 'C1'
     # qlp_color = 'C0'
@@ -619,9 +620,12 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
                                        268301217, 455784423]
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
-        if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
-            if int(star_sector.split('_')[1]) in ground:
-                difference_tglc.add_row(d_tglc[i])
+        try:
+            if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
+                if int(star_sector.split('_')[1]) in ground:
+                    difference_tglc.add_row(d_tglc[i])
+        except IndexError:
+            print(star_sector)
             # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     # difference_tglc.write(f'deviation_TGLC_677.dat', format='ascii.csv')
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
@@ -1039,6 +1043,6 @@ def figure_8(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
-    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
+    # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
+    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0)
     # figure_5(type='phase-fold')
