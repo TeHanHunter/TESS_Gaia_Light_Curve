@@ -656,7 +656,7 @@ if __name__ == '__main__':
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
 
-    # directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
+    directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
     # tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_extra.dat')[0])
     # print(len(tic_sector))
     # TIC_183985250_2
