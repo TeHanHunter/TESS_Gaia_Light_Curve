@@ -1050,7 +1050,7 @@ def figure_8(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
+    # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.)
+    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.)
     # figure_5(type='phase-fold')
