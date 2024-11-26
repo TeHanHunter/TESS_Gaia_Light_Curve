@@ -402,7 +402,7 @@ def compute_weighted_mean_all(data):
             # print(errors_pl_ratror[i])
     # Compute the ratio and its propagated error
     difference_values = values - pl_ratror
-    errors_ratio = np.sqrt(errors_value ** 2 + errors_pl_ratror ** 2)
+    errors_ratio = np.sqrt(errors_value ** 2)
 
     # Compute inverse variance weighted mean
     weights = 1 / (errors_ratio ** 2)
@@ -631,6 +631,7 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
     diff_tglc_ground = diff_tglc
+    iw_mean_tglc_ground = iw_mean_tglc
     print(len(difference_tglc))
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
@@ -689,13 +690,17 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
 
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
-        if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
-            if int(star_sector.split('_')[1]) in no_ground:
-                difference_tglc.add_row(d_tglc[i])
-                # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+        try:
+            if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
+                if int(star_sector.split('_')[1]) in no_ground:
+                    difference_tglc.add_row(d_tglc[i])
+        except IndexError:
+            pass
+                    # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
     diff_tglc_no_ground = diff_tglc
+    iw_mean_tglc_no_ground = iw_mean_tglc
     print(len(difference_tglc))
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
@@ -719,7 +724,7 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     ax[1].set_xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
     ax[1].set_ylabel('Error Weighted Counts')
     ax[1].legend(loc='upper right')
-    ax[1].set_xticks([-0.01, 0, 0.01, 0.02, 0.06], )
+    ax[1].set_xticks([-0.02, -0.01, 0, 0.01, 0.02, 0.06], )
     plt.xlim(-0.025, 0.025)
 
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
@@ -727,6 +732,8 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     print(f"P-value: {p_value}")
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
+
+    return iw_mean_tglc_ground, iw_mean_tglc_no_ground
 
 
 def figure_5(folder='/home/tehan/Downloads/Data/', ):
@@ -1043,6 +1050,7 @@ def figure_8(type='all'):
 
 if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
-    # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
-    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0)
+    fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
+    # figure_4(folder='/Users/tehan/Documents/TGLC/')
+    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.)
     # figure_5(type='phase-fold')
