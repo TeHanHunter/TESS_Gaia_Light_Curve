@@ -403,7 +403,6 @@ def compute_weighted_mean_all(data):
     # Compute the ratio and its propagated error
     difference_values = values - pl_ratror
     errors_ratio = np.sqrt(errors_value ** 2)
-
     # Compute inverse variance weighted mean
     weights = 1 / (errors_ratio ** 2)
     weighted_mean = np.sum(difference_values * weights) / np.sum(weights)
@@ -411,20 +410,8 @@ def compute_weighted_mean_all(data):
     return difference_values, errors_ratio, weighted_mean, weighted_mean_error
 
 
-def compute_weighted_mean_bootstrap(data):
-    fit_values = data['value']
-    pl_ratror = data['pl_ratror']
-    errors_value = (data['err1'] - data['err2']) / 2
-    errors_pl_ratror = (data['pl_ratrorerr1'] - data['pl_ratrorerr2']) / 2
-
-    # correct literature with 0 error
-    for i in range(len(errors_pl_ratror)):
-        if errors_pl_ratror[i] == 0:
-            errors_pl_ratror[i] = errors_value[i]
-            # print(errors_pl_ratror[i])
-    # Compute the ratio and its propagated error
-    difference_values = fit_values - pl_ratror
-    errors_ratio = np.sqrt(errors_value ** 2)
+def compute_weighted_mean_bootstrap(data, output_table=False):
+    difference_values, errors_ratio = compute_weighted_mean_all(data)[:2]
 
     # errors_ratio = np.sqrt(errors_value ** 2 + errors_pl_ratror ** 2)
     # errors_ratio = np.ones(len(errors_pl_ratror))
@@ -451,11 +438,14 @@ def compute_weighted_mean_bootstrap(data):
     print(f"Inverse-Variance Weighted Mean: {iw_mean}")
     print(f"95% Confidence Interval: ({ci_low}, {ci_high})")
     print(res.standard_error)
-    return iw_mean, res.standard_error, res.standard_error
-    # return iw_mean, (iw_mean - ci_low)/2, (ci_high - iw_mean)/2
+    if output_table:
+        table = Table([difference_values, weights], names=('diff', 'weights'))
+        return table, iw_mean, res.standard_error, res.standard_error
+    else:
+        return iw_mean, res.standard_error, res.standard_error
 
 
-def figure_4(folder='/home/tehan/Downloads/Data/', ):
+def figure_4(folder='/Users/tehan/Documents/TGLC/', ):
     palette = sns.color_palette('bright')
     tglc_color = 'C1'
     qlp_color = 'C0'
@@ -468,10 +458,10 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
-    # print(len(d_qlp))
+    print(len(d_qlp))
     d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
-    # print(len(d_tglc))
+    print(len(d_tglc))
     difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
     ground = [156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
@@ -567,7 +557,7 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
     ax[1].hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 41),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
-    ax[1].set_title(f'TESS and Ground-based radius ({len(difference_tglc)} light curves)')
+    ax[1].set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax[1].scatter(iw_mean_tglc, 6.8, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
                   zorder=4, label='TGLC')
     ax[1].errorbar(iw_mean_tglc, 4, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
@@ -589,7 +579,7 @@ def figure_4(folder='/home/tehan/Downloads/Data/', ):
     plt.show()
 
 
-def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
+def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio.dat')
     print(len(set(contamrt['tic_sec'])))
     palette = sns.color_palette('bright')
@@ -618,12 +608,14 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
               239816546, 361343239] + [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
                                        268301217, 455784423]
+    contamrt_ground = []
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         try:
             if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
                 if int(star_sector.split('_')[1]) in ground:
                     difference_tglc.add_row(d_tglc[i])
+                    contamrt_ground.append(contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]])
         except IndexError:
             print(star_sector)
             # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
@@ -631,14 +623,13 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
     diff_tglc_ground = diff_tglc
-    iw_mean_tglc_ground = iw_mean_tglc
-    print(len(difference_tglc))
+    difference_tglc_ground = difference_tglc
+    print(difference_tglc[np.argsort(diff_tglc)[0]])
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
     # ax[0].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
-
     ax[0].hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 41),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
@@ -688,30 +679,31 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
                     408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
                     407126408, 55650590, 335630746, 55525572, 342642208, 394357918]
 
+    contamrt_no_ground = []
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
         try:
             if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
                 if int(star_sector.split('_')[1]) in no_ground:
                     difference_tglc.add_row(d_tglc[i])
+                    contamrt_no_ground.append(contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]])
         except IndexError:
             pass
-                    # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+            # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
     diff_tglc_no_ground = diff_tglc
-    iw_mean_tglc_no_ground = iw_mean_tglc
-    print(len(difference_tglc))
+    difference_tglc_no_ground = difference_tglc
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
     # ax[1].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
-
+    print(np.sort(diff_tglc))
     ax[1].hist(diff_tglc, bins=np.linspace(-0.05, 0.05, 41),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
-    ax[1].set_title(f'TESS and Ground-based radius ({len(difference_tglc)} light curves)')
+    ax[1].set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax[1].scatter(iw_mean_tglc, 5.5, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
                   zorder=4, label='TGLC')
     ax[1].errorbar(iw_mean_tglc, 3, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
@@ -724,8 +716,8 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     ax[1].set_xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
     ax[1].set_ylabel('Error Weighted Counts')
     ax[1].legend(loc='upper right')
-    ax[1].set_xticks([-0.02, -0.01, 0, 0.01, 0.02, 0.06], )
-    plt.xlim(-0.025, 0.025)
+    ax[1].set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
+    # plt.xlim(-0.025, 0.025)
 
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
@@ -733,7 +725,123 @@ def figure_4_tglc(folder='/home/tehan/Downloads/Data/', contamrt_min=0.0):
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
-    return iw_mean_tglc_ground, iw_mean_tglc_no_ground
+    return difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground
+
+
+def figure_4_tglc_contamrt_trend(folder='/Users/tehan/Documents/TGLC/'):
+    difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground \
+        = figure_4_tglc()
+    arg_g = np.argsort(contamrt_ground)
+    arg_ng = np.argsort(contamrt_no_ground)
+    difference_tglc_ground = difference_tglc_ground[arg_g]
+    difference_tglc_no_ground = difference_tglc_no_ground[arg_ng]
+    contamrt_ground = np.array(contamrt_ground)[arg_g]
+    contamrt_no_ground = np.array(contamrt_no_ground)[arg_ng]
+    # print(contamrt_ground)
+    # print(contamrt_no_ground)
+    ## running median ###
+    # tables_g_rm = []
+    # contam_g_rm = []
+    # d_ror_g_rm =[]
+    # d_ror_g_rm_err=[]
+    batch_size=150
+    batch=np.arange(0,1,0.05)
+    idx_g=[]
+    for i in batch:
+        idx = int(np.where((contamrt_ground > i))[0][0])
+        if idx+batch_size < len(contamrt_ground):
+            idx_g.append(idx)
+    idx_g=np.array(idx_g)
+    # for i in range(len(contamrt_ground) - batch_size):
+    #     contam_g_rm.append(np.median(contamrt_ground[i:i+batch_size]))
+    #     t,d,e = compute_weighted_mean_bootstrap(difference_tglc_ground[i:i+batch_size], output_table=True)[0:3]
+    #     tables_g_rm.append(t)
+    #     d_ror_g_rm.append(d)
+    #     d_ror_g_rm_err.append(e)
+    # tables_ng_rm = []
+    # contam_ng_rm = []
+    # d_ror_ng_rm =[]
+    # d_ror_ng_rm_err=[]
+    idx_ng=[]
+    for i in batch:
+        idx = int(np.where((contamrt_no_ground > i))[0][0])
+        if idx+batch_size < len(contamrt_no_ground):
+            idx_ng.append(idx)
+    idx_ng=np.array(idx_ng)
+    # for i in range(len(contamrt_no_ground) - batch_size):
+    #     contam_ng_rm.append(np.median(contamrt_no_ground[i:i+batch_size]))
+    #     t,d,e = compute_weighted_mean_bootstrap(difference_tglc_no_ground[i:i+batch_size], output_table=True)[0:3]
+    #     tables_ng_rm.append(t)
+    #     d_ror_ng_rm.append(d)
+    #     d_ror_ng_rm_err.append(e)
+    #
+    # data = {
+    #     "tables_g_rm": tables_g_rm,
+    #     "contam_g_rm": contam_g_rm,
+    #     "d_ror_g_rm": d_ror_g_rm,
+    #     "d_ror_g_rm_err": d_ror_g_rm_err,
+    #     "tables_ng_rm": tables_ng_rm,
+    #     "contam_ng_rm": contam_ng_rm,
+    #     "d_ror_ng_rm": d_ror_ng_rm,
+    #     "d_ror_ng_rm_err": d_ror_ng_rm_err,
+    # }
+    # with open(f"{folder}lists_data.pkl", "wb") as f:
+    #     pickle.dump(data, f)
+
+    with open(f"{folder}lists_data.pkl", "rb") as f:
+        data = pickle.load(f)
+    tables_g_rm = data['tables_g_rm']
+    contam_g_rm = data["contam_g_rm"]
+    d_ror_g_rm = data["d_ror_g_rm"]
+    d_ror_g_rm_err = data["d_ror_g_rm_err"]
+    tables_ng_rm = data['tables_ng_rm']
+    contam_ng_rm = data["contam_ng_rm"]
+    d_ror_ng_rm = data["d_ror_ng_rm"]
+    d_ror_ng_rm_err = data["d_ror_ng_rm_err"]
+
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+    palette = sns.color_palette('colorblind')
+    g_color = palette[2]
+    ng_color = palette[3]
+    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(6, 8))
+    plt.errorbar(d_ror_g_rm, contam_g_rm, xerr=d_ror_g_rm_err, alpha=0.1, linestyle='',
+                 marker='o', zorder=1, ms=4, elinewidth=1., mfc=g_color, color='k')
+    plt.errorbar(d_ror_ng_rm, contam_ng_rm, xerr=d_ror_ng_rm_err, alpha=0.1, linestyle='',
+                 marker='o', zorder=1, ms=4, elinewidth=1., mfc=ng_color, color='k')
+    plt.errorbar(np.array(d_ror_g_rm)[idx_g], np.array(contam_g_rm)[idx_g], xerr=np.array(d_ror_g_rm_err)[idx_g],
+                 label='Ground-based-only', alpha=0.9, linestyle='',
+                 marker='o', zorder=1000, ms=5, elinewidth=1.5, mfc=g_color, color='k')
+    plt.errorbar(np.array(d_ror_ng_rm)[idx_ng], np.array(contam_ng_rm)[idx_ng], xerr=np.array(d_ror_ng_rm_err)[idx_ng],
+                 label='TESS-influenced', alpha=0.9, linestyle='',
+                 marker='o', zorder=1000, ms=5, elinewidth=1.5, mfc=ng_color, color='k')
+    from scipy.stats import gaussian_kde
+    x = np.linspace(-0.02, 0.04, 300)
+    scale = 1000
+    for i in idx_g:
+        kde = gaussian_kde(tables_g_rm[i]['diff'], weights=tables_g_rm[i]['weights'], bw_method=0.4)
+        y = kde(x)
+        plt.plot(x, y / scale + contam_g_rm[i], c=g_color, alpha=0.8, zorder=0)
+        plt.fill_between(x, y / scale + contam_g_rm[i], np.zeros(len(x)) + contam_g_rm[i], color=g_color, alpha=0.1,
+                         zorder=len(x) - i)
+    x = np.linspace(-0.02, 0.04, 300)
+    for i in idx_ng:
+        kde = gaussian_kde(tables_ng_rm[i]['diff'], weights=tables_ng_rm[i]['weights'], bw_method=0.2)
+        y = kde(x)
+        plt.plot(x, y / scale + contam_ng_rm[i], c=ng_color, alpha=0.8, zorder=0)
+        plt.fill_between(x, y / scale + contam_ng_rm[i], np.zeros(len(x)) + contam_ng_rm[i], color=ng_color, alpha=0.1,
+                         zorder=len(x) - i)
+
+    plt.legend(loc='upper left')
+    plt.xlim(-0.015, 0.025)
+    plt.xticks([-0.01, -0.005, 0, 0.005, 0.010, 0.015, 0.02])
+    plt.vlines(0, ymin=0, ymax=0.8, color='k', ls='dashed', lw=1, zorder=1)
+    plt.xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
+    plt.ylabel(r'Contamination Ratio Median')
+    plt.ylim(0.05, 0.85)
+    plt.savefig(os.path.join(folder, f'ror_v_contamrt.pdf'), bbox_inches='tight', dpi=600)
+    plt.show()
 
 
 def figure_5(folder='/home/tehan/Downloads/Data/', ):
@@ -1052,5 +1160,6 @@ if __name__ == '__main__':
     # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.)
+    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.)
+    figure_4_tglc_contamrt_trend()
     # figure_5(type='phase-fold')
