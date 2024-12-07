@@ -626,7 +626,7 @@ def figure_4(folder='/Users/tehan/Documents/TGLC/', ):
 
 
 def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
-    contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio.dat')
+    contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio_combined.dat')
     print(len(set(contamrt['tic_sec'])))
     palette = sns.color_palette('bright')
     tglc_color = 'C1'
@@ -892,7 +892,7 @@ def figure_4_tglc_contamrt_trend(folder='/Users/tehan/Documents/TGLC/'):
     ax[0].legend(loc='upper left')
     ax[0].vlines(0, ymin=0, ymax=0.8, color='k', ls='dashed', lw=1, zorder=1)
     ax[0].set_ylabel(r'Contamination Ratio Median')
-    ax[0].set_ylim(0.05, 0.85)
+    ax[0].set_ylim(0.0, 0.85)
 
     ### ground
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(
