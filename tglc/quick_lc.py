@@ -584,7 +584,7 @@ if __name__ == '__main__':
     #     if tics_new[i] not in tics:
     #         idx.append(i)
     # t_new[idx].write('PSCompPars_2024.12.07_14.30.50_new_addition.csv', overwrite=True)
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50_new_addition.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50_new_addition.csv'), delimiter=',', header_start=0)
     tics = [int(s[4:]) for s in t['tic_id']]
     dir = '/home/tehan/data/cosmos/tdv_odd_new/'
     get_tglc_lc(tics=tics, method='search', server=1, directory=dir, prior=None)
