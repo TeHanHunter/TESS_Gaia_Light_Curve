@@ -577,31 +577,41 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 if __name__ == '__main__':
     # t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
     # tics = [int(s[4:]) for s in t['tic_id']]
-    # dir = '/home/tehan/data/cosmos/transit_depth_validation/'
-    # tic_sector = sort_sectors(t, dir=dir)
-    # np.savetxt('/home/tehan/data/cosmos/transit_depth_validation/tic_sector.csv', tic_sector, fmt='%s', delimiter=',')
-    # # tic_sector = np.loadtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
-    # for i in trange(len(tic_sector)):
-    #     if int(tic_sector[i, 0]) in tics:
-    #         produce_config_qlp('/home/tehan/data/cosmos/transit_depth_validation_qlp/', tic=int(tic_sector[i, 0]),
-    #                        nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
-    #                        sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
+    # t_new = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    # tics_new = [int(s[4:]) for s in t_new['tic_id']]
+    # idx=[]
+    # for i in range(len(tics_new)):
+    #     if tics_new[i] not in tics:
+    #         idx.append(i)
+    # t_new[idx].write('PSCompPars_2024.12.07_14.30.50_new_addition.csv', overwrite=True)
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50_new_addition.csv'))
+    tics = [int(s[4:]) for s in t['tic_id']]
+    dir = '/home/tehan/data/cosmos/tdv_odd_new/'
+    get_tglc_lc(tics=tics, method='search', server=1, directory=dir, prior=None)
+    tic_sector = sort_sectors(t, dir=dir)
+    # np.savetxt(f'{dir}tic_sector.csv', tic_sector, fmt='%s', delimiter=',')
+    # tic_sector = np.loodtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
+    for i in trange(len(tic_sector)):
+        if int(tic_sector[i, 0]) in tics:
+            produce_config(dir, tic=int(tic_sector[i, 0]),
+                           nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
+                           sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
-    tics = [int(s) for s in t['planet_host']]
-    # tics=[198008005]
-    dir = '/home/tehan/data/cosmos/planet_host_companion/'
-    # get_tglc_lc(tics=tics, directory=dir,)
-    for i in range(len(tics)):
-        print(t['planet_host_gaia'][i])
-        try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
-        except:
-            continue
-        try:
-            plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
-        except:
-            continue
+    # t = ascii.read(pkg_resources.resource_stream(__name__, 'tic_neighbor.csv'))
+    # tics = [int(s) for s in t['planet_host']]
+    # # tics=[198008005]
+    # dir = '/home/tehan/data/cosmos/planet_host_companion/'
+    # # get_tglc_lc(tics=tics, directory=dir,)
+    # for i in range(len(tics)):
+    #     print(t['planet_host_gaia'][i])
+    #     try:
+    #         plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['planet_host_gaia'][i])
+    #     except:
+    #         continue
+    #     try:
+    #         plot_contamination(local_directory=f'{dir}TIC {tics[i]}/', gaia_dr3=t['neighbor_gaia'][i])
+    #     except:
+    #         continue
     # for i in trange(len(tic_sector)):
     #     if int(tic_sector[i, 0]) in tics:
     #         produce_config('/home/tehan/data/cosmos/transit_depth_validation/', tic=int(tic_sector[i, 0]),
