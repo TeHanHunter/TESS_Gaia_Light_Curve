@@ -593,6 +593,7 @@ if __name__ == '__main__':
     # tic_sector = np.loodtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
+            print(1)
             produce_config(dir, tic=int(tic_sector[i, 0]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
