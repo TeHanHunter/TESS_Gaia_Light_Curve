@@ -191,6 +191,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
     if len(files) == 1:
+        print(1)
         os.makedirs(output_dir_, exist_ok=True)
         with fits.open(files[0], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
@@ -593,7 +594,6 @@ if __name__ == '__main__':
     # tic_sector = np.loodtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
-            print(1)
             produce_config(dir, tic=int(tic_sector[i, 0]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
