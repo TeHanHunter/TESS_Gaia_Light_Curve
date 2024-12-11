@@ -186,9 +186,7 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     output_dir = '/home/tehan/data/pyexofits/Data/'
     version = 'cal_aper_flux'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
-    print(f'{dir}*{gaiadr3}*0{sector}-*.fits')
     files = glob(f'{dir}*{gaiadr3}*0{sector}-*.fits')
-    print(len(files))
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
@@ -595,7 +593,7 @@ if __name__ == '__main__':
     # tic_sector = np.loodtxt('/home/tehan/Downloads/Data/tic_sector.csv', delimiter=',')
     for i in trange(len(tic_sector)):
         if int(tic_sector[i, 0]) in tics:
-            produce_config(dir, tic=int(tic_sector[i, 0]),
+            produce_config(dir, tic=int(tic_sector[i, 0]), gaiadr3=int(tic_sector[i, 1]),
                            nea=t[np.where(t['tic_id'] == f'TIC {int(tic_sector[i, 0])}')[0][0]],
                            sector=int(tic_sector[i, 2])) # assign sector to '' for generating combined config; or int(tic_sector[i, 2])
 
