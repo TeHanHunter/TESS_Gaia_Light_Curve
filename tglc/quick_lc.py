@@ -186,12 +186,13 @@ def produce_config(dir, tic=None, gaiadr3=None, nea=None, sector=1):
     output_dir = '/home/tehan/data/pyexofits/Data/'
     version = 'cal_aper_flux'
     output_dir_ = f'{output_dir}{star_name}/Photometry/'
+    print(f'{dir}*{gaiadr3}*0{sector}-*.fits')
     files = glob(f'{dir}*{gaiadr3}*0{sector}-*.fits')
+    print(len(files))
     error_name = {'psf_flux': 'PSF_ERR', 'aperture_flux': 'APER_ERR', 'cal_psf_flux': 'CPSF_ERR',
                   'cal_aper_flux': 'CAPE_ERR'}
     # data = np.empty((3, 0))
     if len(files) == 1:
-        print(1)
         os.makedirs(output_dir_, exist_ok=True)
         with fits.open(files[0], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
