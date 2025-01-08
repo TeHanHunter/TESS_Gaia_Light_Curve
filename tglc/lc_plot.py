@@ -86,9 +86,9 @@ def combine_contamrt():
                                   overwrite=True)
 
 
-def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
+def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratror', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
     # t = ascii.read('/home/tehan/PycharmProjects/TESS_Gaia_Light_Curve/tglc/PSCompPars_2024.02.05_22.52.50.csv')
     tics = [int(s[4:]) for s in t['tic_id']]
 
@@ -174,7 +174,7 @@ def figure_1(folder='/home/tehan/Downloads/Data/', param='pl_rade', r1=0.01, r2=
 
     plt.figure(figsize=(5, 5))
     # np.save(f'deviation_{pipeline}.npy', np.array(t_['value'] - t_[f'{param}']))
-    # t_.write(f'deviation_{pipeline}.dat', format='ascii.csv')
+    t_.write(f'deviation_{pipeline}_2024.dat', format='ascii.csv')
     difference_qlp = ascii.read('deviation_QLP.dat')
     difference_tglc = ascii.read('deviation_TGLC.dat')
     plt.hist(difference_tglc, edgecolor='C0', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
@@ -652,7 +652,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
     ground = [156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 289661991, 464300749, 151483286, 335590096,
-              17865622, 193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+              193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
               395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
@@ -668,7 +668,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
             # contamrt_ground.append(contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]])
         # except IndexError:
         #     print(star_sector)
-            # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+        # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     # difference_tglc.write(f'deviation_TGLC_677.dat', format='ascii.csv')
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
@@ -713,20 +713,20 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    no_ground = [428699140, 201248411, 172518755, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+    no_ground = [428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
                  271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
                  219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
-                 172370679, 116483514, 350153977, 37770169, 162802770, 212957629, 393831507, 207110080, 190496853,
+                 172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 1003831, 83092282,
                  264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] + [
                     370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
                     464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
-                    320004517, 163539739, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                    320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
                     408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
                     407126408, 55650590, 335630746, 55525572, 342642208, 394357918]
 
@@ -740,7 +740,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
             # contamrt_no_ground.append(contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]])
         # except IndexError:
         #     pass
-            # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
+        # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
     diff_tglc_no_ground = diff_tglc
@@ -773,7 +773,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
-    plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
+    # plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
     # print(len(ground)+len(no_ground))
@@ -1442,9 +1442,34 @@ def figure_8(type='all'):
         plt.savefig('/Users/tehan/Documents/TGLC/eb_tglc_pf_portion.png', dpi=600)
         plt.show()
 
+def mass_radius_to_density(mass, radius, mass_err, radius_err):
+    """
+    Calculate density and propagate error from mass and radius.
 
-def figure_9(folder='/Users/tehan/Documents/TGLC/'):
+    Parameters:
+    - mass: Mass in Earth masses or any consistent unit
+    - radius: Radius in Earth radii or any consistent unit
+    - mass_err: Error in mass
+    - radius_err: Error in radius
+
+    Returns:
+    - density: Density in consistent units (e.g., Earth density if mass/radius in Earth units)
+    - density_err: Propagated error in density
+    """
+    # Calculate density (assuming consistent units for mass and radius)
+    density = mass / (radius ** 3)
+
+    # Propagate error using partial derivatives
+    density_err = density * np.sqrt((mass_err / mass) ** 2 + (3 * radius_err / radius) ** 2)
+    if type(density_err) is np.ma.core.MaskedConstant:
+        density_err = 0.
+    return density, density_err
+
+
+def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
     tics = [int(s[4:]) for s in t['tic_id']]
     palette = sns.color_palette('colorblind')
     g_color = palette[2]
@@ -1452,68 +1477,111 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/'):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.8'})
-    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'hspace': 0.1})
+    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(6, 6), gridspec_kw={'hspace': 0.1})
     ground = [156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 289661991, 464300749, 151483286, 335590096,
-              17865622, 193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+              193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
               395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
               239816546, 361343239] + [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
                                        268301217, 455784423]
-    no_ground = [428699140, 201248411, 172518755, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+    no_ground = [428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
                  271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
                  219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
-                 172370679, 116483514, 350153977, 37770169, 162802770, 212957629, 393831507, 207110080, 190496853,
+                 172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 1003831, 83092282,
                  264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] + [
                     370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
                     464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
-                    320004517, 163539739, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                    320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
                     408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
                     407126408, 55650590, 335630746, 55525572, 342642208, 394357918]
-    for i, tic in enumerate(tics):
-        if tic in ground:
-            ax[0].errorbar(t['pl_bmasse'][i], t['pl_rade'][i], xerr=[[-t['pl_bmasseerr2'][i]], [t['pl_bmasseerr1'][i]]],
-                           yerr=[[-t['pl_radeerr2'][i]], [t['pl_radeerr1'][i]]], label='Ground-based', alpha=0.9,
-                           linestyle='', marker='o', zorder=1000, ms=5, elinewidth=1.5, mfc=g_color, color='k')
-            ax[1].errorbar(t['pl_bmasse'][i], t['pl_rade'][i], xerr=[[-t['pl_bmasseerr2'][i]], [t['pl_bmasseerr1'][i]]],
-                           yerr=[[-t['pl_radeerr2'][i]], [t['pl_radeerr1'][i]]], label='Ground-based', alpha=0.9,
-                           linestyle='', marker='o', zorder=1000, ms=5, elinewidth=1.5, mfc=g_color, color='k')
-        elif tic in no_ground:
-            ax[0].errorbar(t['pl_bmasse'][i], t['pl_rade'][i], xerr=[[-t['pl_bmasseerr2'][i]], [t['pl_bmasseerr1'][i]]],
-                           yerr=[[-t['pl_radeerr2'][i]], [t['pl_radeerr1'][i]]], label='TESS-influenced', alpha=0.9,
-                           linestyle='', marker='o', zorder=1000, ms=5, elinewidth=1.5, mfc=ng_color, color='k')
-            ax[1].errorbar(t['pl_bmasse'][i], t['pl_rade'][i] * 1.0615,
-                           xerr=[[-t['pl_bmasseerr2'][i]], [t['pl_bmasseerr1'][i]]],
-                           yerr=[[-t['pl_radeerr2'][i] * 1.0615], [t['pl_radeerr1'][i] * 1.0615]],
-                           label='TESS-influenced', alpha=0.9, linestyle='',
-                           marker='o', zorder=1000, ms=5, elinewidth=1.5, mfc=ng_color, color='k')
-    # ax.grid(which='major', linestyle='-', linewidth=0.8, color='black')  # Major tick gridlines
-    # ax.grid(which='minor', linestyle=':', linewidth=0.5, color='gray')  # Minor tick gridlines
-    # plt.legend()
-    ax[0].set_xscale('log')
-    # ax[0].set_yscale('log')
-    ax[1].set_xscale('log')
-    # ax[1].set_yscale('log')
-    ax[0].set_ylim(0,5)
-    ax[1].set_ylim(0,5)
-    plt.xlim(1,100)
+
+    if recalculate:
+        mass_g = []
+        density_g = []
+        mass_ng = []
+        density_ng = []
+        density_ng_corr = []
+        for i, tic in enumerate(tics):
+            if t['pl_bmassjlim'][i] == 0:
+                density, density_err = mass_radius_to_density(t['pl_bmasse'][i], t['pl_rade'][i],
+                                                              (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2,
+                                                              (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
+                if tic in ground:
+                    mass_g.append(t['pl_bmasse'][i])
+                    density_g.append(density)
+                elif tic in no_ground:
+                    mass_ng.append(t['pl_bmasse'][i])
+                    density_ng.append(density)
+                    ror = []
+                    for j in range(len(difference_tglc)):
+                        if tics_fit[j] == tic and difference_tglc['rhat'][j] < 1.1:
+                            ror.append(difference_tglc['value'][j])
+                    ror = np.median(ror)
+
+                    density_corr, _ = mass_radius_to_density(t['pl_bmasse'][i], 109.076 * ror * t['st_rad'][i],
+                                                            (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2,
+                                                            109.076 * ror * (t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
+                    density_ng_corr.append(density_corr)
+                # if density > 10:
+                #     print(tic)
+                # if tic in ground:
+                #     ax.scatter(t['pl_bmasse'][i], density, alpha=0.9, marker='o', zorder=1, s=10, color=g_color)
+                # elif tic in no_ground:
+                #     ax.scatter(t['pl_bmasse'][i], density, alpha=0.5, marker='o', zorder=2, s=10, color='gray')
+                #     ax.scatter(t['pl_bmasse'][i], density / 1.21, alpha=0.9, marker='o', zorder=3, s=15,
+                #             color=ng_color)
+                #     ax.plot([t['pl_bmasse'][i], t['pl_bmasse'][i]], [density, density / 1.21], color='gray', zorder=1,
+                #             marker='', alpha=0.5,)
+        data = {
+            "mass_g": mass_g,
+            "density_g": density_g,
+            "mass_ng": mass_ng,
+            "density_ng": density_ng,
+            "density_ng_corr": density_ng_corr,
+        }
+
+        with open(f"{folder}mass_density.pkl", "wb") as f:
+            pickle.dump(data, f)
+
+    with open(f"{folder}mass_density.pkl", "rb") as f:
+        data = pickle.load(f)
+    mass_g = data["mass_g"]
+    density_g = data["density_g"]
+    mass_ng = data["mass_ng"]
+    density_ng = data["density_ng"]
+    density_ng_corr = data["density_ng_corr"]
+    plt.hist(np.array(density_ng_corr)-np.array(density_ng), bins=np.linspace(-2.0, 2.0, 99))
+    plt.xlim(-0.5,0.5)
+
+    # ax.scatter(mass_g, density_g, alpha=0.9, marker='o', zorder=1, s=10, color=g_color, label='Ground-based')
+    # ax.scatter(mass_ng, density_ng, alpha=0.5, marker='o', zorder=2, s=10, color='gray', label='TESS-influenced')
+    # ax.scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_color, label='TESS-influenced corrected')
+    # ax.plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.5,)
+    # plt.xscale('log')
+    # plt.ylim(0,2)
+    # # plt.xlim(0,30)
+    # # plt.yscale('log')
+    # plt.xlabel(r'$M_{\text{p}} (\text{M}_{\oplus})$ ')
+    # plt.ylabel(r'$\rho_{\text{p}} (\rho_{\oplus})$ ')
+    # plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     return
 
 
 if __name__ == '__main__':
-    # figure_1(folder='/home/tehan/Downloads/Data_qlp/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.)
+    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    # figure_9()
+    # figure_9(recalculate=True)
     # combine_contamrt()
