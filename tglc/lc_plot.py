@@ -128,72 +128,73 @@ def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratr
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
+    t_.write(f'{folder}deviation_{pipeline}_2024.dat', format='ascii.csv')
     print('missing stars:', missed_stars)
-    colormap = cm.viridis
-    norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
-    scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
-    fig, ax = plt.subplots(figsize=(12, 8))
-    for k in range(len(t_)):
-        if t_['rhat'][k] < 1.05:
-            ax.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
-                        yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
-                        mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=10, elinewidth=1, capsize=0.7, alpha=0.5,
-                        zorder=2)
-        # else:
-        #     plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
-        #                  fmt='o', mec='silver', mfc='none', ecolor='silver',
-        #                  ms=10, elinewidth=1, capsize=5, alpha=0.8, zorder=1)
-    range_zoom = [0.07, 0.12]
-    axins = inset_axes(ax, width='35%', height='35%', loc='lower right', borderpad=2)
-    for k in range(len(t_)):
-        if t_['rhat'][k] < 1.05:
-            axins.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
-                           yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
-                           mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=5, elinewidth=1, capsize=0.7, alpha=0.5,
-                           zorder=2)
-    axins.set_xlim(range_zoom)
-    axins.set_ylim(range_zoom)
-    axins.set_xscale('log')
-    axins.set_yscale('log')
-    axins.set_xticks([0.07, 0.08, 0.09, 0.1, 0.12])
-    axins.set_xticklabels(['0.07', '', '', '0.1', '0.12'])
-    axins.set_yticks([0.07, 0.08, 0.09, 0.1, 0.12])
-    axins.set_yticklabels(['0.07', '', '', '0.1', '0.12'])
-    axins.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
-    mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5", linestyle='dashed')
-    plt.colorbar(scatter, ax=ax, label='TESS magnitude')
-    ax.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
-    ax.set_xlim(r1, r2)
-    ax.set_ylim(r1, r2)
-    ax.set_xlabel(r'Literature $R_p/R_*$')
-    ax.set_ylabel(rf'{pipeline}-only fit $R_p/R_*$')
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    plt.savefig(os.path.join(folder, f'{param}_diagonal_{pipeline}.png'), bbox_inches='tight', dpi=600)
-    plt.close()
-
-    plt.figure(figsize=(5, 5))
-    # np.save(f'deviation_{pipeline}.npy', np.array(t_['value'] - t_[f'{param}']))
-    t_.write(f'deviation_{pipeline}_2024.dat', format='ascii.csv')
-    difference_qlp = ascii.read('deviation_QLP.dat')
-    difference_tglc = ascii.read('deviation_TGLC.dat')
-    plt.hist(difference_tglc, edgecolor='C0', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
-    plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
-    plt.ylabel(r'Number of stars')
-    median_value = np.median(difference_tglc)
-    print(np.median(np.abs(difference_tglc)))
-    print(len(np.where(difference_tglc < 0)[0]) / len(difference_tglc))
-    percentage = 68
-    lower_bound = np.percentile(difference_tglc, (100 - percentage) / 2)
-    upper_bound = np.percentile(difference_tglc, 100 - (100 - percentage) / 2)
-    print(median_value, lower_bound, upper_bound)
-    # plt.vlines(lower_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
-    plt.vlines(median_value, ymin=0, ymax=275, color='C0')
-    # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
-    # plt.vlines(upper_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
-
-    plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
-    plt.close()
+    # colormap = cm.viridis
+    # norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
+    # scatter = plt.scatter(t_[f'{param}'], t_['value'], c=t_[cmap], cmap=colormap, facecolors='none', s=0)
+    # fig, ax = plt.subplots(figsize=(12, 8))
+    # for k in range(len(t_)):
+    #     if t_['rhat'][k] < 1.05:
+    #         ax.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
+    #                     yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
+    #                     mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=10, elinewidth=1, capsize=0.7, alpha=0.5,
+    #                     zorder=2)
+    #     # else:
+    #     #     plt.errorbar(t_[f'{param}'][k], t_['value'][k], yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]],
+    #     #                  fmt='o', mec='silver', mfc='none', ecolor='silver',
+    #     #                  ms=10, elinewidth=1, capsize=5, alpha=0.8, zorder=1)
+    # range_zoom = [0.07, 0.12]
+    # axins = inset_axes(ax, width='35%', height='35%', loc='lower right', borderpad=2)
+    # for k in range(len(t_)):
+    #     if t_['rhat'][k] < 1.05:
+    #         axins.errorbar(t_[f'{param}'][k], t_['value'][k], xerr=t_[f'{param}err1'][k],
+    #                        yerr=[[t_['err2'][k] * -1], [t_['err1'][k]]], fmt='o', mec=colormap(norm(t_[cmap][k])),
+    #                        mfc='none', ecolor=colormap(norm(t_[cmap][k])), ms=5, elinewidth=1, capsize=0.7, alpha=0.5,
+    #                        zorder=2)
+    # axins.set_xlim(range_zoom)
+    # axins.set_ylim(range_zoom)
+    # axins.set_xscale('log')
+    # axins.set_yscale('log')
+    # axins.set_xticks([0.07, 0.08, 0.09, 0.1, 0.12])
+    # axins.set_xticklabels(['0.07', '', '', '0.1', '0.12'])
+    # axins.set_yticks([0.07, 0.08, 0.09, 0.1, 0.12])
+    # axins.set_yticklabels(['0.07', '', '', '0.1', '0.12'])
+    # axins.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
+    # mark_inset(ax, axins, loc1=1, loc2=3, fc="none", ec="0.5", linestyle='dashed')
+    # plt.colorbar(scatter, ax=ax, label='TESS magnitude')
+    # ax.plot([0.01, 0.4], [0.01, 0.4], 'k', zorder=0)
+    # ax.set_xlim(r1, r2)
+    # ax.set_ylim(r1, r2)
+    # ax.set_xlabel(r'Literature $R_p/R_*$')
+    # ax.set_ylabel(rf'{pipeline}-only fit $R_p/R_*$')
+    # ax.set_xscale('log')
+    # ax.set_yscale('log')
+    # plt.savefig(os.path.join(folder, f'{param}_diagonal_{pipeline}.png'), bbox_inches='tight', dpi=600)
+    # plt.close()
+    #
+    # plt.figure(figsize=(5, 5))
+    # # np.save(f'deviation_{pipeline}.npy', np.array(t_['value'] - t_[f'{param}']))
+    # t_.write(f'deviation_{pipeline}_2024.dat', format='ascii.csv')
+    # difference_qlp = ascii.read('deviation_QLP.dat')
+    # difference_tglc = ascii.read('deviation_TGLC.dat')
+    # plt.hist(difference_tglc, edgecolor='C0', histtype='step', linewidth=1.2, bins=np.arange(-0.1, 0.1, 0.005))
+    # plt.xlabel(r'fit $R_p/R_*$ - Literature $R_p/R_*$')
+    # plt.ylabel(r'Number of stars')
+    # median_value = np.median(difference_tglc)
+    # print(np.median(np.abs(difference_tglc)))
+    # print(len(np.where(difference_tglc < 0)[0]) / len(difference_tglc))
+    # percentage = 68
+    # lower_bound = np.percentile(difference_tglc, (100 - percentage) / 2)
+    # upper_bound = np.percentile(difference_tglc, 100 - (100 - percentage) / 2)
+    # print(median_value, lower_bound, upper_bound)
+    # # plt.vlines(lower_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
+    # plt.vlines(median_value, ymin=0, ymax=275, color='C0')
+    # # plt.vlines(np.mean(difference), ymin=0,ymax=225, color='r')
+    # # plt.vlines(upper_bound, ymin=0, ymax=250, color='C0', linestyle='dashed')
+    #
+    # plt.savefig(os.path.join(folder, f'{param}_hist.png'), bbox_inches='tight', dpi=600)
+    # plt.close()
 
     # plt.figure(figsize=(5, 5))
     # percent_err = (t_['err1'] - t_['err2']) / 2 / t_['value']
