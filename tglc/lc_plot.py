@@ -1578,7 +1578,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 
 
 if __name__ == '__main__':
-    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='QLP')
+    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
