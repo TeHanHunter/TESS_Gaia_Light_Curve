@@ -8,24 +8,24 @@ token = 'EJaIdttWb1wgv0A3AQnJSbNvftJiKHBkaqCIQ0PI'
 import requests
 from astropy.table import Table
 # Load data
-t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.02.05_22.52.50.csv'))
+t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
 tics = [int(s[4:]) for s in t['tic_id']]
 html = t['pl_rade_reflink']
 
-difference_tglc = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_676.dat')
+difference_tglc = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_2024_rhat_limited.dat')
 print(len(difference_tglc))
-difference_tglc_common = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_common.dat')
-print(len(difference_tglc_common))
+# difference_tglc_common = ascii.read('/Users/tehan/Documents/TGLC/deviation_TGLC_common.dat')
+# print(len(difference_tglc_common))
 used_tics = []
-difference_tglc_extra=[]
+# difference_tglc_extra=[]
 for s in difference_tglc['Star_sector']:
-    if s not in difference_tglc_common['Star_sector']:
-        difference_tglc_extra.append(s)
-        tic = int(s.split('_')[1])
-        if tic not in used_tics:
-            used_tics.append(tic)
+    # if s not in difference_tglc_common['Star_sector']:
+    #     difference_tglc_extra.append(s)
+    tic = int(s.split('_')[1])
+    if tic not in used_tics:
+        used_tics.append(tic)
 print(len(used_tics))
-ascii.write(Table([difference_tglc_extra], names=['Star_sector']), '/Users/tehan/Documents/TGLC/deviation_TGLC_extra.dat')
+# ascii.write(Table([difference_tglc_extra], names=['Star_sector']), '/Users/tehan/Documents/TGLC/deviation_TGLC_extra.dat')
 idx = [np.where(np.array(tics) == used_tics[i])[0][0] for i in range(len(used_tics)) if used_tics[i] in tics]
 
 # Prepare lists for star names and URLs
@@ -51,7 +51,7 @@ entries = []
 successful_entries = 0
 bibcode_used = []
 tic_used = []
-with open("citations_extra.bib", "w") as bibfile:
+with open("citations_2024.bib", "w") as bibfile:
     for star_name, url in zip(star_names, paper_urls):
         bibcode = extract_bibcode(url)
         if bibcode:
@@ -97,7 +97,7 @@ for i in range(num_rows):
 
 latex_table += "\\hline\n\\end{longtable}"
 # Save the LaTeX table to a .tex file
-with open("citations_table_extra.tex", "w") as texfile:
+with open("citations_table_2024.tex", "w") as texfile:
     texfile.write(latex_table)
 
 # Output success rate
