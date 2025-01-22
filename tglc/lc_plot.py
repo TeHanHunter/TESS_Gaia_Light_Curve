@@ -1812,8 +1812,8 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # Log-prior function
     def log_prior(params):
         w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
-        if 0.2 <= w1 <= 0.99 and 0.1 <= w2 <= 0.99 and 0.2 <= mu1 <= 0.5 and 0.4 <= mu2 <= 0.5 and 0.6 <= mu3 <= 0.8 and \
-                0.01 <= sigma1 <= 0.15 and 0.001 <= sigma2 <= 0.03 and 0.01 <= sigma3 <= 0.15:
+        if 0.2 <= w1 <= 0.99 and 0.1 <= w2 <= 0.4 and 0.2 <= mu1 <= 0.5 and 0.4 <= mu2 <= 0.5 and 0.6 <= mu3 <= 0.8 and \
+                0.01 <= sigma1 <= 0.25 and 0.001 <= sigma2 <= 0.03 and 0.01 <= sigma3 <= 0.15:
             return 0.0  # Uniform prior
         return -np.inf  # Outside bounds
 
@@ -1825,12 +1825,12 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         return lp + log_likelihood(params, data)
 
     # Initial parameter guess
-    initial_params = [0.3, 0.3, 0.24, 0.47, 0.7, 0.04, 0.05, 0.13]
+    initial_params = [0.3, 0.25, 0.24, 0.47, 0.7, 0.04, 0.05, 0.13]
 
     # Setting up the MCMC sampler
     ndim = len(initial_params)
     nwalkers = 32  # Number of walkers
-    nsteps = 5000  # Number of steps
+    nsteps = 20000  # Number of steps
 
     # Initialize walkers around the initial guess
     initial_guess = np.array(initial_params) + 0.01 * np.random.randn(nwalkers, ndim)
@@ -1840,10 +1840,10 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     sampler.run_mcmc(initial_guess, nsteps, progress=True)
 
     # Analyze results
-    samples = sampler.get_chain(discard=1000, thin=10, flat=True)  # Flatten the chain
+    samples = sampler.get_chain(discard=5000, thin=10, flat=True)  # Flatten the chain
     w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = np.median(samples, axis=0)
     w3 = 1 - w1 - w2
-
+    print(w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3)
     x = np.linspace(d_ng_corr.min() - 1, d_ng_corr.max() + 1, 1000)
     pdf1 = w1 * norm.pdf(x, mu1, sigma1)
     pdf2 = w2 * norm.pdf(x, mu2, sigma2)
