@@ -1796,6 +1796,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     d_ng = np.array(density_ng)[np.where(np.array(r_ng)<5)]
     d_ng_corr = np.array(density_ng_corr)[np.where(np.array(r_ng) < 5)]
     print(len(d_ng_corr))
+    # print(np.sort(d_ng_corr)[40:60])
     # Log-likelihood function
     def log_likelihood(params, data):
         w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
@@ -1812,8 +1813,8 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # Log-prior function
     def log_prior(params):
         w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
-        if 0.2 <= w1 <= 0.99 and 0.1 <= w2 <= 0.4 and 0.2 <= mu1 <= 0.5 and 0.4 <= mu2 <= 0.5 and 0.6 <= mu3 <= 0.8 and \
-                0.01 <= sigma1 <= 0.25 and 0.001 <= sigma2 <= 0.03 and 0.01 <= sigma3 <= 0.15:
+        if 0.2 <= w1 <= 0.99 and 0.1 <= w2 <= 0.4 and 0.2 <= mu1 <= 0.5 and 0.40 <= mu2 <= 0.55 and 0.6 <= mu3 <= 0.8 and \
+                0.01 <= sigma1 <= 0.25 and 0.001 <= sigma2 <= 0.02 and 0.01 <= sigma3 <= 0.20:
             return 0.0  # Uniform prior
         return -np.inf  # Outside bounds
 
@@ -1825,7 +1826,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         return lp + log_likelihood(params, data)
 
     # Initial parameter guess
-    initial_params = [0.3, 0.25, 0.24, 0.47, 0.7, 0.04, 0.05, 0.13]
+    initial_params = [0.3, 0.25, 0.24, 0.5, 0.7, 0.04, 0.01, 0.1]
 
     # Setting up the MCMC sampler
     ndim = len(initial_params)
@@ -1840,7 +1841,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     sampler.run_mcmc(initial_guess, nsteps, progress=True)
 
     # Analyze results
-    samples = sampler.get_chain(discard=5000, thin=10, flat=True)  # Flatten the chain
+    samples = sampler.get_chain(discard=10000, thin=10, flat=True)  # Flatten the chain
     w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = np.median(samples, axis=0)
     w3 = 1 - w1 - w2
     print(w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3)
@@ -1857,8 +1858,8 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     plt.plot(x, pdf3, label=f'Gaussian 3: μ={mu3:.2f}, σ={sigma3:.2f}')
     plt.plot(x, total_pdf, 'k-', lw=1, label='Total Mixture Model')
     plt.xlim(0, 1.5)
-    plt.xlabel("Data")
-    plt.ylabel("Density")
+    plt.xlabel(r"Planet Density $(\rho_{\oplus})$")
+    plt.ylabel("Probability Density")
     plt.legend()
     plt.title("Fitted Gaussian Mixture Model (MCMC)")
     plt.savefig(os.path.join(folder, f'density_distribution.pdf'), bbox_inches='tight', dpi=600)
