@@ -285,7 +285,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'/pdo/spoc-data/sector-{sector:03d}/ffi*/**/*{camera}-{ccd}-????-?_ffic.fits*', recursive=True)
+    input_files = glob(f'/pdo/qlp-data/orbit-119/ffi/cam1/ccd1/FITS/*-{camera}-*{ccd}*.fits', recursive=True) + \
+              glob(f'/pdo/qlp-data/orbit-120/ffi/cam1/ccd1/FITS/*-{camera}-*{ccd}*.fits', recursive=True)
+    print(len(input_files))
+    # input_files = glob(f'/pdo/spoc-data/sector-{sector:03d}/ffi*/**/*{camera}-{ccd}-????-?_ffic.fits*', recursive=True)
     # input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []
@@ -361,10 +364,10 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
-    os.makedirs(f'{local_directory}source/{camera}-{ccd}/', exist_ok=True)
+    os.makedirs(f'{local_directory}source_qlp_bg/{camera}-{ccd}/', exist_ok=True)
     for i in trange(14):  # 22
         for j in range(14):  # 22
-            source_path = f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl'
+            source_path = f'{local_directory}source_qlp_bg/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl'
             source_exists = exists(source_path)
             if source_exists and os.path.getsize(source_path) > 0:
                 # print(f'{source_path} exists. ')
