@@ -1797,13 +1797,13 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # return
     ###
     # Filter data
-    d_ng = np.array(density_ng)[(np.array(r_ng) < 5) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
-    d_ng_corr = np.array(density_ng_corr)[(np.array(r_ng) < 5) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
+    d_ng = np.array(density_ng)[(np.array(r_ng) < 4) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
+    d_ng_corr = np.array(density_ng_corr)[(np.array(r_ng) < 4) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
 
     # Plot raw histograms for visualization
     plt.hist(d_ng, bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Raw")
-    plt.legend()
-    plt.show()
+    # plt.legend()
+    # plt.show()
     plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Corrected")
     plt.legend()
     plt.show()
