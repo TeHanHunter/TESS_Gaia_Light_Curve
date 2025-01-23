@@ -1722,7 +1722,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         r_ng_err = []
         density_ng = []
         density_ng_corr = []
-
+        density_ng_err = []
         for i, tic in enumerate(tics):
             if t['pl_bmassjlim'][i] == 0:
                 density, density_err = mass_radius_to_density(t['pl_bmasse'][i], t['pl_rade'][i],
@@ -1738,7 +1738,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                     density_ng.append(density)
                     ## overall shift ###
                     density_ng_corr.append(density * 0.829)
-
+                    density_ng_err.append(density_err)
                     # ### individual fits ###
                     # ror = []
                     # ror_err = []
@@ -1792,35 +1792,44 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     density_ng_corr = data["density_ng_corr"]
     # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
     # print(density_weight)
-
+    # plt.hist(density_ng_err, bins=np.linspace(0, 1, 51))
+    # plt.show()
+    # return
     ###
-
     # Filter data
-    d_ng = np.array(density_ng)[np.where(np.array(r_ng) < 3)]
-    d_ng_corr = np.array(density_ng_corr)[np.where(np.array(r_ng) < 3)]
-    plt.hist(d_ng, bins=np.linspace(0, 1.5, 51), alpha=0.4)
-    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 51), alpha=0.4)
+    d_ng = np.array(density_ng)[(np.array(r_ng) < 5) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
+    d_ng_corr = np.array(density_ng_corr)[(np.array(r_ng) < 5) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
+
+    # Plot raw histograms for visualization
+    plt.hist(d_ng, bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Raw")
+    plt.legend()
     plt.show()
+    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Corrected")
+    plt.legend()
+    plt.show()
+    return
     print(len(d_ng_corr))
-    # print(np.sort(d_ng_corr)[40:60])
+
     # Log-likelihood function
     def log_likelihood(params, data):
-        w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
+        w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
         w3 = 1 - w1 - w2  # Ensure weights sum to 1
         if w3 < 0 or sigma1 <= 0 or sigma2 <= 0 or sigma3 <= 0:
             return -np.inf  # Invalid parameters
         pdf = (
-                w1 * norm.pdf(data, mu1, sigma1) +
-                w2 * norm.pdf(data, mu2, sigma2) +
-                w3 * norm.pdf(data, mu3, sigma3)
+                w1 * norm.pdf(data, mu1, sigma1) +  # Gaussian 1
+                w2 * norm.pdf(data, mu2, sigma2) +  # Gaussian 2
+                w3 * skewnorm.pdf(data, alpha3, loc=mu3, scale=sigma3)  # Skewed Gaussian 3
         )
         return np.sum(np.log(pdf + 1e-10))  # Add small constant to avoid log(0)
 
     # Log-prior function
     def log_prior(params):
-        w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
-        if 0.2 <= w1 <= 0.99 and 0.01 <= w2 <= 0.4 and 0.2 <= mu1 <= 0.5 and 0.42 <= mu2 <= 0.55 and 0.6 <= mu3 <= 1 and \
-                0.01 <= sigma1 <= 0.25 and 0.001 <= sigma2 <= 0.05 and 0.01 <= sigma3 <= 0.50:
+        w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
+        if (0.01 <= w1 <= 0.99 and 0.01 <= w2 <= 0.4 and
+                0 <= alpha3 <= 10 and
+                0.1 <= mu1 <= 0.3 and 0.3 <= mu2 <= 0.55 and 0.4 <= mu3 <= 0.8 and
+                0.01 <= sigma1 <= 0.1 and 0.01 <= sigma2 <= 0.1 and 0.01 <= sigma3 <= 1):
             return 0.0  # Uniform prior
         return -np.inf  # Outside bounds
 
@@ -1832,12 +1841,15 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         return lp + log_likelihood(params, data)
 
     # Initial parameter guess
-    initial_params = [0.5, 0.1, 0.24, 0.5, 0.7, 0.04, 0.01, 0.1]
+    initial_params = [0.25, 0.25,
+                      5,
+                      0.24, 0.4, 0.6,
+                      0.05, 0.05, 0.2]
 
     # Setting up the MCMC sampler
     ndim = len(initial_params)
     nwalkers = 32  # Number of walkers
-    nsteps = 20000  # Number of steps
+    nsteps = 10000  # Number of steps
 
     # Initialize walkers around the initial guess
     initial_guess = np.array(initial_params) + 0.01 * np.random.randn(nwalkers, ndim)
@@ -1847,32 +1859,35 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     sampler.run_mcmc(initial_guess, nsteps, progress=True)
 
     # Analyze results
-    samples = sampler.get_chain(discard=10000, thin=10, flat=True)  # Flatten the chain
-    w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = np.median(samples, axis=0)
+    samples = sampler.get_chain(discard=5000, thin=10, flat=True)  # Flatten the chain
+    w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3 = np.median(samples, axis=0)
     w3 = 1 - w1 - w2
-    print(w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3)
+    print(w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3)
+
+    # Generate PDFs
     x = np.linspace(d_ng_corr.min() - 1, d_ng_corr.max() + 1, 1000)
-    pdf1 = w1 * norm.pdf(x, mu1, sigma1)
-    pdf2 = w2 * norm.pdf(x, mu2, sigma2)
-    pdf3 = w3 * norm.pdf(x, mu3, sigma3)
+    pdf1 = w1 * norm.pdf(x, mu1, sigma1)  # Gaussian 1
+    pdf2 = w2 * norm.pdf(x, mu2, sigma2)  # Gaussian 2
+    pdf3 = w3 * skewnorm.pdf(x, alpha3, loc=mu3, scale=sigma3)  # Skewed Gaussian 3
     total_pdf = pdf1 + pdf2 + pdf3
 
     # Plot data and fitted model
     plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 51), density=True, alpha=0.6, color='gray', label="Data")
     plt.plot(x, pdf1, label=f'Gaussian 1: μ={mu1:.2f}, σ={sigma1:.2f}')
     plt.plot(x, pdf2, label=f'Gaussian 2: μ={mu2:.2f}, σ={sigma2:.2f}')
-    plt.plot(x, pdf3, label=f'Gaussian 3: μ={mu3:.2f}, σ={sigma3:.2f}')
+    plt.plot(x, pdf3, label=f'SkewNorm 3: α={alpha3:.2f}, μ={mu3:.2f}, σ={sigma3:.2f}')
     plt.plot(x, total_pdf, 'k-', lw=1, label='Total Mixture Model')
     plt.xlim(0, 1.5)
     plt.xlabel(r"Planet Density $(\rho_{\oplus})$")
     plt.ylabel("Probability Density")
     plt.legend()
-    plt.title("Fitted Gaussian Mixture Model (MCMC)")
+    plt.title("Fitted Gaussian Mixture Model with Skewed Gaussian 3 (MCMC)")
     plt.savefig(os.path.join(folder, f'density_distribution.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
-    import corner
-    labels = ["w1", "w2", "mu1", "mu2", "mu3", "sigma1", "sigma2", "sigma3"]
-    fig = corner.corner(samples, labels=labels, truths=[w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3])
+
+    # Create a corner plot
+    labels = ["w1", "w2", "alpha3", "mu1", "mu2", "mu3", "sigma1", "sigma2", "sigma3"]
+    fig = corner.corner(samples, labels=labels, truths=[w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3])
     plt.show()
     return
 
