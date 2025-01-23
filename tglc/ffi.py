@@ -285,10 +285,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'/pdo/qlp-data/orbit-119/ffi/cam1/ccd1/FITS/*-{camera}-*{ccd}*.fits', recursive=True) + \
-              glob(f'/pdo/qlp-data/orbit-120/ffi/cam1/ccd1/FITS/*-{camera}-*{ccd}*.fits', recursive=True)
-    print(len(input_files))
-    # input_files = glob(f'/pdo/spoc-data/sector-{sector:03d}/ffi*/**/*{camera}-{ccd}-????-?_ffic.fits*', recursive=True)
+    input_files = glob(f'/pdo/spoc-data/sector-{sector:03d}/ffi*/**/*{camera}-{ccd}-????-?_ffic.fits*', recursive=True)
     # input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []
@@ -361,6 +358,113 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
             break
 
     exposure = int((hdul[0].header['TSTOP'] - hdul[0].header['TSTART']) * 86400)
+
+    # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
+    # try 77*77 with 4 redundant, (28*28 cuts)
+    os.makedirs(f'{local_directory}source/{camera}-{ccd}/', exist_ok=True)
+    for i in trange(14):  # 22
+        for j in range(14):  # 22
+            source_path = f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl'
+            source_exists = exists(source_path)
+            if source_exists and os.path.getsize(source_path) > 0:
+                # print(f'{source_path} exists. ')
+                pass
+            else:
+                with open(source_path, 'wb') as output:
+                    source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
+                                    time=time, size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
+                                    exposure=exposure, cadence=cadence)
+                    pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+
+def ffi_qlp_bg(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
+    """
+    Generate Source object from the calibrated FFI downloaded directly from MAST
+    :param sector: int, required
+    TESS sector number
+    :param camera: int, required
+    camera number
+    :param ccd: int, required
+    ccd number
+    :param size: int, optional
+    size of the FFI cut, default size is 150. Recommend large number for better quality.
+    :param local_directory: string, required
+    path to the FFI folder
+    :return:
+    """
+    input_files = glob(f'/pdo/qlp-data/orbit-119/ffi/cam1/ccd1/FITS/*-{camera}-*{ccd}*.fits', recursive=True) + \
+              glob(f'/pdo/qlp-data/orbit-120/ffi/cam1/ccd1/FITS/*-{camera}-*{ccd}*.fits', recursive=True)
+    print(len(input_files))    # input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
+    print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
+    time = []
+    quality = []
+    cadence = []
+    flux = np.empty((len(input_files), 2048, 2048), dtype=np.float32)
+    for i, file in enumerate(tqdm(input_files)):
+        try:
+            with fits.open(file, mode='denywrite', memmap=False) as hdul:
+                quality.append(hdul[0].header['QUAL_BIT'])
+                cadence.append(hdul[0].header['CADENCE'])
+                flux[i] = hdul[0].data[0:2048, 44:2092]
+                time.append(hdul[0].header['MIDTJD'])
+
+        except:
+            print(f'Corrupted file {file}, download again ...')
+            response = requests.get(
+                f'https://mast.stsci.edu/api/v0.1/Download/file/?uri=mast:TESS/product/{os.path.basename(file)}')
+            open(file, 'wb').write(response.content)
+            with fits.open(file, mode='denywrite', memmap=False) as hdul:
+                quality.append(hdul[0].header['QUAL_BIT'])
+                cadence.append(hdul[0].header['CADENCE'])
+                flux[i] = hdul[0].data[0:2048, 44:2092]
+                time.append(hdul[0].header['MIDTJD'])
+    time_order = np.argsort(np.array(time))
+    time = np.array(time)[time_order]
+    flux = flux[time_order, :, :]
+    quality = np.array(quality)[time_order]
+    cadence = np.array(cadence)[time_order]
+    # mask = np.array([True] * 2048 ** 2).reshape(2048, 2048)
+    # for i in range(len(time)):
+    #     mask[np.where(flux[i] > np.percentile(flux[i], 99.95))] = False
+    #     mask[np.where(flux[i] < np.median(flux[i]) / 2)] = False
+    if np.min(np.diff(cadence)) != 1:
+        np.save(f'{local_directory}/Wrong_Cadence_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', np.min(np.diff(cadence)))
+    if producing_mask:
+        median_flux = np.median(flux, axis=0)
+        mask = background_mask(im=median_flux)
+        mask /= ndimage.median_filter(mask, size=51)
+        np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
+        return
+    # load mask
+    mask = pkg_resources.resource_stream(__name__, f'background_mask/median_mask.fits')
+    mask = fits.open(mask)[0].data[(camera - 1) * 4 + (ccd - 1), :]
+    mask = np.repeat(mask.reshape(1, 2048), repeats=2048, axis=0)
+    bad_pixels = np.zeros(np.shape(flux[0]))
+    med_flux = np.median(flux, axis=0)
+    bad_pixels[med_flux > 0.8 * np.nanmax(med_flux)] = 1
+    bad_pixels[med_flux < 0.2 * np.nanmedian(med_flux)] = 1
+    bad_pixels[np.isnan(med_flux)] = 1
+
+    x_b, y_b = np.where(bad_pixels)
+    for i in range(len(x_b)):
+        if x_b[i] < 2047:
+            bad_pixels[x_b[i] + 1, y_b[i]] = 1
+        if x_b[i] > 0:
+            bad_pixels[x_b[i] - 1, y_b[i]] = 1
+        if y_b[i] < 2047:
+            bad_pixels[x_b[i], y_b[i] + 1] = 1
+        if y_b[i] > 0:
+            bad_pixels[x_b[i], y_b[i] - 1] = 1
+
+    mask = np.ma.masked_array(mask, mask=bad_pixels)
+    mask = np.ma.masked_equal(mask, 0)
+
+    for i in range(10):
+        hdul = fits.open(input_files[np.where(np.array(quality) == 0)[0][i]])
+        wcs = WCS(hdul[0].header)
+        if wcs.axis_type_names == ['RA', 'DEC']:
+            break
+
+    exposure = int((hdul[0].header['ENDTJD'] - hdul[0].header['STARTTJD']) * 86400)
 
     # 95*95 cuts with 2 pixel redundant, (22*22 cuts)
     # try 77*77 with 4 redundant, (28*28 cuts)
