@@ -258,6 +258,8 @@ class Source(object):
         coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
         radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
         attempt = 0
+        print(type(coord), type(radius))
+        print(coord, radius)
         while attempt < 5:
             try:
                 catalogdata = Gaia.cone_search_async(coord, radius=radius,
@@ -265,10 +267,13 @@ class Source(object):
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
                 print(f'{self.wcs.pixel_to_world([x + co1 + 44], [y + co2])}, {self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[1]}')
                 return catalogdata
-            except:
+            except Exception as e:
                 attempt += 1
+                print(f"Error occurred: {e}")
+                import traceback
+                traceback.print_exc()
+                print(f"Trying Gaia search again. Coord = {coord}, radius = {radius}")
                 time.sleep(10)
-                print(f'Trying Gaia search again. Coord = {coord}, radius = {radius}')
 
 def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
