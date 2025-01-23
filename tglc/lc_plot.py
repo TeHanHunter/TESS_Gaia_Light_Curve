@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import emcee
+import corner
 
 from jedi.inference import param
 from wotan import flatten
@@ -25,7 +26,7 @@ import seaborn as sns
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astroquery.mast import Catalogs
-from scipy.stats import bootstrap, ks_2samp, norm, gaussian_kde
+from scipy.stats import bootstrap, ks_2samp, norm, gaussian_kde, skewnorm
 from scipy.optimize import minimize
 
 plt.rcParams['font.family'] = 'serif'
@@ -1793,8 +1794,13 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # print(density_weight)
 
     ###
-    d_ng = np.array(density_ng)[np.where(np.array(r_ng)<5)]
-    d_ng_corr = np.array(density_ng_corr)[np.where(np.array(r_ng) < 5)]
+
+    # Filter data
+    d_ng = np.array(density_ng)[np.where(np.array(r_ng) < 3)]
+    d_ng_corr = np.array(density_ng_corr)[np.where(np.array(r_ng) < 3)]
+    plt.hist(d_ng, bins=np.linspace(0, 1.5, 51), alpha=0.4)
+    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 51), alpha=0.4)
+    plt.show()
     print(len(d_ng_corr))
     # print(np.sort(d_ng_corr)[40:60])
     # Log-likelihood function
@@ -1813,8 +1819,8 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # Log-prior function
     def log_prior(params):
         w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
-        if 0.2 <= w1 <= 0.99 and 0.1 <= w2 <= 0.4 and 0.2 <= mu1 <= 0.5 and 0.40 <= mu2 <= 0.55 and 0.6 <= mu3 <= 0.8 and \
-                0.01 <= sigma1 <= 0.25 and 0.001 <= sigma2 <= 0.02 and 0.01 <= sigma3 <= 0.20:
+        if 0.2 <= w1 <= 0.99 and 0.01 <= w2 <= 0.4 and 0.2 <= mu1 <= 0.5 and 0.42 <= mu2 <= 0.55 and 0.6 <= mu3 <= 1 and \
+                0.01 <= sigma1 <= 0.25 and 0.001 <= sigma2 <= 0.05 and 0.01 <= sigma3 <= 0.50:
             return 0.0  # Uniform prior
         return -np.inf  # Outside bounds
 
@@ -1826,7 +1832,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         return lp + log_likelihood(params, data)
 
     # Initial parameter guess
-    initial_params = [0.3, 0.25, 0.24, 0.5, 0.7, 0.04, 0.01, 0.1]
+    initial_params = [0.5, 0.1, 0.24, 0.5, 0.7, 0.04, 0.01, 0.1]
 
     # Setting up the MCMC sampler
     ndim = len(initial_params)
@@ -1852,7 +1858,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     total_pdf = pdf1 + pdf2 + pdf3
 
     # Plot data and fitted model
-    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 40), density=True, alpha=0.6, color='gray', label="Data")
+    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 51), density=True, alpha=0.6, color='gray', label="Data")
     plt.plot(x, pdf1, label=f'Gaussian 1: μ={mu1:.2f}, σ={sigma1:.2f}')
     plt.plot(x, pdf2, label=f'Gaussian 2: μ={mu2:.2f}, σ={sigma2:.2f}')
     plt.plot(x, pdf3, label=f'Gaussian 3: μ={mu3:.2f}, σ={sigma3:.2f}')
@@ -1863,6 +1869,10 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     plt.legend()
     plt.title("Fitted Gaussian Mixture Model (MCMC)")
     plt.savefig(os.path.join(folder, f'density_distribution.pdf'), bbox_inches='tight', dpi=600)
+    plt.show()
+    import corner
+    labels = ["w1", "w2", "mu1", "mu2", "mu3", "sigma1", "sigma2", "sigma3"]
+    fig = corner.corner(samples, labels=labels, truths=[w1, w2, mu1, mu2, mu3, sigma1, sigma2, sigma3])
     plt.show()
     return
 
