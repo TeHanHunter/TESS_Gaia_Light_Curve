@@ -71,7 +71,7 @@ def ffi_to_source(sector=1, local_directory=''):
 
     # for i in range(16):
     i = 0
-    ffi(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
+    ffi_qlp_bg(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
 
 
 if __name__ == '__main__':
