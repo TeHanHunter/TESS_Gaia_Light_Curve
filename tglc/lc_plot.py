@@ -1624,8 +1624,8 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax.scatter(mass_g, density_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='Ground-based')
     ax.scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=2, s=15, facecolors='none', edgecolors=ng_color,
                label='TESS-influenced')
-    for j in range(len(mass_ng)):
-        plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
+    # for j in range(len(mass_ng)):
+    #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
     ax.scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color, label='TESS-influenced corrected')
     ax.plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.5,)
     plt.legend(loc='best', fontsize=10)
@@ -1651,11 +1651,12 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     mass = np.linspace(1, 30, 100)
     rho = owen_2017_earth_core(mass)
     ax.plot(mass, rho, c='r', zorder=4, label='Earth-like', linewidth=2)
-
-    mass = np.linspace(2, 30, 100)
-    plt.plot(mass, mass / (mass ** 0.59)**3)
     plt.text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=10, ha='center',
              va='center', zorder=4, rotation=43)
+    mass = np.linspace(2, 30, 100)
+    plt.plot(mass, mass / (0.80811874404 * mass ** 0.59)**3, ls='dotted', c='k')
+    plt.scatter(2, 2 / (0.80811874404 * 2 ** 0.59)**3, marker=7)
+    plt.scatter(1.5838*2, 1.5838*2 / (0.80811874404 * (1.5838*2) ** 0.59)**3, marker=6)
     # mass, rho = fortney_2007_earth_like()
     # ax.plot(mass, rho, c='C5')
 
@@ -1907,13 +1908,13 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 
 
 if __name__ == '__main__':
-    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    figure_9(recalculate=True)
+    # figure_9(recalculate=True)
     # figure_10(recalculate=True)
     # combine_contamrt()
