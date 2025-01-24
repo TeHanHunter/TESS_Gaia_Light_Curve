@@ -258,8 +258,8 @@ class Source(object):
         coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
         radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
         attempt = 0
-        print(type(coord), type(radius))
-        print(coord, radius)
+        # print(type(coord), type(radius))
+        # print(coord, radius)
         while attempt < 5:
             try:
                 catalogdata = Gaia.cone_search_async(coord, radius=radius,

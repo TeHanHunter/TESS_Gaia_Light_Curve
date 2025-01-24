@@ -225,6 +225,9 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         bg_dof = 6
     else:
         bg_dof = 3
+
+    ### for qlp background check
+    bg_dof = 0
     A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
     A[np.repeat(index, 4), star_info_num[1]] = star_info_num[2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
