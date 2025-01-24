@@ -1541,12 +1541,13 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         mass_g = []
         r_g = []
         density_g = []
+
         mass_ng = []
         r_ng = []
         r_ng_err = []
         density_ng = []
         density_ng_corr = []
-
+        tic_ng = []
         for i, tic in enumerate(tics):
             if t['pl_bmassjlim'][i] == 0:
                 density, density_err = mass_radius_to_density(t['pl_bmasse'][i], t['pl_rade'][i],
@@ -1560,6 +1561,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                     mass_ng.append(t['pl_bmasse'][i])
                     r_ng.append(t['pl_rade'][i])
                     density_ng.append(density)
+                    tic_ng.append(str(tic))
                     ## overall shift ###
                     density_ng_corr.append(density * 0.829)
 
@@ -1599,6 +1601,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
             "r_ng_err": r_ng_err,
             "density_ng": density_ng,
             "density_ng_corr": density_ng_corr,
+            "tic_ng": tic_ng
         }
 
         with open(f"{folder}mass_density.pkl", "wb") as f:
@@ -1614,12 +1617,15 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     r_ng_err = data["r_ng_err"]
     density_ng = data["density_ng"]
     density_ng_corr = data["density_ng_corr"]
+    tic_ng = data["tic_ng"]
     # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
     # print(density_weight)
 
     ax.scatter(mass_g, density_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='Ground-based')
     ax.scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=2, s=15, facecolors='none', edgecolors=ng_color,
                label='TESS-influenced')
+    for j in range(len(mass_ng)):
+        plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
     ax.scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color, label='TESS-influenced corrected')
     ax.plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.5,)
     plt.legend(loc='best', fontsize=10)
@@ -1645,6 +1651,9 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     mass = np.linspace(1, 30, 100)
     rho = owen_2017_earth_core(mass)
     ax.plot(mass, rho, c='r', zorder=4, label='Earth-like', linewidth=2)
+
+    mass = np.linspace(2, 30, 100)
+    plt.plot(mass, mass / (mass ** 0.59)**3)
     plt.text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=10, ha='center',
              va='center', zorder=4, rotation=43)
     # mass, rho = fortney_2007_earth_like()
@@ -1671,7 +1680,9 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # plt.yscale('log')
     plt.xlabel(r'$M_{\text{p}} (\text{M}_{\oplus})$ ')
     plt.ylabel(r'$\rho_{\text{p}} (\rho_{\oplus})$ ')
-    # plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
+
+    plt.plot(2, 2**-0.77)
+    plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     return
 
@@ -1801,9 +1812,12 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     d_ng_corr = np.array(density_ng_corr)[(np.array(r_ng) < 4) & (np.array(density_ng_err)/np.array(r_ng) < 0.35)]
 
     # Plot raw histograms for visualization
+    plt.hist(np.array(density_g)[(np.array(r_g) < 4)], bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Raw")
+    plt.legend()
+    plt.show()
     plt.hist(d_ng, bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Raw")
-    # plt.legend()
-    # plt.show()
+    plt.legend()
+    plt.show()
     plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Corrected")
     plt.legend()
     plt.show()
@@ -1827,9 +1841,9 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     def log_prior(params):
         w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3 = params
         if (0.01 <= w1 <= 0.99 and 0.01 <= w2 <= 0.4 and
-                0 <= alpha3 <= 10 and
-                0.1 <= mu1 <= 0.3 and 0.3 <= mu2 <= 0.55 and 0.4 <= mu3 <= 0.8 and
-                0.01 <= sigma1 <= 0.1 and 0.01 <= sigma2 <= 0.1 and 0.01 <= sigma3 <= 1):
+                0 <= alpha3 <= 30 and
+                0.2 <= mu1 <= 0.4 and 0.3 <= mu2 <= 0.55 and 0.55 <= mu3 <= 0.8 and
+                0. <= sigma1 <= 0.05 and 0. <= sigma2 <= 0.05 and 0.01 <= sigma3 <= 0.1):
             return 0.0  # Uniform prior
         return -np.inf  # Outside bounds
 
@@ -1842,14 +1856,14 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 
     # Initial parameter guess
     initial_params = [0.25, 0.25,
-                      5,
-                      0.24, 0.4, 0.6,
-                      0.05, 0.05, 0.2]
+                      1,
+                      0.3, 0.4, 0.65,
+                      0.03, 0.03, 0.08]
 
     # Setting up the MCMC sampler
     ndim = len(initial_params)
     nwalkers = 32  # Number of walkers
-    nsteps = 10000  # Number of steps
+    nsteps = 20000  # Number of steps
 
     # Initialize walkers around the initial guess
     initial_guess = np.array(initial_params) + 0.01 * np.random.randn(nwalkers, ndim)
@@ -1859,7 +1873,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     sampler.run_mcmc(initial_guess, nsteps, progress=True)
 
     # Analyze results
-    samples = sampler.get_chain(discard=5000, thin=10, flat=True)  # Flatten the chain
+    samples = sampler.get_chain(discard=10000, thin=10, flat=True)  # Flatten the chain
     w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3 = np.median(samples, axis=0)
     w3 = 1 - w1 - w2
     print(w1, w2, alpha3, mu1, mu2, mu3, sigma1, sigma2, sigma3)
@@ -1872,7 +1886,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     total_pdf = pdf1 + pdf2 + pdf3
 
     # Plot data and fitted model
-    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 51), density=True, alpha=0.6, color='gray', label="Data")
+    plt.hist(d_ng_corr, bins=np.linspace(0, 1.5, 31), density=True, alpha=0.6, color='gray', label="Data")
     plt.plot(x, pdf1, label=f'Gaussian 1: μ={mu1:.2f}, σ={sigma1:.2f}')
     plt.plot(x, pdf2, label=f'Gaussian 2: μ={mu2:.2f}, σ={sigma2:.2f}')
     plt.plot(x, pdf3, label=f'SkewNorm 3: α={alpha3:.2f}, μ={mu3:.2f}, σ={sigma3:.2f}')
@@ -1900,6 +1914,6 @@ if __name__ == '__main__':
     # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    # figure_9(recalculate=True)
-    figure_10(recalculate=True)
+    figure_9(recalculate=True)
+    # figure_10(recalculate=True)
     # combine_contamrt()
