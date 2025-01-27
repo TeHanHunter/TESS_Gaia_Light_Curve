@@ -229,7 +229,7 @@ def figure_2_collect_result(folder='/home/tehan/Downloads/Data/', ):
         difference_tglc.add_row(d_tglc[i])
             # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     # difference_qlp.write(f'deviation_QLP_common.dat', format='ascii.csv')
-    difference_tglc.write(f'{folder}deviation_TGLC_2024_rhat_limited.dat', format='ascii.csv')
+    difference_tglc.write(f'{folder}deviation_TGLC_2024_rhat_limited.dat', format='ascii.csv', overwrite=True)
     print(len(difference_tglc))
     # print(len(difference_qlp))
     # average 491 lcs
@@ -1908,8 +1908,8 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 
 
 if __name__ == '__main__':
-    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
-    # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
+    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')

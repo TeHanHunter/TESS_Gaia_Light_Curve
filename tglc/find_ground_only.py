@@ -47,15 +47,16 @@ table = r"""
 
 stars = []
 tablist=table.split(r'\\')
-for i in range(43):
+for i in range(60):
     t = tablist[i].split(r'&')
+    print(t)
     stars.append([t[0],t[1]])
     stars.append([t[3],t[4]])
-stars.append([tablist[43].split(r'&')[0], tablist[43].split(r'&')[1]])
-print(tablist[43])
+stars.append([tablist[60].split(r'&')[0], tablist[60].split(r'&')[1]])
+print(tablist[60])
 no_ground=[]
 ground=[]
-for i in range(87):
+for i in range(121):
     if '\lozenge' in stars[i][1] or '\square' in stars[i][1]:
         no_ground.append(int(stars[i][0]))
     else:
