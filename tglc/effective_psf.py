@@ -86,6 +86,7 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
         A[:, -2] = yy.flatten()
         A[:, -3] = xx.flatten()
     ### for qlp background check
+    bg_dof = 0
     A = np.zeros((size ** 2, over_size ** 2))
     star_info = []
     for i in range(len(source.gaia)):
