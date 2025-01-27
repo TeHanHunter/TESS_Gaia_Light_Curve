@@ -644,7 +644,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'hspace': 0.1})
     # ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -686,6 +686,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # ax[0].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
+    print(np.sort(diff_tglc))
     ax[0].hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
@@ -709,7 +710,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # plt.ylim(-1,2)
     # no-ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -755,7 +756,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # ax[1].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
-    # print(np.sort(diff_tglc))
+    print(np.sort(diff_tglc))
     ax[1].hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
                color=tglc_color, alpha=0.6, edgecolor=None)
@@ -1909,10 +1910,10 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 
 if __name__ == '__main__':
     # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
-    figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
+    # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
+    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
     # figure_9(recalculate=True)
