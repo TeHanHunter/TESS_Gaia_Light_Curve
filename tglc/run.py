@@ -136,9 +136,10 @@ def process_star_results(result, table, file_names_odd, file_names_even):
                 file_names_odd.append(file_name)
 
 
-def get_file_name(tic_ids, max_retries=5, delay=10, dir='/Users/tehan/Documents/TGLC/'):
-    table = convert_tic_to_gaia(tic_ids)
-    table.write(f'{dir}Jeroen_VAR_tic_to_gaia.csv', format='csv', overwrite=True)
+def get_file_name(tic_ids, max_retries=5, delay=10, dir='/Users/tehan/Downloads/'):
+    # table = convert_tic_to_gaia(tic_ids)
+    # table.write(f'{dir}Jeroen_keplerq9v3_tic_to_gaia.csv', format='csv', overwrite=True)
+    table = Table.read(f'{dir}Jeroen_keplerq9v3_tic_to_gaia.csv', format='csv')
     file_names_odd = mp.Manager().list()
     file_names_even = mp.Manager().list()
 
@@ -151,15 +152,15 @@ def get_file_name(tic_ids, max_retries=5, delay=10, dir='/Users/tehan/Documents/
     pool.close()
     pool.join()
     odd_table = Table([file_names_odd], names=('files',))
-    odd_table.write(f'{dir}Jeroen_VAR_odd_files.csv', format='csv', overwrite=True)
+    odd_table.write(f'{dir}Jeroen_keplerq9v3_odd_files.csv', format='csv', overwrite=True)
     even_table = Table([file_names_even], names=('files',))
-    even_table.write(f'{dir}Jeroen_VAR_even_files.csv', format='csv', overwrite=True)
+    even_table.write(f'{dir}Jeroen_keplerq9v3_even_files.csv', format='csv', overwrite=True)
 
     return list(file_names_odd), list(file_names_even)
 
 
 if __name__ == '__main__':
-    file_path = '/Users/tehan/Documents/TGLC/VAR_Final_Classification.csv'
+    file_path = '/Users/tehan/Downloads/keplerq9v3_tess_crossmatch.csv'
     table = Table.read(file_path)
     file_names_odd, file_names_even = get_file_name(table['TIC'].tolist())
     # run cp_files next
