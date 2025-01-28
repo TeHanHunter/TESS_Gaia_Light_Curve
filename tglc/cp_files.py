@@ -4,7 +4,7 @@ import os
 import time
 
 # Read the CSV file
-csv_file = '/home/tehan/data/cosmos/Jeroen/VAR/Jeroen_keplerq9v3_odd_files.csv'  # replace with your CSV file path
+csv_file = '/home/tehan/data/cosmos/Jeroen/keplerq9v3/Jeroen_keplerq9v3_odd_files.csv'  # replace with your CSV file path
 df = pd.read_csv(csv_file)  # Assuming the CSV does not have a header
 file_names = df['files']  # Assuming the file names are in the first column
 print(file_names[0])
