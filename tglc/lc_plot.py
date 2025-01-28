@@ -3135,7 +3135,17 @@ def plot_MAD_all():
 
 
 if __name__ == '__main__':
-    plot_MAD_all()
+    # plot_MAD_all()
+    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+    print(len(files))
+    tic = []
+    aper_precision = []
+    for i in trange(len(files)):
+        tic_, aper_precision_= get_MAD(i, files=files)
+        tic.append(tic_)
+        aper_precision.append(aper_precision_)
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_qlp_bg_30min_s56_1_1.npy', np.vstack((tic, aper_precision)))
+
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
     # with Pool() as p:
