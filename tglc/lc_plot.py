@@ -28,6 +28,7 @@ import astropy.units as u
 from astroquery.mast import Catalogs
 from scipy.stats import bootstrap, ks_2samp, norm, gaussian_kde, skewnorm
 from scipy.optimize import minimize
+import matplotlib
 
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['mathtext.fontset'] = 'dejavuserif'  # Use Computer Modern (serif font)
@@ -1666,6 +1667,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
             "density_g": density_g,
             "mass_ng": mass_ng,
             "r_ng": r_ng,
+            "r_ng_corr": r_ng_corr,
             "r_ng_err": r_ng_err,
             "density_ng": density_ng,
             "density_ng_corr": density_ng_corr,
@@ -1682,6 +1684,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     density_g = data["density_g"]
     mass_ng = data["mass_ng"]
     r_ng = data["r_ng"]
+    r_ng_corr = data["r_ng_corr"]
     r_ng_err = data["r_ng_err"]
     density_ng = data["density_ng"]
     density_ng_corr = data["density_ng_corr"]
@@ -1715,10 +1718,10 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # ax[0].plot(mass, r, c=palette[0], zorder=4, label='Water world')
     ax[0].plot(mass, rho, c=palette[0], zorder=4, label='Water world', linewidth=2)
     ax[1].plot(mass, r, c=palette[0], zorder=4, label='Water world', linewidth=2)
-    ax[0].text(mass[-1] - 22, rho[-1] - 0.13, 'Water world', color=palette[0], fontweight='bold', fontsize=10,
-               ha='center',
-               va='center', zorder=4, rotation=23)
-    ax[1].plot(mass, r, c=palette[0], zorder=4, label='Water world', linewidth=2)
+    ax[0].text(mass[-1] - 22, rho[-1] - 0.13, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
+               ha='center', va='center', zorder=4, rotation=21)
+    ax[1].text(mass[-1] - 25, r[-1] - 0.12, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
+               ha='center', va='center', zorder=4, rotation=22)
     ### rocky core + H/He atmos ###
     mass = np.linspace(1, 30, 100)
     r, r1, r2, rho, rho1, rho2 = rogers_2023_rocky_core(mass)
@@ -1730,9 +1733,10 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=4, label='Rocky core with H/He atmosphere', linewidth=2)
     ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=4, ls='--')
     ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=4, ls='--')
-    ax[0].text(mass[0] + 0.95, rho[0] + 0.015, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=10, ha='center',
-               va='center', zorder=4, rotation=11)
+    ax[0].text(mass[0] + 0.95, rho[0] + 0.01, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=9)
+    ax[1].text(mass[0] + 0.9, r[0] + 0.35, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=23)
 
     ### Earth-like ###
     mass = np.linspace(1, 30, 100)
@@ -1740,8 +1744,10 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     r = (rho / mass) ** (-1 / 3)
     ax[0].plot(mass, rho, c='r', zorder=4, label='Earth-like', linewidth=2)
     ax[1].plot(mass, r, c='r', zorder=4, label='Earth-like', linewidth=2)
-    ax[0].text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=10, ha='center',
-               va='center', zorder=4, rotation=43)
+    ax[0].text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
+               va='center', zorder=4, rotation=40)
+    ax[1].text(mass[-1] - 8, r[-1]-0.35, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
+               va='center', zorder=4, rotation=21)
     ### M-R relation ###
     # mass = np.linspace(2, 30, 100)
     # ax[0].plot(mass, mass / (0.80811874404 * mass ** 0.59)**3, ls='dotted', c='k')
@@ -1752,26 +1758,36 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 
     ### solar planets ###
     # ax[0].scatter(0.0553,0.985,facecolors='none', edgecolors='k', zorder=4, marker='o')
-    # ax[0].text(0.0553/1.1, 0.985, 'Mercury', color='k', fontsize=10, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].text(0.0553/1.1, 0.985, 'Mercury', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     # ax[0].scatter(0.815,0.951,facecolors='none', edgecolors='k', zorder=4, marker='o')
-    # ax[0].text(0.815/1.05, 0.951, 'Venus', color='k', fontsize=10, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].text(0.815/1.05, 0.951, 'Venus', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     ax[0].scatter(1, 1, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[0].text(1 / 1.05, 1, 'Earth', color='k', fontsize=10, ha='right', va='center', zorder=4, rotation=0)
+    ax[0].text(1, 1 * 1.08, 'Earth', color='k', fontsize=9, ha='center', va='center', zorder=4, rotation=0)
+    ax[1].scatter(1, 1, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    ax[1].text(1, 1 * 1.1, 'Earth', color='k', fontsize=9, ha='center', va='center', zorder=4, rotation=0)
     # ax[0].scatter(0.107,0.714,facecolors='none', edgecolors='k', zorder=4, marker='o')
-    # ax[0].text(0.107, 0.714, 'Mars', color='k', fontsize=10, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].text(0.107, 0.714, 'Mars', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     ax[0].scatter(95.2, 0.125, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[0].text(95.2 / 1.05, 0.125, 'Saturn', color='k', fontsize=10, ha='right', va='center', zorder=4, rotation=0)
+    ax[0].text(95.2 / 1.05, 0.125, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    ax[1].scatter(95.2, 9.45, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    ax[1].text(95.2 / 1.05, 9.45, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     # ax[0].scatter(14.5,0.230,facecolors='none', edgecolors='k', zorder=4, marker='o')
-    # ax[0].text(14.5/1.05, 0.230, 'Uranus', color='k', fontsize=10, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].text(14.5/1.05, 0.230, 'Uranus', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     ax[0].scatter(17.1, 0.297, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[0].text(17.1 * 1.05, 0.297, 'Neptune', color='k', fontsize=10, ha='left', va='center', zorder=4, rotation=0)
+    ax[0].text(17.1 * 1.05, 0.297, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
+    ax[1].scatter(17.1, 3.88, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    ax[1].text(17.1 * 1.05, 3.88, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
+    #####
     ax[0].set_xscale('log')
     ax[1].set_xscale('log')
     ax[1].set_yscale('log')
-    ax[0].set_ylim(0, 2)
-    ax[1].set_ylim(0.9, 13)
-    ax[0].set_xlim(0.5, 100)
-    ax[1].set_xlim(0.5, 100)
+    ax[0].set_ylim(-.1, 2)
+    ax[1].set_ylim(0.9, 10)
+    ax[0].set_xlim(0.8, 100)
+    ax[1].set_xlim(0.8, 100)
+    ax[0].get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    plt.xticks([1, 3, 10, 30, 100])
+
     ax[0].set_yticks([0, 0.5, 1, 1.5, 2])
     ax[0].set_yticklabels(['0', '0.5', '1', '1.5', '2'])
     ax[1].set_yticks([1, 2, 3, 5, 10])
@@ -1782,7 +1798,6 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[0].set_ylabel(r'$\rho_{\text{p}} (\rho_{\oplus})$ ')
     ax[1].set_ylabel(r'$R_{\text{p}} (R_{\oplus})$ ')
 
-    plt.plot(2, 2 ** -0.77)
     plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     return
@@ -2035,6 +2050,6 @@ if __name__ == '__main__':
     # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    figure_9(recalculate=True)
+    figure_9(recalculate=False)
     # figure_10(recalculate=True)
     # combine_contamrt()
