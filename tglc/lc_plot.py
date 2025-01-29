@@ -3133,18 +3133,102 @@ def plot_MAD_all():
     plt.savefig('/Users/tehan/Documents/TGLC/s56_mad_all.png', bbox_inches='tight', dpi=600)
     # plt.show()
 
+def plot_MAD_qlp_bg():
+    palette = sns.color_palette('colorblind')
+    tglc_color = palette[3]
+    qlp_color = palette[2]
+    spoc_color = palette[0]
+    mad_tglc = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_archive_30min_s56_1_1.npy', allow_pickle=True)
+    mad_qlp = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_qlp_bg_30min_s56_1_1.npy', allow_pickle=True)
+    noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
+    # print(type(mad_tglc.tolist()['tics']))
+    # print(type(mad_spoc.tolist()['tics']))
+    # Sort data
+    sorted_indices_tglc = np.argsort(mad_tglc.tolist()[0])
+    sorted_indices_qlp = np.argsort(mad_qlp.tolist()[0])
+    noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
+    # Bin data
+    bin_size = 1000
+    tglc_mag = np.median(mad_tglc[0][sorted_indices_tglc][
+                         :len(mad_tglc[0][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1,bin_size), axis=1)
+    tglc_binned = np.median(mad_tglc[1][sorted_indices_tglc][:len(
+        mad_tglc[1][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1, bin_size),
+                            axis=1)
+
+    bin_size = 1000
+    qlp_mag = np.nanmedian(mad_qlp[0][sorted_indices_qlp][
+                           :len(mad_qlp[0][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1,
+                                                                                                              bin_size),
+                           axis=1)
+    qlp_binned = np.nanmedian(mad_qlp[1][sorted_indices_qlp][:len(
+        mad_qlp[1][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+
+    # Create Seaborn plot
+    # sns.set_style("whitegrid")
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 6), gridspec_kw={'height_ratios': [3, 2], 'hspace': 0.1})
+
+    # Top panel
+    ax[0].scatter(mad_tglc[0][sorted_indices_tglc],
+                  mad_tglc[1][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color,
+                  alpha=0.5)
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='TGLC Aperture')
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1)
+    ax[0].scatter(mad_qlp[0][sorted_indices_qlp], mad_qlp[1][sorted_indices_qlp],
+                  s=0.15, linewidths=0, color=qlp_color, alpha=0.5)
+    ax[0].scatter(0, 0, s=1, color=qlp_color, alpha=1, label='QLP SAP')
+    ax[0].scatter(0, 0, s=1, color=spoc_color, alpha=1, label='TESS-SPOC PDCSAP')
+    rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
+    ax[0].add_patch(rect)
+    # print(np.min(np.where(qlp_mag>13.5)[0]))
+    ax[0].plot(qlp_mag, qlp_binned, color=qlp_color, ls='-', lw=2)
+    ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
+    ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label=r'$\sigma_\mathrm{base}(T)$')
+
+    # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
+    ax[0].set_ylabel('Estimated Photometric Precision')
+    ax[0].set_yscale('log')
+    ax[0].set_ylim(1e-4, 1)
+    ax[0].set_title('S56 30-min bin')
+    ax[0].legend(loc=4, markerscale=2, fontsize=7.5, framealpha=1)
+
+    # Bottom panel
+    p1, = ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2,
+                     label='TGLC Aperture')
+    p3, = ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, ls='-', lw=2,
+                     label='QLP SAP')
+    p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label=r'$\sigma_\mathrm{base}(T)$')
+    p6_, = ax[1].plot([0], [0], '.', c='white', alpha=0)
+
+    ax[1].set_ylim(0.5, 2.5)
+    ax[1].set_yticks([0.5, 1, 1.5, 2])
+    ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
+    ax[1].set_xlabel('TESS magnitude')
+    ax[1].set_ylabel('Precision Ratio')
+    ax[1].legend([(p1, ), (p3, ), (p6_, p6)],
+                 ['TGLC BG', 'QLP BG', r'$\sigma_\mathrm{base}(T)$'],
+                 numpoints=1, loc=4, markerscale=1, ncol=2, handlelength=4.5, framealpha=1,
+                 columnspacing=0, fontsize=7.5, handler_map={tuple: HandlerTuple(ndivide=None)})
+    # ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
+
+    plt.xlim(7, 16.5)
+    plt.savefig('/Users/tehan/Documents/TGLC/QLP integration/s56_mad_qlp_bg.png', bbox_inches='tight', dpi=600)
+    # plt.show()
 
 if __name__ == '__main__':
-    # plot_MAD_all()
-    files = glob('/pdo/users/tehan/sector0056_archive/lc/1-1/*.fits')
-    print(len(files))
-    tic = []
-    aper_precision = []
-    for i in trange(len(files)):
-        tic_, aper_precision_= get_MAD(i, files=files)
-        tic.append(tic_)
-        aper_precision.append(aper_precision_)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_archive_30min_s56_1_1.npy', np.vstack((tic, aper_precision)))
+    plot_MAD_qlp_bg()
+    # files = glob('/pdo/users/tehan/sector0056_archive/lc/1-1/*.fits')
+    # print(len(files))
+    # tic = []
+    # aper_precision = []
+    # for i in trange(len(files)):
+    #     tic_, aper_precision_= get_MAD(i, files=files)
+    #     tic.append(tic_)
+    #     aper_precision.append(aper_precision_)
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_archive_30min_s56_1_1.npy', np.vstack((tic, aper_precision)))
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))

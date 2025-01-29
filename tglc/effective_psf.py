@@ -85,8 +85,6 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
         A[:, -1] = np.ones(size ** 2)
         A[:, -2] = yy.flatten()
         A[:, -3] = xx.flatten()
-    ### for qlp background check
-    bg_dof = 0
     A = np.zeros((size ** 2, over_size ** 2))
     star_info = []
     for i in range(len(source.gaia)):
@@ -229,8 +227,6 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     else:
         bg_dof = 3
 
-    ### for qlp background check
-    bg_dof = 0
     A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
     A[np.repeat(index, 4), star_info_num[1]] = star_info_num[2]
     psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)

@@ -230,8 +230,6 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
     else:
         bg_dof = 6
-    ### for qlp background check
-    bg_dof = 0
 
     os.makedirs(lc_directory, exist_ok=True)
     # sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=2817).T)
