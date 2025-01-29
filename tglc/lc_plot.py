@@ -633,17 +633,14 @@ def figure_4(folder='/Users/tehan/Documents/TGLC/', ):
     plt.show()
 
 
-def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
-    # contamrt = ascii.read('/Users/tehan/Documents/TGLC/contamination_ratio.dat')
-    # print(np.max(contamrt['contamrt']))
-    # print(len(set(contamrt['tic_sec'])))
-    palette = sns.color_palette('bright')
-    tglc_color = 'C1'
-    # qlp_color = 'C0'
+def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
+    palette = sns.color_palette('colorblind')
+    g_color = palette[7]
+    ng_color = palette[3]
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                'axes.facecolor': '0.95', 'grid.color': '0.8'})
-    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 8), gridspec_kw={'hspace': 0.1})
+                'axes.facecolor': '1', 'grid.color': '0.8'})
+    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
     # ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
@@ -655,17 +652,20 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    ground = [156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+    ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 289661991, 464300749, 151483286, 335590096,
               193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
               395393265, 310002617, 220076110, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137, 243641947,
               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
-              239816546, 361343239] + [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
-                                       268301217, 455784423] + [452006073, 306648160, 165464482, 23769326, 470171739,
+              239816546, 361343239] +
+              [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
+                                       268301217, 455784423] +
+              [452006073, 306648160, 165464482, 23769326, 470171739,
                                                                 166184428, 259172249, 69356857, 58825110, 154220877,
                                                                 119585136, 388076422, 178709444, 241249530, 446549906,
-                                                                269333648, 401125028, 439366538]
+                                                                269333648, 401125028, 439366538])
+
     contamrt_ground = []
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
@@ -686,27 +686,27 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # print(np.sort(diff_tglc))
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
-    # ax[0].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
+    # ax.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
     print(np.sort(diff_tglc))
-    ax[0].hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 51),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-               color=tglc_color, alpha=0.6, edgecolor=None)
-    ax[0].set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
-    ax[0].scatter(iw_mean_tglc, 2.75, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=4, label='TGLC')
-    ax[0].errorbar(iw_mean_tglc, 1.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+               color=g_color, alpha=0.8, edgecolor=None, zorder=2)
+    # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
+    ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
+                  zorder=4, label=r'Ground-determined $p$' + f'\n({len(difference_tglc)} lcs of 86 planets)')
+    ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                    elinewidth=1, capsize=3, zorder=2, )
-    # ax[0].scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
+    # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
-    # ax[0].errorbar(iw_mean_qlp, 1.6, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
+    # ax.errorbar(iw_mean_qlp, 1.6, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
 
-    ax[0].vlines(0, ymin=0, ymax=55, color='k', ls='dashed', lw=1, zorder=3)
-    ax[0].set_xlabel('')
-    ax[0].set_ylabel('Error Weighted Counts')
-    ax[0].legend(loc='upper right')
+    # ax.vlines(0, ymin=0, ymax=55, color='k', ls='dashed', lw=1, zorder=3)
+    # ax.set_xlabel('')
+    # ax.set_ylabel('Error Weighted Counts')
+    # ax.legend(loc='upper right')
     # ax[0].set_xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
     #            [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
     # plt.xlim(-0.05, 0.05)
@@ -722,7 +722,8 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    no_ground = [428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+
+    no_ground = ([428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
                  271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
                  219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
@@ -732,47 +733,24 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 1003831, 83092282,
-                 264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] + [
-                    370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
-                    464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
-                    320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
-                    408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
-                    407126408, 55650590, 335630746, 55525572, 342642208, 394357918] + [293607057, 332534326, 260708537,
-                                                                                       443556801, 52005579, 287145649,
-                                                                                       232540264, 404518509, 358070912,
-                                                                                       352413427, 169765334, 39699648,
-                                                                                       305739565, 391903064, 237913194,
-                                                                                       160390955, 257060897, 365102760,
-                                                                                       393818343, 153065527, 154872375,
-                                                                                       232967440, 154089169, 97766057,
-                                                                                       158002130, 22233480, 233087860,
-                                                                                       120826158, 99869022, 456862677,
-                                                                                       219850915, 380887434, 232612416,
-                                                                                       271169413, 232976128, 49254857,
-                                                                                       198241702, 282485660, 224297258,
-                                                                                       303432813, 391949880, 437011608,
-                                                                                       198356533, 232982558, 237232044,
-                                                                                       343628284, 246965431, 417931607,
-                                                                                       240968774, 306955329, 219041246,
-                                                                                       58542531, 102734241, 268334473,
-                                                                                       159418353, 18318288, 219857012,
-                                                                                       35009898, 287080092, 124573851,
-                                                                                       289580577, 367858035, 277634430,
-                                                                                       9348006, 219344917, 21535395,
-                                                                                       34077285, 286916251, 322807371,
-                                                                                       142381532, 142387023, 46432937,
-                                                                                       348755728, 4672985, 91987762,
-                                                                                       258514800, 445903569, 71431780,
-                                                                                       417931300, 8967242, 441765914,
-                                                                                       166648874, 368287008, 389900760,
-                                                                                       159781361, 21832928, 8348911,
-                                                                                       289164482, 158241252, 467651916,
-                                                                                       201177276, 307958020, 382602147,
-                                                                                       317548889, 268532343, 407591297,
-                                                                                       1167538, 328081248, 328934463,
-                                                                                       429358906, 37749396, 305424003,
-                                                                                       63898957]
-
+                 264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] +
+                 [370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
+                 464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
+                 320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                 408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
+                 407126408, 55650590, 335630746, 55525572, 342642208, 394357918] +
+                 [293607057, 332534326, 260708537, 443556801, 52005579, 287145649,232540264, 404518509, 358070912,
+                  352413427, 169765334, 39699648,305739565, 391903064, 237913194, 160390955, 257060897, 365102760,
+                  393818343, 153065527, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
+                  120826158, 99869022, 456862677, 219850915, 380887434, 232612416, 271169413, 232976128, 49254857,
+                  198241702, 282485660, 224297258, 303432813, 391949880, 437011608, 198356533, 232982558, 237232044,
+                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 58542531, 102734241, 268334473,
+                  159418353, 18318288, 219857012, 35009898, 287080092, 124573851, 289580577, 367858035, 277634430,
+                  9348006, 219344917, 21535395, 34077285, 286916251, 322807371, 142381532, 142387023, 46432937,
+                  348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
+                  166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
+                  201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
+                  429358906, 37749396, 305424003, 63898957])
     contamrt_no_ground = []
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
@@ -790,32 +768,33 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/', contamrt_min=0.0):
     difference_tglc_no_ground = difference_tglc
     # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
     #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
-    # ax[1].hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
+    # ax.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
     print(np.sort(diff_tglc))
-    ax[1].hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 51),
                weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-               color=tglc_color, alpha=0.6, edgecolor=None)
-    ax[1].set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
-    ax[1].scatter(iw_mean_tglc, 13.75, marker='v', color=tglc_color, edgecolors='k', linewidths=0.7, s=50,
-                  zorder=4, label='TGLC')
-    ax[1].errorbar(iw_mean_tglc, 7.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+               color=ng_color, alpha=0.6, edgecolor=None)
+    # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
+    ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
+                  zorder=4, label=r'TESS-influenced $p$ ' + f'\n({len(difference_tglc)} lcs of 236 planets)')
+    ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                    elinewidth=1, capsize=3, zorder=2, )
-    # ax[1].scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
+    # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
-    # ax[1].errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
+    # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
-    ax[1].vlines(0, ymin=0, ymax=250, color='k', ls='dashed', lw=1, zorder=3)
-    ax[1].set_xlabel(r'$\Delta(R_{\text{p}}/R_*)$')
-    ax[1].set_ylabel('Error Weighted Counts')
-    ax[1].legend(loc='upper right')
-    # ax[1].set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
+    ax.vlines(0, ymin=0, ymax=200, color='k', ls='dashed', lw=1, zorder=3)
+    ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) \equiv \Delta p = (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
+    ax.set_ylabel('Error Weighted Counts')
+    ax.legend(loc='upper left')
+    # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
     plt.xlim(-0.3, 0.3)
 
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
+    plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
@@ -1554,8 +1533,8 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ng_corr_color = palette[2]
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                'axes.facecolor': '0.95', 'grid.color': '0.8'})
-    fig, ax = plt.subplots(1, 2, sharex=True, figsize=(14, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.15})
+                'axes.facecolor': '1', 'grid.color': '0.8'})
+    fig, ax = plt.subplots(1, 2, sharex=True, figsize=(12, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.15})
     for spine in ax[0].spines.values():
         spine.set_zorder(5)
     for spine in ax[1].spines.values():
@@ -1813,7 +1792,7 @@ def figure_10(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ng_corr_color = palette[2]
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
-                'axes.facecolor': '0.95', 'grid.color': '0.8'})
+                'axes.facecolor': '1', 'grid.color': '0.8'})
     fig, ax = plt.subplots(1, 1, sharex=True, figsize=(8, 6), gridspec_kw={'hspace': 0.1})
     for spine in ax.spines.values():
         spine.set_zorder(5)
@@ -2047,9 +2026,9 @@ if __name__ == '__main__':
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
+    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    figure_9(recalculate=False)
+    # figure_9(recalculate=False)
     # figure_10(recalculate=True)
     # combine_contamrt()
