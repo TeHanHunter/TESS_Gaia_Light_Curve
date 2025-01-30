@@ -3235,8 +3235,8 @@ def lc_comparison():
     for i in range(100):
         hdul_both = fits.open(both_bg_files[i])
         hdul_tglc = fits.open('/pdo/users/tehan/sector0056_archive/lc/1-1/' + os.path.basename(both_bg_files[i]))
-        plt.plot(hdul_both['time'], hdul_both['aperture_flux'], ls='', color='k', alpha=0.8)
-        plt.plot(hdul_tglc['time'], hdul_tglc['aperture_flux'], ls='', color='k', alpha=0.8)
+        plt.plot(hdul_both[1].data['time'], hdul_both[1].data['aperture_flux'], ls='', color='k', alpha=0.8)
+        plt.plot(hdul_tglc[1].data['time'], hdul_tglc[1].data['aperture_flux'], ls='', color='k', alpha=0.8)
         plt.savefig(f'/pdo/users/tehan/sector0056/plot/{os.path.basename(both_bg_files[i])}.png')
         plt.close()
 
