@@ -3230,8 +3230,19 @@ def plot_MAD_qlp_bg():
     plt.savefig('/Users/tehan/Documents/TGLC/QLP integration/s56_mad_qlp_bg.png', bbox_inches='tight', dpi=600)
     # plt.show()
 
+def lc_comparison():
+    both_bg_files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
+    for i in range(100):
+        hdul_both = fits.open(both_bg_files[i])
+        hdul_tglc = fits.open('/pdo/users/tehan/sector0056_archive/lc/1-1/' + os.path.basename(both_bg_files[i]))
+        plt.plot(hdul_both['time'], hdul_both['aperture_flux'], ls='', color='k', alpha=0.8)
+        plt.plot(hdul_tglc['time'], hdul_tglc['aperture_flux'], ls='', color='k', alpha=0.8)
+        plt.savefig(f'/pdo/users/tehan/sector0056/plot/{os.path.basename(both_bg_files[i])}.png')
+        plt.close()
+
 if __name__ == '__main__':
-    plot_MAD_qlp_bg()
+    # plot_MAD_qlp_bg()
+    lc_comparison()
     # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     # print(len(files))
     # tic = []
