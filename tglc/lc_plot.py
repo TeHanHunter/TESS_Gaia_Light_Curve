@@ -3142,8 +3142,8 @@ def plot_MAD_qlp_bg():
     mad_tglc = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_archive_30min_s56_1_1.npy', allow_pickle=True)
     mad_qlp = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_qlp_bg_30min_s56_1_1.npy', allow_pickle=True)
     mad_both = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_both_bg_30min_s56_1_1.npy', allow_pickle=True)
-    mad_qlp[1] = mad_qlp[1] / 200
-    mad_both[1] = mad_both[1] / 200
+    mad_qlp[1] = mad_qlp[1]
+    mad_both[1] = mad_both[1]
     noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
     # print(type(mad_tglc.tolist()['tics']))
     # print(type(mad_spoc.tolist()['tics']))
