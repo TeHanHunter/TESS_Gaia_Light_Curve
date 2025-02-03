@@ -3247,7 +3247,7 @@ if __name__ == '__main__':
     files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     print(len(files))
     with Pool() as p:
-        results = p.map(partial(get_MAD, files=files), range(len(files)))
+        results = p.map(partial(get_MAD, files=files), trange(len(files)))
 
     filtered_results = [res for res in results if res is not None]
     # Now unpack safely
