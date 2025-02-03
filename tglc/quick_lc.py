@@ -314,48 +314,9 @@ def _phase_centered(t, period, t0):
 def phasebin_centered(time, meas, meas_err, period, t0, binsize_days=None, nbins=None):
     phase = _phase_centered(time, period, t0)
 
-    if nbins is None:
-        if binsize_days is None:
-            raise ValueError("Provide binsize_days (days) or nbins.")
-        bw = binsize_days / period
-        nbins = max(1, int(np.floor(1.0 / bw)))  # at least one bin
-
-    edges = np.linspace(-0.5, 0.5, nbins + 1)
-    centers = 0.5 * (edges[:-1] + edges[1:])
-
-    # Bin index for each point
-    idx = np.digitize(phase, edges) - 1
-    valid = (idx >= 0) & (idx < nbins) & np.isfinite(meas) & np.isfinite(meas_err)
-
-    # Build weights; if all invalid or <=0, fall back to unweighted
-    w = np.zeros_like(meas, dtype=float)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        w = 1.0 / np.square(meas_err)
-    badw = ~np.isfinite(w) | (w <= 0)
-    if np.all(~valid) or np.all(badw[valid]):
-        # fallback to ones for all finite measurements
-        valid = (idx >= 0) & (idx < nbins) & np.isfinite(meas)
-        w = np.ones_like(meas, dtype=float)
-
-    # Apply validity mask
-    idx_v = idx[valid]
-    w_v = w[valid]
-    y_v = meas[valid]
-
-    # Accumulate per-bin sums
-    wsum = np.bincount(idx_v, weights=w_v, minlength=nbins)
-    ysum = np.bincount(idx_v, weights=w_v * y_v, minlength=nbins)
-
-    # Bin mean and error (1/sqrt(sum of weights)); if unweighted, this becomes 1/sqrt(N)
-    y = np.divide(ysum, wsum, out=np.full(nbins, np.nan), where=wsum > 0)
-    yerr = np.divide(1.0, np.sqrt(wsum), out=np.full(nbins, np.nan), where=wsum > 0)
-
-    m = wsum > 0
-    return centers[m], y[m], yerr[m]
-
-def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux',
-               binsize_days=60/86400, nbins=None):
-    files = sorted(glob(f'{local_directory}*.fits'))
+def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
+    files = glob(f'{local_directory}*.fits')
+    files = np.array(files)[np.array([3,4,0,1,6,2,5])]
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
 
     fig = plt.figure(figsize=(13, 5))
@@ -368,11 +329,11 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
                 # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[kind], '.', c='silver', ms=3)
                 plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=0.1,
                              marker='.', ms=3, zorder=2)
-                # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
-                #                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
-                #                                            binsize=600 / 86400)
-                # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
-                #              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
+                time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
+                                                           meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
+                                                           binsize=600 / 86400)
+                plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
+                             marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {kind}'
@@ -383,20 +344,20 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
     #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
-    time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
-                                               meas_err=f_err_all,
-                                               binsize=300 / 86400)
-    plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
-                 marker='.', ms=8, zorder=3, label=f'All sectors')
+    # time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
+    #                                            meas_err=f_err_all,
+    #                                            binsize=300 / 86400)
+    # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
+    #              marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    plt.ylim(0.9, 1.1)
+    plt.ylim(0.99, 1.01)
     # plt.xlim(0.3, 0.43)
     plt.title(title)
     # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
-    plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
+    # plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
     plt.xlabel('Phase')
     plt.ylabel('Normalized flux')
     # from astropy.table import Table
@@ -418,9 +379,10 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     #                                            binsize=300 / 86400)
     # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C2', ls='', elinewidth=0.1,
     #              marker='.', ms=8, zorder=3, label='S44')
-    plt.legend()
+    plt.legend(loc=1)
 
     plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
+    plt.show()
     plt.close(fig)
 
 # newest
@@ -640,10 +602,10 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    # tics = [298130822]
-    # directory = f'/Users/tehan/Documents/TGLC/'
+    tics = [3664898]
+    directory = f'/Users/tehan/Documents/TGLC/'
     # # # directory = '/home/tehan/data/cosmos/GEMS/'
-    # os.makedirs(directory, exist_ok=True)
+    os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
@@ -651,33 +613,33 @@ if __name__ == '__main__':
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=8.835, mid_transit_tbjd=1830.6529981,
-    #            kind='cal_aper_flux')
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.4587118084227911, mid_transit_tbjd=1,
+               kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
 
-    directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
+    # directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
     # tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_extra.dat')[0])
     # print(len(tic_sector))
     # TIC_183985250_2
     # TIC_288735205_20
     # TIC_339672028_9
-    tics=[183985250,288735205,339672028]
-    sectors=[2,20,9]
+    # tics=[183985250,288735205,339672028]
+    # sectors=[2,20,9]
     # for i in range(len(tic_sector)):
     #     tics.append(tic_sector[i]['Star_sector'].split('_')[1])
     #     sectors.append(int(tic_sector[i]['Star_sector'].split('_')[2]))
 
-    for i in range(len(tics)):
-        # try:
-        target = f'TIC {tics[i]}'
-        local_directory = f'{directory}{target}/'
-        os.makedirs(local_directory, exist_ok=True)
-        tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
-                get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None,
-                transient=None)
-        plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97,
-                yhigh=1.03)
-        # except Exception as e:
-        #     with open(f"{directory}error_log.txt", "w") as file:
-        #         file.write(f"An error occurred for {target}: {e}\n")
+    # for i in range(len(tics)):
+    #     # try:
+    #     target = f'TIC {tics[i]}'
+    #     local_directory = f'{directory}{target}/'
+    #     os.makedirs(local_directory, exist_ok=True)
+    #     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
+    #             get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=None,
+    #             transient=None)
+    #     plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97,
+    #             yhigh=1.03)
+    #     except Exception as e:
+    #         with open(f"{directory}error_log.txt", "w") as file:
+    #             file.write(f"An error occurred for {target}: {e}\n")
