@@ -303,7 +303,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 quality.append(hdul[1].header['DQUALITY'])
                 cadence.append(hdul[0].header['FFIINDEX'])
                 #### convert unit to e/s for TICA FFI ####
-                flux[i] = hdul[1].data[0:2048, 44:2092] / 200
+                flux[i] = hdul[1].data[0:2048, 44:2092]
                 time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
 
         except:
@@ -410,7 +410,7 @@ def ffi_qlp_bg(ccd=1, camera=1, sector=1, size=150, local_directory='', producin
             with fits.open(file, mode='denywrite', memmap=False) as hdul:
                 quality.append(hdul[0].header['QUAL_BIT'])
                 cadence.append(hdul[0].header['CADENCE'])
-                flux[i] = hdul[0].data[0:2048, 44:2092]
+                flux[i] = hdul[0].data[0:2048, 44:2092] / 200
                 time.append(hdul[0].header['MIDTJD'])
 
         except:
