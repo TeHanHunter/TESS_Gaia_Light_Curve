@@ -3246,13 +3246,18 @@ if __name__ == '__main__':
     # lc_comparison()
     files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     print(len(files))
-    tic = []
-    aper_precision = []
-    for i in trange(len(files)):
-        tic_, aper_precision_= get_MAD(i, files=files)
-        tic.append(tic_)
-        aper_precision.append(aper_precision_)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_both_bg_30min_s56_1_1.npy', np.vstack((tic, aper_precision)))
+    with Pool() as p:
+        results = p.map(partial(get_MAD_tglc_v_spoc, files=files), range(len(files)))
+
+    filtered_results = [res for res in results if res is not None]
+    # Now unpack safely
+    if filtered_results:  # Only unpack if there are valid results
+        tics, precision, tic_id = zip(*filtered_results)
+    else:
+        tics, precision, tic_id = [], [], []  # Handle case with no valid results
+    tics = np.array(tics)
+    precision = np.array(precision)
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_both_bg_30min_s56_1_1.npy', np.vstack((tics, precision)))
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
