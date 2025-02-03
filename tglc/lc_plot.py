@@ -3252,9 +3252,9 @@ if __name__ == '__main__':
     filtered_results = [res for res in results if res is not None]
     # Now unpack safely
     if filtered_results:  # Only unpack if there are valid results
-        tics, precision, tic_id = zip(*filtered_results)
+        tics, precision = zip(*filtered_results)
     else:
-        tics, precision, tic_id = [], [], []  # Handle case with no valid results
+        tics, precision = [], []  # Handle case with no valid results
     tics = np.array(tics)
     precision = np.array(precision)
     np.save('/pdo/users/tehan/sector0056/mad_tglc_both_bg_30min_s56_1_1.npy', np.vstack((tics, precision)))
