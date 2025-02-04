@@ -3136,8 +3136,8 @@ def plot_MAD_all():
 def plot_MAD_qlp_bg():
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
-    qlp_color = palette[2]
-    both_color = palette[1]
+    qlp_color = palette[1]
+    both_color = palette[2]
     spoc_color = palette[0]
     mad_tglc = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_archive_30min_s56_1_1.npy', allow_pickle=True)
     # mad_qlp = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_qlp_bg_30min_s56_1_1.npy', allow_pickle=True)
@@ -3243,21 +3243,21 @@ def lc_comparison():
 
 if __name__ == '__main__':
     # plot_MAD_qlp_bg()
-    # lc_comparison()
-    files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
-    print(len(files))
-    with Pool() as p:
-        results = p.map(partial(get_MAD, files=files), trange(len(files)))
-
-    filtered_results = [res for res in results if res is not None]
-    # Now unpack safely
-    if filtered_results:  # Only unpack if there are valid results
-        tics, precision = zip(*filtered_results)
-    else:
-        tics, precision = [], []  # Handle case with no valid results
-    tics = np.array(tics)
-    precision = np.array(precision)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_both_bg_30min_s56_1_1.npy', np.vstack((tics, precision)))
+    lc_comparison()
+    # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
+    # print(len(files))
+    # with Pool() as p:
+    #     results = p.map(partial(get_MAD, files=files), trange(len(files)))
+    #
+    # filtered_results = [res for res in results if res is not None]
+    # # Now unpack safely
+    # if filtered_results:  # Only unpack if there are valid results
+    #     tics, precision = zip(*filtered_results)
+    # else:
+    #     tics, precision = [], []  # Handle case with no valid results
+    # tics = np.array(tics)
+    # precision = np.array(precision)
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_both_bg_30min_s56_1_1.npy', np.vstack((tics, precision)))
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
