@@ -3233,7 +3233,7 @@ def plot_MAD_qlp_bg():
 
 def lc_comparison():
     both_bg_files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
-    for i in trange(100):
+    for i in trange(1000):
         hdul_both = fits.open(both_bg_files[i])
         hdul_tglc = fits.open('/pdo/users/tehan/sector0056_archive/lc/1-1/' + os.path.basename(both_bg_files[i]))
         q = list(hdul_both[1].data['TESS_flags'] == 0) and list(hdul_both[1].data['TGLC_flags'] == 0)
@@ -3276,9 +3276,9 @@ def lc_pf():
     plt.close()
 
 if __name__ == '__main__':
-    lc_pf()
+    # lc_pf()
     # plot_MAD_qlp_bg()
-    # lc_comparison()
+    lc_comparison()
     # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     # print(len(files))
     # with Pool() as p:
