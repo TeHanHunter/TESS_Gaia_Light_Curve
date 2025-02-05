@@ -792,7 +792,6 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
     ax.legend(loc='upper left')
     # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
     plt.xlim(-0.3, 0.3)
-
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
