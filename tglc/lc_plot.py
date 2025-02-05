@@ -3235,10 +3235,14 @@ def lc_comparison():
     for i in trange(100):
         hdul_both = fits.open(both_bg_files[i])
         hdul_tglc = fits.open('/pdo/users/tehan/sector0056_archive/lc/1-1/' + os.path.basename(both_bg_files[i]))
-        plt.plot(hdul_both[1].data['time'], hdul_both[1].data['aperture_flux'], '.r', alpha=0.8, label='both bg')
-        plt.plot(hdul_tglc[1].data['time'], hdul_tglc[1].data['aperture_flux'], '.k', alpha=0.8, label='TGLC bg')
+        q = list(hdul_both[1].data['TESS_flags'] == 0) and list(hdul_both[1].data['TGLC_flags'] == 0)
+        plt.plot(hdul_both[1].data['time'], hdul_both[1].data['aperture_flux'], '.', c= 'C1', alpha=0.8, ms=1, label='both bg')
+        plt.plot(hdul_both[1].data['time'][q], hdul_both[1].data['aperture_flux'][q], '.r', alpha=0.8, ms=1, label='both bg')
+        q = list(hdul_tglc[1].data['TESS_flags'] == 0) and list(hdul_tglc[1].data['TGLC_flags'] == 0)
+        plt.plot(hdul_tglc[1].data['time'], hdul_tglc[1].data['aperture_flux'], '.', c='silver', alpha=0.8, ms=1, label='TGLC bg')
+        plt.plot(hdul_tglc[1].data['time'][q], hdul_tglc[1].data['aperture_flux'][q], '.k', alpha=0.8, ms=1, label='TGLC bg')
         plt.legend()
-        plt.savefig(f'/pdo/users/tehan/sector0056/plot/{os.path.basename(both_bg_files[i])}.png')
+        plt.savefig(f'/pdo/users/tehan/sector0056/plot/{os.path.basename(both_bg_files[i])}.png', dpi=300)
         plt.close()
 
 if __name__ == '__main__':
