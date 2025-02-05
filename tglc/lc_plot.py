@@ -3246,13 +3246,13 @@ def lc_comparison():
         plt.savefig(f'/pdo/users/tehan/sector0056/plot/{os.path.basename(both_bg_files[i])}.png', dpi=300)
         plt.close()
 
-def lc_pf():
-    hdul_both = fits.open('/Users/tehan/Documents/TGLC/QLP integration/qlp_bg_hlsp_tglc_tess_ffi_gaiaid-2840746761769473024-s0056-cam1-ccd1_tess_v1_llc.fits')
-    hdul_tglc = fits.open('/Users/tehan/Documents/TGLC/QLP integration/hlsp_tglc_tess_ffi_gaiaid-2840746761769473024-s0056-cam1-ccd1_tess_v1_llc.fits')
+def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_tess_v1_llc.fits'):
+    hdul_both = fits.open(f'/Users/tehan/Documents/TGLC/QLP integration/qlp_bg_{file}')
+    hdul_tglc = fits.open(f'/Users/tehan/Documents/TGLC/QLP integration/{file}')
 
     q = list(hdul_both[1].data['TESS_flags'] == 0) and list(hdul_both[1].data['TGLC_flags'] == 0)
-    min_freq = 1 / 5  # 50-day max period
-    max_freq = 1 / 0.1  # 2-day min period
+    min_freq = 1 / 1
+    max_freq = 1 / 0.1
     frequency = np.linspace(min_freq, max_freq, 1000)
 
     # Compute Lomb-Scargle periodogram
@@ -3260,25 +3260,25 @@ def lc_pf():
     p = 1 / frequency[np.argmax(power)]
     p = 2 * p
     print(p)
-
     plt.plot(hdul_both[1].data['time'] % p / p, hdul_both[1].data['cal_aper_flux'], '.', c='C1', alpha=0.8, ms=1,
              label='both bg')
     plt.plot(hdul_both[1].data['time'][q] % p / p, hdul_both[1].data['cal_aper_flux'][q], '.r', alpha=0.8, ms=1,
              label='both bg')
     q = list(hdul_tglc[1].data['TESS_flags'] == 0) and list(hdul_tglc[1].data['TGLC_flags'] == 0)
+
     plt.plot(hdul_tglc[1].data['time'] % p / p, hdul_tglc[1].data['cal_aper_flux'], '.', c='silver', alpha=0.8, ms=1,
              label='TGLC bg')
     plt.plot(hdul_tglc[1].data['time'][q] % p / p, hdul_tglc[1].data['cal_aper_flux'][q], '.k', alpha=0.8, ms=1,
              label='TGLC bg')
     plt.legend()
-    plt.ylim(0.,1.5)
+    plt.ylim(0.5    ,1.5)
     plt.savefig(f'/Users/tehan/Documents/TGLC/QLP integration/both_bg_vs_tglc.png', dpi=300)
     plt.close()
 
 if __name__ == '__main__':
-    # lc_pf()
+    lc_pf()
     # plot_MAD_qlp_bg()
-    lc_comparison()
+    # lc_comparison()
     # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     # print(len(files))
     # with Pool() as p:
