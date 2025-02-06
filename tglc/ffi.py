@@ -397,8 +397,9 @@ def ffi_qlp_bg(ccd=1, camera=1, sector=1, size=150, local_directory='', producin
     path to the FFI folder
     :return:
     """
-    input_files = glob(f'/pdo/qlp-data/orbit-119/ffi/cam{camera}/ccd{ccd}/FITS/*-{camera}-*{ccd}*.fits', recursive=True) + \
-              glob(f'/pdo/qlp-data/orbit-120/ffi/cam{camera}/ccd{ccd}/FITS/*-{camera}-*{ccd}*.fits', recursive=True)
+    input_files = glob(f'/pdo/qlp-data/tica-delivery/s0056/cam{camera}-ccd{ccd}/*.fits', recursive=True)
+    # input_files = glob(f'/pdo/qlp-data/orbit-119/ffi/cam{camera}/ccd{ccd}/FITS/*-{camera}-*{ccd}*.fits', recursive=True) + \
+    #           glob(f'/pdo/qlp-data/orbit-120/ffi/cam{camera}/ccd{ccd}/FITS/*-{camera}-*{ccd}*.fits', recursive=True)
     print(len(input_files))    # input_files = glob(f'{local_directory}ffi/*{camera}-{ccd}-????-?_ffic.fits')
     print('camera: ' + str(camera) + '  ccd: ' + str(ccd) + '  num of files: ' + str(len(input_files)))
     time = []

@@ -69,9 +69,9 @@ def ffi_to_source(sector=1, local_directory=''):
     # with Pool(2) as p:
     #     p.map(partial(cut_ffi_, sector=sector, size=150, local_directory=local_directory), range(16))
 
-    # i = 0
-    for i in range(1, 16):
-        ffi_qlp_bg(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
+    i = 0
+    # for i in range(1, 16):
+    ffi_qlp_bg(camera=1 + i // 4, ccd=1 + i % 4, sector=sector, size=150, local_directory=local_directory)
 
 
 if __name__ == '__main__':
