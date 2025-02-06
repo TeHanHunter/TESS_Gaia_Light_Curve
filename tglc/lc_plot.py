@@ -697,7 +697,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'Ground-determined $p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
+               zorder=4, label=r'TESS-free $p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -779,7 +779,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-influenced $p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
+               zorder=4, label=r'TESS-dependent $p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -1542,7 +1542,8 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '0.8'})
-    fig, ax = plt.subplots(1, 2, sharex=True, figsize=(12, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.15})
+    fig, ax_ = plt.subplots(1, 2, sharex=True, figsize=(12, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.15})
+    ax = [ax_[1], ax_[0]]
     for spine in ax[0].spines.values():
         spine.set_zorder(5)
     for spine in ax[1].spines.values():
@@ -1699,7 +1700,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[1].scatter(mass_ng, r_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color,
                   label='TESS-influenced corrected')
     ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.5, )
-    plt.legend(loc='best', fontsize=10)
+    ax[1].legend(loc='best', fontsize=10)
 
     ### water world ###
     r = np.linspace(1.24, 4, 100)
@@ -2040,9 +2041,9 @@ if __name__ == '__main__':
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
+    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    # figure_9(recalculate=True)
+    figure_9(recalculate=True)
     # figure_10(recalculate=True)
     # combine_contamrt()
