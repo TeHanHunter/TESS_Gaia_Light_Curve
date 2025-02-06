@@ -787,7 +787,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
     ax.vlines(0, ymin=0, ymax=200, color='k', ls='dashed', lw=1, zorder=3)
-    ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) \equiv \Delta p = (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
+    ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax.set_ylabel('Error Weighted Counts')
     ax.legend(loc='upper left')
     # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
@@ -1528,11 +1528,12 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
     b = t['pl_imppar']
     ror = t['pl_rade'] / t['st_rad'] / 109
-    for i in range(len(b)):
-        if 1 - b[i] < ror[i] / 2:
-            print(t['tic_id'][i])
-            print(b[i])
-            print(ror[i])
+    # find grazing
+    # for i in range(len(b)):
+    #     if 1 - b[i] < ror[i] / 2:
+    #         print(t['tic_id'][i])
+    #         print(b[i])
+    #         print(ror[i])
     difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024.dat')
     tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
     tics = [int(s[4:]) for s in t['tic_id']]
@@ -1542,7 +1543,7 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '0.8'})
-    fig, ax_ = plt.subplots(1, 2, sharex=True, figsize=(12, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.15})
+    fig, ax_ = plt.subplots(1, 2, sharex=True, figsize=(12, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.17})
     ax = [ax_[1], ax_[0]]
     for spine in ax[0].spines.values():
         spine.set_zorder(5)
@@ -1692,15 +1693,15 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6,
                alpha=0.5, )
     ### mass-radius ###
-    ax[1].scatter(mass_g, r_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='Ground-based')
+    ax[1].scatter(mass_g, r_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='TESS-free')
     ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=2, s=15, facecolors='none', edgecolors=ng_color,
-                  label='TESS-influenced')
+                  label='TESS-dependent')
     # for j in range(len(mass_ng)):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
     ax[1].scatter(mass_ng, r_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color,
-                  label='TESS-influenced corrected')
+                  label='TESS-dependent corrected')
     ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.5, )
-    ax[1].legend(loc='best', fontsize=10)
+    ax[1].legend(loc=4, fontsize=10)
 
     ### water world ###
     r = np.linspace(1.24, 4, 100)
@@ -1787,6 +1788,8 @@ def figure_9(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[1].set_xlabel(r'$M_{\text{p}} (\text{M}_{\oplus})$ ')
     ax[0].set_ylabel(r'$\rho_{\text{p}} (\rho_{\oplus})$ ')
     ax[1].set_ylabel(r'$R_{\text{p}} (R_{\oplus})$ ')
+    ax[0].text(0.1, 0.9, "b", transform=ax[0].transAxes, fontsize=12, color='k', fontweight='bold')
+    ax[1].text(0.1, 0.9, "a", transform=ax[1].transAxes, fontsize=12, color='k', fontweight='bold')
 
     plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
