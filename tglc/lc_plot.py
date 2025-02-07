@@ -3209,8 +3209,8 @@ def plot_MAD_qlp_bg():
     # Bottom panel
     p1, = ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2,
                      label='TGLC Aperture')
-    # p3, = ax[1].plot(qlp_mag, qlp_binned / noise_interp(qlp_mag), color=qlp_color, ls='-', lw=2,
-    #                  label='QLP BG only')
+    p2, = ax[1].plot(tica_mag, tica_binned / noise_interp(tica_mag), color=qlp_color, ls='-', lw=2,
+                     label='TICA')
     p3, = ax[1].plot(both_mag, both_binned / noise_interp(both_mag), color=both_color, ls='-', lw=2,
                      label='TGLC + QLP BG')
     p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label=r'$\sigma_\mathrm{base}(T)$')
@@ -3221,8 +3221,8 @@ def plot_MAD_qlp_bg():
     ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
     ax[1].set_xlabel('TESS magnitude')
     ax[1].set_ylabel('Precision Ratio')
-    ax[1].legend([(p1, ), (p3, ), (p6_, p6)],
-                 ['TGLC BG', 'QLP BG', r'$\sigma_\mathrm{base}(T)$'],
+    ax[1].legend([(p1, p2), (p3, ), (p6_, p6)],
+                 ['SPOC/TICA FFI', 'QLP+TGLC BG', r'$\sigma_\mathrm{base}(T)$'],
                  numpoints=1, loc=4, markerscale=1, ncol=2, handlelength=4.5, framealpha=1,
                  columnspacing=0, fontsize=7.5, handler_map={tuple: HandlerTuple(ndivide=None)})
     # ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
@@ -3248,6 +3248,7 @@ def lc_comparison():
 
 def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_tess_v1_llc.fits'):
     hdul_both = fits.open(f'/Users/tehan/Documents/TGLC/QLP integration/qlp_bg_{file}')
+    hdul_both = fits.open(f'/Users/tehan/Documents/TGLC/QLP integration/tica_{file}')
     hdul_tglc = fits.open(f'/Users/tehan/Documents/TGLC/QLP integration/{file}')
 
     q = list(hdul_both[1].data['TESS_flags'] == 0) and list(hdul_both[1].data['TGLC_flags'] == 0)
@@ -3271,28 +3272,29 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
     plt.plot(hdul_tglc[1].data['time'][q] % p / p, hdul_tglc[1].data['cal_aper_flux'][q], '.k', alpha=0.8, ms=1,
              label='TGLC bg')
     plt.legend()
-    plt.ylim(0.5    ,1.5)
-    plt.savefig(f'/Users/tehan/Documents/TGLC/QLP integration/both_bg_vs_tglc.png', dpi=300)
+    plt.ylim(0.5,1.5)
+    plt.title(file)
+    plt.savefig(f'/Users/tehan/Documents/TGLC/QLP integration/tica_vs_spoc_FFI_tglc.png', dpi=300)
     plt.close()
 
 if __name__ == '__main__':
-    # lc_pf()
+    lc_pf()
     # plot_MAD_qlp_bg()
     # lc_comparison()
-    files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
-    print(len(files))
-    with Pool() as p:
-        results = p.map(partial(get_MAD, files=files), trange(len(files)))
-
-    filtered_results = [res for res in results if res is not None]
-    # Now unpack safely
-    if filtered_results:  # Only unpack if there are valid results
-        tics, precision = zip(*filtered_results)
-    else:
-        tics, precision = [], []  # Handle case with no valid results
-    tics = np.array(tics)
-    precision = np.array(precision)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_30min_s56_1_1.npy', np.vstack((tics, precision)))
+    # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
+    # print(len(files))
+    # with Pool() as p:
+    #     results = p.map(partial(get_MAD, files=files), trange(len(files)))
+    #
+    # filtered_results = [res for res in results if res is not None]
+    # # Now unpack safely
+    # if filtered_results:  # Only unpack if there are valid results
+    #     tics, precision = zip(*filtered_results)
+    # else:
+    #     tics, precision = [], []  # Handle case with no valid results
+    # tics = np.array(tics)
+    # precision = np.array(precision)
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_30min_s56_1_1.npy', np.vstack((tics, precision)))
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
