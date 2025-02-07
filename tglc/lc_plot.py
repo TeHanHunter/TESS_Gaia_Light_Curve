@@ -3139,9 +3139,9 @@ def plot_MAD_qlp_bg():
     tglc_color = palette[3]
     qlp_color = palette[1]
     both_color = palette[2]
-    spoc_color = palette[0]
+    tica_color = palette[0]
     mad_tglc = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_archive_30min_s56_1_1.npy', allow_pickle=True)
-    # mad_qlp = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_qlp_bg_30min_s56_1_1.npy', allow_pickle=True)
+    mad_tica = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_tica_30min_s56_1_1.npy', allow_pickle=True)
     mad_both = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_both_bg_30min_s56_1_1.npy', allow_pickle=True)
     # mad_qlp[1] = mad_qlp[1]
     # mad_both[1] = mad_both[1] / 200
@@ -3150,7 +3150,7 @@ def plot_MAD_qlp_bg():
     # print(type(mad_spoc.tolist()['tics']))
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()[0])
-    # sorted_indices_qlp = np.argsort(mad_qlp.tolist()[0])
+    sorted_indices_tica = np.argsort(mad_tica.tolist()[0])
     sorted_indices_both = np.argsort(mad_both.tolist()[0])
     noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
     # Bin data
@@ -3160,11 +3160,11 @@ def plot_MAD_qlp_bg():
     tglc_binned = np.median(mad_tglc[1][sorted_indices_tglc][:len(
         mad_tglc[1][sorted_indices_tglc]) // bin_size * bin_size].reshape(-1, bin_size),
                             axis=1)
-    # bin_size = 1000
-    # qlp_mag = np.nanmedian(mad_qlp[0][sorted_indices_qlp][
-    #                        :len(mad_qlp[0][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1,bin_size),axis=1)
-    # qlp_binned = np.nanmedian(mad_qlp[1][sorted_indices_qlp][:len(
-    #     mad_qlp[1][sorted_indices_qlp]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+    bin_size = 1000
+    tica_mag = np.nanmedian(mad_tica[0][sorted_indices_tica][
+                           :len(mad_tica[0][sorted_indices_tica]) // bin_size * bin_size].reshape(-1,bin_size),axis=1)
+    tica_binned = np.nanmedian(mad_tica[1][sorted_indices_tica][:len(
+        mad_tica[1][sorted_indices_tica]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
     bin_size = 1000
     both_mag = np.nanmedian(mad_both[0][sorted_indices_both][
                            :len(mad_both[0][sorted_indices_both]) // bin_size * bin_size].reshape(-1,bin_size),axis=1)
@@ -3185,8 +3185,8 @@ def plot_MAD_qlp_bg():
                   alpha=0.5)
     ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='TGLC Aperture')
     ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1)
-    # ax[0].scatter(mad_qlp[0][sorted_indices_qlp], mad_qlp[1][sorted_indices_qlp],
-    #               s=0.15, linewidths=0, color=qlp_color, alpha=0.5)
+    ax[0].scatter(mad_tica[0][sorted_indices_tica], mad_tica[1][sorted_indices_tica],
+                  s=0.15, linewidths=0, color=qlp_color, alpha=0.5)
     ax[0].scatter(0, 0, s=1, color=qlp_color, alpha=1, label='QLP SAP')
     ax[0].scatter(mad_both[0][sorted_indices_both], mad_both[1][sorted_indices_both],
                   s=0.15, linewidths=0, color=both_color, alpha=0.5)
@@ -3194,7 +3194,7 @@ def plot_MAD_qlp_bg():
     rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
     ax[0].add_patch(rect)
     # print(np.min(np.where(qlp_mag>13.5)[0]))
-    # ax[0].plot(qlp_mag, qlp_binned, color=qlp_color, ls='-', lw=2)
+    ax[0].plot(tica_mag, tica_binned, color=tica_color, ls='-', lw=2)
     ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
     ax[0].plot(both_mag, both_binned, color=both_color, ls='-', lw=2)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label=r'$\sigma_\mathrm{base}(T)$')
@@ -3278,7 +3278,7 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
 if __name__ == '__main__':
     # lc_pf()
     # plot_MAD_qlp_bg()
-    lc_comparison()
+    # lc_comparison()
     files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     print(len(files))
     with Pool() as p:
