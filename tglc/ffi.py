@@ -382,7 +382,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                                     exposure=exposure, cadence=cadence)
                     pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
 
-def ffi_qlp_bg(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
+def ffi_tica(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=False):
     """
     Generate Source object from the calibrated FFI downloaded directly from MAST
     :param sector: int, required
@@ -411,7 +411,7 @@ def ffi_qlp_bg(ccd=1, camera=1, sector=1, size=150, local_directory='', producin
             with fits.open(file, mode='denywrite', memmap=False) as hdul:
                 quality.append(hdul[0].header['QUAL_BIT'])
                 cadence.append(hdul[0].header['CADENCE'])
-                flux[i] = hdul[0].data[0:2048, 44:2092] / 200
+                flux[i] = hdul[0].data[0:2048, 44:2092] / (200 * 0.8 * 0.99)
                 time.append(hdul[0].header['MIDTJD'])
 
         except:
