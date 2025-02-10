@@ -3278,9 +3278,9 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
     plt.close()
 
 if __name__ == '__main__':
-    lc_pf()
+    # lc_pf()
     # plot_MAD_qlp_bg()
-    # lc_comparison()
+    lc_comparison()
     # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     # print(len(files))
     # with Pool() as p:
