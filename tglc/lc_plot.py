@@ -3137,12 +3137,12 @@ def plot_MAD_all():
 def plot_MAD_qlp_bg():
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
-    qlp_color = palette[1]
-    both_color = palette[2]
+    # qlp_color = palette[1]
+    # both_color = palette[2]
     tica_color = palette[0]
     mad_tglc = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_archive_30min_s56_1_1.npy', allow_pickle=True)
     mad_tica = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_tica_30min_s56_1_1.npy', allow_pickle=True)
-    mad_both = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_both_bg_30min_s56_1_1.npy', allow_pickle=True)
+    # mad_both = np.load('/Users/tehan/Documents/TGLC/QLP integration/mad_tglc_both_bg_30min_s56_1_1.npy', allow_pickle=True)
     # mad_qlp[1] = mad_qlp[1]
     # mad_both[1] = mad_both[1] / 200
     noise_2015 = ascii.read('/Users/tehan/Documents/TGLC/noisemodel.dat')
@@ -3151,7 +3151,7 @@ def plot_MAD_qlp_bg():
     # Sort data
     sorted_indices_tglc = np.argsort(mad_tglc.tolist()[0])
     sorted_indices_tica = np.argsort(mad_tica.tolist()[0])
-    sorted_indices_both = np.argsort(mad_both.tolist()[0])
+    # sorted_indices_both = np.argsort(mad_both.tolist()[0])
     noise_interp = interp1d(noise_2015['col1'], noise_2015['col2'], kind='cubic')
     # Bin data
     bin_size = 1000
@@ -3166,10 +3166,10 @@ def plot_MAD_qlp_bg():
     tica_binned = np.nanmedian(mad_tica[1][sorted_indices_tica][:len(
         mad_tica[1][sorted_indices_tica]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
     bin_size = 1000
-    both_mag = np.nanmedian(mad_both[0][sorted_indices_both][
-                           :len(mad_both[0][sorted_indices_both]) // bin_size * bin_size].reshape(-1,bin_size),axis=1)
-    both_binned = np.nanmedian(mad_both[1][sorted_indices_both][:len(
-        mad_both[1][sorted_indices_both]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
+    # both_mag = np.nanmedian(mad_both[0][sorted_indices_both][
+    #                        :len(mad_both[0][sorted_indices_both]) // bin_size * bin_size].reshape(-1,bin_size),axis=1)
+    # both_binned = np.nanmedian(mad_both[1][sorted_indices_both][:len(
+    #     mad_both[1][sorted_indices_both]) // bin_size * bin_size].reshape(-1, bin_size), axis=1)
 
     # Create Seaborn plot
     # sns.set_style("whitegrid")
@@ -3183,20 +3183,20 @@ def plot_MAD_qlp_bg():
     ax[0].scatter(mad_tglc[0][sorted_indices_tglc],
                   mad_tglc[1][sorted_indices_tglc], s=0.15, linewidths=0, color=tglc_color,
                   alpha=0.5)
-    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='TGLC Aperture')
+    ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1, label='SPOC')
     ax[0].scatter(0, 0, s=1, color=tglc_color, alpha=1)
     ax[0].scatter(mad_tica[0][sorted_indices_tica], mad_tica[1][sorted_indices_tica],
-                  s=0.15, linewidths=0, color=qlp_color, alpha=0.5)
-    ax[0].scatter(0, 0, s=1, color=qlp_color, alpha=1, label='QLP SAP')
-    ax[0].scatter(mad_both[0][sorted_indices_both], mad_both[1][sorted_indices_both],
-                  s=0.15, linewidths=0, color=both_color, alpha=0.5)
-    ax[0].scatter(0, 0, s=1, color=both_color, alpha=1, label='Both')
+                  s=0.15, linewidths=0, color=tica_color, alpha=0.5)
+    ax[0].scatter(0, 0, s=1, color=tica_color, alpha=1, label='TICA')
+    # ax[0].scatter(mad_both[0][sorted_indices_both], mad_both[1][sorted_indices_both],
+    #               s=0.15, linewidths=0, color=both_color, alpha=0.5)
+    # ax[0].scatter(0, 0, s=1, color=both_color, alpha=1, label='Both')
     rect = patches.Rectangle((0, 0), 1, 1, transform=ax[0].transAxes, color='white', alpha=0.25)
     ax[0].add_patch(rect)
     # print(np.min(np.where(qlp_mag>13.5)[0]))
     ax[0].plot(tica_mag, tica_binned, color=tica_color, ls='-', lw=2)
     ax[0].plot(tglc_mag, tglc_binned, color=tglc_color, ls='-', lw=2)
-    ax[0].plot(both_mag, both_binned, color=both_color, ls='-', lw=2)
+    # ax[0].plot(both_mag, both_binned, color=both_color, ls='-', lw=2)
     ax[0].plot(noise_2015['col1'], noise_2015['col2'], color='k', label=r'$\sigma_\mathrm{base}(T)$')
 
     # ax[0].hlines(y=[0.1, 0.01], xmin=7, xmax=16.5, colors='k', linestyles='dotted')
@@ -3209,10 +3209,10 @@ def plot_MAD_qlp_bg():
     # Bottom panel
     p1, = ax[1].plot(tglc_mag, tglc_binned / noise_interp(tglc_mag), color=tglc_color, ls='-', lw=2,
                      label='TGLC Aperture')
-    p2, = ax[1].plot(tica_mag, tica_binned / noise_interp(tica_mag), color=qlp_color, ls='-', lw=2,
+    p2, = ax[1].plot(tica_mag, tica_binned / noise_interp(tica_mag), color=tica_color, ls='-', lw=2,
                      label='TICA')
-    p3, = ax[1].plot(both_mag, both_binned / noise_interp(both_mag), color=both_color, ls='-', lw=2,
-                     label='TGLC + QLP BG')
+    # p3, = ax[1].plot(both_mag, both_binned / noise_interp(both_mag), color=both_color, ls='-', lw=2,
+    #                  label='TGLC + QLP BG')
     p6 = ax[1].hlines(y=1, xmin=7, xmax=17, colors='k', label=r'$\sigma_\mathrm{base}(T)$')
     p6_, = ax[1].plot([0], [0], '.', c='white', alpha=0)
 
@@ -3221,8 +3221,8 @@ def plot_MAD_qlp_bg():
     ax[1].set_yticklabels(['0.5', '1', '1.5', '2'])
     ax[1].set_xlabel('TESS magnitude')
     ax[1].set_ylabel('Precision Ratio')
-    ax[1].legend([(p1, p2), (p3, ), (p6_, p6)],
-                 ['SPOC/TICA FFI', 'QLP+TGLC BG', r'$\sigma_\mathrm{base}(T)$'],
+    ax[1].legend([(p1, p2),  (p6_, p6)],
+                 ['SPOC/TICA FFI', r'$\sigma_\mathrm{base}(T)$'],
                  numpoints=1, loc=4, markerscale=1, ncol=2, handlelength=4.5, framealpha=1,
                  columnspacing=0, fontsize=7.5, handler_map={tuple: HandlerTuple(ndivide=None)})
     # ax[1].legend(loc=4, markerscale=1, ncol=2, columnspacing=1, fontsize=7.2)
@@ -3278,23 +3278,23 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
     plt.close()
 
 if __name__ == '__main__':
-    # lc_pf()
+    lc_pf()
     # plot_MAD_qlp_bg()
     # lc_comparison()
-    files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
-    print(len(files))
-    with Pool() as p:
-        results = p.map(partial(get_MAD, files=files), trange(len(files)))
-
-    filtered_results = [res for res in results if res is not None]
-    # Now unpack safely
-    if filtered_results:  # Only unpack if there are valid results
-        tics, precision = zip(*filtered_results)
-    else:
-        tics, precision = [], []  # Handle case with no valid results
-    tics = np.array(tics)
-    precision = np.array(precision)
-    np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_30min_s56_1_1.npy', np.vstack((tics, precision)))
+    # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
+    # print(len(files))
+    # with Pool() as p:
+    #     results = p.map(partial(get_MAD, files=files), trange(len(files)))
+    #
+    # filtered_results = [res for res in results if res is not None]
+    # # Now unpack safely
+    # if filtered_results:  # Only unpack if there are valid results
+    #     tics, precision = zip(*filtered_results)
+    # else:
+    #     tics, precision = [], []  # Handle case with no valid results
+    # tics = np.array(tics)
+    # precision = np.array(precision)
+    # np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_30min_s56_1_1.npy', np.vstack((tics, precision)))
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
