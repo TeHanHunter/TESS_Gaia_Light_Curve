@@ -3261,9 +3261,9 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
     p = 1 / frequency[np.argmax(power)]
     p = 2 * p
     print(p)
-    plt.plot(hdul_both[1].data['time'] % p / p, hdul_both[1].data['cal_aper_flux'], '.', c='C1', alpha=0.8, ms=1,
+    plt.plot(hdul_both[1].data['time'] % p / p, hdul_both[1].data['cal_aper_flux'] + 0.1, '.', c='C1', alpha=0.8, ms=1,
              label='both bg')
-    plt.plot(hdul_both[1].data['time'][q] % p / p, hdul_both[1].data['cal_aper_flux'][q], '.r', alpha=0.8, ms=1,
+    plt.plot(hdul_both[1].data['time'][q] % p / p, hdul_both[1].data['cal_aper_flux'][q] + 0.1, '.r', alpha=0.8, ms=1,
              label='both bg')
     q = list(hdul_tglc[1].data['TESS_flags'] == 0) and list(hdul_tglc[1].data['TGLC_flags'] == 0)
 
@@ -3278,9 +3278,9 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
     plt.close()
 
 if __name__ == '__main__':
-    # lc_pf()
+    lc_pf()
     # plot_MAD_qlp_bg()
-    lc_comparison()
+    # lc_comparison()
     # files = glob('/pdo/users/tehan/sector0056/lc/1-1/*.fits')
     # print(len(files))
     # with Pool() as p:
