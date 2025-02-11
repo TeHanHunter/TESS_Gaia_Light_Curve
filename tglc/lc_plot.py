@@ -697,7 +697,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-free $p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
+               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -779,7 +779,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-dependent $p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
+               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -795,7 +795,7 @@ def figure_4_tglc(folder='/Users/tehan/Documents/TGLC/'):
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
-    plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
+    # plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
@@ -2044,9 +2044,9 @@ if __name__ == '__main__':
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    # figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
+    figure_4_tglc(folder='/Users/tehan/Documents/TGLC/')
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
-    figure_9(recalculate=True)
+    # figure_9(recalculate=True)
     # figure_10(recalculate=True)
     # combine_contamrt()
