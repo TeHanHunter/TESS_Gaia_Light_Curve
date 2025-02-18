@@ -2315,9 +2315,12 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
     if recalculate:
         delta_R = 0.06011182562150113
         mass_g = []
+        mass_g_err = []
         r_g = []
+        r_g_err = []
         density_g = []
         mass_ng = []
+        mass_ng_err = []
         r_ng = []
         r_ng_err = []
         density_ng = []
@@ -2330,12 +2333,16 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
                                                               (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
                 if tic in ground:
                     mass_g.append(t['pl_bmasse'][i])
+                    mass_g_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
                     r_g.append(t['pl_rade'][i])
+                    r_g_err.append((t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
                     density_g.append(density)
                 elif tic in no_ground:
                     if t['pl_bmassprov'][i] == 'Mass':
                         mass_ng.append(t['pl_bmasse'][i])
+                        mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
                         r_ng.append(t['pl_rade'][i])
+                        r_ng_err.append((t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
                         density_ng.append(density)
                         ## overall shift ###
                         density_ng_corr.append(density * (1 - delta_R) ** 3)
@@ -2369,9 +2376,12 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
                 #             marker='', alpha=0.5,)
         data = {
             "mass_g": mass_g,
+            "mass_g_err": mass_g_err,
             "r_g": r_g,
+            "r_g_err": r_g_err,
             "density_g": density_g,
             "mass_ng": mass_ng,
+            "mass_ng_err": mass_ng_err,
             "r_ng": r_ng,
             "r_ng_err": r_ng_err,
             "density_ng": density_ng,
@@ -2384,9 +2394,12 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
     with open(f"{folder}mass_density.pkl", "rb") as f:
         data = pickle.load(f)
     mass_g = data["mass_g"]
+    mass_g_err = data["mass_g_err"]
     r_g = data["r_g"]
+    r_g_err = data["r_g_err"]
     density_g = data["density_g"]
     mass_ng = data["mass_ng"]
+    mass_ng_err = data["mass_ng_err"]
     r_ng = data["r_ng"]
     r_ng_err = data["r_ng_err"]
     density_ng = data["density_ng"]
@@ -2398,8 +2411,9 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
     # return
     ###
     # Filter data
-    d_ng = np.array(density_ng)[(np.array(r_ng) < 5) & (np.array(density_ng_err) / np.array(r_ng) < 0.35)]
-    d_ng_corr = np.array(density_ng_corr)[(np.array(r_ng) < 5) & (np.array(density_ng_err) / np.array(r_ng) < 0.35)]
+
+    d_ng = np.array(density_ng)[(np.array(r_ng) < 4) & (np.array(r_ng_err) / np.array(r_ng) < 0.08) & (np.array(mass_ng_err) / np.array(mass_ng) < 0.25)]
+    d_ng_corr = np.array(density_ng_corr)[(np.array(r_ng) < 4) & (np.array(r_ng_err) / np.array(r_ng) < 0.08) & (np.array(mass_ng_err) / np.array(mass_ng) < 0.25)]
 
     # Plot raw histograms for visualization
     # plt.hist(np.array(density_g)[(np.array(r_g) < 4)], bins=np.linspace(0, 1.5, 31), alpha=0.4, label="Raw")
@@ -2503,7 +2517,8 @@ if __name__ == '__main__':
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
-    figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
+    # figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
+    figure_density_dist(recalculate=True)
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
     # figure_9(recalculate=True)
