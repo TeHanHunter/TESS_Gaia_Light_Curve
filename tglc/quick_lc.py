@@ -586,7 +586,7 @@ if __name__ == '__main__':
     # t_new[idx].write('PSCompPars_2024.12.07_14.30.50_new_addition.csv', overwrite=True)
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2025.02.18_10.38.34.csv'), delimiter=',', header_start=0)
     tics = [int(s[4:]) for s in t['tic_id']]
-    dir = '/home/tehan/data/cosmos/tdv_odd_kepler/'
+    dir = '/home/tehan/data/cosmos/tdv_even_kepler/'
     get_tglc_lc(tics=tics, method='search', server=2, directory=dir, prior=None)
     tic_sector = sort_sectors(t, dir=dir)
     np.savetxt(f'{dir}tic_sector.csv', tic_sector, fmt='%s', delimiter=',')
