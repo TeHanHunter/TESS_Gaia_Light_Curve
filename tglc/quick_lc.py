@@ -156,7 +156,7 @@ def timebin(time, meas, meas_err, binsize):
 def star_spliter(server=1,  # or 2
                  tics=None, local_directory=None):
     # for i in range(server, 56, 2):
-    for i in [15,41]:
+    for i in [53,55]:
         with Pool(16) as p:
             p.map(partial(search_stars, sector=i, tics=tics, local_directory=local_directory), range(16))
     return
