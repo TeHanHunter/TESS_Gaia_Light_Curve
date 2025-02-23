@@ -216,7 +216,7 @@ def figure_2_collect_result(folder='/home/tehan/Downloads/Data/', ):
     tglc_color = palette[3]
     qlp_color = palette[2]
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -641,6 +641,7 @@ def figure_4(folder='/Users/tehan/Documents/TGLC/', ):
 def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     palette = sns.color_palette('colorblind')
     g_color = palette[7]
+    k_color = palette[0]
     ng_color = palette[3]
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
@@ -648,11 +649,39 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
     # ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
+
+    difference_kepler = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
+    d_tglc = difference_kepler[np.where(difference_kepler['rhat'] < 1.01)]
+    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # print(len(d_tglc))
+    # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+
+    contamrt_ground = []
+    for i in range(len(d_tglc)):
+        star_sector = d_tglc['Star_sector'][i]
+        difference_tglc.add_row(d_tglc[i])
+    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
+    diff_tglc_ground = diff_tglc
+    difference_tglc_ground = difference_tglc
+    print(np.sort(diff_tglc))
+    print(difference_tglc[np.argsort(diff_tglc)])
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 51),
+            weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+            color=k_color, alpha=0.8, edgecolor=None, zorder=3)
+    # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
+    ax.scatter(iw_mean_tglc, 10, marker='v', color=k_color, edgecolors='k', linewidths=0.7, s=50,
+               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} lcs of ? planets)')
+    ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                elinewidth=1, capsize=3, zorder=4, )
+
+
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
-    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
@@ -704,7 +733,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
                zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
-                elinewidth=1, capsize=3, zorder=2, )
+                elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
     # ax.errorbar(iw_mean_qlp, 1.6, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
@@ -724,7 +753,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
-    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
@@ -786,7 +815,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
                zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
-                elinewidth=1, capsize=3, zorder=2, )
+                elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
@@ -797,11 +826,12 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax.legend(loc='upper left')
     # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
     plt.xlim(-0.3, 0.3)
+    plt.ylim(0,15)
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
     # plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
-    plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
+    # plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
     # print(len(ground)+len(no_ground))
@@ -2512,11 +2542,11 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
     # figure_density_dist(recalculate=True)
     # figure_4_tglc_contamrt_trend(recalculate=True)
