@@ -92,7 +92,7 @@ def combine_contamrt():
 def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratror', r1=0.01, r2=0.4, cmap='Tmag',
                             pipeline='TGLC'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2025.02.18_10.38.34.csv'))
     # t = ascii.read('/home/tehan/PycharmProjects/TESS_Gaia_Light_Curve/tglc/PSCompPars_2024.02.05_22.52.50.csv')
     tics = [int(s[4:]) for s in t['tic_id']]
 
@@ -132,7 +132,7 @@ def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratr
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
-    t_.write(f'{folder}deviation_{pipeline}_2024.dat', format='ascii.csv')
+    t_.write(f'{folder}deviation_{pipeline}_2024_kepler.dat', format='ascii.csv')
     print('missing stars:', missed_stars)
     # colormap = cm.viridis
     # norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
@@ -2512,13 +2512,13 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
-    figure_density_dist(recalculate=True)
+    # figure_density_dist(recalculate=True)
     # figure_4_tglc_contamrt_trend(recalculate=True)
     # figure_5(type='phase-fold')
     # figure_9(recalculate=True)
