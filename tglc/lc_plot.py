@@ -820,29 +820,29 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #               zorder=3, label='QLP')
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
-    ax.vlines(0, ymin=0, ymax=200, color='k', ls='dashed', lw=1, zorder=3)
+    ax.vlines(0, ymin=0, ymax=150, color='k', ls='dashed', lw=1, zorder=3)
     ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax.set_ylabel('Error Weighted Counts')
     ax.legend(loc='upper left')
     # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
     plt.xlim(-0.3, 0.3)
-    plt.ylim(0,15)
+    # plt.ylim(0,15)
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
     # plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
-    # plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground_TGLC.pdf'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'ror_g_ng_kepler.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
     # print(len(ground)+len(no_ground))
     tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_ground['Star_sector']]
     # # print(str() in tics)
     # print(set(ground) - set(tics))
-    print(len(set(tics)))
+    print(list(set(tics)))
     tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_no_ground['Star_sector']]
     # # print(str(89020549) in tics)
     # print(set(no_ground) - set(tics))
-    print(len(set(tics)))
+    print(list(set(tics)))
     return difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground
 
 
