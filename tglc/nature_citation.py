@@ -75,6 +75,7 @@ def format_author_list(authors):
 
 def process_bib_entries(entries, start_num):
     processed = []
+    used_name = set()
     for entry in entries:
         authors = [parse_author(a) for a in entry.get('author', '').split(' and ')]
         formatted_authors = format_author_list(authors)
@@ -84,6 +85,13 @@ def process_bib_entries(entries, start_num):
         pages = entry.get('pages', entry.get('eid', ''))
         year = entry.get('year', '')
         key = f"{authors[0][0]}{year}" if authors else f"Unknown{year}"
+        suffix = ''
+        while key + suffix in used_name:
+            if not suffix:
+                suffix = 'b'  # Start with 'b'
+            else:
+                suffix = chr(ord(suffix) + 1)  # Move to next letter
+        key += suffix
         ID = entry.get('ID', '')
         processed.append({
             'authors': formatted_authors,
@@ -95,6 +103,8 @@ def process_bib_entries(entries, start_num):
             'key': key,
             'ID': ID
         })
+        used_name.add(key)
+
     entry_lines = []
     ref_lines = []
     convert = {}
