@@ -2686,10 +2686,11 @@ def get_MAD(i, files=None):
             aper_flux = aper_flux[~np.isnan(aper_flux)]
             MAD_aper = np.median(np.abs(np.diff(aper_flux)))
             aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
+            return tic, aper_precision
         except:
-            pass
+            return None, None
+
     # np.save('/pdo/users/tehan/sector0056/mad_tglc_30min.npy', np.vstack((tic, aper_precision)))
-    return tic, aper_precision
 
 
 def get_MAD_tglc_v_spoc(i, files=None):
