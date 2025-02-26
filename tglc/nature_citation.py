@@ -6,7 +6,6 @@ from bibtexparser.bparser import BibTexParser
 input_bib = "g_ng_citation.bib"
 output_entries = "entries.tex"
 output_refs = "references.tex"
-convert_refs = 'convert.txt'
 start_num = 10
 # ===================================
 
@@ -20,6 +19,9 @@ journal_mapping = {
     'aap': 'Astronomy & Astrophysics',
     'apj': 'The Astrophysical Journal',
     'pasp': 'Publications of the Astronomical Society of the Pacific',
+    'nat': 'Nature',
+    'pasa': 'Publications of the Astronomical Society of Australia',
+    'pasj': 'Publications of the Astronomical Society of Japan'
     # Add more mappings as needed
 }
 

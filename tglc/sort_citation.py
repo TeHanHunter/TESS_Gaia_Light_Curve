@@ -6,7 +6,6 @@ from collections import OrderedDict
 input_table = 'new_input_table.tex'
 output_entries = "entries.tex"  # Existing entries file (to reorder)
 output_refs = "references.tex"  # Existing references file (to reorder)
-convert_refs = 'convert.txt'
 
 tic_list_1 = [156648452, 454248975, 445751830, 86263325, 194795551, 193641523, 394050135, 409794137, 243641947,
               470171739, 306648160, 460984940, 33595516, 458419328, 147977348, 16005254, 280655495, 375506058,
@@ -52,6 +51,7 @@ def parse_table(input_table, convert):
     # Regex to find TIC and citation pairs
     pattern = r'(\d+) & (.*?) & (\\cite\{TIC_\d+\})'
     matches = re.findall(pattern, content)
+    print(len(matches))
     # Group into entries and track citation order
     entries = []
     citation_order = OrderedDict()  # Track first appearance of TIC
@@ -62,7 +62,8 @@ def parse_table(input_table, convert):
         if tic not in citation_order:
             citation_order[key] = tic  # Store TIC for sorting later
         entries.append({'tic': tic, 'pipeline': pipeline, 'citation': citation, 'key': key})
-
+    print(len(entries))
+    print(len(citation_order))
     return entries, citation_order
 
 
@@ -74,7 +75,13 @@ def split_and_sort_tables(entries, tic_list_1, tic_list_2):
     # Sort each table by TIC
     table1_sorted = sorted(table1_entries, key=lambda x: x['tic'])
     table2_sorted = sorted(table2_entries, key=lambda x: x['tic'])
+    existing_tics = {e['tic'] for e in entries}
+    # Find missing TICs
+    # missing_from_list_1 = [tic for tic in tic_list_1 if tic not in existing_tics]
+    # missing_from_list_2 = [tic for tic in tic_list_2 if tic not in existing_tics]
 
+    # print("Missing TICs from list 1:", missing_from_list_1)
+    # print("Missing TICs from list 2:", missing_from_list_2)
     return table1_sorted, table2_sorted
 
 
@@ -87,38 +94,43 @@ def reorder_citations(entries_file, refs_file, citation_order):
 
     # Extract keys from entries and references
     entry_dict = {}
+    seen = set()
     for line in entries:
-        match = re.search(r'\\noindent\s+\d+\.\s+([A-Za-z]+),\s+[A-Z].*?\(\d{4}\)', line)
+        match = re.search(r'\\noindent\s+\d+\.\s+([\w\s-]+),\s+[A-Z].*?\(\d{4}\)', line)
         if match:
             last_name = match.group(1)
             year = re.search(r'\((\d{4})\)', line).group(1)
             key = f"{last_name}{year}"
+            if key in seen:
+                key = key + 'b'
             entry_dict[key] = line
-    print(entry_dict)
+            seen.add(key)
+        else:
+            print(line)
+    # print(len(refs))
     ref_dict = {}
     for line in refs:
         key_match = re.search(r'\\reference\{(.*?)\}', line)
         if key_match:
             key = key_match.group(1)
             ref_dict[key] = line
-    print(ref_dict)
+    # print(len(ref_dict))
 
     # Sort based on citation_order (sorted TIC lists)
     sorted_entries = []
     sorted_refs = []
     seen = set()
     start = 100
+    # print(len(citation_order))
     for key in citation_order:
         if key in entry_dict and key not in seen:
-            match = re.search(r'\\noindent\s+(\d+)\.\s+[A-Za-z]+,\s+[A-Z].*?\(\d{4}\)', entry_dict[key])
+            match = re.search(r'\\noindent\s+(\d+)\.\s+[\w\s-]+,\s+[A-Z].*?\(\d{4}\)', entry_dict[key])
             sorted_entries.append(entry_dict[key].replace(f'{match.group(1)}.', f'{start}.'))
             seen.add(key)
             sorted_refs.append(ref_dict[key].replace(f'^{match.group(1)}', '^{' + f'{start}' + '}'))
             sorted_refs.append(ref_dict[f"{key}-r"].replace('{' + f'{match.group(1)}', '{' + f'{start}'))
             start +=1
 
-    print(sorted_entries)
-    print(sorted_refs)
     # Write reordered files
     with open('entries_sorted.tex', 'w') as f:
         f.writelines(sorted_entries)
@@ -183,7 +195,7 @@ if __name__ == "__main__":
         convert = json.load(file)
     # Step 1: Parse input table
     entries, citation_order = parse_table(input_table, convert)
-    print(citation_order)
+    # print(entries)
     # Step 2: Split and sort entries
     table1, table2 = split_and_sort_tables(entries, tic_list_1, tic_list_2)
 

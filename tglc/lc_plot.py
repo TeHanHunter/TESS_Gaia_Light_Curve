@@ -649,8 +649,9 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
     # ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-
     difference_kepler = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
+    print(len(difference_kepler))
+
     d_tglc = difference_kepler[np.where(difference_kepler['rhat'] < 1.01)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     # print(len(d_tglc))
@@ -838,11 +839,11 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_ground['Star_sector']]
     # # print(str() in tics)
     # print(set(ground) - set(tics))
-    print(list(set(tics)))
+    print(len(set(tics)))
     tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_no_ground['Star_sector']]
     # # print(str(89020549) in tics)
     # print(set(no_ground) - set(tics))
-    print(list(set(tics)))
+    print(len(set(tics)))
     return difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground
 
 
