@@ -75,7 +75,7 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
     plt.savefig(f'{local_directory}log/epsf_sector_{sector}_{camccd}.png', bbox_inches='tight', dpi=300)
 
 
-def convert_tic_to_gaia(tic_ids):
+def convert_tic_to_gaia(tic_ids, gaiadr3):
     """
     Convert a list of TIC IDs to Gaia DR3 designations.
 
@@ -88,10 +88,10 @@ def convert_tic_to_gaia(tic_ids):
     gaia_results = []
     # gaia_designations = []
 
-    for tic_id in tqdm(tic_ids):
+    for i, tic_id in tqdm(enumerate(tic_ids)):
         try:
             catalog_data = Catalogs.query_criteria(catalog="TIC", ID=tic_id)
-            gaia_id = catalog_data[0]["GAIA"]
+            gaia_id = gaiadr3[i]
             ra = catalog_data[0]["ra"]
             dec = catalog_data[0]["dec"]
             gaia_results.append((tic_id, gaia_id, ra, dec))
@@ -100,6 +100,23 @@ def convert_tic_to_gaia(tic_ids):
 
     # Convert results to an astropy Table
     table = Table(rows=gaia_results, names=('TIC', 'designation', 'ra', 'dec'))
+    return table
+
+def gaiadr3_table(gaiadr3, ra, dec):
+    gaia_results = []
+    # gaia_designations = []
+
+    for i, gaia in tqdm(enumerate(gaiadr3)):
+        try:
+            gaia_id = gaia.split(' ')[-1]
+            ra_ = ra[i]
+            dec_ = dec[i]
+            gaia_results.append((gaia_id, ra_, dec_))
+        except:
+            continue
+
+    # Convert results to an astropy Table
+    table = Table(rows=gaia_results, names=('designation', 'ra', 'dec'))
     return table
 
 
@@ -136,10 +153,10 @@ def process_star_results(result, table, file_names_odd, file_names_even):
                 file_names_odd.append(file_name)
 
 
-def get_file_name(tic_ids, max_retries=5, delay=10, dir='/Users/tehan/Downloads/'):
-    # table = convert_tic_to_gaia(tic_ids)
-    # table.write(f'{dir}Jeroen_keplerq9v3_tic_to_gaia.csv', format='csv', overwrite=True)
-    table = Table.read(f'{dir}Jeroen_keplerq9v3_tic_to_gaia.csv', format='csv')
+def get_file_name(gaiadr3, ra, dec, max_retries=5, delay=10, dir='/Users/tehan/Documents/TGLC/Jeroen/'):
+    table = gaiadr3_table(gaiadr3, ra, dec)
+    table.write(f'{dir}Jeroen_new_tic_to_gaia.csv', format='csv', overwrite=True)
+    table = Table.read(f'{dir}Jeroen_new_tic_to_gaia.csv', format='csv')
     file_names_odd = mp.Manager().list()
     file_names_even = mp.Manager().list()
 
@@ -152,18 +169,36 @@ def get_file_name(tic_ids, max_retries=5, delay=10, dir='/Users/tehan/Downloads/
     pool.close()
     pool.join()
     odd_table = Table([file_names_odd], names=('files',))
-    odd_table.write(f'{dir}Jeroen_keplerq9v3_odd_files.csv', format='csv', overwrite=True)
+    odd_table.write(f'{dir}Jeroen_new_odd_files.csv', format='csv', overwrite=True)
     even_table = Table([file_names_even], names=('files',))
-    even_table.write(f'{dir}Jeroen_keplerq9v3_even_files.csv', format='csv', overwrite=True)
+    even_table.write(f'{dir}Jeroen_new_even_files.csv', format='csv', overwrite=True)
 
     return list(file_names_odd), list(file_names_even)
 
 
 if __name__ == '__main__':
-    file_path = '/Users/tehan/Downloads/keplerq9v3_tess_crossmatch.csv'
-    table = Table.read(file_path)
-    file_names_odd, file_names_even = get_file_name(table['TIC'].tolist())
+    file_path = '/Users/tehan/Documents/TGLC/Jeroen/CEPS_Plachy_GaiaID.csv'
+    table1 = Table.read(file_path)
+    file_path = '/Users/tehan/Documents/TGLC/Jeroen/RRLS_Molnar_GaiaID.csv'
+    table2 = Table.read(file_path)
+    file_path = '/Users/tehan/Documents/TGLC/Jeroen/gaia_missing_tf.csv'
+    table3 = Table.read(file_path)
+    file_path = '/Users/tehan/Documents/TGLC/Jeroen/gaia_missing_A_M_hybrid.csv'
+    table4 = Table.read(file_path)
+
+    # tic_ids = table3['tic_id'].tolist() + table4['tic_id'].tolist()
+    # gaiadr3 = table3['dr3_source_id'].tolist() + table4['dr3_source_id'].tolist()
+    # print(len(tic_ids), len(gaiadr3))
+    # file_names_odd, file_names_even = get_file_name(tic_ids, gaiadr3)
+    gaiadr3 = table1['designation'].tolist() + table2['designation'].tolist()
+    ra = table1['ra'].tolist() + table2['ra'].tolist()
+    dec = table1['dec'].tolist() + table2['dec'].tolist()
+    print(len(gaiadr3))
+    file_names_odd, file_names_even = get_file_name(gaiadr3, ra, dec)
+
+
     # run cp_files next
+
 
     # file_path = '/home/tehan/data/cosmos/mallory/mdwarfs_s1.csv'
     # table = Table.read(file_path, format='csv', delimiter=',')
