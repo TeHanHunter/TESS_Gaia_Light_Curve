@@ -2543,11 +2543,11 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
     # figure_density_dist(recalculate=True)
     # figure_4_tglc_contamrt_trend(recalculate=True)
