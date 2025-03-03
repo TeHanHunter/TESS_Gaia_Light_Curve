@@ -355,7 +355,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
                              marker='.', ms=3, zorder=2)
                 time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
                                                            meas_err=np.array([err] * len(t)),
-                                                           binsize=1 * 3600 / 86400)
+                                                           binsize=1 * 600 / 86400)
                 plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
                              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
             else:
@@ -374,7 +374,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
     #              marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    plt.ylim(0.995, 1.005)
+    plt.ylim(0.95, 1.05)
     plt.title(title)
     # plt.xlim(mid_transit_tbjd % period / period - 0.1, mid_transit_tbjd % period / period + 0.1)
     # plt.ylim(0.9, 1.1)
@@ -633,7 +633,7 @@ if __name__ == '__main__':
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
 
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
+    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=3919169687804622336, detrend=True)
