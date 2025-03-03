@@ -668,7 +668,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     difference_tglc_ground = difference_tglc
     print(np.sort(diff_tglc))
     print(difference_tglc[np.argsort(diff_tglc)])
-    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 51),
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=k_color, alpha=0.8, edgecolor=None, zorder=3)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
@@ -727,7 +727,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
     print(np.sort(diff_tglc))
-    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 51),
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
@@ -809,7 +809,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
     print(np.sort(diff_tglc))
-    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 51),
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
@@ -2543,11 +2543,11 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
     # figure_density_dist(recalculate=True)
     # figure_4_tglc_contamrt_trend(recalculate=True)
