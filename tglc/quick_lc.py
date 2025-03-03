@@ -295,7 +295,8 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.close(fig)
 
 
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
+# newest
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, detrend=True):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
@@ -307,8 +308,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             if ymin is None and ymax is None:
-                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.01
-                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.01
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
             with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
@@ -327,10 +328,10 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                     np.nanmedian(
                         source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
                         axis=0))
-                fig = plt.figure(constrained_layout=False, figsize=(20, 12))
+                fig = plt.figure(constrained_layout=False, figsize=(15, 9))
                 gs = fig.add_gridspec(21, 10)
-                gs.update(wspace=0.03, hspace=0.1)
-                ax0 = fig.add_subplot(gs[:10, :3])
+                gs.update(wspace=0.05, hspace=0.15)
+                ax0 = fig.add_subplot(gs[:9, :3])
                 ax0.imshow(np.median(source.flux, axis=0), cmap='RdBu', vmin=-max_flux, vmax=max_flux, origin='lower')
                 ax0.set_xlabel('x pixel')
                 ax0.set_ylabel('y pixel')
@@ -393,13 +394,15 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                         ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
                         ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-
-                        _, trend = flatten(hdul[1].data['time'][q],
-                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
-                                           window_length=1, method='biweight', return_trend=True)
-                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
-                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
-                            hdul[0].data[:, j, k][q]) + 1
+                        if detrend:
+                            _, trend = flatten(hdul[1].data['time'][q],
+                                               hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
+                                               window_length=1, method='biweight', return_trend=True)
+                            cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                                hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
+                                hdul[0].data[:, j, k][q]) + 1
+                        else:
+                            cal_aper = (hdul[0].data[:, j, k][q]) / np.nanmedian(hdul[0].data[:, j, k][q])
                         if 1 <= j <= 3 and 1 <= k <= 3:
                             arrays.append(cal_aper)
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
@@ -426,13 +429,13 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 print(f"Interquartile Range (IQR): {iqr}")
                 std_dev = np.std(median_abs_diffs)
                 print(f"Standard Deviation: {std_dev}")
-                ax1 = fig.add_subplot(gs[:10, 4:7])
+                ax1 = fig.add_subplot(gs[:9, 3:6])
                 ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
                 ax1.set_box_aspect(1)
-                ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
-                ax1.set_xlabel('MAD between combinations of center 3*3 pixel fluxes')
+                # ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
+                ax1.set_xlabel('MAD between combinations of fluxes')
                 ax1.set_ylabel('Counts')
-                text_ax = fig.add_axes([0.71, 0.9, 0.3, 0.3])  # [left, bottom, width, height] in figure coordinates
+                text_ax = fig.add_axes([0.6, 0.95, 0.3, 0.3])  # [left, bottom, width, height] in figure coordinates
                 text_ax.axis('off')  # Turn off axis lines, ticks, etc.
                 text_ax.text(0., 0., f"Gaia DR3 {gaia_dr3} \n"
                                      f" ←← TESS SPOC FFI and TIC/Gaia stars with proper motions. \n"
@@ -441,7 +444,6 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                                      f" ↓  Fluxes of each pixels after contaminations are removed. \n"
                                      f"      The fluxes are normalized and detrended. The background \n"
                                      f"      color shows the pixel brightness after the decontamination. \n"
-                                     f"\n"
                                      f"How to interpret these plots: \n"
                                      f"     If the signals you are interested in (i.e. transits, \n"
                                      f"     eclipses, variable stars) show similar amplitudes in \n"
@@ -456,12 +458,13 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                                      f"Interquartile Range (IQR): {iqr:05f} \n"
                                      f"Standard Deviation: {std_dev:05f}", transform=text_ax.transAxes, ha='left',
                              va='top')
-                plt.subplots_adjust(top=.98, bottom=0.05, left=0.05, right=0.95)
+                plt.subplots_adjust(top=.97, bottom=0.06, left=0.05, right=0.95)
                 plt.savefig(
                     f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
-                    dpi=300)
+                    dpi=300,)
                 # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
                 #             dpi=600)
+                plt.close()
 
 def plot_epsf(local_directory=None):
     files = glob(f'{local_directory}epsf/*.npy')
