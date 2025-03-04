@@ -627,7 +627,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [86263325]
+    tics = [415399713]
     directory = f'/Users/tehan/Downloads/'
     # # # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
@@ -635,11 +635,11 @@ if __name__ == '__main__':
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=3300533043849517184)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=3919169687804622336, detrend=True)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=4.5445828, mid_transit_tbjd=2556.51669,
-               kind='cal_aper_flux')
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=4.5445828, mid_transit_tbjd=2556.51669,
+    #            kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
 
