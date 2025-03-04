@@ -664,17 +664,17 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
         difference_tglc.add_row(d_tglc[i])
     diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
-    diff_tglc_ground = diff_tglc
-    difference_tglc_ground = difference_tglc
+    diff_tglc_kelper = diff_tglc
+    difference_tglc_kelper = difference_tglc
     print(np.sort(diff_tglc))
     print(difference_tglc[np.argsort(diff_tglc)])
     ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=k_color, alpha=0.8, edgecolor=None, zorder=3)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
-    ax.scatter(iw_mean_tglc, 10, marker='v', color=k_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} lcs of ? planets)')
-    ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+    ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
+               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} lcs of 31 planets)')
+    ax.errorbar(iw_mean_tglc, 6.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
 
 
@@ -731,9 +731,9 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
-    ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
-    ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+    ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
+               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} lcs of 79 planets)')
+    ax.errorbar(iw_mean_tglc, 10.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
@@ -814,8 +814,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
-    ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} lcs of 216 planets)')
+    ax.errorbar(iw_mean_tglc, 7.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
@@ -825,7 +825,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax.set_ylabel('Error Weighted Counts')
     ax.legend(loc='upper left')
-    # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
+    ax.set_xticks([-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3],
+                  [f"{x * 100:.0f}%" for x in [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3]])
     plt.xlim(-0.3, 0.3)
     # plt.ylim(0,15)
     stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
@@ -836,6 +837,10 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     plt.show()
     # print(len(set(ground+no_ground)))
     # print(len(ground)+len(no_ground))
+    tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_kelper['Star_sector']]
+    # # print(str() in tics)
+    # print(set(ground) - set(tics))
+    print(len(set(tics)))
     tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_ground['Star_sector']]
     # # print(str() in tics)
     # print(set(ground) - set(tics))
