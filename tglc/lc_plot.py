@@ -643,7 +643,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     g_color = palette[7]
     k_color = palette[0]
     ng_color = palette[3]
-    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+    sns.set(rc={'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '0.8'})
     fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
@@ -673,7 +673,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             color=k_color, alpha=0.8, edgecolor=None, zorder=3)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} lcs of 31 planets)')
+               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
     ax.errorbar(iw_mean_tglc, 6.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
 
@@ -732,7 +732,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} lcs of 79 planets)')
+               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
     ax.errorbar(iw_mean_tglc, 10.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -814,7 +814,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} lcs of 216 planets)')
+               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} fits of 216 planets)')
     ax.errorbar(iw_mean_tglc, 7.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -823,7 +823,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #                elinewidth=1,capsize=3, zorder=2,)
     ax.vlines(0, ymin=0, ymax=150, color='k', ls='dashed', lw=1, zorder=3)
     ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
-    ax.set_ylabel('Error Weighted Counts')
+    ax.set_ylabel('Error weighted counts')
     ax.legend(loc='upper left')
     ax.set_xticks([-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3],
                   [f"{x * 100:.0f}%" for x in [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3]])
@@ -932,7 +932,7 @@ def figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/'):
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} lcs of 84 planets)')
+               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} fits of 84 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -1014,7 +1014,7 @@ def figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} lcs of 235 planets)')
+               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} fits of 235 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -1775,7 +1775,7 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     palette = sns.color_palette('colorblind')
     ng_color = palette[3]
     ng_corr_color = palette[2]
-    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+    sns.set(rc={'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '0.8'})
     fig, ax_ = plt.subplots(1, 2, sharex=True, figsize=(12, 5), gridspec_kw={'hspace': 0.01, 'wspace': 0.17})
@@ -1926,7 +1926,7 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[0].scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color,
                   label='TESS-influenced corrected')
     ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6,
-               alpha=0.5, )
+               alpha=0.8, )
     ### mass-radius ###
     ax[1].scatter(mass_g, r_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='TESS-free')
     ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=2, s=15, facecolors='none', edgecolors=ng_color,
@@ -1935,8 +1935,8 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
     ax[1].scatter(mass_ng, r_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color,
                   label='TESS-dependent corrected')
-    ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.5, )
-    ax[1].legend(loc=4, fontsize=10)
+    ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.8, )
+    ax[1].legend(loc=2, fontsize=10)
 
     ### water world ###
     r = np.linspace(1.24, 4, 100)
@@ -1944,10 +1944,10 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # ax[0].plot(mass, r, c=palette[0], zorder=4, label='Water world')
     ax[0].plot(mass, rho, c=palette[0], zorder=4, label='Water world', linewidth=2)
     ax[1].plot(mass, r, c=palette[0], zorder=4, label='Water world', linewidth=2)
-    ax[0].text(mass[-1] - 22, rho[-1] - 0.13, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=4, rotation=21)
-    ax[1].text(mass[-1] - 25, r[-1] - 0.12, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=4, rotation=22)
+    ax[0].text(mass[-1] - 22, rho[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
+               ha='center', va='center', zorder=4, rotation=23)
+    ax[1].text(mass[-1] - 25, r[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
+               ha='center', va='center', zorder=4, rotation=25)
     ### rocky core + H/He atmos ###
     mass = np.linspace(1, 30, 100)
     r, r1, r2, rho, rho1, rho2 = rogers_2023_rocky_core(mass)
@@ -1960,9 +1960,9 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=4, ls='--')
     ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=4, ls='--')
     ax[0].text(mass[0] + 0.95, rho[0] + 0.01, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=9)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=11)
     ax[1].text(mass[0] + 0.9, r[0] + 0.35, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=23)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=27)
 
     ### Earth-like ###
     mass = np.linspace(1, 30, 100)
@@ -1971,9 +1971,9 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[0].plot(mass, rho, c='r', zorder=4, label='Earth-like', linewidth=2)
     ax[1].plot(mass, r, c='r', zorder=4, label='Earth-like', linewidth=2)
     ax[0].text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=4, rotation=40)
+               va='center', zorder=4, rotation=45)
     ax[1].text(mass[-1] - 8, r[-1] - 0.35, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=4, rotation=21)
+               va='center', zorder=4, rotation=23)
     ### M-R relation ###
     # mass = np.linspace(2, 30, 100)
     # ax[0].plot(mass, mass / (0.80811874404 * mass ** 0.59)**3, ls='dotted', c='k')
@@ -1993,16 +1993,16 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[1].text(1, 1 * 1.1, 'Earth', color='k', fontsize=9, ha='center', va='center', zorder=4, rotation=0)
     # ax[0].scatter(0.107,0.714,facecolors='none', edgecolors='k', zorder=4, marker='o')
     # ax[0].text(0.107, 0.714, 'Mars', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
-    ax[0].scatter(95.2, 0.125, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[0].text(95.2 / 1.05, 0.125, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
-    ax[1].scatter(95.2, 9.45, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[1].text(95.2 / 1.05, 9.45, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].scatter(95.2, 0.125, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[0].text(95.2 / 1.05, 0.125, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    # ax[1].scatter(95.2, 9.45, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[1].text(95.2 / 1.05, 9.45, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     # ax[0].scatter(14.5,0.230,facecolors='none', edgecolors='k', zorder=4, marker='o')
     # ax[0].text(14.5/1.05, 0.230, 'Uranus', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
     ax[0].scatter(17.1, 0.297, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[0].text(17.1 * 1.05, 0.297, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
+    ax[0].text(17.1 * 1.08, 0.297, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
     ax[1].scatter(17.1, 3.88, facecolors='none', edgecolors='k', zorder=4, marker='o')
-    ax[1].text(17.1 * 1.05, 3.88, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
+    ax[1].text(17.1 * 1.08, 3.88, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
     #####
     ax[0].set_xscale('log')
     ax[1].set_xscale('log')
@@ -2023,8 +2023,8 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[1].set_xlabel(r'$M_{\text{p}} (\text{M}_{\oplus})$ ')
     ax[0].set_ylabel(r'$\rho_{\text{p}} (\rho_{\oplus})$ ')
     ax[1].set_ylabel(r'$R_{\text{p}} (R_{\oplus})$ ')
-    ax[0].text(0.1, 0.9, "b", transform=ax[0].transAxes, fontsize=12, color='k', fontweight='bold')
-    ax[1].text(0.1, 0.9, "a", transform=ax[1].transAxes, fontsize=12, color='k', fontweight='bold')
+    ax[0].text(-0.12, 1, "b", transform=ax[0].transAxes, fontsize=12, color='k', fontweight='bold')
+    ax[1].text(-0.12, 1, "a", transform=ax[1].transAxes, fontsize=12, color='k', fontweight='bold')
 
     plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
@@ -2071,7 +2071,7 @@ def figure_tsm(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     palette = sns.color_palette('colorblind')
     ng_color = palette[3]
     ng_corr_color = palette[2]
-    sns.set_style("ticks", {'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+    sns.set_style("ticks", {'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
                             'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                             'axes.facecolor': '1', 'grid.color': '0.'})
     # sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
@@ -2250,7 +2250,7 @@ def figure_tsm(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         elif tsm_ng[i] > 0:
             count += 1
     print(count)
-    ax.hlines(12, xmin=0, xmax=1.5, linestyles='dotted', color='k', label='follow-up cutoff')
+    ax.hlines(12, xmin=0, xmax=1.5, linestyles='dotted', color='k', label='Follow-up cutoff')
     ax.hlines(92, xmin=1.5, xmax=2.75, linestyles='dotted', color='k')
     ax.hlines(84, xmin=2.75, xmax=4, linestyles='dotted', color='k')
     ax.hlines(96, xmin=4, xmax=10, linestyles='dotted', color='k')
@@ -2548,11 +2548,13 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
+    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_mr_mrho(recalculate=False)
+    # figure_tsm(recalculate=True)
     # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
-    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/')
     # figure_density_dist(recalculate=True)
     # figure_4_tglc_contamrt_trend(recalculate=True)
