@@ -217,14 +217,12 @@ def timebin(time, meas, meas_err, binsize):
     time = time[ind_order]
     meas = meas[ind_order]
     meas_err = meas_err[ind_order]
-    print(meas_err)
-
     ct = 0
     while ct < len(time):
         ind = np.where((time >= time[ct]) & (time < time[ct] + binsize))[0]
         num = len(ind)
         wt = (1. / meas_err[ind]) ** 2.  # weights based in errors
-        wt = wt / np.nansum(wt)  # normalized weights
+        wt = wt / np.sum(wt)  # normalized weights
         if ct == 0:
             time_out = [np.sum(wt * time[ind])]
             meas_out = [np.sum(wt * meas[ind])]
@@ -318,10 +316,9 @@ def phasebin_centered(time, meas, meas_err, period, t0, binsize_days=None, nbins
 
 def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
-    # files = np.array(files)[np.array([3,4,0,1,6,2,5])]
+    files = np.array(files)[np.array([3,4,0,1,6,2,5])]
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
-
-    fig = plt.figure(figsize=(13, 5))
+    fig = plt.figure(figsize=(8, 4))
     t_all = np.array([])
     f_all = np.array([])
     f_err_all = np.array([])
@@ -334,30 +331,29 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
             # if hdul[0].header['sector'] == 15:
             #     q = [a and b for a, b in zip(q, list(hdul[1].data['time'] < 1736))]
             if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
-                # if hdul[0].header["SECTOR"] <= 26:
-                t = hdul[1].data['time'][q]
-                f = hdul[1].data[kind][q]
-                # elif hdul[0].header["SECTOR"] <= 55:
-                #     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
-                #     f = np.mean(
-                #         hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 3 * 3].reshape(-1, 3), axis=1)
-                # else:
-                #     t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                #     f = np.mean(
-                #         hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 9 * 9].reshape(-1, 9), axis=1)
+                if hdul[0].header["SECTOR"] <= 26:
+                    t = hdul[1].data['time'][q]
+                    f = hdul[1].data[kind][q]
+                elif hdul[0].header["SECTOR"] <= 55:
+                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
+                    f = np.mean(
+                        hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 3 * 3].reshape(-1, 3), axis=1)
+                else:
+                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
+                    f = np.mean(
+                        hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 9 * 9].reshape(-1, 9), axis=1)
                 t_all = np.append(t_all, t)
                 f_all = np.append(f_all, f)
                 f_err_all = np.append(f_err_all, np.array([hdul[1].header['CAPE_ERR']] * len(t)))
-                err = np.std(f)
 
                 # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[kind], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, err, c=f'C{j}', ls='', elinewidth=0.1,
-                             marker='.', ms=3, zorder=2, label=f'Sector {hdul[0].header["sector"]}')
-                # time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
-                #                                            meas_err=np.array([err] * len(t)),
-                #                                            binsize=1 * 600 / 86400)
-                # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
-                #              marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
+                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=0.1,
+                             marker='.', ms=3, zorder=2)
+                time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
+                                                           meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
+                                                           binsize=600 / 86400)
+                plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
+                             marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {kind}'
@@ -374,9 +370,10 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
     #              marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    # plt.ylim(0.95, 1.05)
+    plt.ylim(0.99, 1.01)
+    # plt.xlim(0.3, 0.43)
     plt.title(title)
-    # plt.xlim(mid_transit_tbjd % period / period - 0.1, mid_transit_tbjd % period / period + 0.1)
+    # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
@@ -409,7 +406,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.close(fig)
 
 # newest
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, detrend=True):
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
@@ -507,15 +504,13 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                         ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
                         ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        if detrend:
-                            _, trend = flatten(hdul[1].data['time'][q],
-                                               hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
-                                               window_length=1, method='biweight', return_trend=True)
-                            cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
-                                hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
-                                hdul[0].data[:, j, k][q]) + 1
-                        else:
-                            cal_aper = (hdul[0].data[:, j, k][q]) / np.nanmedian(hdul[0].data[:, j, k][q])
+
+                        _, trend = flatten(hdul[1].data['time'][q],
+                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
+                                           window_length=1, method='biweight', return_trend=True)
+                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
+                            hdul[0].data[:, j, k][q]) + 1
                         if 1 <= j <= 3 and 1 <= k <= 3:
                             arrays.append(cal_aper)
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
@@ -618,7 +613,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
-            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=False, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
@@ -627,18 +622,18 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [86263325]
-    directory = f'/Users/tehan/Downloads/'
+    tics = [3664898]
+    directory = f'/Users/tehan/Documents/TGLC/'
     # # # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=3919169687804622336)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=3919169687804622336, detrend=True)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=4.5445828, mid_transit_tbjd=2556.51669,
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.4587118084227911, mid_transit_tbjd=1,
                kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
