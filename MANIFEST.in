@@ -1,1 +1,2 @@
 include tglc/background_mask/*.fits
+include tglc/ephemeris_data/*

@@ -27,7 +27,7 @@ controller = ThreadpoolController()
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None):
+            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None, ffi='TICA'):
     '''
     Generate light curve for a single target.
 
@@ -68,28 +68,28 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         print(f'Only processing Sector {sector}.')
         print('Downloading Data from MAST and Gaia ...')
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
-                         limit_mag=limit_mag, transient=transient)  # sector
+                         limit_mag=limit_mag, transient=transient, ffi=ffi)  # sector
         source.select_sector(sector=sector)
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     elif first_sector_only:
         print(f'Only processing the first sector the target is observed in: Sector {sector_table["sector"][0]}.')
         print('Downloading Data from MAST and Gaia ...')
         sector = sector_table["sector"][0]
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
-                         limit_mag=limit_mag, transient=transient)  # sector
+                         limit_mag=limit_mag, transient=transient, ffi=ffi)  # sector
         source.select_sector(sector=source.sector_table['sector'][0])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     elif last_sector_only:
         print(f'Only processing the last sector the target is observed in: Sector {sector_table["sector"][-1]}.')
         print('Downloading Data from MAST and Gaia ...')
         sector = sector_table["sector"][-1]
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
-                         limit_mag=limit_mag, transient=transient)  # sector
+                         limit_mag=limit_mag, transient=transient, ffi=ffi)  # sector
         source.select_sector(sector=source.sector_table['sector'][-1])
         epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     elif sector == None:
         print(f'Processing all available sectors of the target.')
         print('Downloading Data from MAST and Gaia ...')
@@ -98,20 +98,20 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             print(f'Downloading Sector {sector_table["sector"][j]}.')
             source = ffi_cut(target=target, size=size, local_directory=local_directory,
                              sector=sector_table['sector'][j],
-                             limit_mag=limit_mag, transient=transient)
+                             limit_mag=limit_mag, transient=transient, ffi=ffi)
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     else:
         print(
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
             f'large, the download might cause a timeout error from MAST.')
         print('Downloading Data from MAST and Gaia ...')
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
-                         limit_mag=limit_mag, transient=transient)  # sector
+                         limit_mag=limit_mag, transient=transient, ffi=ffi)  # sector
         for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior)
+                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
 
 
 def search_stars(i, sector=1, tics=None, local_directory=None):
@@ -499,7 +499,7 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.show()
 
 
-def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None):
+def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None, ffi='TICA'):
     if method == 'query':
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'
@@ -507,17 +507,17 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
-                    transient=None)
+                    transient=None, ffi=ffi)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
 
 if __name__ == '__main__':
-    tics = [16005254]
+    tics = [16005254]  # can be a list of TIC IDs
     directory = f'/Users/tehan/Downloads/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, directory=directory, ffi='TICA')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
