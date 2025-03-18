@@ -220,7 +220,7 @@ def figure_2_collect_result(folder='/home/tehan/Downloads/Data/', ):
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
-    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.1)]
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
@@ -231,7 +231,7 @@ def figure_2_collect_result(folder='/home/tehan/Downloads/Data/', ):
         difference_tglc.add_row(d_tglc[i])
         # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     # difference_qlp.write(f'deviation_QLP_common.dat', format='ascii.csv')
-    difference_tglc.write(f'{folder}deviation_TGLC_2024_rhat_limited.dat', format='ascii.csv', overwrite=True)
+    difference_tglc.write(f'{folder}deviation_TGLC_kepler_rhat_limited.dat', format='ascii.csv', overwrite=True)
     print(len(difference_tglc))
     # print(len(difference_qlp))
     # average 491 lcs
@@ -649,33 +649,6 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
     # ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_kepler = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
-    print(len(difference_kepler))
-
-    d_tglc = difference_kepler[np.where(difference_kepler['rhat'] < 1.01)]
-    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
-    # print(len(d_tglc))
-    # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
-    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-
-    contamrt_ground = []
-    for i in range(len(d_tglc)):
-        star_sector = d_tglc['Star_sector'][i]
-        difference_tglc.add_row(d_tglc[i])
-    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
-    iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
-    diff_tglc_kelper = diff_tglc
-    difference_tglc_kelper = difference_tglc
-    print(np.sort(diff_tglc))
-    print(difference_tglc[np.argsort(diff_tglc)])
-    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
-            weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-            color=k_color, alpha=0.8, edgecolor=None, zorder=3)
-    # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
-    ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
-    ax.errorbar(iw_mean_tglc, 6.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
-                elinewidth=1, capsize=3, zorder=4, )
 
 
     difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
@@ -817,10 +790,40 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} fits of 216 planets)')
     ax.errorbar(iw_mean_tglc, 7.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
+
+    difference_kepler = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
+    print(len(difference_kepler))
+
+    d_tglc = difference_kepler[np.where(difference_kepler['rhat'] < 1.01)]
+    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # print(len(d_tglc))
+    # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+
+    contamrt_ground = []
+    for i in range(len(d_tglc)):
+        star_sector = d_tglc['Star_sector'][i]
+        difference_tglc.add_row(d_tglc[i])
+    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
+    diff_tglc_kelper = diff_tglc
+    difference_tglc_kelper = difference_tglc
+    print(np.sort(diff_tglc))
+    print(difference_tglc[np.argsort(diff_tglc)])
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+            weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+            color=k_color, alpha=0.8, edgecolor=None, zorder=3)
+    # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
+    ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
+               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
+    ax.errorbar(iw_mean_tglc, 6.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                elinewidth=1, capsize=3, zorder=4, )
+
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
     #               zorder=3, label='QLP')
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
+
     ax.vlines(0, ymin=0, ymax=150, color='k', ls='dashed', lw=1, zorder=3)
     ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax.set_ylabel('Error weighted counts')
@@ -1918,62 +1921,62 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
     # print(density_weight)
     ### mass-density ###
-    ax[0].scatter(mass_g, density_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='Ground-based')
-    ax[0].scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=2, s=15, facecolors='none', edgecolors=ng_color,
+    ax[0].scatter(mass_g, density_g, alpha=0.5, marker='o', zorder=2, s=10, color=palette[7], label='Ground-based')
+    ax[0].scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color,
                   label='TESS-influenced')
     # for j in range(len(mass_ng)):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
-    ax[0].scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color,
+    ax[0].scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=4, s=15, color=ng_corr_color,
                   label='TESS-influenced corrected')
-    ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6,
+    ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=2, marker='', linewidth=0.6,
                alpha=0.8, )
     ### mass-radius ###
-    ax[1].scatter(mass_g, r_g, alpha=0.5, marker='o', zorder=1, s=10, color=palette[7], label='TESS-free')
-    ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=2, s=15, facecolors='none', edgecolors=ng_color,
+    ax[1].scatter(mass_g, r_g, alpha=0.5, marker='o', zorder=2, s=10, color=palette[7], label='TESS-free')
+    ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color,
                   label='TESS-dependent')
     # for j in range(len(mass_ng)):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
-    ax[1].scatter(mass_ng, r_ng_corr, alpha=0.9, marker='o', zorder=3, s=15, color=ng_corr_color,
+    ax[1].scatter(mass_ng, r_ng_corr, alpha=0.9, marker='o', zorder=4, s=15, color=ng_corr_color,
                   label='TESS-dependent corrected')
-    ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=1, marker='', linewidth=0.6, alpha=0.8, )
+    ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=2, marker='', linewidth=0.6, alpha=0.8, )
     ax[1].legend(loc=2, fontsize=10)
 
     ### water world ###
     r = np.linspace(1.24, 4, 100)
     mass, rho = zeng_2019_water_world(r)
     # ax[0].plot(mass, r, c=palette[0], zorder=4, label='Water world')
-    ax[0].plot(mass, rho, c=palette[0], zorder=4, label='Water world', linewidth=2)
-    ax[1].plot(mass, r, c=palette[0], zorder=4, label='Water world', linewidth=2)
+    ax[0].plot(mass, rho, c=palette[0], zorder=1, label='Water world', linewidth=2)
+    ax[1].plot(mass, r, c=palette[0], zorder=1, label='Water world', linewidth=2)
     ax[0].text(mass[-1] - 22, rho[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=4, rotation=23)
+               ha='center', va='center', zorder=1, rotation=23)
     ax[1].text(mass[-1] - 25, r[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=4, rotation=25)
+               ha='center', va='center', zorder=1, rotation=25)
     ### rocky core + H/He atmos ###
     mass = np.linspace(1, 30, 100)
     r, r1, r2, rho, rho1, rho2 = rogers_2023_rocky_core(mass)
     # ax[0].plot(mass, r, c=sns.color_palette('muted')[5], zorder=4, label='Rocky core with H/He atmosphere')
-    ax[0].plot(mass, rho, c=sns.color_palette('muted')[5], zorder=4, label='Rocky core with H/He atmosphere',
+    ax[0].plot(mass, rho, c=sns.color_palette('muted')[5], zorder=1, label='Rocky core with H/He atmosphere',
                linewidth=2)
-    ax[0].plot(mass, rho1, c=sns.color_palette('muted')[5], zorder=4, ls='--')
-    ax[0].plot(mass, rho2, c=sns.color_palette('muted')[5], zorder=4, ls='--')
-    ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=4, label='Rocky core with H/He atmosphere', linewidth=2)
-    ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=4, ls='--')
-    ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=4, ls='--')
+    ax[0].plot(mass, rho1, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[0].plot(mass, rho2, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=1, label='Rocky core with H/He atmosphere', linewidth=2)
+    ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=1, ls='--')
     ax[0].text(mass[0] + 0.95, rho[0] + 0.01, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=11)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=1, rotation=11)
     ax[1].text(mass[0] + 0.9, r[0] + 0.35, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=4, rotation=27)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=1, rotation=27)
 
     ### Earth-like ###
     mass = np.linspace(1, 30, 100)
     rho = owen_2017_earth_core(mass)
     r = (rho / mass) ** (-1 / 3)
-    ax[0].plot(mass, rho, c='r', zorder=4, label='Earth-like', linewidth=2)
-    ax[1].plot(mass, r, c='r', zorder=4, label='Earth-like', linewidth=2)
+    ax[0].plot(mass, rho, c='r', zorder=1, label='Earth-like', linewidth=2)
+    ax[1].plot(mass, r, c='r', zorder=1, label='Earth-like', linewidth=2)
     ax[0].text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=4, rotation=45)
+               va='center', zorder=1, rotation=45)
     ax[1].text(mass[-1] - 8, r[-1] - 0.35, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=4, rotation=23)
+               va='center', zorder=1, rotation=23)
     ### M-R relation ###
     # mass = np.linspace(2, 30, 100)
     # ax[0].plot(mass, mass / (0.80811874404 * mass ** 0.59)**3, ls='dotted', c='k')
@@ -2548,8 +2551,8 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
-    figure_mr_mrho(recalculate=False)
+    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    # figure_mr_mrho(recalculate=False)
     # figure_tsm(recalculate=True)
     # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')

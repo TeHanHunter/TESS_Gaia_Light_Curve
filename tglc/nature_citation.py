@@ -6,7 +6,7 @@ from bibtexparser.bparser import BibTexParser
 input_bib = "g_ng_citation.bib"
 output_entries = "entries.tex"
 output_refs = "references.tex"
-start_num = 10
+start_num = 1
 # ===================================
 
 # Expanded journal name mapping (update/add entries here)

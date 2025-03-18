@@ -40,7 +40,10 @@ tic_list_2 = [428699140, 157698565, 140691463, 271478281, 332558858, 126606859, 
               158002130, 153065527, 456862677, 389900760, 4672985, 339672028, 176956893, 142381532, 219041246,
               266980320, 260004324, 288735205, 158241252, 237104103, 73540072, 159418353, 159781361, 204650483,
               321857016, 343628284, 350618622, 436873727]
-
+tic_list_3 = [27916356, 137683938, 405717754, 271354351, 123495874, 268159158, 123233041, 122596693,
+              27774415, 164786087, 159098316, 268924036, 158388163, 138430864, 164892194, 272366748,
+              273874849, 137899948, 158170594, 399794420, 63452790, 378085713, 122441491, 137903329,
+              299220166, 271042217, 269269546, 171974763, 27318774, 159725995, 27990610]
 
 # ===================================
 def parse_table(input_table, convert):
@@ -67,14 +70,15 @@ def parse_table(input_table, convert):
     return entries, citation_order
 
 
-def split_and_sort_tables(entries, tic_list_1, tic_list_2):
+def split_and_sort_tables(entries, tic_list_1, tic_list_2, tic_list3):
     # Split entries into two groups based on TIC lists
     table1_entries = [e for e in entries if e['tic'] in tic_list_1]
     table2_entries = [e for e in entries if e['tic'] in tic_list_2]
-
+    table3_entries = [e for e in entries if e['tic'] in tic_list_3]
     # Sort each table by TIC
     table1_sorted = sorted(table1_entries, key=lambda x: x['tic'])
     table2_sorted = sorted(table2_entries, key=lambda x: x['tic'])
+    table3_sorted = sorted(table3_entries, key=lambda x: x['tic'])
     existing_tics = {e['tic'] for e in entries}
     # Find missing TICs
     # missing_from_list_1 = [tic for tic in tic_list_1 if tic not in existing_tics]
@@ -82,7 +86,7 @@ def split_and_sort_tables(entries, tic_list_1, tic_list_2):
 
     # print("Missing TICs from list 1:", missing_from_list_1)
     # print("Missing TICs from list 2:", missing_from_list_2)
-    return table1_sorted, table2_sorted
+    return table1_sorted, table2_sorted, table3_sorted
 
 
 def reorder_citations(entries_file, refs_file, citation_order):
@@ -120,7 +124,7 @@ def reorder_citations(entries_file, refs_file, citation_order):
     sorted_entries = []
     sorted_refs = []
     seen = set()
-    start = 100
+    start = 26
     # print(len(citation_order))
     for key in citation_order:
         if key in entry_dict and key not in seen:
@@ -138,17 +142,17 @@ def reorder_citations(entries_file, refs_file, citation_order):
         f.writelines(sorted_refs)
 
 
-def generate_latex_tables(table1, table2, convert):
+def generate_latex_tables(table1, table2, table3, convert):
     # Generate LaTeX code for Table 1
     table1_tex = [
         r'\begin{longtable}{llrllr}',
         r'\caption{Table 1: TICs in List 1} \label{tab:table1} \\',
         r'\hline',
-        r'TIC & Pipeline & Literature & TIC & Pipeline & Literature \\',
+        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Pipeline & Literature & TIC & Pipeline & Literature \\',
+        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
@@ -167,11 +171,11 @@ def generate_latex_tables(table1, table2, convert):
         r'\begin{longtable}{llrllr}',
         r'\caption{Table 1: TICs in List 1} \label{tab:table1} \\',
         r'\hline',
-        r'TIC & Pipeline & Literature & TIC & Pipeline & Literature \\',
+        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Pipeline & Literature & TIC & Pipeline & Literature \\',
+        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
@@ -186,7 +190,29 @@ def generate_latex_tables(table1, table2, convert):
             line.append(f"{entry['tic']} & {entry['pipeline']} & {citation}")
         table2_tex.append(' & '.join(line) + r' \\')
 
-    return '\n'.join(table1_tex), '\n'.join(table2_tex)
+    table3_tex = [
+        r'\begin{longtable}{lrlr}',
+        r'\caption{Table 1: TICs in List 1} \label{tab:table1} \\',
+        r'\hline',
+        r'TIC & Literature & TIC & Literature \\',
+        r'\hline',
+        r'\endfirsthead',
+        r'\hline',
+        r'TIC & Literature & TIC & Literature \\',
+        r'\hline',
+        r'\endhead',
+        r'\hline\endfoot'
+    ]
+    for i in range(0, len(table3), 2):
+        row = table3[i:i + 2]
+        line = []
+        for entry in row:
+            key = entry['citation'].split('{')[1].split('}')[0]
+            citation = '\citen{' + f'{convert[key]}' + '-r}'
+            # citation = '\citen{' + f'{key}' + '}'
+            line.append(f"{entry['tic']} & {citation}")
+        table3_tex.append(' & '.join(line) + r' \\')
+    return '\n'.join(table1_tex), '\n'.join(table2_tex), '\n'.join(table3_tex)
 
 
 # Main script
@@ -197,14 +223,16 @@ if __name__ == "__main__":
     entries, citation_order = parse_table(input_table, convert)
     # print(entries)
     # Step 2: Split and sort entries
-    table1, table2 = split_and_sort_tables(entries, tic_list_1, tic_list_2)
-
+    table1, table2, table3 = split_and_sort_tables(entries, tic_list_1, tic_list_2, tic_list_3)
+    print(table3)
     # Step 3: Reorder citations
     reorder_citations(output_entries, output_refs, citation_order)
 
     # Step 4: Generate LaTeX tables (optional)
-    table1_tex, table2_tex = generate_latex_tables(table1, table2, convert)
+    table1_tex, table2_tex, table3_tex = generate_latex_tables(table1, table2, table3, convert)
     with open("table1.tex", 'w') as f:
         f.write(table1_tex)
     with open("table2.tex", 'w') as f:
         f.write(table2_tex)
+    with open("table3.tex", 'w') as f:
+        f.write(table3_tex)
