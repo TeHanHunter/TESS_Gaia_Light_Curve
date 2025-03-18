@@ -6,7 +6,7 @@ with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name="tglc",
-    version='0.6.6',
+    version='0.6.7',
     author="Te Han",
     author_email="tehanhunter@gmail.com",
     description="TESS-Gaia Light Curve",
@@ -19,7 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=['astropy>=5.1', 'astroquery==0.4.7', 'matplotlib', 'numpy', 'oauthlib', 'requests', 'scipy',
-                      'threadpoolctl', 'tqdm', 'wheel', 'wotan', 'seaborn'],
+                      'threadpoolctl', 'tqdm', 'wheel', 'wotan', 'seaborn', 'pandas'],
     packages=setuptools.find_packages(include=['tglc', 'tglc.*']),
     python_requires=">=3.8, <3.13",
     include_package_data=True

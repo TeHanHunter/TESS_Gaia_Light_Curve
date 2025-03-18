@@ -13,6 +13,10 @@ from os.path import exists
 from tglc.effective_psf import get_psf, fit_psf, fit_lc, fit_lc_float_field, bg_mod
 from tglc.ffi import Source
 from tglc.ffi_cut import Source_cut
+import tglc
+from astropy.coordinates import SkyCoord
+from tglc.barycentric_correction import apply_barycentric_correction
+import astropy.units as u
 
 warnings.simplefilter('always', UserWarning)
 
@@ -20,7 +24,7 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None):
+              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None, ffi='TICA'):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -103,9 +107,11 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         fits.Card('STAR_Y', y_aperture, 'star y position in cut'),
         fits.Card('COMMENT', 'hdul[0].data[:,star_y,star_x]=lc'),
         fits.Card('ORIGIN', 'UCSB/TGLC', 'institution responsible for creating this file'),
+        fits.Card('TGLCVER', f'{tglc.__version__}', 'TGLC version'),
         fits.Card('TELESCOP', 'TESS', 'telescope'),
         fits.Card('INSTRUME', 'TESS Photometer', 'detector type'),
         fits.Card('FILTER', 'TESS', 'the filter used for the observations'),
+        fits.Card('FFIVER', ffi, 'the FFI product used (SPOC/TICA)'),
         fits.Card('OBJECT', source.gaia[index]['DESIGNATION'], 'string version of Gaia DR3 ID'),
         fits.Card('GAIADR3', objid, 'integer version of Gaia DR3 ID'),
         fits.Card('TICID', ticid, 'TESS Input Catalog ID'),
@@ -138,7 +144,15 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         exposure_time = 600
     else:  # second extended
         exposure_time = 200
-    c1 = fits.Column(name='time', array=np.array(time), format='D')
+
+    ### barycentric correction for TICA
+    if ffi == 'TICA':
+        sector = source.sector
+        tjd = time
+        coord = SkyCoord([(source.gaia[index]['ra'], source.gaia[index]['dec'])], unit=u.deg,)
+        time_bcc = apply_barycentric_correction(sector, tjd, coord)
+
+    c1 = fits.Column(name='time', array=np.array(time_bcc[0]), format='D')
     c2 = fits.Column(name='psf_flux', array=np.array(psf_lc), format='E')  # psf factor
     # c3 = fits.Column(name='psf_flux_err',
     #                  array=1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))) * np.ones(len(psf_lc)), format='E')
@@ -160,7 +174,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu = fits.BinTableHDU.from_columns([c1, c2, c4, c6, c8, c10, c11, c12, c13])
     table_hdu.header.append(('INHERIT', 'T', 'inherit the primary header'), end=True)
     table_hdu.header.append(('EXTNAME', 'LIGHTCURVE', 'name of extension'), end=True)
-    table_hdu.header.append(('EXTVER', 1, 'extension version'),  # TODO: version?
+    table_hdu.header.append(('EXTVER', 1, 'extension version'),
                             end=True)
     table_hdu.header.append(('TELESCOP', 'TESS', 'telescope'), end=True)
     table_hdu.header.append(('INSTRUME', 'TESS Photometer', 'detector type'), end=True)
@@ -206,7 +220,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 
-def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0,
+def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0, ffi='TICA',
          limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False, prior=None):
     """
     User function that unites all necessary steps
@@ -356,6 +370,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                     lc_output(source, local_directory=lc_directory, index=i,
                               tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
                               aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i], tglc_flag=quality,
+                              ffi='SPOC',
                               bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
@@ -364,7 +379,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                     lc_output(source, local_directory=lc_directory, index=i,
                               tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
                               aperture=aperture.astype(np.float32), star_y=y_round[i], star_x=x_round[i],
-                              tglc_flag=quality,
+                              tglc_flag=quality, ffi=ffi,
                               bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,

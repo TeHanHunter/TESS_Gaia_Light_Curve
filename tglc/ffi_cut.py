@@ -23,7 +23,7 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 
 
 class Source_cut(object):
-    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None, transient=None):
+    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None, transient=None, ffi='TICA'):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
@@ -71,15 +71,15 @@ class Source_cut(object):
         if len(sector_table) == 0:
             warnings.warn('TESS has not observed this position yet :(')
         if sector is None:
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size)
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi)
         elif sector == 'first':
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector_table['sector'][0])
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][0])
             sector = sector_table['sector'][0]
         elif sector == 'last':
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector_table['sector'][-1])
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][-1])
             sector = sector_table['sector'][-1]
         else:
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, sector=sector)
+            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector)
         self.catalogdata = catalogdata
         self.sector_table = sector_table
         self.camera = int(sector_table[0]['camera'])
@@ -245,7 +245,7 @@ class Source_cut_pseudo(object):
         self.gaia = gaia_targets
 
 
-def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None, transient=None):
+def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None, transient=None, ffi='TICA'):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -259,13 +259,13 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
     :return: tglc.ffi_cut.Source_cut
     """
     if sector is None:
-        source_name = f'source_{target}'
+        source_name = f'source_{ffi}_{target}'
     elif sector == 'first':
-        source_name = f'source_{target}_earliest_sector'
+        source_name = f'source_{ffi}_{target}_earliest_sector'
     elif sector == 'last':
-        source_name = f'source_{target}_last_sector'
+        source_name = f'source_{ffi}_{target}_last_sector'
     else:
-        source_name = f'source_{target}_sector_{sector}'
+        source_name = f'source_{ffi}_{target}_sector_{sector}'
     source_exists = exists(f'{local_directory}source/{source_name}.pkl')
     if source_exists and os.path.getsize(f'{local_directory}source/{source_name}.pkl') > 0:
         with open(f'{local_directory}source/{source_name}.pkl', 'rb') as input_:
@@ -274,6 +274,6 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
         print('Loaded ffi_cut from directory. ')
     else:
         with open(f'{local_directory}source/{source_name}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient)
+            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient, ffi=ffi)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
