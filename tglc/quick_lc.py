@@ -27,7 +27,7 @@ controller = ThreadpoolController()
 
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
-            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None, ffi='TICA'):
+            first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None, ffi='SPOC'):
     '''
     Generate light curve for a single target.
 
@@ -499,7 +499,7 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.show()
 
 
-def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None, ffi='TICA'):
+def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None, ffi='SPOC'):
     if method == 'query':
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'
@@ -514,10 +514,10 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [16005254]  # can be a list of TIC IDs
+    tics = [218795833]  # can be a list of TIC IDs
     directory = f'/Users/tehan/Downloads/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, directory=directory, ffi='TICA')
+    get_tglc_lc(tics=tics, directory=directory, ffi='SPOC')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)

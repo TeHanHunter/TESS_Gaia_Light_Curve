@@ -51,6 +51,7 @@ class Source_cut(object):
         self.quality = []
         self.mask = []
         self.transient = transient
+        self.ffi = ffi
 
         target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         if len(target) == 0:
@@ -114,8 +115,14 @@ class Source_cut(object):
         self.ccd = int(hdu[0].header['CCD'])
         wcs = WCS(hdu[2].header)
         data_time = hdu[1].data['TIME']
-        data_flux = hdu[1].data['FLUX']
-        data_flux_err = hdu[1].data['FLUX_ERR']
+        if self.ffi == 'SPOC':
+            data_flux = hdu[1].data['FLUX']
+            data_flux_err = hdu[1].data['FLUX_ERR']
+        elif self.ffi == 'TICA':
+            data_flux = hdu[1].data['FLUX'] / (200 * 0.8 * 0.99)
+            data_flux_err = hdu[1].data['FLUX_ERR'] / (200 * 0.8 * 0.99)
+        else:
+            raise Exception(f'FFI type {self.ffi} not supported')
         data_quality = hdu[1].data['QUALITY']
         # data_time = data_time[np.where(data_quality == 0)]
         # data_flux = data_flux[np.where(data_quality == 0), :, :][0]
