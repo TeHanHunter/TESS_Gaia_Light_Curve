@@ -29,10 +29,11 @@ from astroquery.mast import Catalogs
 from scipy.stats import bootstrap, ks_2samp, norm, gaussian_kde, skewnorm
 from scipy.optimize import minimize
 import matplotlib
-
+from scipy.optimize import curve_fit  # Add this import
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['mathtext.fontset'] = 'dejavuserif'  # Use Computer Modern (serif font)
-
+def gaussian(x, a, mu, sigma):
+    return a * np.exp(-(x - mu)**2 / (2 * sigma**2))
 
 def read_parameter(file=None):
     with open(file, 'r') as file:
@@ -423,7 +424,8 @@ def compute_weighted_mean_all(data):
     pl_ratror = data['pl_ratror']
     errors_value = (data['err1'] - data['err2']) / 2
     errors_pl_ratror = (data['pl_ratrorerr1'] - data['pl_ratrorerr2']) / 2
-
+    print('####')
+    print(np.median(errors_value/values))
     # correct literature with 0 error
     for i in range(len(errors_pl_ratror)):
         if errors_pl_ratror[i] == 0:
@@ -700,12 +702,25 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
     print(np.sort(diff_tglc))
+    # n1, bins1, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    #                        color=g_color, alpha=0.8, edgecolor=None, zorder=2)
+    # bin_centers1 = (bins1[:-1] + bins1[1:]) / 2
+    # try:
+    #     popt1, _ = curve_fit(gaussian, bin_centers1, n1, p0=[max(n1), 0, 0.1])
+    #     x_fit1 = np.linspace(bin_centers1[0], bin_centers1[-1], 200)
+    #     y_fit1 = gaussian(x_fit1, *popt1)
+    #     ax.plot(x_fit1, y_fit1, color=g_color, linestyle='--', lw=1.5, zorder=3)
+    #     print(f"Ground-based Gaussian Fit: Mean = {popt1[1]:.3f}, Sigma = {popt1[2]:.3f}")
+    # except RuntimeError:
+    #     print("Ground-based Gaussian fit failed")
+
     ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-            color=g_color, alpha=0.8, edgecolor=None, zorder=2)
+            color=g_color, alpha=0.7, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
+               zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
     ax.errorbar(iw_mean_tglc, 10.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -782,12 +797,24 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
     print(np.sort(diff_tglc))
+    # n2, bins2, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    #                        color=ng_color, alpha=0.6, edgecolor=None)
+    # bin_centers2 = (bins2[:-1] + bins2[1:]) / 2
+    # try:
+    #     popt2, _ = curve_fit(gaussian, bin_centers2, n2, p0=[max(n2), 0, 0.1])
+    #     x_fit2 = np.linspace(bin_centers2[0], bin_centers2[-1], 200)
+    #     y_fit2 = gaussian(x_fit2, *popt2)
+    #     ax.plot(x_fit2, y_fit2, color=ng_color, linestyle='--', lw=1.5, zorder=3)
+    #     print(f"No-ground Gaussian Fit: Mean = {popt2[1]:.3f}, Sigma = {popt2[2]:.3f}")
+    # except RuntimeError:
+    #     print("No-ground Gaussian fit failed")
     ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-            color=ng_color, alpha=0.6, edgecolor=None)
+            color=ng_color, alpha=0.8, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} fits of 216 planets)')
+               zorder=4, label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 216 planets)')
     ax.errorbar(iw_mean_tglc, 7.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
 
@@ -810,12 +837,24 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     difference_tglc_kelper = difference_tglc
     print(np.sort(diff_tglc))
     print(difference_tglc[np.argsort(diff_tglc)])
+    # n3, bins3, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    #                        color=k_color, alpha=0.8, edgecolor=None, zorder=3)
+    # bin_centers3 = (bins3[:-1] + bins3[1:]) / 2
+    # try:
+    #     popt3, _ = curve_fit(gaussian, bin_centers3, n3, p0=[max(n3), 0, 0.1])
+    #     x_fit3 = np.linspace(bin_centers3[0], bin_centers3[-1], 200)
+    #     y_fit3 = gaussian(x_fit3, *popt3)
+    #     ax.plot(x_fit3, y_fit3, color=k_color, linestyle='--', lw=1.5, zorder=3)
+    #     print(f"Kepler Gaussian Fit: Mean = {popt3[1]:.3f}, Sigma = {popt3[2]:.3f}")
+    # except RuntimeError:
+    #     print("Kepler Gaussian fit failed")
     ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-            color=k_color, alpha=0.8, edgecolor=None, zorder=3)
+            color=k_color, alpha=0.7, edgecolor=None, zorder=3)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'Kepler $\Delta p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
+               zorder=4, label=r'Kepler $f_p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
     ax.errorbar(iw_mean_tglc, 6.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=4, )
 
@@ -825,7 +864,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     #                elinewidth=1,capsize=3, zorder=2,)
 
     ax.vlines(0, ymin=0, ymax=150, color='k', ls='dashed', lw=1, zorder=3)
-    ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
+    ax.set_xlabel(r'$f_p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax.set_ylabel('Error weighted counts')
     ax.legend(loc='upper left')
     ax.set_xticks([-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3],
@@ -935,7 +974,7 @@ def figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/'):
             color=g_color, alpha=0.8, edgecolor=None, zorder=2)
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-free $\Delta p$' + f'\n({len(difference_tglc)} fits of 84 planets)')
+               zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 84 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -1017,7 +1056,7 @@ def figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.6, edgecolor=None)
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
-               zorder=4, label=r'TESS-dependent $\Delta p$ ' + f'\n({len(difference_tglc)} fits of 235 planets)')
+               zorder=4, label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 235 planets)')
     ax.errorbar(iw_mean_tglc, 7, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
                 elinewidth=1, capsize=3, zorder=2, )
     # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
@@ -1025,7 +1064,7 @@ def figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/'):
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
     ax.vlines(0, ymin=0, ymax=200, color='k', ls='dashed', lw=1, zorder=3)
-    ax.set_xlabel(r'$\Delta(R_{\text{p}}/R_*) = \Delta p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
+    ax.set_xlabel(r'f_p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax.set_ylabel('Error Weighted Counts')
     ax.legend(loc='upper left')
     # ax.set_xticks([-0.02, -0.01, 0, 0.01, 0.02], )
