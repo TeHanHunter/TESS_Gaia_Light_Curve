@@ -353,7 +353,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
                                                            meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
                                                            binsize=600 / 86400)
                 plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
-                             marker='.', ms=8, zorder=3, label=f'Sector {hdul[0].header["sector"]}')
+                             marker='o', ms=5, mfc='none', zorder=3, label=f'Sector {hdul[0].header["sector"]}')
             else:
                 not_plotted_num += 1
             title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {kind}'
