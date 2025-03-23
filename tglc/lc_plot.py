@@ -424,8 +424,6 @@ def compute_weighted_mean_all(data):
     pl_ratror = data['pl_ratror']
     errors_value = (data['err1'] - data['err2']) / 2
     errors_pl_ratror = (data['pl_ratrorerr1'] - data['pl_ratrorerr2']) / 2
-    print('####')
-    print(np.median(errors_value/values))
     # correct literature with 0 error
     for i in range(len(errors_pl_ratror)):
         if errors_pl_ratror[i] == 0:
@@ -641,6 +639,8 @@ def figure_4(folder='/Users/tehan/Documents/TGLC/', ):
 
 
 def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    tics = [int(s[4:]) for s in t['tic_id']]
     palette = sns.color_palette('colorblind')
     g_color = palette[7]
     k_color = palette[0]
@@ -657,7 +657,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
-    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] == 1.0)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
@@ -742,7 +742,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
-    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] == 1.0)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
@@ -892,6 +892,263 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # print(set(no_ground) - set(tics))
     print(len(set(tics)))
     return difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground
+
+def figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/'):
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    tics = [int(s[4:]) for s in t['tic_id']]
+    palette = sns.color_palette('colorblind')
+    g_color = palette[7]
+    k_color = palette[0]
+    ng_color = palette[3]
+    sns.set(rc={'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '1', 'grid.color': '0.8'})
+    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
+    # ground
+    # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
+
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
+    # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
+    # print(len(d_qlp))
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
+    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # print(len(d_tglc))
+    # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+    ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 464300749, 151483286,
+               335590096,
+               193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+               395393265, 310002617, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137,
+               243641947,
+               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
+               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
+               239816546, 361343239] +
+              [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
+               268301217, 455784423] +
+              [452006073, 306648160, 165464482, 23769326, 470171739,
+               166184428, 259172249, 69356857, 58825110, 154220877,
+               119585136, 388076422, 178709444, 241249530, 446549906,
+               269333648, 401125028, 439366538])
+
+    contamrt_ground = []
+    ecc_g = []
+    for i in range(len(d_tglc)):
+        star_sector = d_tglc['Star_sector'][i]
+        # try:
+        #     if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
+        if int(star_sector.split('_')[1]) in ground:
+            ecc_g.append(float(t['pl_orbeccen'][np.where(np.array(tics) == int(star_sector.split('_')[1]))[0]].filled(0)))
+            if ecc_g[-1] > 0.3:
+                difference_tglc.add_row(d_tglc[i])
+
+            # contamrt_ground.append(contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]])
+    # difference_tglc.write(f'deviation_TGLC_677.dat', format='ascii.csv')
+    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
+    diff_tglc_ground = diff_tglc
+    difference_tglc_ground = difference_tglc
+    # print(difference_tglc[np.argsort(diff_tglc)[0]])
+    # print(np.sort(diff_tglc))
+    # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
+    #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
+    # ax.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
+    #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
+    #            color=qlp_color, alpha=0.6, edgecolor=None)
+    print(np.sort(diff_tglc))
+    # n1, bins1, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    #                        color=g_color, alpha=0.8, edgecolor=None, zorder=2)
+    # bin_centers1 = (bins1[:-1] + bins1[1:]) / 2
+    # try:
+    #     popt1, _ = curve_fit(gaussian, bin_centers1, n1, p0=[max(n1), 0, 0.1])
+    #     x_fit1 = np.linspace(bin_centers1[0], bin_centers1[-1], 200)
+    #     y_fit1 = gaussian(x_fit1, *popt1)
+    #     ax.plot(x_fit1, y_fit1, color=g_color, linestyle='--', lw=1.5, zorder=3)
+    #     print(f"Ground-based Gaussian Fit: Mean = {popt1[1]:.3f}, Sigma = {popt1[2]:.3f}")
+    # except RuntimeError:
+    #     print("Ground-based Gaussian fit failed")
+
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+            weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+            color=g_color, alpha=0.7, edgecolor=None, zorder=2)
+    # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
+    ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
+               zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
+    ax.errorbar(iw_mean_tglc, 10.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                elinewidth=1, capsize=3, zorder=4, )
+    # ax.scatter(iw_mean_qlp, 2.6, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
+    #               zorder=3, label='QLP')
+    # ax.errorbar(iw_mean_qlp, 1.6, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
+    #                elinewidth=1,capsize=3, zorder=2,)
+
+    # ax.vlines(0, ymin=0, ymax=55, color='k', ls='dashed', lw=1, zorder=3)
+    # ax.set_xlabel('')
+    # ax.set_ylabel('Error Weighted Counts')
+    # ax.legend(loc='upper right')
+    # ax[0].set_xticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06],
+    #            [r'$-6\%$', r'$-4\%$', r'$-2\%$', r'$0\%$', r'$2\%$', r'$4\%$', r'$6\%$'])
+    # plt.xlim(-0.05, 0.05)
+    # plt.ylim(-1,2)
+    # no-ground
+    # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
+    # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
+    # print(len(d_qlp))
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
+    d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # print(len(d_tglc))
+    # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+
+    no_ground = ([428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+                  271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
+                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
+                  219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
+                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
+                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
+                  172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
+                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
+                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
+                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 83092282,
+                  264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] +
+                 [370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
+                  464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
+                  320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                  408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
+                  407126408, 55650590, 335630746, 55525572, 342642208, 394357918] +
+                 [293607057, 332534326, 260708537, 443556801, 52005579, 287145649, 232540264, 404518509, 358070912,
+                  352413427, 169765334, 39699648, 305739565, 391903064, 237913194, 160390955, 257060897, 365102760,
+                  393818343, 153065527, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
+                  120826158, 99869022, 456862677, 219850915, 380887434, 232612416, 271169413, 232976128, 49254857,
+                  198241702, 282485660, 224297258, 303432813, 391949880, 437011608, 198356533, 232982558, 237232044,
+                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 58542531, 102734241, 268334473,
+                  159418353, 18318288, 219857012, 35009898, 287080092, 124573851, 289580577, 367858035, 277634430,
+                  9348006, 219344917, 21535395, 34077285, 286916251, 322807371, 142381532, 142387023, 46432937,
+                  348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
+                  166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
+                  201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
+                  429358906, 37749396, 305424003, 63898957])
+    # contamrt_no_ground = []
+    ecc_ng = []
+    for i in range(len(d_tglc)):
+        star_sector = d_tglc['Star_sector'][i]
+        # try:
+        #     if contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]] > contamrt_min:
+        if int(star_sector.split('_')[1]) in no_ground:
+            ecc_ng.append(
+                float(t['pl_orbeccen'][np.where(np.array(tics) == int(star_sector.split('_')[1]))[0]].filled(0)))
+            if ecc_ng[-1] > 0.3:
+                difference_tglc.add_row(d_tglc[i])
+
+    print(np.median(ecc_g + ecc_ng))
+    diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
+    diff_tglc_no_ground = diff_tglc
+    difference_tglc_no_ground = difference_tglc
+    # sns.violinplot(data=df, x="diff", y="Tmag_int", hue="Pipeline", split=True, bw_adjust=.6, gap=.04, alpha=0.6,
+    #                gridsize=500, width=1.2, palette=[tglc_color, qlp_color])
+    # ax.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
+    #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
+    #            color=qlp_color, alpha=0.6, edgecolor=None)
+    print(np.sort(diff_tglc))
+    # n2, bins2, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    #                        color=ng_color, alpha=0.6, edgecolor=None)
+    # bin_centers2 = (bins2[:-1] + bins2[1:]) / 2
+    # try:
+    #     popt2, _ = curve_fit(gaussian, bin_centers2, n2, p0=[max(n2), 0, 0.1])
+    #     x_fit2 = np.linspace(bin_centers2[0], bin_centers2[-1], 200)
+    #     y_fit2 = gaussian(x_fit2, *popt2)
+    #     ax.plot(x_fit2, y_fit2, color=ng_color, linestyle='--', lw=1.5, zorder=3)
+    #     print(f"No-ground Gaussian Fit: Mean = {popt2[1]:.3f}, Sigma = {popt2[2]:.3f}")
+    # except RuntimeError:
+    #     print("No-ground Gaussian fit failed")
+    ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+            weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+            color=ng_color, alpha=0.8, edgecolor=None)
+    # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
+    ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
+               zorder=4, label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 216 planets)')
+    ax.errorbar(iw_mean_tglc, 7.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+                elinewidth=1, capsize=3, zorder=4, )
+
+    # difference_kepler = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
+    # print(len(difference_kepler))
+    #
+    # d_tglc = difference_kepler[np.where(difference_kepler['rhat'] < 1.01)]
+    # d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
+    # # print(len(d_tglc))
+    # # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
+    # difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+    #
+    # contamrt_ground = []
+    # for i in range(len(d_tglc)):
+    #     star_sector = d_tglc['Star_sector'][i]
+    #     difference_tglc.add_row(d_tglc[i])
+    # diff_tglc, errors_tglc, weighted_mean_tglc, weighted_mean_error_tglc = compute_weighted_mean_all(difference_tglc)
+    # iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
+    # diff_tglc_kelper = diff_tglc
+    # difference_tglc_kelper = difference_tglc
+    # print(np.sort(diff_tglc))
+    # print(difference_tglc[np.argsort(diff_tglc)])
+    # # n3, bins3, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    # #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    # #                        color=k_color, alpha=0.8, edgecolor=None, zorder=3)
+    # # bin_centers3 = (bins3[:-1] + bins3[1:]) / 2
+    # # try:
+    # #     popt3, _ = curve_fit(gaussian, bin_centers3, n3, p0=[max(n3), 0, 0.1])
+    # #     x_fit3 = np.linspace(bin_centers3[0], bin_centers3[-1], 200)
+    # #     y_fit3 = gaussian(x_fit3, *popt3)
+    # #     ax.plot(x_fit3, y_fit3, color=k_color, linestyle='--', lw=1.5, zorder=3)
+    # #     print(f"Kepler Gaussian Fit: Mean = {popt3[1]:.3f}, Sigma = {popt3[2]:.3f}")
+    # # except RuntimeError:
+    # #     print("Kepler Gaussian fit failed")
+    # ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
+    #         weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
+    #         color=k_color, alpha=0.7, edgecolor=None, zorder=3)
+    # # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
+    # ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
+    #            zorder=4, label=r'Kepler $f_p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
+    # ax.errorbar(iw_mean_tglc, 6.5, xerr=[[ci_low_tglc], [ci_high_tglc]], ecolor='k',
+    #             elinewidth=1, capsize=3, zorder=4, )
+
+    # ax.scatter(iw_mean_qlp, 6.8, marker='v', color=qlp_color, edgecolors='k', linewidths=0.7, s=50,
+    #               zorder=3, label='QLP')
+    # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
+    #                elinewidth=1,capsize=3, zorder=2,)
+
+    ax.vlines(0, ymin=0, ymax=150, color='k', ls='dashed', lw=1, zorder=3)
+    ax.set_xlabel(r'$f_p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
+    ax.set_ylabel('Error weighted counts')
+    ax.legend(loc='upper left')
+    ax.set_xticks([-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3],
+                  [f"{x * 100:.0f}%" for x in [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3]])
+    plt.xlim(-0.3, 0.3)
+    # plt.ylim(0,15)
+    stat, p_value = ks_2samp(diff_tglc_ground, diff_tglc_no_ground)
+    print(f"K-S Statistic: {stat}")
+    print(f"P-value: {p_value}")
+    # plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
+    plt.savefig(os.path.join(folder, f'ror_g_ng_kepler_ecc.pdf'), bbox_inches='tight', dpi=600)
+    plt.show()
+    # print(len(set(ground+no_ground)))
+    # print(len(ground)+len(no_ground))
+    # tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_kelper['Star_sector']]
+    # # print(str() in tics)
+    # print(set(ground) - set(tics))
+    print(len(set(tics)))
+    tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_ground['Star_sector']]
+    # # print(str() in tics)
+    # print(set(ground) - set(tics))
+    print(len(set(tics)))
+    tics = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_no_ground['Star_sector']]
+    # # print(str(89020549) in tics)
+    # print(set(no_ground) - set(tics))
+    print(len(set(tics)))
+    return difference_tglc_ground, difference_tglc_no_ground
 
 
 def figure_radius_bias_per_planet(folder='/Users/tehan/Documents/TGLC/'):
@@ -1763,7 +2020,7 @@ def mass_radius_to_density(mass, radius, mass_err, radius_err):
     # Propagate error using partial derivatives
     density_err = density * np.sqrt((mass_err / mass) ** 2 + (3 * radius_err / radius) ** 2)
     if type(density_err) is np.ma.core.MaskedConstant:
-        density_err = 100.
+        density_err = 0.
     return density, density_err
 
 
@@ -1811,7 +2068,7 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     #         print(t['tic_id'][i])
     #         print(b[i])
     #         print(ror[i])
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
     tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
     tics = [int(s[4:]) for s in t['tic_id']]
     palette = sns.color_palette('colorblind')
@@ -1878,11 +2135,13 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         density_g = []
 
         mass_ng = []
+        mass_ng_err = []
         r_ng = []
         r_ng_corr = []
         r_ng_err = []
         density_ng = []
         density_ng_corr = []
+        density_ng_corr_err = []
         tic_ng = []
         for i, tic in enumerate(tics):
             if t['pl_bmassjlim'][i] == 0:
@@ -1895,30 +2154,34 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                     density_g.append(density)
                 elif tic in no_ground:
                     if t['pl_bmassprov'][i] == 'Mass':
-                        mass_ng.append(t['pl_bmasse'][i])
-                        r_ng.append(t['pl_rade'][i])
-                        r_ng_corr.append(t['pl_rade'][i] / (1 - delta_R))
-                        density_ng.append(density)
-                        tic_ng.append(str(tic))
-                        ## overall shift ###
-                        density_ng_corr.append(density * (1 - delta_R) ** 3)
-                    # ### individual fits ###
-                    # ror = []
-                    # ror_err = []
-                    # for j in range(len(difference_tglc)):
-                    #     if tics_fit[j] == tic and difference_tglc['rhat'][j] < 1.1:
-                    #         ror.append(difference_tglc['value'][j])
-                    #         ror_err.append((difference_tglc['err1'][j] - difference_tglc['err2'][j])/2)
-                    # ror = np.median(ror)
-                    # ror_err = np.nanmedian(ror_err)
-                    # if np.isnan(ror_err):
-                    #     print(tic)
-                    #
-                    # density_corr, _ = mass_radius_to_density(t['pl_bmasse'][i], 109.076 * ror * t['st_rad'][i],
-                    #                                         (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2,
-                    #                                         109.076 * ror * (t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
-                    # density_ng_corr.append(density_corr)
-                    # r_ng_err.append(ror_err)
+                        # ## overall shift ###
+                        # density_ng_corr.append(density * (1 - delta_R) ** 3)
+                        ### individual fits ###
+                        ror = []
+                        ror_err = []
+                        for j in range(len(difference_tglc)):
+                            if tics_fit[j] == tic and difference_tglc['rhat'][j] == 1.0:
+                                ror.append(float(difference_tglc['value'][j]))
+                                ror_err.append(float((difference_tglc['err1'][j] - difference_tglc['err2'][j])/2))
+                        ror = np.nanmedian(np.array(ror))
+                        ror_err = np.nanmedian(np.array(ror_err))
+
+                        # print(ror is np.nan)
+                        density_corr, density_corr_err = mass_radius_to_density(t['pl_bmasse'][i], 109.076 * ror * t['st_rad'][i],
+                                                                (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2,
+                                                                109.076 * ror * (t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
+                        if ror is not None and not np.isnan(ror):
+                            mass_ng.append(t['pl_bmasse'][i])
+                            mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2)
+                            r_ng.append(t['pl_rade'][i])
+                            r_ng_corr.append(109.076 * ror * t['st_rad'][i])
+                            density_ng.append(density)
+                            tic_ng.append(str(tic))
+                            density_ng_corr.append(density_corr)
+                            density_ng_corr_err.append(density_corr_err)
+                            delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i])/2
+                            delta_ror = ror_err
+                            r_ng_err.append(np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar)))
                 # if density > 10:
                 #     print(tic)
                 # if tic in ground:
@@ -1934,11 +2197,13 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
             "r_g": r_g,
             "density_g": density_g,
             "mass_ng": mass_ng,
+            "mass_ng_err": mass_ng_err,
             "r_ng": r_ng,
             "r_ng_corr": r_ng_corr,
             "r_ng_err": r_ng_err,
             "density_ng": density_ng,
             "density_ng_corr": density_ng_corr,
+            "density_ng_corr_err": density_ng_corr_err,
             "tic_ng": tic_ng
         }
 
@@ -1951,71 +2216,73 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     r_g = data["r_g"]
     density_g = data["density_g"]
     mass_ng = data["mass_ng"]
+    mass_ng_err = data["mass_ng_err"]
     r_ng = data["r_ng"]
     r_ng_corr = data["r_ng_corr"]
     r_ng_err = data["r_ng_err"]
     density_ng = data["density_ng"]
     density_ng_corr = data["density_ng_corr"]
+    density_ng_corr_err = data["density_ng_corr_err"]
     tic_ng = data["tic_ng"]
     # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
     # print(density_weight)
     ### mass-density ###
-    ax[0].scatter(mass_g, density_g, alpha=0.5, marker='o', zorder=2, s=10, color=palette[7], label='Ground-based')
-    ax[0].scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color,
-                  label='TESS-influenced')
+    ax[0].scatter(mass_g, density_g, alpha=0.9, marker='o', zorder=2, s=15, color=palette[7])
+    ax[0].scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color)
     # for j in range(len(mass_ng)):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
-    ax[0].scatter(mass_ng, density_ng_corr, alpha=0.9, marker='o', zorder=4, s=15, color=ng_corr_color,
-                  label='TESS-influenced corrected')
-    ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=2, marker='', linewidth=0.6,
-               alpha=0.8, )
+    ax[0].errorbar(mass_ng, density_ng_corr, xerr=mass_ng_err, yerr=density_ng_corr_err, fmt='o', alpha=0.9, color=ng_corr_color, lw=0.7,
+                   ms=np.sqrt(15), zorder=4)
+    # ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=2, marker='', linewidth=0.6,
+    #            alpha=0.8, )
+
     ### mass-radius ###
-    ax[1].scatter(mass_g, r_g, alpha=0.5, marker='o', zorder=2, s=10, color=palette[7], label='TESS-free')
+    ax[1].scatter(mass_g, r_g, alpha=0.9, marker='o', zorder=2, s=15, color=palette[7], label='TESS-free')
     ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color,
                   label='TESS-dependent')
     # for j in range(len(mass_ng)):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
-    ax[1].scatter(mass_ng, r_ng_corr, alpha=0.9, marker='o', zorder=4, s=15, color=ng_corr_color,
-                  label='TESS-dependent corrected')
-    ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=2, marker='', linewidth=0.6, alpha=0.8, )
+    ax[1].errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_err, fmt='o', alpha=0.9, color=ng_corr_color, lw=0.7,
+                    ms=np.sqrt(15), zorder=4, label='TESS-dependent corrected')
+    # ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=2, marker='', linewidth=0.6, alpha=0.8, )
     ax[1].legend(loc=2, fontsize=10)
 
     ### water world ###
     r = np.linspace(1.24, 4, 100)
     mass, rho = zeng_2019_water_world(r)
     # ax[0].plot(mass, r, c=palette[0], zorder=4, label='Water world')
-    ax[0].plot(mass, rho, c=palette[0], zorder=1, label='Water world', linewidth=2)
-    ax[1].plot(mass, r, c=palette[0], zorder=1, label='Water world', linewidth=2)
+    ax[0].plot(mass, rho, c=palette[0], zorder=5, label='Water world', linewidth=2)
+    ax[1].plot(mass, r, c=palette[0], zorder=5, label='Water world', linewidth=2)
     ax[0].text(mass[-1] - 22, rho[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=1, rotation=23)
+               ha='center', va='center', zorder=5, rotation=23)
     ax[1].text(mass[-1] - 25, r[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=1, rotation=25)
+               ha='center', va='center', zorder=5, rotation=25)
     ### rocky core + H/He atmos ###
     mass = np.linspace(1, 30, 100)
     r, r1, r2, rho, rho1, rho2 = rogers_2023_rocky_core(mass)
     # ax[0].plot(mass, r, c=sns.color_palette('muted')[5], zorder=4, label='Rocky core with H/He atmosphere')
-    ax[0].plot(mass, rho, c=sns.color_palette('muted')[5], zorder=1, label='Rocky core with H/He atmosphere',
+    ax[0].plot(mass, rho, c=sns.color_palette('muted')[5], zorder=5, label='Rocky core with H/He atmosphere',
                linewidth=2)
-    ax[0].plot(mass, rho1, c=sns.color_palette('muted')[5], zorder=1, ls='--')
-    ax[0].plot(mass, rho2, c=sns.color_palette('muted')[5], zorder=1, ls='--')
-    ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=1, label='Rocky core with H/He atmosphere', linewidth=2)
-    ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=1, ls='--')
-    ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[0].plot(mass, rho1, c=sns.color_palette('muted')[5], zorder=5, ls='--')
+    ax[0].plot(mass, rho2, c=sns.color_palette('muted')[5], zorder=5, ls='--')
+    ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=5, label='Rocky core with H/He atmosphere', linewidth=2)
+    ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=5, ls='--')
+    ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=5, ls='--')
     ax[0].text(mass[0] + 0.95, rho[0] + 0.01, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=1, rotation=11)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=5, rotation=11)
     ax[1].text(mass[0] + 0.9, r[0] + 0.35, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=1, rotation=27)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=5, rotation=27)
 
     ### Earth-like ###
     mass = np.linspace(1, 30, 100)
     rho = owen_2017_earth_core(mass)
     r = (rho / mass) ** (-1 / 3)
-    ax[0].plot(mass, rho, c='r', zorder=1, label='Earth-like', linewidth=2)
-    ax[1].plot(mass, r, c='r', zorder=1, label='Earth-like', linewidth=2)
+    ax[0].plot(mass, rho, c='r', zorder=5, label='Earth-like', linewidth=2)
+    ax[1].plot(mass, r, c='r', zorder=5, label='Earth-like', linewidth=2)
     ax[0].text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=1, rotation=45)
+               va='center', zorder=5, rotation=45)
     ax[1].text(mass[-1] - 8, r[-1] - 0.35, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=1, rotation=23)
+               va='center', zorder=5, rotation=23)
     ### M-R relation ###
     # mass = np.linspace(2, 30, 100)
     # ax[0].plot(mass, mass / (0.80811874404 * mass ** 0.59)**3, ls='dotted', c='k')
@@ -2068,7 +2335,253 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ax[0].text(-0.12, 1, "b", transform=ax[0].transAxes, fontsize=12, color='k', fontweight='bold')
     ax[1].text(-0.12, 1, "a", transform=ax[1].transAxes, fontsize=12, color='k', fontweight='bold')
 
-    plt.savefig(os.path.join(folder, f'mass_density.pdf'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'mass_density_individual.pdf'), bbox_inches='tight', dpi=600)
+    plt.show()
+    return
+
+# Define the piecewise function Muller et al. 2024
+def radius(M):
+    if M < 4.37:
+        return 1.02 * M**0.27, 0.03 * M**0.27, 0.04
+    elif 4.37 <= M < 127:
+        return 0.56 * M**0.67, 0.03 * M**0.67, 0.05
+    else:
+        return 18.6 * M**(-0.06), 6.7 * M**(-0.06), 0.07
+
+def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    b = t['pl_imppar']
+    ror = t['pl_rade'] / t['st_rad'] / 109
+    # find grazing
+    # for i in range(len(b)):
+    #     if 1 - b[i] < ror[i] / 2:
+    #         print(t['tic_id'][i])
+    #         print(b[i])
+    #         print(ror[i])
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
+    tics = [int(s[4:]) for s in t['tic_id']]
+    palette = sns.color_palette('colorblind')
+    ng_color = palette[3]
+    ng_corr_color = palette[2]
+    sns.set(rc={'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '1', 'grid.color': '0.8'})
+    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
+    for spine in ax.spines.values():
+        spine.set_zorder(5)
+    ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 464300749, 151483286,
+               335590096,
+               193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+               395393265, 310002617, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137,
+               243641947,
+               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
+               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
+               239816546, 361343239] +
+              [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
+               268301217, 455784423] +
+              [452006073, 306648160, 165464482, 23769326, 470171739,
+               166184428, 259172249, 69356857, 58825110, 154220877,
+               119585136, 388076422, 178709444, 241249530, 446549906,
+               269333648, 401125028, 439366538])
+
+    no_ground = ([428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+                  271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
+                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
+                  219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
+                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
+                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
+                  172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
+                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
+                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
+                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 83092282,
+                  264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] +
+                 [370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
+                  464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
+                  320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                  408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
+                  407126408, 55650590, 335630746, 55525572, 342642208, 394357918] +
+                 [293607057, 332534326, 260708537, 443556801, 52005579, 287145649, 232540264, 404518509, 358070912,
+                  352413427, 169765334, 39699648, 305739565, 391903064, 237913194, 160390955, 257060897, 365102760,
+                  393818343, 153065527, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
+                  120826158, 99869022, 456862677, 219850915, 380887434, 232612416, 271169413, 232976128, 49254857,
+                  198241702, 282485660, 224297258, 303432813, 391949880, 437011608, 198356533, 232982558, 237232044,
+                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 58542531, 102734241, 268334473,
+                  159418353, 18318288, 219857012, 35009898, 287080092, 124573851, 289580577, 367858035, 277634430,
+                  9348006, 219344917, 21535395, 34077285, 286916251, 322807371, 142381532, 142387023, 46432937,
+                  348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
+                  166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
+                  201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
+                  429358906, 37749396, 305424003, 63898957])
+
+
+    if recalculate:
+        delta_R = 0.06011182562150113
+        mass_g = []
+        r_g = []
+        density_g = []
+
+        mass_ng = []
+        mass_ng_err = []
+        r_ng = []
+        r_ng_corr = []
+        r_ng_err = []
+        density_ng = []
+        density_ng_corr = []
+        density_ng_corr_err = []
+        tic_ng = []
+        for i, tic in enumerate(tics):
+            if t['pl_bmassjlim'][i] == 0:
+                density, density_err = mass_radius_to_density(t['pl_bmasse'][i], t['pl_rade'][i],
+                                                              (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2,
+                                                              (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
+                if tic in ground:
+                    mass_g.append(t['pl_bmasse'][i])
+                    r_g.append(t['pl_rade'][i])
+                    density_g.append(density)
+                elif tic in no_ground:
+                    if t['pl_bmassprov'][i] == 'Mass':
+                        # ## overall shift ###
+                        # density_ng_corr.append(density * (1 - delta_R) ** 3)
+                        ### individual fits ###
+                        ror = []
+                        ror_err = []
+                        for j in range(len(difference_tglc)):
+                            if tics_fit[j] == tic and difference_tglc['rhat'][j] == 1.0:
+                                ror.append(float(difference_tglc['value'][j]))
+                                ror_err.append(float((difference_tglc['err1'][j] - difference_tglc['err2'][j])/2))
+                        ror = np.nanmedian(np.array(ror))
+                        ror_err = np.nanmedian(np.array(ror_err))
+
+                        # print(ror is np.nan)
+                        density_corr, density_corr_err = mass_radius_to_density(t['pl_bmasse'][i], 109.076 * ror * t['st_rad'][i],
+                                                                (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2,
+                                                                109.076 * ror * (t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
+                        if ror is not None and not np.isnan(ror):
+                            mass_ng.append(t['pl_bmasse'][i])
+                            mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2)
+                            r_ng.append(t['pl_rade'][i])
+                            r_ng_corr.append(109.076 * ror * t['st_rad'][i])
+                            density_ng.append(density)
+                            tic_ng.append(str(tic))
+                            density_ng_corr.append(density_corr)
+                            density_ng_corr_err.append(density_corr_err)
+                            delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i])/2
+                            delta_ror = ror_err
+                            r_ng_err.append(np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar)))
+                # if density > 10:
+                #     print(tic)
+                # if tic in ground:
+                #     ax.scatter(t['pl_bmasse'][i], density, alpha=0.9, marker='o', zorder=1, s=10, color=g_color)
+                # elif tic in no_ground:
+                #     ax.scatter(t['pl_bmasse'][i], density, alpha=0.5, marker='o', zorder=2, s=10, color='gray')
+                #     ax.scatter(t['pl_bmasse'][i], density / 1.21, alpha=0.9, marker='o', zorder=3, s=15,
+                #             color=ng_color)
+                #     ax.plot([t['pl_bmasse'][i], t['pl_bmasse'][i]], [density, density / 1.21], color='gray', zorder=1,
+                #             marker='', alpha=0.5,)
+        data = {
+            "mass_g": mass_g,
+            "r_g": r_g,
+            "density_g": density_g,
+            "mass_ng": mass_ng,
+            "mass_ng_err": mass_ng_err,
+            "r_ng": r_ng,
+            "r_ng_corr": r_ng_corr,
+            "r_ng_err": r_ng_err,
+            "density_ng": density_ng,
+            "density_ng_corr": density_ng_corr,
+            "density_ng_corr_err": density_ng_corr_err,
+            "tic_ng": tic_ng
+        }
+
+        with open(f"{folder}mass_density.pkl", "wb") as f:
+            pickle.dump(data, f)
+
+    with open(f"{folder}mass_density.pkl", "rb") as f:
+        data = pickle.load(f)
+    mass_g = data["mass_g"]
+    r_g = data["r_g"]
+    density_g = data["density_g"]
+    mass_ng = data["mass_ng"]
+    mass_ng_err = data["mass_ng_err"]
+    r_ng = data["r_ng"]
+    r_ng_corr = data["r_ng_corr"]
+    r_ng_err = data["r_ng_err"]
+    density_ng = data["density_ng"]
+    density_ng_corr = data["density_ng_corr"]
+    density_ng_corr_err = data["density_ng_corr_err"]
+    tic_ng = data["tic_ng"]
+    weight = 1 / np.array(r_ng_err) ** 2
+    weight /= np.nanmax(weight)
+    # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
+    # print(density_weight)
+    ### mass-density ###
+    ### mass-radius ###
+    ax.scatter(mass_g, r_g, alpha=0.9, marker='o', zorder=2, s=15, color=palette[7], label='TESS-free')
+    ax.scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color,
+                  label='TESS-dependent')
+    # for j in range(len(mass_ng)):
+    #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
+    ax.errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_err, fmt='o', alpha=0.9, color=ng_corr_color, lw=0.7,
+                   ms=np.sqrt(15), zorder=4, label='TESS-dependent corrected')
+    ax.legend(loc=2, fontsize=10)
+
+    # ax[0].scatter(1, 1, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[0].text(1, 1 * 1.08, 'Earth', color='k', fontsize=9, ha='center', va='center', zorder=4, rotation=0)
+    ax.scatter(1, 1, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    ax.text(1, 1 * 1.1, 'Earth', color='k', fontsize=9, ha='center', va='center', zorder=4, rotation=0)
+    # ax[0].scatter(0.107,0.714,facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[0].text(0.107, 0.714, 'Mars', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].scatter(95.2, 0.125, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[0].text(95.2 / 1.05, 0.125, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    # ax.scatter(95.2, 9.45, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax.text(95.2 / 1.05, 9.45, 'Saturn', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].scatter(14.5,0.230,facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[0].text(14.5/1.05, 0.230, 'Uranus', color='k', fontsize=9, ha='right', va='center', zorder=4, rotation=0)
+    # ax[0].scatter(17.1, 0.297, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    # ax[0].text(17.1 * 1.08, 0.297, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
+    ax.scatter(17.1, 3.88, facecolors='none', edgecolors='k', zorder=4, marker='o')
+    ax.text(17.1 * 1.08, 3.88, 'Neptune', color='k', fontsize=9, ha='left', va='center', zorder=4, rotation=0)
+    #####
+
+    # Generate mass values
+    M_values = np.logspace(-1, 3, 500)
+    R_values = []
+    R_upper = []
+    R_lower = []
+
+    for M in M_values:
+        R, delta_R, delta_exp = radius(M)
+        R_values.append(R)
+        R_upper.append(R * (1 + delta_R))
+        R_lower.append(R * (1 - delta_R))
+
+    # Plot the M-R relation
+    ax.plot(M_values, R_values, label='M-R Relation', color='k')
+    ax.fill_between(M_values, R_lower, R_upper, color='k', alpha=0.2)
+
+    # ax[0].set_xscale('log')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    # ax[0].set_ylim(-.1, 2)
+    ax.set_ylim(0.9, 10)
+    # ax[0].set_xlim(0.8, 100)
+    ax.set_xlim(0.8, 100)
+    # ax[0].get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    plt.xticks([1, 10, 100, 1000, 10000])
+
+    # ax[0].set_yticks([0, 0.5, 1, 1.5, 2])
+    # ax[0].set_yticklabels(['0', '0.5', '1', '1.5', '2'])
+    ax.set_yticks([1, 3, 10, 30])
+    ax.set_yticklabels(['1', '3', '10', '30'])
+    # plt.yscale('log')
+    # ax[0].set_xlabel(r'$M_{\text{p}} (\text{M}_{\oplus})$ ')
+    ax.set_xlabel(r'$M_{\text{p}} (\text{M}_{\oplus})$ ')
+    # ax[0].set_ylabel(r'$\rho_{\text{p}} (\rho_{\oplus})$ ')
+    ax.set_ylabel(r'$R_{\text{p}} (R_{\oplus})$ ')
+
+    plt.savefig(os.path.join(folder, f'mass_density_all.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     return
 
@@ -2590,8 +3103,9 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
-    # figure_mr_mrho(recalculate=False)
+    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    # figure_mr_mrho(recalculate=True)
+    figure_mr_mrho_all(recalculate=True)
     # figure_tsm(recalculate=True)
     # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
