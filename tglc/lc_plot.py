@@ -30,6 +30,9 @@ from scipy.stats import bootstrap, ks_2samp, norm, gaussian_kde, skewnorm
 from scipy.optimize import minimize
 import matplotlib
 from scipy.optimize import curve_fit  # Add this import
+from scipy.odr import ODR, Model, RealData
+from scipy.stats import multivariate_normal
+
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['mathtext.fontset'] = 'dejavuserif'  # Use Computer Modern (serif font)
 def gaussian(x, a, mu, sigma):
@@ -2169,19 +2172,23 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                         # print(ror is np.nan)
                         density_corr, density_corr_err = mass_radius_to_density(t['pl_bmasse'][i], 109.076 * ror * t['st_rad'][i],
                                                                 (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2,
-                                                                109.076 * ror * (t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
+                                                                109.076 * ror * (t['st_raderr1'][i] - t['st_raderr2'][i])/2)
+                        delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i]) / 2
+                        delta_ror = ror_err
                         if ror is not None and not np.isnan(ror):
-                            mass_ng.append(t['pl_bmasse'][i])
-                            mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2)
-                            r_ng.append(t['pl_rade'][i])
-                            r_ng_corr.append(109.076 * ror * t['st_rad'][i])
-                            density_ng.append(density)
-                            tic_ng.append(str(tic))
-                            density_ng_corr.append(density_corr)
-                            density_ng_corr_err.append(density_corr_err)
-                            delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i])/2
-                            delta_ror = ror_err
-                            r_ng_err.append(np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar)))
+                            if (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2 / t['pl_bmasse'][
+                                i] < .33 and np.sqrt(
+                                    (109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2) / (
+                                    109.076 * ror * t['st_rad'][i]) < 0.25:
+                                mass_ng.append(t['pl_bmasse'][i])
+                                mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
+                                r_ng.append(t['pl_rade'][i])
+                                r_ng_corr.append(109.076 * ror * t['st_rad'][i])
+                                density_ng.append(density)
+                                density_ng_corr_err.append(density_corr_err)
+                                tic_ng.append(str(tic))
+                                density_ng_corr.append(density_corr)
+                                r_ng_err.append(np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2))
                 # if density > 10:
                 #     print(tic)
                 # if tic in ground:
@@ -2342,11 +2349,100 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
 # Define the piecewise function Muller et al. 2024
 def radius(M):
     if M < 4.37:
-        return 1.02 * M**0.27, 0.03 * M**0.27, 0.04
+        return 1.02 * M**0.27, 0.99 * M**0.23, 1.05 * M**0.31
     elif 4.37 <= M < 127:
-        return 0.56 * M**0.67, 0.03 * M**0.67, 0.05
+        return 0.56 * M**0.67, 0.53 * M**0.62, 0.59 * M**0.72
     else:
-        return 18.6 * M**(-0.06), 6.7 * M**(-0.06), 0.07
+        return 18.6 * M ** (-0.06), 11.9 * M ** (-0.13), 25.3 * M ** 0.01
+
+def radius_1(M):
+    if M < 4.37:
+        return (1.18 * M**0.00, (1.18 - 1.21) * M**(0.00 - 0.17), (1.18 + 1.21) * M**(0.00 + 0.17))
+    elif 4.37 <= M < 127:
+        return (0.41 * M**0.71, (0.41 - 1.57) * M**(0.71 - 0.26), (0.41 + 1.57) * M**(0.71 + 0.26))
+    else:
+        return (14.91 * M**-0.03, (14.91 - 1.11) * M**(-0.03 - 0.26), (14.91 + 1.11) * M**(-0.03 + 0.26))
+
+def radius_2(M):
+    if M < 4.37:
+        return (1.01 * M**0.26, (1.01 - 1.41) * M**(0.26 - 0.26), (1.01 + 1.41) * M**(0.26 + 0.26))
+    elif 4.37 <= M < 127:
+        return (0.56 * M**0.66, (0.56 - 1.92) * M**(0.66 - 0.39), (0.56 + 1.92) * M**(0.66 + 0.39))
+    else:
+        return (14.40 * M**-0.01, (14.40 - 1.10) * M**(-0.01 - 0.39), (14.40 + 1.10) * M**(-0.01 + 0.39))
+
+
+def fit_piecewise_power_law(mass, radius, mass_err, radius_err,
+                                         n_samples=1000):
+    """
+    Fits a two-breakpoint piecewise power law with FIXED breakpoints
+    at 4.37 M⊕ and 127 M⊕ (Müller et al. 2024 values)
+    """
+    # Convert inputs and handle masked arrays
+    M = np.ma.masked_invalid(np.asarray(mass)).compressed()
+    R = np.ma.masked_invalid(np.asarray(radius)).compressed()
+    M_err = np.ma.masked_invalid(np.asarray(mass_err)).compressed()
+    R_err = np.ma.masked_invalid(np.asarray(radius_err)).compressed()
+
+    # Fixed breakpoints in log space
+    psi1_fixed = np.log10(4.37)
+    psi2_fixed = np.log10(127)
+
+    # Transform to log space
+    with np.errstate(divide='ignore', invalid='ignore'):
+        logM = np.log10(M)
+        logR = np.log10(R)
+        logM_err = M_err / (M * np.log(10))
+        logR_err = R_err / (R * np.log(10))
+
+    # Modified piecewise function with fixed breaks
+    def piecewise_linear_fixed(params, x):
+        c, alpha1, beta1, beta2 = params
+        y = c + alpha1 * x
+        y += beta1 * (x - psi1_fixed) * (x >= psi1_fixed)
+        y += beta2 * (x - psi2_fixed) * (x >= psi2_fixed)
+        return y
+
+    # ODR setup with fewer parameters (no breakpoint fitting)
+    odr_data = RealData(logM, logR, sx=logM_err, sy=logR_err)
+    model = Model(piecewise_linear_fixed)
+    odr = ODR(odr_data, model, beta0=[0.01,0.27,0.40,-0.72])  # From paper
+
+    # Run fit
+    output = odr.run()
+
+    # Generate predictions with fixed breaks
+    M_fit = np.logspace(np.log10(0.5), np.log10(10000), 500)
+    logM_fit = np.log10(M_fit)
+
+    # Monte Carlo sampling (only for c, α1, β1, β2)
+    samples = multivariate_normal.rvs(
+        mean=output.beta,
+        cov=output.cov_beta,
+        size=n_samples
+    )
+
+    preds = np.array([piecewise_linear_fixed(s, logM_fit) for s in samples])
+    lower = 10 ** np.percentile(preds, 16, axis=0)
+    upper = 10 ** np.percentile(preds, 84, axis=0)
+    best_fit = 10 ** piecewise_linear_fixed(output.beta, logM_fit)
+    print(output.beta)
+    print(output.sd_beta)
+    # Create result dictionary
+    result = {
+        'params': output.beta,
+        'params_err': output.sd_beta,
+        'breakpoints': (4.37, 127),
+        'power_laws': {
+            'small': (10 ** output.beta[0], output.beta[1]),
+            'medium': (10 ** (output.beta[0] - output.beta[2] * psi1_fixed),
+                       output.beta[1] + output.beta[2]),
+            'large': (10 ** (output.beta[0] - output.beta[2] * psi1_fixed - output.beta[3] * psi2_fixed),
+                      output.beta[1] + output.beta[2] + output.beta[3]),
+        },
+        'uncertainty_bands': (lower, upper, best_fit, M_fit)
+    }
+    return result
 
 def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
@@ -2419,7 +2515,9 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     if recalculate:
         delta_R = 0.06011182562150113
         mass_g = []
+        mass_g_err = []
         r_g = []
+        r_g_err = []
         density_g = []
 
         mass_ng = []
@@ -2427,6 +2525,7 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
         r_ng = []
         r_ng_corr = []
         r_ng_err = []
+        r_ng_corr_err = []
         density_ng = []
         density_ng_corr = []
         density_ng_corr_err = []
@@ -2437,9 +2536,12 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
                                                               (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2,
                                                               (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
                 if tic in ground:
-                    mass_g.append(t['pl_bmasse'][i])
-                    r_g.append(t['pl_rade'][i])
-                    density_g.append(density)
+                    if t['pl_bmassprov'][i] == 'Mass':
+                        mass_g.append(t['pl_bmasse'][i])
+                        mass_g_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
+                        r_g.append(t['pl_rade'][i])
+                        r_g_err.append((t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
+                        density_g.append(density)
                 elif tic in no_ground:
                     if t['pl_bmassprov'][i] == 'Mass':
                         # ## overall shift ###
@@ -2457,19 +2559,21 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
                         # print(ror is np.nan)
                         density_corr, density_corr_err = mass_radius_to_density(t['pl_bmasse'][i], 109.076 * ror * t['st_rad'][i],
                                                                 (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2,
-                                                                109.076 * ror * (t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
+                                                                109.076 * ror * (t['st_raderr1'][i] - t['st_raderr2'][i])/2)
+                        delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i]) / 2
+                        delta_ror = ror_err
                         if ror is not None and not np.isnan(ror):
-                            mass_ng.append(t['pl_bmasse'][i])
-                            mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2)
-                            r_ng.append(t['pl_rade'][i])
-                            r_ng_corr.append(109.076 * ror * t['st_rad'][i])
-                            density_ng.append(density)
-                            tic_ng.append(str(tic))
-                            density_ng_corr.append(density_corr)
-                            density_ng_corr_err.append(density_corr_err)
-                            delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i])/2
-                            delta_ror = ror_err
-                            r_ng_err.append(np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar)))
+                            if (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2 / t['pl_bmasse'][i] < .33 and np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2)/ (109.076 * ror * t['st_rad'][i]) < 0.25:
+                                mass_ng.append(t['pl_bmasse'][i])
+                                mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i])/2)
+                                r_ng.append(t['pl_rade'][i])
+                                r_ng_corr.append(109.076 * ror * t['st_rad'][i])
+                                density_ng.append(density)
+                                density_ng_corr_err.append(density_corr_err)
+                                tic_ng.append(str(tic))
+                                density_ng_corr.append(density_corr)
+                                r_ng_err.append((t['pl_radeerr1'][i] - t['pl_radeerr2'][i])/2)
+                                r_ng_corr_err.append(np.sqrt((109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2))
                 # if density > 10:
                 #     print(tic)
                 # if tic in ground:
@@ -2482,13 +2586,16 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
                 #             marker='', alpha=0.5,)
         data = {
             "mass_g": mass_g,
+            "mass_g_err": mass_g_err,
             "r_g": r_g,
+            "r_g_err": r_g_err,
             "density_g": density_g,
             "mass_ng": mass_ng,
             "mass_ng_err": mass_ng_err,
             "r_ng": r_ng,
             "r_ng_corr": r_ng_corr,
             "r_ng_err": r_ng_err,
+            "r_ng_corr_err": r_ng_corr_err,
             "density_ng": density_ng,
             "density_ng_corr": density_ng_corr,
             "density_ng_corr_err": density_ng_corr_err,
@@ -2501,21 +2608,21 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     with open(f"{folder}mass_density.pkl", "rb") as f:
         data = pickle.load(f)
     mass_g = data["mass_g"]
+    mass_g_err = data["mass_g_err"]
     r_g = data["r_g"]
+    r_g_err = data["r_g_err"]
     density_g = data["density_g"]
     mass_ng = data["mass_ng"]
     mass_ng_err = data["mass_ng_err"]
     r_ng = data["r_ng"]
     r_ng_corr = data["r_ng_corr"]
     r_ng_err = data["r_ng_err"]
+    r_ng_corr_err = data["r_ng_corr_err"]
     density_ng = data["density_ng"]
     density_ng_corr = data["density_ng_corr"]
     density_ng_corr_err = data["density_ng_corr_err"]
     tic_ng = data["tic_ng"]
-    weight = 1 / np.array(r_ng_err) ** 2
-    weight /= np.nanmax(weight)
-    # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
-    # print(density_weight)
+
     ### mass-density ###
     ### mass-radius ###
     ax.scatter(mass_g, r_g, alpha=0.9, marker='o', zorder=2, s=15, color=palette[7], label='TESS-free')
@@ -2523,7 +2630,7 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
                   label='TESS-dependent')
     # for j in range(len(mass_ng)):
     #     plt.text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=2)
-    ax.errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_err, fmt='o', alpha=0.9, color=ng_corr_color, lw=0.7,
+    ax.errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_corr_err, fmt='o', alpha=0.9, color=ng_corr_color, lw=0.7,
                    ms=np.sqrt(15), zorder=4, label='TESS-dependent corrected')
     ax.legend(loc=2, fontsize=10)
 
@@ -2546,21 +2653,84 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     #####
 
     # Generate mass values
-    M_values = np.logspace(-1, 3, 500)
+    M_values = np.logspace(-1, 4, 500)
     R_values = []
-    R_upper = []
     R_lower = []
+    R_upper = []
 
     for M in M_values:
-        R, delta_R, delta_exp = radius(M)
+        R, R_low, R_up = radius(M)
         R_values.append(R)
-        R_upper.append(R * (1 + delta_R))
-        R_lower.append(R * (1 - delta_R))
+        R_lower.append(R_low)
+        R_upper.append(R_up)
 
     # Plot the M-R relation
     ax.plot(M_values, R_values, label='M-R Relation', color='k')
     ax.fill_between(M_values, R_lower, R_upper, color='k', alpha=0.2)
 
+    # Modified fitting call (using fixed breakpoints)
+    result = fit_piecewise_power_law(
+        mass_g + mass_ng,
+        r_g + r_ng,
+        mass_g_err + mass_ng_err,
+        r_g_err + r_ng_err
+    )
+
+    # Extract results (now with fixed breakpoints)
+    lower, upper, best_fit, M_fit = result['uncertainty_bands']
+    M1, M2 = result['breakpoints']  # Will be (4.37, 127)
+
+    # Plotting remains similar but with fixed breakpoint labels
+    plt.fill_between(M_fit, lower, upper, color='red', alpha=0.3,
+                     label='1σ uncertainty')
+    plt.plot(M_fit, best_fit, 'r-', lw=2, label='Best fit')
+
+    # Fixed breakpoint lines (no error bars)
+    plt.axvline(M1, color='k', ls=':',
+                label=f'Rocky-Icy Transition: {M1} M⊕ (fixed)')
+    plt.axvline(M2, color='k', ls=':',
+                label=f'Icy-Giant Transition: {M2} M⊕ (fixed)')
+    print("\nFinal power-law relations:")
+    print(f"Small planets (M < {M1} M⊕):")
+    print(
+        f"R = ({result['power_laws']['small'][0]:.2f} ± {10 ** result['params_err'][0]:.2f}) × M^{result['power_laws']['small'][1]:.2f}±{result['params_err'][1]:.2f}")
+
+    print(f"\nIntermediate planets ({M1} ≤ M < {M2} M⊕):")
+    print(
+        f"R = ({result['power_laws']['medium'][0]:.2f} ± {10 ** result['params_err'][2]:.2f}) × M^{result['power_laws']['medium'][1]:.2f}±{np.sqrt(result['params_err'][1] ** 2 + result['params_err'][2] ** 2):.2f}")
+
+    print(f"\nGiant planets (M ≥ {M2} M⊕):")
+    print(
+        f"R = ({result['power_laws']['large'][0]:.2f} ± {10 ** result['params_err'][3]:.2f}) × M^{result['power_laws']['large'][1]:.2f}±{np.sqrt(result['params_err'][1] ** 2 + result['params_err'][2] ** 2 + result['params_err'][3] ** 2):.2f}")
+    # Updated print statements for fixed breakpoint version
+    # Modified fitting call (using fixed breakpoints)
+    result = fit_piecewise_power_law(
+        mass_g + mass_ng,
+        r_g + r_ng_corr,
+        mass_g_err + mass_ng_err,
+        r_g_err + r_ng_corr_err
+    )
+
+    # Extract results (now with fixed breakpoints)
+    lower, upper, best_fit, M_fit = result['uncertainty_bands']
+    M1, M2 = result['breakpoints']  # Will be (4.37, 127)
+
+    # Plotting remains similar but with fixed breakpoint labels
+    plt.fill_between(M_fit, lower, upper, color='blue', alpha=0.3,
+                     label='1σ uncertainty')
+    plt.plot(M_fit, best_fit, 'b-', lw=2, label='Best fit')
+    print("\nFinal power-law relations:")
+    print(f"Small planets (M < {M1} M⊕):")
+    print(
+        f"R = ({result['power_laws']['small'][0]:.2f} ± {10 ** result['params_err'][0]:.2f}) × M^{result['power_laws']['small'][1]:.2f}±{result['params_err'][1]:.2f}")
+
+    print(f"\nIntermediate planets ({M1} ≤ M < {M2} M⊕):")
+    print(
+        f"R = ({result['power_laws']['medium'][0]:.2f} ± {10 ** result['params_err'][2]:.2f}) × M^{result['power_laws']['medium'][1]:.2f}±{np.sqrt(result['params_err'][1] ** 2 + result['params_err'][2] ** 2):.2f}")
+
+    print(f"\nGiant planets (M ≥ {M2} M⊕):")
+    print(
+        f"R = ({result['power_laws']['large'][0]:.2f} ± {10 ** result['params_err'][3]:.2f}) × M^{result['power_laws']['large'][1]:.2f}±{np.sqrt(result['params_err'][1] ** 2 + result['params_err'][2] ** 2 + result['params_err'][3] ** 2):.2f}")
     # ax[0].set_xscale('log')
     ax.set_xscale('log')
     ax.set_yscale('log')
@@ -3104,8 +3274,8 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 if __name__ == '__main__':
     # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
-    # figure_mr_mrho(recalculate=True)
-    figure_mr_mrho_all(recalculate=True)
+    figure_mr_mrho(recalculate=True)
+    # figure_mr_mrho_all(recalculate=True)
     # figure_tsm(recalculate=True)
     # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
