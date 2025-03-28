@@ -124,7 +124,7 @@ def reorder_citations(entries_file, refs_file, citation_order):
     sorted_entries = []
     sorted_refs = []
     seen = set()
-    start = 26
+    start = 30
     # print(len(citation_order))
     for key in citation_order:
         if key in entry_dict and key not in seen:
