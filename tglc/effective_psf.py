@@ -212,7 +212,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
         portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
-        return aperture, psf_lc, y - down, x - left, portion
+        return aperture, psf_lc, y - down, x - left, portion, target_5x5, field_stars_5x5
     left_ = left - x + 5
     right_ = right - x + 5
     down_ = down - y + 5
