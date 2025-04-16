@@ -204,6 +204,15 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     aperture = aperture.reshape((len(source.time), up - down, right - left))
     target_5x5 = (np.dot(A_target, np.nanmedian(e_psf, axis=0)).reshape(cut_size, cut_size))
     field_stars_5x5 = (np.dot(A_cut, np.nanmedian(e_psf, axis=0)).reshape(cut_size, cut_size))
+    if target_5x5.shape != (cut_size, cut_size):
+        # Pad with nans to get to 5x5 shape
+        # Pad amount in a direction is (expected_num_pix) - (actual_num_pix)
+        pad_left = (cut_size // 2) - (x - left)
+        pad_right = (cut_size // 2 + 1) - (right - x)
+        pad_down = (cut_size // 2) - (y - down)
+        pad_up = (cut_size // 2 + 1) - (up - y)
+        target_5x5 = np.pad(target_5x5, [(pad_down, pad_up), (pad_left, pad_right)], constant_values=np.nan)
+        field_stars_5x5 = np.pad(field_stars_5x5, [(pad_down, pad_up), (pad_left, pad_right)], constant_values=np.nan)
 
     # psf_lc
     over_size = psf_size * factor + 1
@@ -212,7 +221,7 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         psf_lc[:] = np.NaN
         e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
         portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
-        return aperture, psf_lc, y - down, x - left, portion
+        return aperture, psf_lc, y - down, x - left, portion, target_5x5, field_stars_5x5
     left_ = left - x + 5
     right_ = right - x + 5
     down_ = down - y + 5
