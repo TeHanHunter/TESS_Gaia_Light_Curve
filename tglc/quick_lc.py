@@ -316,7 +316,7 @@ def phasebin_centered(time, meas, meas_err, period, t0, binsize_days=None, nbins
 
 def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
     files = glob(f'{local_directory}*.fits')
-    files = np.array(files)[np.array([3,4,0,1,6,2,5])]
+    # files = np.array(files)[np.array([3,4,0,1,6,2,5])]
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     fig = plt.figure(figsize=(8, 4))
     t_all = np.array([])
@@ -370,11 +370,11 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
     #              marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    plt.ylim(0.99, 1.01)
+    # plt.ylim(0.99, 1.01)
     # plt.xlim(0.3, 0.43)
     plt.title(title)
     # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
-    # plt.ylim(0.9, 1.1)
+    plt.ylim(0.8, 1.05)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
@@ -405,22 +405,75 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.show()
     plt.close(fig)
 
+
+def plot_pf_lc_points(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
+    files = glob(f'{local_directory}*.fits')
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
+    fig = plt.figure(figsize=(8, 4))
+    ax = fig.add_subplot(111)
+    ax.set_facecolor('white')
+
+    t_all = np.array([])
+    f_all = np.array([])
+
+    for j in range(len(files)):
+        with fits.open(files[j], mode='denywrite') as hdul:
+            q = (hdul[1].data['TESS_flags'] == 0) & (hdul[1].data['TGLC_flags'] == 0)
+            if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
+                if hdul[0].header["SECTOR"] <= 26:
+                    t = hdul[1].data['time'][q]
+                    f = hdul[1].data[kind][q]
+                elif hdul[0].header["SECTOR"] <= 55:
+                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
+                    f = np.mean(hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 3 * 3].reshape(-1, 3), axis=1)
+                else:
+                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
+                    f = np.mean(hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 9 * 9].reshape(-1, 9), axis=1)
+
+                t_all = np.append(t_all, t)
+                f_all = np.append(f_all, f)
+                idxs = np.where(np.diff(t % period / period) < -0.1)
+                id = np.where(np.diff(t % period / period) > 0.1)
+                idxs = [0] + list(idxs[0]) + [len(t)] + list(id[0])
+                idxs = sorted(idxs)
+                print(idxs)
+                for i in range(len(idxs)-1):
+                    ax.plot(t[idxs[i]+1:idxs[i+1]+1] % period / period, f[idxs[i]+1:idxs[i+1]+1],
+                            color='orange', markersize=4, zorder=2, lw=4)
+
+                title = f'TIC_{hdul[0].header["TICID"]}'
+
+    # Remove all decorations
+    ax.set_axis_off()
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    plt.xlim(0.155, 0.235)
+    plt.savefig(f'{local_directory}/plots/{title}_minimal.png',
+                dpi=300, bbox_inches='tight', pad_inches=0,
+                transparent=True)
+    plt.show()
+    plt.close(fig)
+
 # newest
 def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
-    files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
+    if gaia_dr3 is None:
+        files = glob(f'{local_directory}lc/*.fits')
+    else:
+        files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
+            gaia_dr3 = hdul[0].header['GAIADR3']
             sector = hdul[0].header['SECTOR']
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
             if ymin is None and ymax is None:
                 ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
                 ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
-            with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
+            with open(glob(f'{local_directory}source/*.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
@@ -538,7 +591,10 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 std_dev = np.std(median_abs_diffs)
                 print(f"Standard Deviation: {std_dev}")
                 ax1 = fig.add_subplot(gs[:9, 3:6])
-                ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
+                try:
+                    ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
+                except ValueError:
+                    continue
                 ax1.set_box_aspect(1)
                 # ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
                 ax1.set_xlabel('MAD between combinations of fluxes')
@@ -614,7 +670,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
     if method == 'search':
@@ -622,19 +678,19 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 
 if __name__ == '__main__':
-    tics = [305506996]
-    directory = f'/Users/tehan/Documents/TGLC/'
-    # # # directory = '/home/tehan/data/cosmos/GEMS/'
+    tics = [16005254]
+    directory = f'/Users/tehan/Documents/TGLC/'    # # # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=1741429438313012608)
+    # for i in range(len(tics)):
+    #     plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.4587118084227911, mid_transit_tbjd=1,
-    #            kind='cal_aper_flux')
+    plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
+               kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_psf_flux')
 
