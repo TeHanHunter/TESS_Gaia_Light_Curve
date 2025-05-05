@@ -1,11 +1,12 @@
 import re
 import json
 from collections import OrderedDict
+import pickle
+from uncertainties import ufloat
 # ========== CONFIGURATION ==========
-# input_table = "input_table.tex"  # Your LaTeX table file
 input_table = 'new_input_table.tex'
-output_entries = "entries.tex"  # Existing entries file (to reorder)
-output_refs = "references.tex"  # Existing references file (to reorder)
+output_entries = "entries.tex"
+output_refs = "references.tex"
 
 tic_list_1 = [156648452, 454248975, 445751830, 86263325, 194795551, 193641523, 394050135, 409794137, 243641947,
               470171739, 306648160, 460984940, 33595516, 458419328, 147977348, 16005254, 280655495, 375506058,
@@ -45,58 +46,49 @@ tic_list_3 = [27916356, 137683938, 405717754, 271354351, 123495874, 268159158, 1
               273874849, 137899948, 158170594, 399794420, 63452790, 378085713, 122441491, 137903329,
               299220166, 271042217, 269269546, 171974763, 27318774, 159725995, 27990610]
 
+with open(f"/Users/tehan/Documents/TGLC/mass_density.pkl", "rb") as f:
+    data = pickle.load(f)
+r_g = data["r_g"]
+r_g_err = data["r_g_err"]
+tic_g = data["tic_g"]
+
+r_ng = data["r_ng"]
+r_ng_err = data["r_ng_err"]
+tic_ng = data["tic_ng"]
+# print(tic_g)
 # ===================================
 def parse_table(input_table, convert):
-    # Extract TIC numbers and citations from the table
     with open(input_table, 'r') as f:
         content = f.read()
 
-    # Regex to find TIC and citation pairs
     pattern = r'(\d+) & (.*?) & (\\cite\{TIC_\d+\})'
     matches = re.findall(pattern, content)
-    print(len(matches))
-    # Group into entries and track citation order
     entries = []
-    citation_order = OrderedDict()  # Track first appearance of TIC
+    citation_order = OrderedDict()
     for tic_str, pipeline, citation in matches:
         tic = int(tic_str)
-        key = re.search(r'{TIC_(\d+)}', citation).group(0)[1:-1]  # Extract TIC_XXXXXX
+        key = re.search(r'{TIC_(\d+)}', citation).group(0)[1:-1]
         key = convert[key]
         if tic not in citation_order:
-            citation_order[key] = tic  # Store TIC for sorting later
+            citation_order[key] = tic
         entries.append({'tic': tic, 'pipeline': pipeline, 'citation': citation, 'key': key})
-    print(len(entries))
-    print(len(citation_order))
     return entries, citation_order
 
-
 def split_and_sort_tables(entries, tic_list_1, tic_list_2, tic_list3):
-    # Split entries into two groups based on TIC lists
     table1_entries = [e for e in entries if e['tic'] in tic_list_1]
     table2_entries = [e for e in entries if e['tic'] in tic_list_2]
     table3_entries = [e for e in entries if e['tic'] in tic_list_3]
-    # Sort each table by TIC
     table1_sorted = sorted(table1_entries, key=lambda x: x['tic'])
     table2_sorted = sorted(table2_entries, key=lambda x: x['tic'])
     table3_sorted = sorted(table3_entries, key=lambda x: x['tic'])
-    existing_tics = {e['tic'] for e in entries}
-    # Find missing TICs
-    # missing_from_list_1 = [tic for tic in tic_list_1 if tic not in existing_tics]
-    # missing_from_list_2 = [tic for tic in tic_list_2 if tic not in existing_tics]
-
-    # print("Missing TICs from list 1:", missing_from_list_1)
-    # print("Missing TICs from list 2:", missing_from_list_2)
     return table1_sorted, table2_sorted, table3_sorted
 
-
 def reorder_citations(entries_file, refs_file, citation_order):
-    # Read entries and references
     with open(entries_file, 'r') as f:
         entries = f.readlines()
     with open(refs_file, 'r') as f:
         refs = f.readlines()
 
-    # Extract keys from entries and references
     entry_dict = {}
     seen = set()
     for line in entries:
@@ -109,23 +101,18 @@ def reorder_citations(entries_file, refs_file, citation_order):
                 key = key + 'b'
             entry_dict[key] = line
             seen.add(key)
-        else:
-            print(line)
-    # print(len(refs))
+
     ref_dict = {}
     for line in refs:
         key_match = re.search(r'\\reference\{(.*?)\}', line)
         if key_match:
             key = key_match.group(1)
             ref_dict[key] = line
-    # print(len(ref_dict))
 
-    # Sort based on citation_order (sorted TIC lists)
     sorted_entries = []
     sorted_refs = []
     seen = set()
     start = 30
-    # print(len(citation_order))
     for key in citation_order:
         if key in entry_dict and key not in seen:
             match = re.search(r'\\noindent\s+(\d+)\.\s+[\w\s-]+,\s+[A-Z].*?\(\d{4}\)', entry_dict[key])
@@ -135,64 +122,72 @@ def reorder_citations(entries_file, refs_file, citation_order):
             sorted_refs.append(ref_dict[f"{key}-r"].replace('{' + f'{match.group(1)}', '{' + f'{start}'))
             start +=1
 
-    # Write reordered files
     with open('entries_sorted.tex', 'w') as f:
         f.writelines(sorted_entries)
     with open('references_sorted.tex', 'w') as f:
         f.writelines(sorted_refs)
 
-
 def generate_latex_tables(table1, table2, table3, convert):
-    # Generate LaTeX code for Table 1
+    # Generate LaTeX code for Table 1 (Gaia radii)
     table1_tex = [
-        r'\begin{longtable}{llrllr}',
-        r'\caption{Table 1: TICs in List 1} \label{tab:table1} \\',
+        r'\begin{longtable}{llrl}',
+        r'\caption{TICs with Gaia Radii} \label{tab:table1} \\',
         r'\hline',
-        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
     ]
-    for i in range(0, len(table1), 2):
-        row = table1[i:i + 2]
-        line = []
-        for entry in row:
-            key = entry['citation'].split('{')[1].split('}')[0]
-            citation = '\citen{' + f'{convert[key]}' + '-r}'
-            # citation = '\citen{' + f'{key}' + '}'
-            line.append(f"{entry['tic']} & {entry['pipeline']} & {citation}")
-        table1_tex.append(' & '.join(line) + r' \\')
+    for entry in table1:
+        tic = entry['tic']
+        try:
+            idx = tic_g.index(str(tic))
+        except ValueError:
+            print(f"TIC {tic} not found in tic_g. Skipping.")
+            continue
+        radius = r_g[idx]
+        radius_err = r_g_err[idx]
+        key = entry['citation'].split('{')[1].split('}')[0]
+        citation = '\cite{' + f'{convert[key]}' + '}'
+        val = ufloat(radius, radius_err)
+        table1_tex.append(f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ \\\\")
 
+    # Generate LaTeX code for Table 2 (Non-Gaia radii)
     table2_tex = [
-        r'\begin{longtable}{llrllr}',
-        r'\caption{Table 1: TICs in List 1} \label{tab:table1} \\',
+        r'\begin{longtable}{llrl}',
+        r'\caption{TICs with Non-Gaia Radii} \label{tab:table2} \\',
         r'\hline',
-        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Photometry & Literature & TIC & Photometry & Literature \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
     ]
-    for i in range(0, len(table2), 2):
-        row = table2[i:i + 2]
-        line = []
-        for entry in row:
-            key = entry['citation'].split('{')[1].split('}')[0]
-            citation = '\citen{' + f'{convert[key]}' + '-r}'
-            # citation = '\citen{' + f'{key}' + '}'
-            line.append(f"{entry['tic']} & {entry['pipeline']} & {citation}")
-        table2_tex.append(' & '.join(line) + r' \\')
+    for entry in table2:
+        tic = entry['tic']
+        try:
+            idx = tic_ng.index(str(tic))
+        except ValueError:
+            print(f"TIC {tic} not found in tic_ng. Skipping.")
+            continue
+        radius = r_ng[idx]
+        radius_err = r_ng_err[idx]
+        key = entry['citation'].split('{')[1].split('}')[0]
+        citation = '\cite{' + f'{convert[key]}' + '}'
+        val = ufloat(radius, radius_err)
+        table2_tex.append(f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ \\\\")
 
+    # Generate LaTeX code for Table 3 (Original format)
     table3_tex = [
         r'\begin{longtable}{lrlr}',
-        r'\caption{Table 1: TICs in List 1} \label{tab:table1} \\',
+        r'\caption{Additional TICs} \label{tab:table3} \\',
         r'\hline',
         r'TIC & Literature & TIC & Literature \\',
         r'\hline',
@@ -209,26 +204,16 @@ def generate_latex_tables(table1, table2, table3, convert):
         for entry in row:
             key = entry['citation'].split('{')[1].split('}')[0]
             citation = '\citen{' + f'{convert[key]}' + '-r}'
-            # citation = '\citen{' + f'{key}' + '}'
             line.append(f"{entry['tic']} & {citation}")
         table3_tex.append(' & '.join(line) + r' \\')
     return '\n'.join(table1_tex), '\n'.join(table2_tex), '\n'.join(table3_tex)
 
-
-# Main script
 if __name__ == "__main__":
     with open("dictionary.json", "r") as file:
         convert = json.load(file)
-    # Step 1: Parse input table
     entries, citation_order = parse_table(input_table, convert)
-    # print(entries)
-    # Step 2: Split and sort entries
     table1, table2, table3 = split_and_sort_tables(entries, tic_list_1, tic_list_2, tic_list_3)
-    print(table3)
-    # Step 3: Reorder citations
     reorder_citations(output_entries, output_refs, citation_order)
-
-    # Step 4: Generate LaTeX tables (optional)
     table1_tex, table2_tex, table3_tex = generate_latex_tables(table1, table2, table3, convert)
     with open("table1.tex", 'w') as f:
         f.write(table1_tex)
