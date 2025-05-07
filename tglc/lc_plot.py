@@ -727,8 +727,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             color=g_color, alpha=0.1, edgecolor=None, zorder=2)
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-            histtype='step', edgecolor=g_color, linewidth=2, zorder=4, alpha=0.95,
-               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
+            histtype='step', edgecolor=g_color, linewidth=2, zorder=3, alpha=0.95,
+               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 78 planets)')
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
     #            zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
@@ -831,8 +831,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
             color=ng_color, alpha=0.1, edgecolor=None, zorder=1)
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
-            histtype='step', edgecolor=ng_color, linewidth=2, zorder=4, alpha=0.9,
-               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 216 planets)')
+            histtype='step', edgecolor=ng_color, linewidth=2, zorder=3, alpha=0.9,
+               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 191 planets)')
 
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
@@ -899,8 +899,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
 
-    ax1.vlines(0, ymin=0, ymax=175, color='k', ls='dashed', lw=1, zorder=3)
-    ax2.vlines(0, ymin=0, ymax=35, color='k', ls='dashed', lw=1, zorder=3)
+    # ax1.vlines(0, ymin=0, ymax=175, color='k', ls='-', lw=1, zorder=3)
+    # ax2.vlines(0, ymin=0, ymax=40, color='k', ls='-', lw=1, zorder=3)
     ax2.set_xlabel(r'$f_p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax1.set_ylabel('Error weighted counts')
     ax2.set_ylabel('Error weighted counts')
@@ -910,7 +910,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                   [f"{x * 100:.0f}%" for x in [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3]])
     ax1.text(-0.12, 1, "a", transform=ax1.transAxes, fontsize=12, color='k', fontweight='bold')
     ax2.text(-0.12, 1, "b", transform=ax2.transAxes, fontsize=12, color='k', fontweight='bold')
-
+    ax1.set_ylim(0,150)
+    ax2.set_ylim(0,35)
 
     plt.xlim(-0.3, 0.3)
     # plt.ylim(0,15)
@@ -2197,54 +2198,50 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                 density, density_err = mass_radius_to_density(t['pl_bmasse'][i], t['pl_rade'][i],
                                                               (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2,
                                                               (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
-                if tic in ground:
-                    if t['pl_bmassprov'][i] == 'Mass':
-                        if ((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2 / t['pl_bmasse'][i] < 0.25 and
-                                (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2 / t['pl_rade'][i] < 0.20):
-                            mass_g.append(t['pl_bmasse'][i])
-                            mass_g_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
-                            r_g.append(t['pl_rade'][i])
-                            r_g_err.append((t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
-                            density_g.append(density)
-                            density_g_err.append(density_err)
-                            tic_g.append(str(tic))
+                if t['pl_bmassprov'][i] == 'Mass':
+                    # ## overall shift ###
+                    # density_ng_corr.append(density * (1 - delta_R) ** 3)
+                    ### individual fits ###
+                    ror = []
+                    ror_err = []
+                    weights = []
 
-                elif tic in no_ground:
-                    if t['pl_bmassprov'][i] == 'Mass':
-                        # ## overall shift ###
-                        # density_ng_corr.append(density * (1 - delta_R) ** 3)
-                        ### individual fits ###
-                        ror = []
-                        ror_err = []
-                        weights = []
+                    for j in range(len(difference_tglc)):
+                        if tics_fit[j] == tic and difference_tglc['rhat'][j] == 1.0:
+                            value = float(difference_tglc['value'][j])
+                            err = float((difference_tglc['err1'][j] - difference_tglc['err2'][j]) / 2)
+                            if err > 0:
+                                ror.append(value)
+                                ror_err.append(err)
+                                weights.append(1 / err ** 2)
 
-                        for j in range(len(difference_tglc)):
-                            if tics_fit[j] == tic and difference_tglc['rhat'][j] == 1.0:
-                                value = float(difference_tglc['value'][j])
-                                err = float((difference_tglc['err1'][j] - difference_tglc['err2'][j]) / 2)
-                                if err > 0:
-                                    ror.append(value)
-                                    ror_err.append(err)
-                                    weights.append(1 / err ** 2)
+                    ror = np.average(ror, weights=weights) if weights else np.nan
+                    ror_err = np.sqrt(1 / np.sum(weights)) if weights else np.nan
 
-                        ror = np.average(ror, weights=weights) if weights else np.nan
-                        ror_err = np.sqrt(1 / np.sum(weights)) if weights else np.nan
-
-                        # print(ror is np.nan)
-                        density_corr, density_corr_err = mass_radius_to_density(t['pl_bmasse'][i],
-                                                                                109.076 * ror * t['st_rad'][i],
-                                                                                (t['pl_bmasseerr1'][i] -
-                                                                                 t['pl_bmasseerr2'][i]) / 2,
-                                                                                109.076 * ror * (t['st_raderr1'][i] -
-                                                                                                 t['st_raderr2'][
-                                                                                                     i]) / 2)
-                        delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i]) / 2
-                        delta_ror = ror_err
-                        if ror is not None and not np.isnan(ror):
-                            if (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2 / t['pl_bmasse'][
-                                i] < 0.25 and np.sqrt(
-                                    (109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2) / (
-                                    109.076 * ror * t['st_rad'][i]) < 0.20:
+                    # print(ror is np.nan)
+                    density_corr, density_corr_err = mass_radius_to_density(t['pl_bmasse'][i],
+                                                                            109.076 * ror * t['st_rad'][i],
+                                                                            (t['pl_bmasseerr1'][i] -
+                                                                             t['pl_bmasseerr2'][i]) / 2,
+                                                                            109.076 * ror * (t['st_raderr1'][i] -
+                                                                                             t['st_raderr2'][
+                                                                                                 i]) / 2)
+                    delta_Rstar = 109.076 * (t['st_raderr1'][i] - t['st_raderr2'][i]) / 2
+                    delta_ror = ror_err
+                    if ror is not None and not np.isnan(ror):
+                        if (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2 / t['pl_bmasse'][
+                            i] < 0.25 and np.sqrt(
+                                (109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2) / (
+                                109.076 * ror * t['st_rad'][i]) < 0.20:
+                            if tic in ground:
+                                mass_g.append(t['pl_bmasse'][i])
+                                mass_g_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
+                                r_g.append(t['pl_rade'][i])
+                                r_g_err.append((t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2)
+                                density_g.append(density)
+                                density_g_err.append(density_err)
+                                tic_g.append(str(tic))
+                            elif tic in no_ground:
                                 mass_ng.append(t['pl_bmasse'][i])
                                 mass_ng_err.append((t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2)
                                 r_ng.append(t['pl_rade'][i])
@@ -2314,92 +2311,102 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     tic_g = data["tic_g"]
     tic_ng = data["tic_ng"]
     print(len(r_ng))
+    marker_size = 30
     # density_weight = np.array(r_ng_err)[np.where(np.array(r_ng)<4)]
     # print(density_weight)
     ### mass-density ###
     ax[0].errorbar(mass_g, density_g, xerr=mass_g_err, yerr=density_g_err, fmt='none', alpha=0.5,
-                   zorder=2, capsize=1.5, capthick=0.7, lw=0.7, color=palette[7])
+                   zorder=2, capsize=2.5, capthick=0.7, lw=0.7, color=palette[7])
 
-    ax[0].scatter(mass_g, density_g, alpha=0.9, marker='D', zorder=2, s=15, color=palette[7], facecolors=palette[7],
+    ax[0].scatter(mass_g, density_g, alpha=0.9, marker='D', zorder=2, s=marker_size, color=palette[7], facecolors=palette[7],
                   edgecolors='k', linewidths=0.5)
 
     ax[0].errorbar(mass_ng, density_ng, xerr=mass_ng_err, yerr=density_ng_err, fmt='none', alpha=0.5,
-                   zorder=3, capsize=1.5, capthick=0.7, lw=0.7, color=ng_color)
+                   zorder=3, capsize=2.5, capthick=0.7, lw=0.7, color=ng_color)
 
-    ax[0].scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color)
+    ax[0].scatter(mass_ng, density_ng, alpha=0.9, marker='o', zorder=3, s=marker_size, facecolors='none', edgecolors=ng_color)
 
     ax[0].errorbar(mass_ng, density_ng_corr, xerr=mass_ng_err, yerr=density_ng_corr_err, fmt='none',
-                   color=ng_corr_color, lw=0.7, zorder=3, capsize=1.5, capthick=0.7, alpha=0.5)
+                   color=ng_corr_color, lw=0.7, zorder=3, capsize=2.5, capthick=0.7, alpha=0.5)
 
-    ax[0].scatter(mass_ng, density_ng_corr, color=ng_corr_color, alpha=0.9, s=8, zorder=4)
-    ax[0].plot([mass_ng, mass_ng], [density_ng, density_ng_corr], color='gray', zorder=2, marker='', linewidth=3,
-               alpha=0.5, )
+    ax[0].scatter(mass_ng, density_ng_corr, color=ng_corr_color, alpha=0.9, s=marker_size, zorder=4)
+    for i in range(len(density_ng)):
+        if density_ng[i] < density_ng_corr[i]:
+            ax[0].plot([mass_ng[i], mass_ng[i]], [density_ng[i], density_ng_corr[i]], color=ng_corr_color, zorder=2,
+                       marker='', linewidth=3, alpha=0.8)
+        elif density_ng[i] > density_ng_corr[i]:
+            ax[0].plot([mass_ng[i], mass_ng[i]], [density_ng[i], density_ng_corr[i]], color=ng_color, zorder=2,
+                       marker='', linewidth=3, alpha=0.8)
     # for j in range(len(mass_ng)):
     #     ax[0].text(mass_ng[j], density_ng[j], tic_ng[j], fontsize=6)
 
     ### mass-radius ###
     ax[1].errorbar(mass_g, r_g, xerr=mass_g_err, yerr=r_g_err, fmt='none', alpha=0.5,
-                   zorder=2, capsize=1.5, capthick=0.7, lw=0.7, color=palette[7])
-    ax[1].scatter(mass_g, r_g, alpha=0.9, marker='D', zorder=2, s=15, color=palette[7], facecolors=palette[7],
+                   zorder=2, capsize=2.5, capthick=0.7, lw=0.7, color=palette[7])
+    ax[1].scatter(mass_g, r_g, alpha=0.9, marker='D', zorder=2, s=marker_size, color=palette[7], facecolors=palette[7],
                   edgecolors='k', linewidths=0.5)
     ax[1].errorbar(mass_ng, r_ng, xerr=mass_ng_err, yerr=r_ng_err, fmt='none', alpha=0.5,
-                   zorder=3, capsize=1.5, capthick=0.7, lw=0.7, color=ng_color)
-    ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color)
+                   zorder=3, capsize=2.5, capthick=0.7, lw=0.7, color=ng_color)
+    ax[1].scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=3, s=marker_size, facecolors='none', edgecolors=ng_color)
     ax[1].errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_err, fmt='none', alpha=0.5,
-                   color=ng_corr_color, lw=0.7, zorder=4, capsize=1.5, capthick=0.7)
+                   color=ng_corr_color, lw=0.7, zorder=4, capsize=2.5, capthick=0.7)
 
-    ax[1].scatter(mass_ng, r_ng_corr, color=ng_corr_color, alpha=0.9, s=8, zorder=4)
-    ax[1].plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=2, marker='', linewidth=3, alpha=0.5, )
+    ax[1].scatter(mass_ng, r_ng_corr, color=ng_corr_color, alpha=0.9, s=marker_size, zorder=4)
+    for i in range(len(r_ng)):
+        if r_ng[i] < r_ng_corr[i]:
+            ax[1].plot([mass_ng[i], mass_ng[i]], [r_ng[i], r_ng_corr[i]], color=ng_corr_color, zorder=2, marker='', linewidth=3, alpha=0.8, )
+        elif r_ng[i] > r_ng_corr[i]:
+            ax[1].plot([mass_ng[i], mass_ng[i]], [r_ng[i], r_ng_corr[i]], color=ng_color, zorder=2, marker='', linewidth=3, alpha=0.8, )
 
     # add manual legend
     ax[1].errorbar(0, 0, xerr=0, yerr=0, fmt='D', alpha=0.9, markerfacecolor=palette[7], markeredgecolor='k', markeredgewidth=0.5,
-                   zorder=2, capsize=1.5, capthick=0.7, lw=0.7, ms=np.sqrt(8), color=palette[7], label='TESS-free')
+                   zorder=2, capsize=1.5, capthick=0.7, lw=0.7, ms=np.sqrt(marker_size), color=palette[7], label='TESS-free')
     # ax[0].errorbar(mass_ng, density_ng_corr, xerr=mass_ng_err, yerr=density_ng_corr_err, fmt='o', alpha=0.3,
     #                color=ng_corr_color, lw=0.7, ms=np.sqrt(15), zorder=4, capsize=3, capthick=0.7)
     ax[1].errorbar(0, 0, xerr=0, yerr=0, fmt='o', alpha=0.9,
-                   zorder=3, capsize=1.5, capthick=0.7, lw=0.7, ms=np.sqrt(15),
+                   zorder=3, capsize=1.5, capthick=0.7, lw=0.7, ms=np.sqrt(marker_size),
                    color=ng_color, markeredgecolor=ng_color, markerfacecolor='none',
                    label='TESS-dependent')
     ax[1].errorbar(0, 0, xerr=0, yerr=0, fmt='o', alpha=0.9,
-                   color=ng_corr_color, lw=0.7, zorder=4, capsize=1.5, capthick=0.7, ms=np.sqrt(8), label='TESS-dependent TGLC-fitted')
+                   color=ng_corr_color, lw=0.7, zorder=4, capsize=1.5, capthick=0.7, ms=np.sqrt(marker_size), label='TESS-dependent TGLC-fitted')
     ax[1].legend(loc=2, fontsize=10)
 
     ### water world ###
     r = np.linspace(1.24, 4, 100)
     mass, rho = zeng_2019_water_world(r)
     # ax[0].plot(mass, r, c=palette[0], zorder=4, label='Water world')
-    ax[0].plot(mass, rho, c=palette[0], zorder=5, label='Water world', linewidth=2)
-    ax[1].plot(mass, r, c=palette[0], zorder=5, label='Water world', linewidth=2)
+    ax[0].plot(mass, rho, c=palette[0], zorder=1, label='Water world', linewidth=2)
+    ax[1].plot(mass, r, c=palette[0], zorder=1, label='Water world', linewidth=2)
     ax[0].text(mass[-1] - 22, rho[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=5, rotation=23)
-    ax[1].text(mass[-1] - 25, r[-1] - 0.14, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
-               ha='center', va='center', zorder=5, rotation=25)
+               ha='center', va='center', zorder=1, rotation=23)
+    ax[1].text(mass[-1] - 10, r[-1] + 0.05, 'Water world', color=palette[0], fontweight='bold', fontsize=9,
+               ha='center', va='center', zorder=1, rotation=25)
     ### rocky core + H/He atmos ###
     mass = np.linspace(1, 30, 100)
     r, r1, r2, rho, rho1, rho2 = rogers_2023_rocky_core(mass)
     # ax[0].plot(mass, r, c=sns.color_palette('muted')[5], zorder=4, label='Rocky core with H/He atmosphere')
-    ax[0].plot(mass, rho, c=sns.color_palette('muted')[5], zorder=5, label='Rocky core with H/He atmosphere',
+    ax[0].plot(mass, rho, c=sns.color_palette('muted')[5], zorder=1, label='Rocky core with H/He atmosphere',
                linewidth=2)
-    ax[0].plot(mass, rho1, c=sns.color_palette('muted')[5], zorder=5, ls='--')
-    ax[0].plot(mass, rho2, c=sns.color_palette('muted')[5], zorder=5, ls='--')
-    ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=5, label='Rocky core with H/He atmosphere', linewidth=2)
-    ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=5, ls='--')
-    ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=5, ls='--')
+    ax[0].plot(mass, rho1, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[0].plot(mass, rho2, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[1].plot(mass, r, c=sns.color_palette('muted')[5], zorder=1, label='Rocky core with H/He atmosphere', linewidth=2)
+    ax[1].plot(mass, r1, c=sns.color_palette('muted')[5], zorder=1, ls='--')
+    ax[1].plot(mass, r2, c=sns.color_palette('muted')[5], zorder=1, ls='--')
     ax[0].text(mass[0] + 0.95, rho[0] + 0.01, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=5, rotation=11)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=1, rotation=11)
     ax[1].text(mass[0] + 0.9, r[0] + 0.35, 'Rocky+atmosphere', color=sns.color_palette('muted')[5],
-               fontweight='bold', fontsize=9, ha='center', va='center', zorder=5, rotation=27)
+               fontweight='bold', fontsize=9, ha='center', va='center', zorder=1, rotation=27)
 
     ### Earth-like ###
     mass = np.linspace(1, 30, 100)
     rho = owen_2017_earth_core(mass)
     r = (rho / mass) ** (-1 / 3)
-    ax[0].plot(mass, rho, c='r', zorder=5, label='Earth-like', linewidth=2)
-    ax[1].plot(mass, r, c='r', zorder=5, label='Earth-like', linewidth=2)
+    ax[0].plot(mass, rho, c='r', zorder=1, label='Earth-like', linewidth=2)
+    ax[1].plot(mass, r, c='r', zorder=1, label='Earth-like', linewidth=2)
     ax[0].text(14, 1.86, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=5, rotation=45)
+               va='center', zorder=1, rotation=45)
     ax[1].text(mass[-1] - 8, r[-1] - 0.35, 'Earth-like', color='r', fontweight='bold', fontsize=9, ha='center',
-               va='center', zorder=5, rotation=23)
+               va='center', zorder=1, rotation=23)
     ### M-R relation ###
     # mass = np.linspace(2, 30, 100)
     # ax[0].plot(mass, mass / (0.80811874404 * mass ** 0.59)**3, ls='dotted', c='k')
@@ -2511,7 +2518,7 @@ def figure_mr_mrho_save_param(folder='/Users/tehan/Documents/TGLC/', recalculate
                                 (filtered_table['st_raderr1'][idx[j]] - filtered_table['st_raderr2'][idx[j]]) / 2)
                 # Compute Rp/Rs with uncertainty
                 ror_u = pl_rade / st_rad / 109.076
-                print(f"ror_u: {ror_u}, type(ror_u.s): {type(ror_u.s)}, ror_u.s: {ror_u.s}")
+                # print(f"ror_u: {ror_u}, type(ror_u.s): {type(ror_u.s)}, ror_u.s: {ror_u.s}")
                 if np.isnan(ror_u.s):
                     print(tic, filtered_table['st_raderr1'][idx[j]], filtered_table['st_raderr2'][idx[j]])
                 else:
@@ -2821,7 +2828,7 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     sns.set(rc={'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '1', 'grid.color': '0.8'})
-    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(7, 5), gridspec_kw={'hspace': 0.1})
+    fig, ax = plt.subplots(1, 1, sharex=True, figsize=(12, 8), gridspec_kw={'hspace': 0.1})
     for spine in ax.spines.values():
         spine.set_zorder(5)
     ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
@@ -3025,29 +3032,30 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     #                ms=np.sqrt(15), zorder=4, label='TESS-dependent corrected')
     # ax.legend(loc=2, fontsize=10)
     #
-    ax.errorbar(mass_g, r_g, xerr=mass_g_err, yerr=r_g_err, fmt='none', alpha=0.3,
-                   zorder=2, capsize=1.5, capthick=0.7, lw=0.7, color=palette[7])
-    ax.scatter(mass_g, r_g, alpha=0.7, marker='D', zorder=2, s=8, color=palette[7], facecolors=palette[7],
+    marker_size = 35
+    ax.errorbar(mass_g, r_g, xerr=mass_g_err, yerr=r_g_err, fmt='none', alpha=0.7,
+                   zorder=2, capsize=2.5, capthick=0.7, lw=0.7, color=palette[7])
+    ax.scatter(mass_g, r_g, alpha=0.9, marker='D', zorder=2, s=marker_size, color=palette[7], facecolors=palette[7],
                   edgecolors='k', linewidths=0.5)
-    ax.errorbar(mass_ng, r_ng, xerr=mass_ng_err, yerr=r_ng_err, fmt='none', alpha=0.3,
-                   zorder=3, capsize=1.5, capthick=0.7, lw=0.7, color=ng_color)
-    ax.scatter(mass_ng, r_ng, alpha=0.7, marker='o', zorder=3, s=15, facecolors='none', edgecolors=ng_color)
-    ax.errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_err, fmt='none', alpha=0.3,
-                   color=ng_corr_color, lw=0.7, zorder=4, capsize=1.5, capthick=0.7)
-    ax.scatter(mass_ng, r_ng_corr, color=ng_corr_color, alpha=0.7, s=8, zorder=4)
+    ax.errorbar(mass_ng, r_ng, xerr=mass_ng_err, yerr=r_ng_err, fmt='none', alpha=0.7,
+                   zorder=3, capsize=2.5, capthick=0.7, lw=0.7, color=ng_color)
+    ax.scatter(mass_ng, r_ng, alpha=0.9, marker='o', zorder=3, s=marker_size, facecolors='none', edgecolors=ng_color)
+    ax.errorbar(mass_ng, r_ng_corr, xerr=mass_ng_err, yerr=r_ng_err, fmt='none', alpha=0.7,
+                   color=ng_corr_color, lw=0.7, zorder=4, capsize=2.5, capthick=0.7)
+    ax.scatter(mass_ng, r_ng_corr, color=ng_corr_color, alpha=0.9, s=marker_size, zorder=4)
     # ax.plot([mass_ng, mass_ng], [r_ng, r_ng_corr], color='gray', zorder=2, marker='', linewidth=3, alpha=0.5, )
 
     ax.errorbar(0, 0, xerr=0, yerr=0, fmt='D', alpha=0.9, markerfacecolor=palette[7], markeredgecolor='k',
                    markeredgewidth=0.5,
-                   zorder=2, capsize=1.5, capthick=0.7, lw=0.7, ms=np.sqrt(8), color=palette[7], label='TESS-free')
+                   zorder=2, capsize=2.5, capthick=0.7, lw=0.7, ms=np.sqrt(marker_size), color=palette[7], label='TESS-free')
     # ax[0].errorbar(mass_ng, density_ng_corr, xerr=mass_ng_err, yerr=density_ng_corr_err, fmt='o', alpha=0.3,
-    #                color=ng_corr_color, lw=0.7, ms=np.sqrt(15), zorder=4, capsize=3, capthick=0.7)
+    #                color=ng_corr_color, lw=0.7, ms=np.sqrt(15), zorder=4, capsize=2.5, capthick=0.7)
     ax.errorbar(0, 0, xerr=0, yerr=0, fmt='o', alpha=0.9,
-                   zorder=3, capsize=1.5, capthick=0.7, lw=0.7, ms=np.sqrt(15),
+                   zorder=3, capsize=2.5, capthick=0.7, lw=0.7, ms=np.sqrt(marker_size),
                    color=ng_color, markeredgecolor=ng_color, markerfacecolor='none',
                    label='TESS-dependent')
     ax.errorbar(0, 0, xerr=0, yerr=0, fmt='o', alpha=0.9,
-                   color=ng_corr_color, lw=0.7, zorder=4, capsize=1.5, capthick=0.7, ms=np.sqrt(8), label='TESS-dependent TGLC-fitted')
+                   color=ng_corr_color, lw=0.7, zorder=4, capsize=2.5, capthick=0.7, ms=np.sqrt(marker_size), label='TESS-dependent TGLC-fitted')
     # ax[0].scatter(1, 1, facecolors='none', edgecolors='k', zorder=4, marker='o')
     # ax[0].text(1, 1 * 1.08, 'Earth', color='k', fontsize=9, ha='center', va='center', zorder=4, rotation=0)
     # ax.scatter(1, 1, facecolors='none', edgecolors='k', zorder=4, marker='o')
@@ -3082,7 +3090,7 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     y_upper = y_xi(xi_values, c + d_c, alpha1 + d_alpha1, beta+d_beta, psi+d_psi)
     y_lower = y_xi(xi_values, c - d_c, alpha1 - d_alpha1, beta-d_beta, psi-d_psi)
     # Plot the M-R relation
-    ax.plot(10 ** xi_values, 10 ** y_values, label=r'Literature $M$-$R$ relation', color='k', zorder=9, lw=2)
+    ax.plot(10 ** xi_values, 10 ** y_values, label=r'Literature $M$-$R$ relation', color='k', zorder=9, lw=4)
     # ax.fill_between(10 ** xi_values, 10 ** y_upper, 10 ** y_lower, color='k', alpha=0.1, zorder=6)
 
     # #### Original method
@@ -3151,8 +3159,8 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     R_upper = piecewise_power_law(M_fine, params + param_errors)
     R_lower = piecewise_power_law(M_fine, params - param_errors)
 
-    plt.plot(M_fine, R_fit, label=r'TESS $M$-$R$ relation', color=ng_color, zorder=10, lw=2)
-    plt.plot(M_fine, R_fit, color='w', lw=3, alpha=0.5, zorder=9)
+    plt.plot(M_fine, R_fit, label=r'TESS $M$-$R$ relation', color=ng_color, zorder=10, lw=4)
+    plt.plot(M_fine, R_fit, color='w', lw=5, alpha=0.5, zorder=9)
     plt.fill_between(M_fine, R_lower, R_upper, color=ng_color, alpha=0.2, zorder=7)
 
     # Print results
@@ -3172,8 +3180,8 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
     R_upper = piecewise_power_law(M_fine, params + param_errors)
     R_lower = piecewise_power_law(M_fine, params - param_errors)
 
-    plt.plot(M_fine, R_fit, label=r'Corrected TESS $M$-$R$ relation', color=ng_corr_color, zorder=11, lw=2)
-    plt.plot(M_fine, R_fit, color='w', lw=3, alpha=0.5, zorder=10)
+    plt.plot(M_fine, R_fit, label=r'Corrected TESS $M$-$R$ relation', color=ng_corr_color, zorder=11, lw=4)
+    plt.plot(M_fine, R_fit, color='w', lw=5, alpha=0.5, zorder=10)
     plt.fill_between(M_fine, R_lower, R_upper, color=ng_corr_color, alpha=0.2, zorder=8)
 
     # Print results
@@ -3818,8 +3826,8 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 if __name__ == '__main__':
     # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
-    figure_mr_mrho(recalculate=True)
-    # figure_mr_mrho_all(recalculate=True)
+    # figure_mr_mrho(recalculate=True)
+    figure_mr_mrho_all(recalculate=False)
     # figure_mr_mrho_save_param(recalculate=True)
 
 

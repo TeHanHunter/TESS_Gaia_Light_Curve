@@ -1,7 +1,9 @@
 import re
 import json
 from collections import OrderedDict
+import numpy as np
 import pickle
+from astropy.io import ascii
 from uncertainties import ufloat
 # ========== CONFIGURATION ==========
 input_table = 'new_input_table.tex'
@@ -45,16 +47,111 @@ tic_list_3 = [27916356, 137683938, 405717754, 271354351, 123495874, 268159158, 1
               27774415, 164786087, 159098316, 268924036, 158388163, 138430864, 164892194, 272366748,
               273874849, 137899948, 158170594, 399794420, 63452790, 378085713, 122441491, 137903329,
               299220166, 271042217, 269269546, 171974763, 27318774, 159725995, 27990610]
+folder='/Users/tehan/Documents/TGLC/'
+difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
+tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
+# Update for tic_list_1 loop
+rors_1 = []
+ror_errs_1 = []
+fp_1 = []
+tic_1 = []
+for i, tic in enumerate(tic_list_1):
+    ror = []
+    ror_err = []
+    weights = []
+    ror_lit = 0.
+    for j in range(len(difference_tglc)):
+        if tics_fit[j] == tic and difference_tglc['rhat'][j] == 1.0:
+            value = float(difference_tglc['value'][j])
+            err = float((difference_tglc['err1'][j] - difference_tglc['err2'][j]) / 2)
+            if err > 0:
+                ror.append(value)
+                ror_err.append(err)
+                weights.append(1 / err**2)
+                ror_lit = difference_tglc['pl_ratror'][j]
 
-with open(f"/Users/tehan/Documents/TGLC/mass_density.pkl", "rb") as f:
-    data = pickle.load(f)
-r_g = data["r_g"]
-r_g_err = data["r_g_err"]
-tic_g = data["tic_g"]
+    if weights:
+        ror_avg_val = np.average(ror, weights=weights)
+        ror_avg_err_val = np.sqrt(1 / np.sum(weights))
+        ror_avg_u = ufloat(ror_avg_val, ror_avg_err_val)
+    else:
+        ror_avg_u = ufloat(np.nan, np.nan)
+    rors_1.append(ror_avg_u.nominal_value)
+    ror_errs_1.append(ror_avg_u.std_dev)
+    fp = 1 - (ror_lit / ror_avg_u) if not (np.isnan(ror_avg_u.nominal_value) or ror_avg_u.nominal_value == 0) else ufloat(np.nan, np.nan)
+    fp_1.append(fp)
+    tic_1.append(tic)
 
-r_ng = data["r_ng"]
-r_ng_err = data["r_ng_err"]
-tic_ng = data["tic_ng"]
+# Similar update for tic_list_2 loop
+rors_2 = []
+ror_errs_2 = []
+fp_2 = []
+tic_2 = []
+for i, tic in enumerate(tic_list_2):
+    ror = []
+    ror_err = []
+    weights = []
+    ror_lit = 0.
+    for j in range(len(difference_tglc)):
+        if tics_fit[j] == tic and difference_tglc['rhat'][j] == 1.0:
+            value = float(difference_tglc['value'][j])
+            err = float((difference_tglc['err1'][j] - difference_tglc['err2'][j]) / 2)
+            if err > 0:
+                ror.append(value)
+                ror_err.append(err)
+                weights.append(1 / err**2)
+                ror_lit = difference_tglc['pl_ratror'][j]
+
+    if weights:
+        ror_avg_val = np.average(ror, weights=weights)
+        ror_avg_err_val = np.sqrt(1 / np.sum(weights))
+        ror_avg_u = ufloat(ror_avg_val, ror_avg_err_val)
+    else:
+        ror_avg_u = ufloat(np.nan, np.nan)
+    rors_2.append(ror_avg_u.nominal_value)
+    ror_errs_2.append(ror_avg_u.std_dev)
+    fp = 1 - (ror_lit / ror_avg_u) if not (np.isnan(ror_avg_u.nominal_value) or ror_avg_u.nominal_value == 0) else ufloat(np.nan, np.nan)
+    fp_2.append(fp)
+    tic_2.append(tic)
+
+print(len(tic_2))
+
+difference_tglc_kepler = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
+tics_fit_kepler = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc_kepler['Star_sector']]
+
+# 2. Process tic_list_3 data
+rors_3 = []
+ror_errs_3 = []
+fp_3 = []
+tic_3 = []
+for i, tic in enumerate(tic_list_3):
+    ror = []
+    ror_err = []
+    weights = []
+    ror_lit = 0.
+    for j in range(len(difference_tglc_kepler)):
+        if tics_fit_kepler[j] == tic and difference_tglc_kepler['rhat'][j] == 1.0:
+            value = float(difference_tglc_kepler['value'][j])
+            err = float((difference_tglc_kepler['err1'][j] - difference_tglc_kepler['err2'][j]) / 2)
+            if err > 0:
+                ror.append(value)
+                ror_err.append(err)
+                weights.append(1 / err ** 2)
+                ror_lit = difference_tglc_kepler['pl_ratror'][j]
+
+    if weights:
+        ror_avg_val = np.average(ror, weights=weights)
+        ror_avg_err_val = np.sqrt(1 / np.sum(weights))
+        ror_avg_u = ufloat(ror_avg_val, ror_avg_err_val)
+    else:
+        ror_avg_u = ufloat(np.nan, np.nan)
+
+    rors_3.append(ror_avg_u.nominal_value)
+    ror_errs_3.append(ror_avg_u.std_dev)
+    fp = 1 - (ror_lit / ror_avg_u) if not (np.isnan(ror_avg_u.nominal_value) or ror_avg_u.nominal_value == 0) else ufloat(np.nan, np.nan)
+    fp_3.append(fp)
+    tic_3.append(tic)
+
 # print(tic_g)
 # ===================================
 def parse_table(input_table, convert):
@@ -128,16 +225,16 @@ def reorder_citations(entries_file, refs_file, citation_order):
         f.writelines(sorted_refs)
 
 def generate_latex_tables(table1, table2, table3, convert):
-    # Generate LaTeX code for Table 1 (Gaia radii)
+    # Table 1 (Gaia radii)
     table1_tex = [
-        r'\begin{longtable}{llrl}',
+        r'\begin{longtable}{ccccc}',
         r'\caption{TICs with Gaia Radii} \label{tab:table1} \\',
         r'\hline',
-        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ & $f_p$ \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ & $f_p$ \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
@@ -145,67 +242,79 @@ def generate_latex_tables(table1, table2, table3, convert):
     for entry in table1:
         tic = entry['tic']
         try:
-            idx = tic_g.index(str(tic))
+            idx = tic_1.index(tic)
         except ValueError:
-            print(f"TIC {tic} not found in tic_g. Skipping.")
+            print(f"TIC {tic} not found in tic_1. Skipping.")
             continue
-        radius = r_g[idx]
-        radius_err = r_g_err[idx]
+        val = ufloat(rors_1[idx], ror_errs_1[idx])
+        fp_val = fp_1[idx] * 100  # Convert to percentage
         key = entry['citation'].split('{')[1].split('}')[0]
         citation = '\cite{' + f'{convert[key]}' + '}'
-        val = ufloat(radius, radius_err)
-        table1_tex.append(f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ \\\\")
+        if not np.isnan(fp_val.nominal_value):
+            table1_tex.append(f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ & ${fp_val.nominal_value:.2f}\\%$ \\\\")
 
-    # Generate LaTeX code for Table 2 (Non-Gaia radii)
+    # Table 2 (Non-Gaia radii)
     table2_tex = [
-        r'\begin{longtable}{llrl}',
+        r'\begin{longtable}{ccccc}',
         r'\caption{TICs with Non-Gaia Radii} \label{tab:table2} \\',
         r'\hline',
-        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ & $f_p$ \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ \\',
+        r'TIC & Photometry & Literature & $p_{\text{TGLC}}$ & $f_p$ \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
     ]
+
     for entry in table2:
         tic = entry['tic']
         try:
-            idx = tic_ng.index(str(tic))
+            idx = tic_2.index(tic)
         except ValueError:
-            print(f"TIC {tic} not found in tic_ng. Skipping.")
+            print(f"TIC {tic} not found in tic_2. Skipping.")
             continue
-        radius = r_ng[idx]
-        radius_err = r_ng_err[idx]
+        val = ufloat(rors_2[idx], ror_errs_2[idx])
+        fp_val = fp_2[idx] * 100  # Convert to percentage
         key = entry['citation'].split('{')[1].split('}')[0]
         citation = '\cite{' + f'{convert[key]}' + '}'
-        val = ufloat(radius, radius_err)
-        table2_tex.append(f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ \\\\")
+        if not np.isnan(fp_val.nominal_value):
+            table2_tex.append(f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ & ${fp_val.nominal_value:.2f}\\%$ \\\\")
 
-    # Generate LaTeX code for Table 3 (Original format)
+    # Table 3 (Kepler)
     table3_tex = [
-        r'\begin{longtable}{lrlr}',
-        r'\caption{Additional TICs} \label{tab:table3} \\',
+        r'\begin{longtable}{cccc}',
+        r'\caption{Additional TICs (Kepler)} \label{tab:table3} \\',
         r'\hline',
-        r'TIC & Literature & TIC & Literature \\',
+        r'TIC & Literature & $p_{\text{TGLC}}$ & $f_p$ \\',
         r'\hline',
         r'\endfirsthead',
         r'\hline',
-        r'TIC & Literature & TIC & Literature \\',
+        r'TIC & Literature & $p_{\text{TGLC}}$ & $f_p$ \\',
         r'\hline',
         r'\endhead',
         r'\hline\endfoot'
     ]
-    for i in range(0, len(table3), 2):
-        row = table3[i:i + 2]
-        line = []
-        for entry in row:
-            key = entry['citation'].split('{')[1].split('}')[0]
-            citation = '\citen{' + f'{convert[key]}' + '-r}'
-            line.append(f"{entry['tic']} & {citation}")
-        table3_tex.append(' & '.join(line) + r' \\')
+
+    for entry in table3:
+        tic = entry['tic']
+        try:
+            idx = tic_3.index(tic)
+        except ValueError:
+            print(f"TIC {tic} not found in tic_3. Skipping.")
+            continue
+
+        val = ufloat(rors_3[idx], ror_errs_3[idx])
+        fp_val = fp_3[idx] * 100  # Convert to percentage
+        key = entry['citation'].split('{')[1].split('}')[0]
+        citation = '\cite{' + f'{convert[key]}' + '}'
+
+        table3_tex.append(
+            f"{tic} & {citation} & "
+            f"${val:.1uL}$ & ${fp_val.nominal_value:.1f}\\%$ \\\\"
+        )
+
     return '\n'.join(table1_tex), '\n'.join(table2_tex), '\n'.join(table3_tex)
 
 if __name__ == "__main__":
