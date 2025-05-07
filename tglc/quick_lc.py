@@ -662,27 +662,73 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
     # plt.title(f'best prior = {priors[np.argmin(mad)]:04d}')
     # plt.show()
 
+def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=None, prior=None):
+    """
+    Downloads and plots TESS light curves for a given list of TICs and their corresponding sectors.
 
-def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None, ffi='SPOC', mast_timeout=3600):
+    Parameters
+    ----------
+    tics : list of int, optional
+        List of TESS Input Catalog (TIC) IDs. Defaults to None.
+    sectors : list of int, optional
+        List of corresponding sectors for each TIC ID. Must have the same length as tics if provided.
+        Defaults to None.
+    method : str, optional
+        Method to use for retrieving light curves. 'query' downloads individual light curves,
+        'search' might use a different approach (requires star_spliter function). Defaults to 'query'.
+    server : int, optional
+        Server number to use if applicable. Defaults to 1.
+    directory : str, optional
+        Local directory to save the downloaded light curves. Defaults to None.
+    prior : str, optional
+        Prior information to pass to the light curve retrieval function. Defaults to None.
+    """
     if method == 'query':
+        if tics is None:
+            print("Error: 'tics' list cannot be None when method is 'query'.")
+            return
+        if sectors is None:
+            print("Error: 'sectors' list cannot be None when method is 'query'.")
+            return
+        if len(tics) != len(sectors):
+            print("Error: The 'tics' and 'sectors' lists must have the same length.")
+            return
+
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=55, prior=prior,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
-    if method == 'search':
+    elif method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
+    else:
+        print(f"Error: Unknown method '{method}'. Choose either 'query' or 'search'.")
 
 
 if __name__ == '__main__':
-    tics = [16740541]
-    directory = f'/Users/tehan/Downloads/GEMS/'
+    tics = [
+        237405551, 139811707, 139811707, 236387002, 146712644, 146712644, 250239234,
+        240768149, 240768149, 130219802, 235596066, 13468323, 441417469, 196840660,
+        178409591, 230086768, 230086768, 376843143, 376843143, 100100829, 32759110,
+        32759110, 32759110, 189582152, 252140033, 204494565, 154831810, 102417517,
+        461872416, 243921117, 455947620, 455947620, 455947620, 46432937, 46432937,
+        67512645, 67512645, 67512645, 67512645, 419411415, 419411415, 419411415,
+        243641947, 243641947, 178709444, 178709444, 178709444, 302527524, 335590096,
+        335590096, 335590096
+    ]
+
+    sectors = [
+        7, 12, 38, 24, 3, 30, 11, 2, 42, 54, 53, 17, 1, 17, 34, 15, 18, 25, 52, 29, 6,
+        32, 33, 17, 18, 28, 7, 10, 36, 54, 16, 17, 24, 6, 32, 22, 45, 46, 49, 15, 41,
+        55, 11, 38, 10, 36, 37, 38, 10, 36, 46
+    ]
+    directory = f'/Users/tehan/Downloads/GEMS_Rowen/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
