@@ -938,8 +938,166 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     print(np.percentile(periods, [0,25,50,75,100]))
     return difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground
 
+
+def figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/'):
+    # Load and prepare data
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced.csv'))
+    tics = [int(s[4:]) for s in t['tic_id']]
+    palette = sns.color_palette('colorblind')
+    plot_color = palette[3]
+    # Load original datasets
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] == 1.0)]
+
+    # Process ground and no_ground samples
+    ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 464300749, 151483286,
+               335590096,
+               193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
+               395393265, 310002617, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137,
+               243641947,
+               419411415, 281408474, 460984940, 68007716, 39414571, 8599009, 33595516, 458419328, 336128819, 417646390,
+               240823272, 147977348, 144700903, 258920431, 280655495, 66561343, 16005254, 375506058, 279947414,
+               239816546, 361343239] +
+              [90850770, 97568467, 263179590, 194795551, 139375960, 100389539, 250111245,
+               268301217, 455784423] +
+              [452006073, 306648160, 165464482, 23769326, 470171739,
+               166184428, 259172249, 69356857, 58825110, 154220877,
+               119585136, 388076422, 178709444, 241249530, 446549906,
+               269333648, 401125028, 439366538])
+    no_ground = ([428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
+                  271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
+                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
+                  219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
+                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
+                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
+                  172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
+                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
+                  394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
+                  151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 83092282,
+                  264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] +
+                 [370133522, 298663873, 383390264, 329148988, 441462736, 199376584, 257527578, 166527623, 142937186,
+                  464646604, 118327550, 234994474, 260004324, 183985250, 349095149, 139285832, 360156606, 200723869,
+                  320004517, 89020549, 179034327, 158025009, 333473672, 349576261, 470381900, 218795833,
+                  408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
+                  407126408, 55650590, 335630746, 55525572, 342642208, 394357918] +
+                 [293607057, 332534326, 260708537, 443556801, 52005579, 287145649, 232540264, 404518509, 358070912,
+                  352413427, 169765334, 39699648, 305739565, 391903064, 237913194, 160390955, 257060897, 365102760,
+                  393818343, 153065527, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
+                  120826158, 99869022, 456862677, 219850915, 380887434, 232612416, 271169413, 232976128, 49254857,
+                  198241702, 282485660, 224297258, 303432813, 391949880, 437011608, 198356533, 232982558, 237232044,
+                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 58542531, 102734241, 268334473,
+                  159418353, 18318288, 219857012, 35009898, 287080092, 124573851, 289580577, 367858035, 277634430,
+                  9348006, 219344917, 21535395, 34077285, 286916251, 322807371, 142381532, 142387023, 46432937,
+                  348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
+                  166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
+                  201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
+                  429358906, 37749396, 305424003, 63898957])
+    # Create combined dataset
+    combined_data = Table()
+    for sample in ['ground', 'no_ground']:
+        temp = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
+        tic_list = ground if sample == 'ground' else no_ground
+
+        for i in range(len(d_tglc)):
+            star_sector = d_tglc['Star_sector'][i]
+            if int(star_sector.split('_')[1]) in tic_list:
+                temp.add_row(d_tglc[i])
+
+        temp['sample'] = [sample] * len(temp)
+        combined_data = vstack([combined_data, temp])
+
+    # Add sector information
+    combined_data['sector'] = [int(entry['Star_sector'].split('_')[2]) for entry in combined_data]
+
+    # Set up plot
+    sns.set(rc={'font.family': 'sans-serif', 'font.sans-serif': 'Arial', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '1', 'grid.color': '0.8'})
+    fig, axes = plt.subplots(3, 2, figsize=(10, 12), sharex=True)
+    plt.subplots_adjust(hspace=0.3, wspace=0.2)
+
+    # Parameters to analyze - now includes sector instead of eccentricity
+    parameters = [
+        ('magnitude', 'Tmag'),
+        ('period', 'p'),
+        ('sector', 'sector')
+    ]
+
+    # Analysis and plotting
+    for row_idx, (param_name, col_name) in enumerate(parameters):
+        param_values = combined_data[col_name]
+
+        # Determine split criteria
+        if param_name == 'sector':
+            # Fixed sector split at 26
+            lower_mask = param_values <= 26
+            upper_mask = param_values > 26
+            lower_label = "Sectors ≤26"
+            upper_label = "Sectors >26"
+        else:
+            # Median-based split for magnitude/period
+            median_val = np.median(param_values)
+            lower_mask = param_values <= median_val
+            upper_mask = param_values > median_val
+            lower_label = f"{param_name.capitalize()} Lower Half"
+            upper_label = f"{param_name.capitalize()} Upper Half"
+
+        for col_idx, (mask, label) in enumerate(zip([lower_mask, upper_mask], [lower_label, upper_label])):
+            ax = axes[row_idx, col_idx]
+            subset = combined_data[mask]
+
+            if len(subset) < 2:
+                ax.text(0.5, 0.5, 'Insufficient Data', ha='center', va='center')
+                continue
+
+            # Compute statistics
+            diff, errors, _, _ = compute_weighted_mean_all(subset)
+            iw_mean, ci_low, ci_high = compute_weighted_mean_bootstrap(subset)
+
+            weights = (1 / errors ** 2) * len(diff) / np.sum(1 / errors ** 2)
+
+            # Plot histograms with original style
+            ax.hist(diff, bins=np.linspace(-0.5, 0.5, 41),
+                    weights=weights,
+                    color=plot_color,
+                    alpha=0.1,
+                    edgecolor=None,
+                    zorder=2)
+
+            ax.hist(diff, bins=np.linspace(-0.5, 0.5, 41),
+                    weights=weights,
+                    histtype='step',
+                    edgecolor=plot_color,
+                    linewidth=2,
+                    zorder=3,
+                    alpha=0.9,
+                    label=label + f'\n(N={len(subset)})')
+
+            # Add statistics
+            ax.axvline(iw_mean, color=plot_color,
+                       linestyle='--', linewidth=2, zorder=4)
+            ax.axvspan(iw_mean - ci_low, iw_mean + ci_high,
+                       color=plot_color, alpha=0.3, zorder=3)
+
+            # Formatting
+            ax.set_xlim(-0.3, 0.3)
+            if row_idx == 0:
+                ax.set_title(label)
+            if row_idx == 2:
+                ax.set_xlabel(r'$f_p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
+            if col_idx == 0:
+                ax.set_ylabel('Weighted Counts')
+
+            ax.legend(loc='upper right', fontsize=8)
+            ax.set_title(f'{param_name.capitalize()} {"Upper" if col_idx else "Lower"} Half')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(folder, 'ror_sector_split.png'), bbox_inches='tight', dpi=600)
+    plt.show()
+
 def figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/'):
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2024.12.07_14.30.50.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
     palette = sns.color_palette('colorblind')
     g_color = palette[7]
@@ -952,7 +1110,7 @@ def figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/'):
     # ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
 
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -1038,7 +1196,7 @@ def figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/'):
     # plt.ylim(-1,2)
     # no-ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -3826,8 +3984,10 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 if __name__ == '__main__':
     # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
+    # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
     # figure_mr_mrho(recalculate=True)
-    figure_mr_mrho_all(recalculate=False)
+    # figure_mr_mrho_all(recalculate=False)
     # figure_mr_mrho_save_param(recalculate=True)
 
 
