@@ -473,7 +473,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             if ymin is None and ymax is None:
                 ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
                 ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
-            with open(glob(f'{local_directory}source/*.pkl')[0], 'rb') as input_:
+            with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
@@ -728,12 +728,13 @@ if __name__ == '__main__':
     directory = f'/Users/tehan/Downloads/GEMS_Rowen/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     for i in range(len(tics)):
         plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+        print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
