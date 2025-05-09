@@ -3372,7 +3372,7 @@ def figure_mr_mrho_all(folder='/Users/tehan/Documents/TGLC/', recalculate=False)
              color=ng_corr_color, zorder=11, lw=4, ls='--')
     # plt.plot(M_fine, R_fit_corr, color='w', lw=5, alpha=0.5, zorder=10)
     plt.fill_between(M_fine, R_lower_corr, R_upper_corr,
-                     color=ng_corr_color, alpha=0.2, zorder=8)
+                     color=ng_corr_color, alpha=0.15, zorder=8)
 
     # Print corrected results
     phys_params = convert_params(params_corr, param_errors_corr)
