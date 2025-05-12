@@ -654,6 +654,13 @@ def figure_4(folder='/Users/tehan/Documents/TGLC/', ):
     plt.savefig(os.path.join(folder, f'ror_ground_vs_no_ground.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
 
+def weighted_median(data, weights):
+    sorted_idx = np.argsort(data)
+    data_sorted = data[sorted_idx]
+    weights_sorted = weights[sorted_idx]
+    cum_weights = np.cumsum(weights_sorted)
+    cutoff = weights_sorted.sum() / 2.0
+    return data_sorted[np.searchsorted(cum_weights, cutoff)]
 
 def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced.csv'))
@@ -679,7 +686,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
-    ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+    ground_old = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
                445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 464300749, 151483286,
                335590096,
                193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
@@ -694,6 +701,14 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                166184428, 259172249, 69356857, 58825110, 154220877,
                119585136, 388076422, 178709444, 241249530, 446549906,
                269333648, 401125028, 439366538])
+    ground = [16005254, 20182780, 33595516, 44792534, 86263325, 88992642,
+    119585136, 144700903, 150098860, 154220877, 179317684, 193641523,
+    243641947, 250111245, 259172249, 271893367, 285048486, 335590096,
+    376524552, 388076422, 394050135, 395393265, 396562848, 409794137,
+    419411415, 428787891, 445751830, 447061717, 458419328, 460984940,
+    464300749]
+
+    ground_diff = list(set(ground_old)-set(ground))
 
     contamrt_ground = []
     for i in range(len(d_tglc)):
@@ -736,14 +751,13 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=g_color, alpha=0.1, edgecolor=None, zorder=2)
-    mean = np.average(diff_tglc, weights=1 / errors_tglc ** 2)
-    var = np.average((diff_tglc - mean) ** 2, weights=1 / errors_tglc ** 2)
-    std = np.sqrt(var)
-    fwhm = 2.355 * std
-
-    print(f"Weighted mean (μ): {mean:.6f}")
-    print(f"Weighted std (σ): {std:.6f}")
-    print(f"FWHM ≈ {fwhm:.6f}")
+    w_median = weighted_median(diff_tglc, 1 / errors_tglc ** 2)
+    print(f"Weighted median: {w_median:.6f}")
+    mad = np.median(np.abs(diff_tglc - np.median(diff_tglc)))
+    robust_std = 1.4826 * mad  # Approx. conversion to std if data is normal
+    fwhm_robust = 2.355 * robust_std
+    print(f"Robust std (MAD × 1.4826): {robust_std:.6f}")
+    print(f"Robust FWHM ≈ {fwhm_robust:.6f}")
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=g_color, linewidth=2, zorder=3, alpha=0.95,
@@ -810,7 +824,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                   348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
                   166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
                   201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
-                  429358906, 37749396, 305424003, 63898957])
+                  429358906, 37749396, 305424003, 63898957]
+                 + ground_diff)
     contamrt_no_ground = []
     for i in range(len(d_tglc)):
         star_sector = d_tglc['Star_sector'][i]
@@ -848,14 +863,13 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=ng_color, alpha=0.1, edgecolor=None, zorder=1)
-    mean = np.average(diff_tglc, weights=1 / errors_tglc ** 2)
-    var = np.average((diff_tglc - mean) ** 2, weights=1 / errors_tglc ** 2)
-    std = np.sqrt(var)
-    fwhm = 2.355 * std
-
-    print(f"Weighted mean (μ): {mean:.6f}")
-    print(f"Weighted std (σ): {std:.6f}")
-    print(f"FWHM ≈ {fwhm:.6f}")
+    w_median = weighted_median(diff_tglc, 1 / errors_tglc ** 2)
+    print(f"Weighted median: {w_median:.6f}")
+    mad = np.median(np.abs(diff_tglc - np.median(diff_tglc)))
+    robust_std = 1.4826 * mad  # Approx. conversion to std if data is normal
+    fwhm_robust = 2.355 * robust_std
+    print(f"Robust std (MAD × 1.4826): {robust_std:.6f}")
+    print(f"Robust FWHM ≈ {fwhm_robust:.6f}")
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=ng_color, linewidth=2, zorder=3, alpha=0.9,
@@ -926,8 +940,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # ax.errorbar(iw_mean_qlp, 4, xerr=[[iw_mean_qlp-ci_low_qlp], [ci_high_qlp-iw_mean_qlp]], ecolor='k',
     #                elinewidth=1,capsize=3, zorder=2,)
 
-    # ax1.vlines(0, ymin=0, ymax=175, color='k', ls='-', lw=1, zorder=3)
-    # ax2.vlines(0, ymin=0, ymax=40, color='k', ls='-', lw=1, zorder=3)
+    ax1.vlines(0, ymin=0, ymax=200, color='k', ls='dotted', lw=2, zorder=3)
+    ax2.vlines(0, ymin=0, ymax=40, color='k', ls='dotted', lw=2, zorder=3)
     ax2.set_xlabel(r'$f_p \equiv (p_{\text{TGLC}} - p_{\text{lit}}) / p_{\text{TGLC}}$')
     ax1.set_ylabel('Error weighted counts')
     ax2.set_ylabel('Error weighted counts')
@@ -937,7 +951,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                   [f"{x * 100:.0f}%" for x in [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3]])
     ax1.text(-0.12, 1, "a", transform=ax1.transAxes, fontsize=12, color='k', fontweight='bold')
     ax2.text(-0.12, 1, "b", transform=ax2.transAxes, fontsize=12, color='k', fontweight='bold')
-    ax1.set_ylim(0,150)
+    ax1.set_ylim(0,200)
     ax2.set_ylim(0,35)
 
     plt.xlim(-0.3, 0.3)
