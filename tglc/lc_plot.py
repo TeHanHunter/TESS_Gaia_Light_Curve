@@ -430,19 +430,30 @@ def compute_weighted_mean_all(data):
     pl_ratror = data['pl_ratror']
     errors_value = (data['err1'] - data['err2']) / 2
     errors_pl_ratror = (data['pl_ratrorerr1'] - data['pl_ratrorerr2']) / 2
-    # correct literature with 0 error
-    for i in range(len(errors_pl_ratror)):
-        if errors_pl_ratror[i] == 0:
-            errors_pl_ratror[i] = errors_value[i]
-            # print(errors_pl_ratror[i])
-    # Compute the ratio and its propagated error
-    difference_values = (values - pl_ratror) / values
-    errors_ratio = np.sqrt(errors_value ** 2)
-    # errors_ratio = np.ones(len(errors_ratio))
-    # Compute inverse variance weighted mean
-    weights = 1 / (errors_ratio ** 2)
-    weighted_mean = np.sum(difference_values * weights) / np.sum(weights)
-    weighted_mean_error = np.sqrt(1 / np.sum(weights))
+    values = [ufloat(v, e) for v, e in zip(values, errors_value)]
+    pl_ratror = [ufloat(r, e if e > 0 else ve) for r, e, ve in zip(pl_ratror, errors_pl_ratror, errors_value)]
+
+    diff_frac = [(v - p) / v for v, p in zip(values, pl_ratror)]
+    diff_vals = np.array([d.n for d in diff_frac])
+    diff_errs = np.array([d.s for d in diff_frac])
+
+    weights = 1 / diff_errs ** 2
+    weighted_mean = np.sum(diff_vals * weights) / np.sum(weights)
+    weighted_mean_err = np.sqrt(1 / np.sum(weights))
+
+    # # correct literature with 0 error
+    # for i in range(len(errors_pl_ratror)):
+    #     if errors_pl_ratror[i] == 0:
+    #         errors_pl_ratror[i] = errors_value[i]
+    #         # print(errors_pl_ratror[i])
+    # # Compute the ratio and its propagated error
+    # difference_values = (values - pl_ratror) / values
+    # errors_ratio = np.sqrt(errors_value ** 2)
+    # # errors_ratio = np.ones(len(errors_ratio))
+    # # Compute inverse variance weighted mean
+    # weights = 1 / (errors_ratio ** 2)
+    # weighted_mean = np.sum(difference_values * weights) / np.sum(weights)
+    # weighted_mean_error = np.sqrt(1 / np.sum(weights))
     # print('###')
     # print(np.median(values))
     # if len(values) == 230:
@@ -455,7 +466,7 @@ def compute_weighted_mean_all(data):
     # plt.xlim(0,0.01)
     # plt.show()
     # print(np.sort(weights))
-    return difference_values, errors_ratio, weighted_mean, weighted_mean_error
+    return diff_vals, diff_errs, weighted_mean, weighted_mean_err
 
 
 def compute_weighted_mean_bootstrap(data, output_table=False):
@@ -708,7 +719,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # ax.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
-    print(np.sort(diff_tglc))
+    # print(np.sort(diff_tglc))
     # n1, bins1, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
     #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
     #                        color=g_color, alpha=0.8, edgecolor=None, zorder=2)
@@ -725,6 +736,14 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=g_color, alpha=0.1, edgecolor=None, zorder=2)
+    mean = np.average(diff_tglc, weights=1 / errors_tglc ** 2)
+    var = np.average((diff_tglc - mean) ** 2, weights=1 / errors_tglc ** 2)
+    std = np.sqrt(var)
+    fwhm = 2.355 * std
+
+    print(f"Weighted mean (μ): {mean:.6f}")
+    print(f"Weighted std (σ): {std:.6f}")
+    print(f"FWHM ≈ {fwhm:.6f}")
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=g_color, linewidth=2, zorder=3, alpha=0.95,
@@ -813,7 +832,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # ax.hist(diff_qlp, bins=np.linspace(-0.05, 0.05, 41),
     #            weights=(1 / errors_qlp ** 2) * len(diff_qlp) / np.sum(1 / errors_qlp ** 2),
     #            color=qlp_color, alpha=0.6, edgecolor=None)
-    print(np.sort(diff_tglc))
+    # print(np.sort(diff_tglc))
     # n2, bins2, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
     #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
     #                        color=ng_color, alpha=0.6, edgecolor=None)
@@ -829,6 +848,14 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             color=ng_color, alpha=0.1, edgecolor=None, zorder=1)
+    mean = np.average(diff_tglc, weights=1 / errors_tglc ** 2)
+    var = np.average((diff_tglc - mean) ** 2, weights=1 / errors_tglc ** 2)
+    std = np.sqrt(var)
+    fwhm = 2.355 * std
+
+    print(f"Weighted mean (μ): {mean:.6f}")
+    print(f"Weighted std (σ): {std:.6f}")
+    print(f"FWHM ≈ {fwhm:.6f}")
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=ng_color, linewidth=2, zorder=3, alpha=0.9,
@@ -861,8 +888,8 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     iw_mean_tglc, ci_low_tglc, ci_high_tglc = compute_weighted_mean_bootstrap(difference_tglc)
     diff_tglc_kelper = diff_tglc
     difference_tglc_kelper = difference_tglc
-    print(np.sort(diff_tglc))
-    print(difference_tglc[np.argsort(diff_tglc)])
+    # print(np.sort(diff_tglc))
+    # print(difference_tglc[np.argsort(diff_tglc)])
     # n3, bins3, _ = ax.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
     #                        weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
     #                        color=k_color, alpha=0.8, edgecolor=None, zorder=3)
@@ -919,7 +946,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
     # plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
-    plt.savefig(os.path.join(folder, f'ror_g_ng_kepler.pdf'), bbox_inches='tight', dpi=600)
+    # plt.savefig(os.path.join(folder, f'ror_g_ng_kepler.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
     # print(len(ground)+len(no_ground))
@@ -3958,11 +3985,11 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
 
 if __name__ == '__main__':
-    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
     # figure_mr_mrho(recalculate=True)
-    figure_mr_mrho_all(recalculate=False)
+    # figure_mr_mrho_all(recalculate=False)
     # figure_mr_mrho_save_param(recalculate=True)
 
 
