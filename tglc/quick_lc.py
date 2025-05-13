@@ -709,8 +709,8 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [461872416,350290592,381856446]
-    sectors = [36,34,27]
+    tics = [100100827]
+    sectors = [29]
     directory = f'/Users/tehan/Downloads/GEMS_Rowen/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
