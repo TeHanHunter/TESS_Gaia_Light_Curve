@@ -32,7 +32,7 @@ import matplotlib
 from scipy.optimize import curve_fit  # Add this import
 from scipy.odr import ODR, Model, RealData, Data
 from scipy.stats import multivariate_normal
-from pr_main import Fit
+# from pr_main import Fit
 from uncertainties import ufloat
 from rapidfuzz import process, fuzz
 
