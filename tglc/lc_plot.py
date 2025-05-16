@@ -99,7 +99,7 @@ def combine_contamrt():
 def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratror', r1=0.01, r2=0.4, cmap='Tmag',
                             pipeline='TGLC'):
     param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PSCompPars_2025.02.18_10.38.34.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced_cleaned.csv'))
     # t = ascii.read('/home/tehan/PycharmProjects/TESS_Gaia_Light_Curve/tglc/PSCompPars_2024.02.05_22.52.50.csv')
     tics = [int(s[4:]) for s in t['tic_id']]
 
@@ -139,7 +139,7 @@ def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratr
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
-    t_.write(f'{folder}deviation_{pipeline}_2024_kepler.dat', format='ascii.csv')
+    t_.write(f'{folder}deviation_{pipeline}_2025_partial_odd.dat', format='ascii.csv')
     print('missing stars:', missed_stars)
     # colormap = cm.viridis
     # norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
@@ -978,7 +978,6 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     print(len(set(tics)))
     print(np.percentile(periods, [0,25,50,75,100]))
     return difference_tglc_ground, difference_tglc_no_ground, contamrt_ground, contamrt_no_ground
-
 
 def figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/'):
     # Load and prepare data
@@ -3997,9 +3996,62 @@ def figure_density_dist(folder='/Users/tehan/Documents/TGLC/', recalculate=False
 
     return
 
+def clean_and_patch_PS_table():
+    t = ascii.read('PS_reduced.csv')
+    full = ascii.read('PS_2025.05.02_14.09.47.csv')
+    key_cols = ['st_rad', 'st_raderr1', 'st_raderr2', 'pl_rade', 'pl_radeerr1', 'pl_radeerr2']
+    id_col = 'tic_id'
+
+    # Step 1: Identify bad rows
+    bad_rows = []
+    good_rows = []
+    for i, row in enumerate(t):
+        vals = [row[c] for c in key_cols]
+        if any(v is np.ma.masked or not np.isfinite(v) for v in vals):
+            bad_rows.append(i)
+        else:
+            good_rows.append(i)
+    # Step 2: Replace from full table
+    replacements = []
+    for j in bad_rows:
+        tic_id = str(t[j][id_col])
+        matches = []
+        for i, row in enumerate(full):
+            if str(row[id_col]) == tic_id:
+                valid = True
+                for c in key_cols:
+                    if row[c] is np.ma.masked or not np.isfinite(row[c]):
+                        valid = False
+                        break
+                if valid:
+                    matches.append(i)
+        if len(matches) > 1:
+            # your logic for handling multiple matches
+            pub = [i for i in matches if full[i]['soltype'] == 'Published Confirmed']
+            matches = pub if pub else matches
+
+        if len(matches) == 0:
+            print(f"No valid replacement for TIC {tic_id}")
+        elif len(matches) == 1:
+            replacements.append(matches[0])
+        else:
+            print(f"Multiple valid replacements for TIC {tic_id}")
+            for k, i in enumerate(matches):
+                print(f"[{k}] {dict(full[i])}")
+            choice = input(f"Select index (0 to {len(matches) - 1}) to use for TIC {tic_id}, or press Enter to skip: ")
+            if choice.isdigit() and 0 <= int(choice) < len(matches):
+                replacements.append(matches[int(choice)])
+            else:
+                print("Skipped.")
+    print(replacements)
+    # Step 4: Save
+    # ascii.write(t[good_rows], 'PS_reduced_cleaned.csv', overwrite=True, format='csv')
+    # ascii.write(full[replacements], 'PS_replace.csv', overwrite=True, format='csv')
+
 
 if __name__ == '__main__':
-    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    # clean_and_patch_PS_table()
+    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
     # figure_mr_mrho(recalculate=True)
@@ -4008,7 +4060,7 @@ if __name__ == '__main__':
 
 
     # figure_tsm(recalculate=True)
-    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
