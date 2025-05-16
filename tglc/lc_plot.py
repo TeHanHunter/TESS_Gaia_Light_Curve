@@ -139,7 +139,7 @@ def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratr
                              sigma_ror, - sigma_ror, table_posterior_row['Value'][0],
                              table_posterior_row['Upper Error'][0], table_posterior_row['Lower Error'][0]])
     print(len(t_))
-    t_.write(f'{folder}deviation_{pipeline}_2025_partial_odd.dat', format='ascii.csv')
+    t_.write(f'{folder}deviation_{pipeline}_2025_partial_even.dat', format='ascii.csv')
     print('missing stars:', missed_stars)
     # colormap = cm.viridis
     # norm = plt.Normalize(t_[cmap].min(), t_[cmap].max())
