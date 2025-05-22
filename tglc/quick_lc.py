@@ -709,9 +709,9 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [100100827]
-    sectors = [29]
-    directory = f'/Users/tehan/Downloads/GEMS_Rowen/'
+    tics = [258804746,258804746,258804746,258804746,258804746]
+    sectors = [31,42,43,70,71]
+    directory = f'/Users/tehan/Downloads/Kaya/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
