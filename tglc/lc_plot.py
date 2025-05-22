@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pickle
 import emcee
 import corner
+from collections import Counter
 
 from jedi.inference import param
 from wotan import flatten
@@ -217,17 +218,63 @@ def figure_1_collect_result(folder='/home/tehan/Downloads/Data/', param='pl_ratr
     # plt.ylabel(r'Percent uncertainty on $R_p/R_*$')
     # plt.savefig(os.path.join(folder, f'{param}_error_{pipeline}.png'), bbox_inches='tight', dpi=600)
 
+def figure_1_rewrite_result(folder='/home/tehan/Downloads/Data/', param='pl_ratror', r1=0.01, r2=0.4, cmap='Tmag', pipeline='TGLC'):
+    param_dict = {'pl_rade': 'r_pl__0', 'pl_ratror': 'ror__0'}
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced_cleaned.csv'))
+    tics = [int(s[4:]) for s in t['tic_id']]
+    duplicates = [tic for tic, count in Counter(tics).items() if count > 1]
+    print(duplicates)
+
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_filtered.dat', format='csv')
+    t_ = Table(
+        names=['Star_sector', 'Tmag', 'rhat', 'p', param, f'{param}err1', f'{param}err2', 'value', 'err1', 'err2'],
+        dtype=['S20', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'])
+
+    missed_stars = 0
+    for i in trange(len(tics)):
+        for j in range(len(difference_tglc)):
+            star_sector_str = difference_tglc['Star_sector'][j]
+            star = int(star_sector_str.split('_')[1])
+            sector = star_sector_str.split('_')[2]
+            if star == tics[i]:
+                try:
+                    ror = t['pl_rade'][i] / t['st_rad'][i] / 109.076
+                    sigma_rade = (t['pl_radeerr1'][i] - t['pl_radeerr2'][i]) / 2
+                    sigma_st_rad = (t['st_raderr1'][i] - t['st_raderr2'][i]) / 2
+                    sigma_ror = ((sigma_rade / t['st_rad'][i] / 109.076) ** 2 +
+                                 (t['pl_rade'][i] / t['st_rad'][i] ** 2 / 109.076 * sigma_st_rad) ** 2) ** 0.5
+
+                    # Replace param-related entries; keep others from original table
+                    t_.add_row([
+                        star_sector_str,
+                        t['sy_tmag'][i],
+                        difference_tglc['rhat'][j],
+                        t['pl_orbper'][i],
+                        ror,
+                        sigma_ror,
+                        -sigma_ror,
+                        difference_tglc['value'][j],
+                        difference_tglc['err1'][j],
+                        difference_tglc['err2'][j]
+                    ])
+                except Exception as e:
+                    missed_stars += 1
+                    print(f"Error for TIC {star}: {e}")
+    print(f"Missed stars: {missed_stars}")
+    t_.write(f'{folder}deviation_{pipeline}_2025_updated.dat', format='ascii.csv')
+
 
 def figure_2_collect_result(folder='/home/tehan/Downloads/Data/', ):
     palette = sns.color_palette('colorblind')
     tglc_color = palette[3]
     qlp_color = palette[2]
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2024_kepler.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_partial.dat')
+    print(difference_tglc)
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
-    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] < 1.01)]
+    d_tglc = difference_tglc[np.where(difference_tglc['rhat'] == 1.0)]
     d_tglc['Pipeline'] = ['TGLC'] * len(d_tglc)
     print(len(d_tglc))
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
@@ -238,7 +285,7 @@ def figure_2_collect_result(folder='/home/tehan/Downloads/Data/', ):
         difference_tglc.add_row(d_tglc[i])
         # difference_qlp.add_row(d_qlp[np.where(d_qlp['Star_sector'] == star_sector)[0][0]])
     # difference_qlp.write(f'deviation_QLP_common.dat', format='ascii.csv')
-    difference_tglc.write(f'{folder}deviation_TGLC_kepler_rhat_limited.dat', format='ascii.csv', overwrite=True)
+    difference_tglc.write(f'{folder}deviation_TGLC_2025_partial_rhat_limited.dat', format='ascii.csv', overwrite=True)
     print(len(difference_tglc))
     # print(len(difference_qlp))
     # average 491 lcs
@@ -662,8 +709,38 @@ def weighted_median(data, weights):
     cutoff = weights_sorted.sum() / 2.0
     return data_sorted[np.searchsorted(cum_weights, cutoff)]
 
+from sklearn.utils import resample
+def ecc_vs_circ(folder='/Users/tehan/Documents/TGLC/'):
+    circ = ascii.read(f'{folder}deviation_TGLC_2025.dat')
+    ecc = ascii.read(f'{folder}deviation_TGLC_2025_partial_rhat_limited.dat')
+
+    rows = []
+    for i in range(len(ecc)):
+        try:
+            idx = np.where(circ['Star_sector'] == ecc['Star_sector'][i])[0][0]
+            rows.append((
+                float(circ['value'][idx]),
+                float(circ['err1'][idx]),
+                float(circ['err2'][idx]),
+                float(ecc['value'][i]),
+                float(ecc['err1'][i]),
+                float(ecc['err2'][i]),
+            ))
+        except:
+            continue
+
+    value, err1, err2, pl_ratror, pl_ratrorerr1, pl_ratrorerr2 = zip(*rows)
+    data = Table([
+        value, err1, err2,
+        pl_ratror, pl_ratrorerr1, pl_ratrorerr2
+    ], names=[
+        'value', 'err1', 'err2',
+        'pl_ratror', 'pl_ratrorerr1', 'pl_ratrorerr2'
+    ])
+    compute_weighted_mean_bootstrap(data)
+
 def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced_cleaned.csv'))
     tics = [int(s[4:]) for s in t['tic_id']]
     palette = sns.color_palette('colorblind')
     g_color = palette[7]
@@ -677,7 +754,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
     periods = []
 
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_updated.dat', format='csv')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -687,7 +764,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # difference_qlp = Table(names=d_qlp.colnames, dtype=[col.dtype for col in d_qlp.columns.values()])
     difference_tglc = Table(names=d_tglc.colnames, dtype=[col.dtype for col in d_tglc.columns.values()])
     ground_old = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
-               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 464300749, 151483286,
+               445751830, 7548817, 155867025, 198008005, 178162579, 464300749, 151483286,
                335590096,
                193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
                395393265, 310002617, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137,
@@ -701,10 +778,10 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                166184428, 259172249, 69356857, 58825110, 154220877,
                119585136, 388076422, 178709444, 241249530, 446549906,
                269333648, 401125028, 439366538])
-    ground = [16005254, 20182780, 33595516, 44792534, 86263325, 88992642,
+    ground = [16005254, 20182780, 33595516, 44792534, 88992642,
     119585136, 144700903, 150098860, 154220877, 179317684, 193641523,
     243641947, 250111245, 259172249, 271893367, 285048486, 335590096,
-    376524552, 388076422, 394050135, 395393265, 396562848, 409794137,
+    376524552, 388076422, 394050135, 396562848, 409794137,
     419411415, 428787891, 445751830, 447061717, 458419328, 460984940,
     464300749]
 
@@ -761,7 +838,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=g_color, linewidth=2, zorder=3, alpha=0.95,
-               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 78 planets)')
+               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 29 planets)')
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
     #            zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
@@ -787,7 +864,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     # plt.ylim(-1,2)
     # no-ground
     # difference_qlp = ascii.read(f'{folder}deviation_QLP.dat')
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_updated.dat', format='csv')
     # d_qlp = difference_qlp[np.where(difference_qlp['rhat'] < 1.1)]
     # d_qlp['Pipeline'] = ['QLP'] * len(d_qlp)
     # print(len(d_qlp))
@@ -799,12 +876,12 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
 
     no_ground = ([428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
                   271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
-                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
+                  351601843, 24358417, 144193715, 445805961, 103633434, 230001847, 70899085, 147950620,
                   219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
-                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
-                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
+                  148673433, 229510866, 321669174, 183120439, 293954617, 256722647, 280206394, 468574941,
+                  29960110, 106402532, 392476080, 158588995, 410214986, 441738827, 220479565,
                   172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
-                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
+                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 169249234, 159873822,
                   394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
                   151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 83092282,
                   264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] +
@@ -814,17 +891,18 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
                   408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
                   407126408, 55650590, 335630746, 55525572, 342642208, 394357918] +
                  [293607057, 332534326, 260708537, 443556801, 52005579, 287145649, 232540264, 404518509, 358070912,
-                  352413427, 169765334, 39699648, 305739565, 391903064, 237913194, 160390955, 257060897, 365102760,
-                  393818343, 153065527, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
-                  120826158, 99869022, 456862677, 219850915, 380887434, 232612416, 271169413, 232976128, 49254857,
-                  198241702, 282485660, 224297258, 303432813, 391949880, 437011608, 198356533, 232982558, 237232044,
-                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 58542531, 102734241, 268334473,
-                  159418353, 18318288, 219857012, 35009898, 287080092, 124573851, 289580577, 367858035, 277634430,
-                  9348006, 219344917, 21535395, 34077285, 286916251, 322807371, 142381532, 142387023, 46432937,
+                  352413427, 169765334, 39699648, 305739565, 237913194, 160390955, 257060897, 365102760,
+                  393818343, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
+                  99869022, 456862677, 219850915, 232612416, 271169413, 232976128, 49254857,
+                  198241702, 282485660, 224297258, 303432813, 198356533, 232982558, 237232044,
+                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 102734241, 268334473,
+                  159418353, 18318288, 219857012, 287080092, 124573851, 289580577, 367858035, 277634430,
+                  9348006, 219344917, 21535395, 286916251, 322807371, 142381532, 142387023, 46432937,
                   348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
-                  166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
-                  201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
-                  429358906, 37749396, 305424003, 63898957]
+                  368287008, 389900760, 159781361, 21832928, 8348911, 289164482,
+                  201177276, 307958020, 382602147, 317548889, 268532343, 1167538, 328081248, 328934463,
+                  429358906, 37749396]
+                 + [209459275, 130924120, 419523962, 163539739]  # temp
                  + ground_diff)
     contamrt_no_ground = []
     for i in range(len(d_tglc)):
@@ -873,7 +951,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=ng_color, linewidth=2, zorder=3, alpha=0.9,
-               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 191 planets)')
+               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 234 planets)')
 
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
@@ -922,7 +1000,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax2.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=k_color, linewidth=2, zorder=5, alpha=0.9,
-               label=r'Kepler $f_p$' + f'\n({len(difference_tglc)} fits of 31 planets)')
+               label=r'Kepler $f_p$' + f'\n({len(difference_tglc)} fits of 30 planets)')
 
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 4, marker='^', color=k_color, edgecolors='k', linewidths=0.7, s=50,
@@ -960,7 +1038,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     print(f"K-S Statistic: {stat}")
     print(f"P-value: {p_value}")
     # plt.title(r'Fractional difference in radius ratio $p$ (TGLC vs. literature)')
-    # plt.savefig(os.path.join(folder, f'ror_g_ng_kepler.pdf'), bbox_inches='tight', dpi=600)
+    plt.savefig(os.path.join(folder, f'ror_g_ng_kepler.pdf'), bbox_inches='tight', dpi=600)
     plt.show()
     # print(len(set(ground+no_ground)))
     # print(len(ground)+len(no_ground))
@@ -1189,7 +1267,7 @@ def figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/'):
                 ecc_val = ecc_val.filled(0.0)
 
             ecc_g.append(float(ecc_val))
-            if ecc_g[-1] > 0:
+            if ecc_g[-1] == 0:
                 difference_tglc.add_row(d_tglc[i])
 
             # contamrt_ground.append(contamrt['contamrt'][np.where(contamrt['tic_sec'] == star_sector)[0][0]])
@@ -1294,7 +1372,7 @@ def figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/'):
                 ecc_val = ecc_val.filled(0.0)
 
             ecc_ng.append(float(ecc_val))
-            if ecc_ng[-1] > 0:
+            if ecc_ng[-1] == 0:
                 difference_tglc.add_row(d_tglc[i])
 
     print(np.median(ecc_g + ecc_ng))
@@ -2323,7 +2401,7 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     #         print(t['tic_id'][i])
     #         print(b[i])
     #         print(ror[i])
-    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025.dat')
+    difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_updated.dat')
     tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
     tics = [int(s[4:]) for s in t['tic_id']]
     palette = sns.color_palette('colorblind')
@@ -2340,8 +2418,8 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
         spine.set_zorder(5)
     for spine in ax[1].spines.values():
         spine.set_zorder(5)
-    ground = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
-               445751830, 7548817, 86263325, 155867025, 198008005, 178162579, 464300749, 151483286,
+    ground_old = ([156648452, 154293917, 271893367, 285048486, 88992642, 454248975, 428787891, 394722182, 395171208,
+               445751830, 7548817, 155867025, 198008005, 178162579, 464300749, 151483286,
                335590096,
                193641523, 396562848, 447061717, 124379043, 44792534, 150098860, 179317684, 124029677, 95660472,
                395393265, 310002617, 20182780, 70524163, 95057860, 376524552, 394050135, 409794137,
@@ -2355,15 +2433,23 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                166184428, 259172249, 69356857, 58825110, 154220877,
                119585136, 388076422, 178709444, 241249530, 446549906,
                269333648, 401125028, 439366538])
+    ground = [16005254, 20182780, 33595516, 44792534, 88992642,
+    119585136, 144700903, 150098860, 154220877, 179317684, 193641523,
+    243641947, 250111245, 259172249, 271893367, 285048486, 335590096,
+    376524552, 388076422, 394050135, 396562848, 409794137,
+    419411415, 428787891, 445751830, 447061717, 458419328, 460984940,
+    464300749]
+
+    ground_diff = list(set(ground_old)-set(ground))
 
     no_ground = ([428699140, 157698565, 119584412, 262530407, 219854185, 140691463, 237922465,
                   271478281, 29857954, 198485881, 332558858, 376637093, 54002556, 126606859, 231702397, 460205581,
-                  351601843, 24358417, 144193715, 219016883, 445805961, 103633434, 230001847, 70899085, 147950620,
+                  351601843, 24358417, 144193715, 445805961, 103633434, 230001847, 70899085, 147950620,
                   219854519, 333657795, 200322593, 287256467, 206541859, 420112589, 261867566, 10837041, 70513361,
-                  148673433, 229510866, 321669174, 183120439, 149845414, 293954617, 256722647, 280206394, 468574941,
-                  29960110, 141488193, 106402532, 392476080, 158588995, 49428710, 410214986, 441738827, 220479565,
+                  148673433, 229510866, 321669174, 183120439, 293954617, 256722647, 280206394, 468574941,
+                  29960110, 106402532, 392476080, 158588995, 410214986, 441738827, 220479565,
                   172370679, 116483514, 350153977, 37770169, 212957629, 393831507, 207110080, 190496853,
-                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 300038935, 169249234, 159873822,
+                  404505029, 207141131, 439456714, 394137592, 267263253, 192790476, 169249234, 159873822,
                   394561119, 142394656, 318753380, 422756130, 339672028, 176956893, 348835438, 62483237, 266980320,
                   151825527, 466206508, 288735205, 237104103, 437856897, 73540072, 229742722, 83092282,
                   264678534, 271971130, 204650483, 394918211, 321857016, 290348383, 436873727, 362249359, 372172128] +
@@ -2373,17 +2459,19 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                   408636441, 76923707, 353475866, 202426247, 387690507, 209464063, 12421862, 296739893, 350618622,
                   407126408, 55650590, 335630746, 55525572, 342642208, 394357918] +
                  [293607057, 332534326, 260708537, 443556801, 52005579, 287145649, 232540264, 404518509, 358070912,
-                  352413427, 169765334, 39699648, 305739565, 391903064, 237913194, 160390955, 257060897, 365102760,
-                  393818343, 153065527, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
-                  120826158, 99869022, 456862677, 219850915, 380887434, 232612416, 271169413, 232976128, 49254857,
-                  198241702, 282485660, 224297258, 303432813, 391949880, 437011608, 198356533, 232982558, 237232044,
-                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 58542531, 102734241, 268334473,
-                  159418353, 18318288, 219857012, 35009898, 287080092, 124573851, 289580577, 367858035, 277634430,
-                  9348006, 219344917, 21535395, 34077285, 286916251, 322807371, 142381532, 142387023, 46432937,
+                  352413427, 169765334, 39699648, 305739565, 237913194, 160390955, 257060897, 365102760,
+                  393818343, 154872375, 232967440, 154089169, 97766057, 158002130, 22233480, 233087860,
+                  99869022, 456862677, 219850915, 232612416, 271169413, 232976128, 49254857,
+                  198241702, 282485660, 224297258, 303432813, 198356533, 232982558, 237232044,
+                  343628284, 246965431, 417931607, 240968774, 306955329, 219041246, 102734241, 268334473,
+                  159418353, 18318288, 219857012, 287080092, 124573851, 289580577, 367858035, 277634430,
+                  9348006, 219344917, 21535395, 286916251, 322807371, 142381532, 142387023, 46432937,
                   348755728, 4672985, 91987762, 258514800, 445903569, 71431780, 417931300, 8967242, 441765914,
-                  166648874, 368287008, 389900760, 159781361, 21832928, 8348911, 289164482, 158241252, 467651916,
-                  201177276, 307958020, 382602147, 317548889, 268532343, 407591297, 1167538, 328081248, 328934463,
-                  429358906, 37749396, 305424003, 63898957])
+                  368287008, 389900760, 159781361, 21832928, 8348911, 289164482,
+                  201177276, 307958020, 382602147, 317548889, 268532343, 1167538, 328081248, 328934463,
+                  429358906, 37749396]
+                 + [209459275, 130924120, 419523962, 163539739]  # temp
+                 + ground_diff)
 
     if recalculate:
         delta_R = 0.06011182562150113
@@ -4051,16 +4139,17 @@ def clean_and_patch_PS_table():
 
 if __name__ == '__main__':
     # clean_and_patch_PS_table()
-    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
-    # figure_mr_mrho(recalculate=True)
-    # figure_mr_mrho_all(recalculate=False)
+    figure_mr_mrho(recalculate=True)
+    figure_mr_mrho_all(recalculate=False)
     # figure_mr_mrho_save_param(recalculate=True)
 
-
+    # ecc_vs_circ()
     # figure_tsm(recalculate=True)
-    figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    # figure_1_collect_result(folder='/home/tehan/data/pyexofits/Data/', r1=0.01, param='pl_ratror', cmap='Tmag', pipeline='TGLC')
+    # figure_1_rewrite_result(folder='/Users/tehan/Documents/TGLC/',)
     # figure_2_collect_result(folder='/Users/tehan/Documents/TGLC/')
     # fetch_contamrt(folder='/home/tehan/data/cosmos/transit_depth_validation_contamrt/')
     # figure_4(folder='/Users/tehan/Documents/TGLC/')
