@@ -75,7 +75,7 @@ tic_list_3 = [27916356, 137683938, 405717754, 271354351, 123495874, 268159158, 1
 tic_list_4 = [428699140, 156648452, 157698565, 140691463, 271478281, 332558858, 126606859, 387690507, 460205581, 454248975, 24358417, 370133522, 219344917, 408636441, 103633434, 441765914, 147950620, 232982558, 194795551, 342642208, 257060897, 289580577, 206541859, 261867566, 10837041, 296739893, 321669174, 183120439, 154872375, 293954617, 198356533, 332534326, 329148988, 280206394, 328934463, 232612416, 306955329, 158588995, 410214986, 441738827, 322807371, 220479565, 209459275, 393831507, 190496853, 130924120, 394137592, 470171739, 394561119, 306648160, 183985250, 142937186, 318753380, 232540264, 237913194, 404518509, 303432813, 219857012, 151825527, 268532343, 358070912, 437856897, 229742722, 147977348, 280655495, 375506058, 362249359, 269333648, 293607057, 279947414, 286916251, 119584412, 154293917, 394357918, 124573851, 287080092, 237922465, 29857954, 100389539, 219850915, 376637093, 401125028, 365102760, 97766057, 287145649, 1167538, 230001847, 246965431, 452006073, 219854519, 201177276, 289164482, 333657795, 198008005, 199376584, 420112589, 154089169, 229510866, 445903569, 97568467, 256722647, 179034327, 468574941, 12421862, 393818343, 349095149, 23769326, 124029677, 172370679, 350153977, 241249530, 118327550, 232976128, 70524163, 307958020, 361343239, 207141131, 232967440, 348755728, 267263253, 353475866, 257527578, 163539739, 159873822, 142394656, 368287008, 422756130, 68007716, 62483237, 224297258, 39414571, 466206508, 305739565, 160390955, 158025009, 91987762, 336128819, 417646390, 218795833, 83092282, 271971130, 69356857, 429358906, 76923707, 66561343, 394918211, 263179590, 139285832, 142387023, 417931607, 139375960, 317548889, 99869022, 290348383, 372172128, 328081248, 239816546, 262530407, 219854185, 367858035, 233087860, 198485881, 419523962, 54002556, 231702397, 277634430, 271169413, 394722182, 395171208, 445805961, 407126408, 268334473, 439366538, 70899085, 22233480, 7548817, 446549906, 178162579, 151483286, 58825110, 148673433, 335630746, 282485660, 200723869, 268301217, 165464482, 124379043, 382602147, 320004517, 198241702, 9348006, 237232044, 29960110, 392476080, 95660472, 310002617, 37770169, 360156606, 207110080, 298663873, 178709444, 404505029, 49254857, 439456714, 464646604, 192790476, 441462736, 169249234, 158002130, 456862677, 169765334, 4672985, 281408474, 142381532, 176956893, 219041246, 339672028, 266980320, 8599009, 260004324, 288735205, 237104103, 73540072, 240823272, 166184428, 258920431, 159418353, 159781361, 204650483, 321857016, 343628284, 350618622, 436873727]
 
 folder='/Users/tehan/Documents/TGLC/'
-difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_filtered.dat', format='csv')
+difference_tglc = ascii.read(f'{folder}deviation_TGLC_2025_updated.dat', format='csv')
 tics_fit = [int(tic_sec.split('_')[1]) for tic_sec in difference_tglc['Star_sector']]
 # Update for tic_list_1 loop
 rors_1 = []
@@ -185,17 +185,28 @@ def parse_table(input_table, convert):
     with open(input_table, 'r') as f:
         content = f.read()
 
-    pattern = r'(\d+) & (.*?) & (\\cite\{TIC_\d+\})'
+    pattern = r'(\d+) & (.*?) & \\cite\{([^\}]+)\}'
     matches = re.findall(pattern, content)
     entries = []
     citation_order = OrderedDict()
-    for tic_str, pipeline, citation in matches:
+
+    for tic_str, pipeline, citation_key in matches:
         tic = int(tic_str)
-        key = re.search(r'{TIC_(\d+)}', citation).group(0)[1:-1]
-        key = convert[key]
-        if tic not in citation_order:
+        if citation_key.startswith('TIC_'):
+            key = convert.get(citation_key, citation_key)  # Convert TIC_... to custom key
+        else:
+            key = citation_key  # Keep author-year as is
+
+        if key not in citation_order:
             citation_order[key] = tic
-        entries.append({'tic': tic, 'pipeline': pipeline, 'citation': citation, 'key': key})
+
+        entries.append({
+            'tic': tic,
+            'pipeline': pipeline.strip(),
+            'citation': f'\\cite{{{citation_key}}}',
+            'key': key
+        })
+
     return entries, citation_order
 
 def split_and_sort_tables(entries, tic_list_1, tic_list_2, tic_list3):
@@ -335,12 +346,16 @@ def generate_latex_tables(table1, table2, table3, convert):
         val = ufloat(rors_1[idx], ror_errs_1[idx])
         fp_val = fp_1[idx] * 100  # Convert to percentage
         key = entry['citation'].split('{')[1].split('}')[0]
-        citation = '\cite{' + f'{convert[key]}' + '}'
+        if key.startswith('TIC_'):
+            citation = f'\\cite{{{convert.get(key, key)}}}'
+        else:
+            citation = f'\\cite{{{key}}}'
         if not np.isnan(fp_val.nominal_value):
             fp_str = f"{fp_val.nominal_value:.1f}\\% $\\pm$ {fp_val.std_dev:.1f}\\%"
             table1_tex.append(
                 f"{tic} & {entry['pipeline']} & {citation} & ${val:.1uL}$ & {fp_str} \\\\"
             )
+
     # Table 2 (Non-Gaia radii)
     table2_tex = [
         r'\begin{longtable}{ccccc}',
@@ -358,18 +373,19 @@ def generate_latex_tables(table1, table2, table3, convert):
     tics_ = []
     for entry in table2:
         tic = entry['tic']
-        # if tic not in tic_list_4:
         tics_.append(tic)
-
         try:
             idx = tic_2.index(tic)
         except ValueError:
             print(f"TIC {tic} not found in tic_2. Skipping.")
             continue
         val = ufloat(rors_2[idx], ror_errs_2[idx])
-        fp_val = fp_2[idx] * 100  # Convert to percentage
+        fp_val = fp_2[idx] * 100
         key = entry['citation'].split('{')[1].split('}')[0]
-        citation = '\cite{' + f'{convert[key]}' + '}'
+        if key.startswith('TIC_'):
+            citation = f'\\cite{{{convert.get(key, key)}}}'
+        else:
+            citation = f'\\cite{{{key}}}'
         if not np.isnan(fp_val.nominal_value):
             fp_str = f"{fp_val.nominal_value:.1f}\\% $\\pm$ {fp_val.std_dev:.1f}\\%"
             table2_tex.append(
@@ -377,6 +393,7 @@ def generate_latex_tables(table1, table2, table3, convert):
             )
     print(len(set(tics_) - set(tic_list_4)))
     print(set(tic_list_4) - set(tics_))
+
     # Table 3 (Kepler)
     table3_tex = [
         r'\begin{longtable}{cccc}',
@@ -391,7 +408,6 @@ def generate_latex_tables(table1, table2, table3, convert):
         r'\endhead',
         r'\hline\endfoot'
     ]
-
     for entry in table3:
         tic = entry['tic']
         try:
@@ -399,16 +415,18 @@ def generate_latex_tables(table1, table2, table3, convert):
         except ValueError:
             print(f"TIC {tic} not found in tic_3. Skipping.")
             continue
-
         val = ufloat(rors_3[idx], ror_errs_3[idx])
-        fp_val = fp_3[idx] * 100  # Convert to percentage
+        fp_val = fp_3[idx] * 100
         key = entry['citation'].split('{')[1].split('}')[0]
-        citation = '\cite{' + f'{convert[key]}' + '}'
-
+        if key.startswith('TIC_'):
+            citation = f'\\cite{{{convert.get(key, key)}}}'
+        else:
+            citation = f'\\cite{{{key}}}'
         fp_str = f"{fp_val.nominal_value:.1f}\\% $\\pm$ {fp_val.std_dev:.1f}\\%"
         table3_tex.append(
             f"{tic} & {citation} & ${val:.1uL}$ & {fp_str} \\\\"
         )
+
     generate_csv(table1, tic_1, rors_1, ror_errs_1, fp_1, convert, 'table1.csv')
     generate_csv(table2, tic_2, rors_2, ror_errs_2, fp_2, convert, 'table2.csv')
     generate_csv(table3, tic_3, rors_3, ror_errs_3, fp_3, convert, 'table3.csv')

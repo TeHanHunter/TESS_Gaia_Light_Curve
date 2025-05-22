@@ -838,7 +838,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=g_color, linewidth=2, zorder=3, alpha=0.95,
-               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 29 planets)')
+               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 28 planets)')
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
     #            zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
@@ -951,7 +951,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=ng_color, linewidth=2, zorder=3, alpha=0.9,
-               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 234 planets)')
+               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 229 planets)')
 
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
@@ -2530,7 +2530,7 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                     delta_ror = ror_err
                     if ror is not None and not np.isnan(ror):
                         if (t['pl_bmasseerr1'][i] - t['pl_bmasseerr2'][i]) / 2 / t['pl_bmasse'][
-                            i] < 0.25 and np.sqrt(
+                            i] < 0.33 and np.sqrt(
                                 (109.076 * t['st_rad'][i] * delta_ror) ** 2 + (ror * delta_Rstar) ** 2) / (
                                 109.076 * ror * t['st_rad'][i]) < 0.20:
                             if tic in ground:
@@ -4139,7 +4139,7 @@ def clean_and_patch_PS_table():
 
 if __name__ == '__main__':
     # clean_and_patch_PS_table()
-    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
     figure_mr_mrho(recalculate=True)
