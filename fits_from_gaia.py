@@ -17,35 +17,39 @@ os.makedirs(destination_dir, exist_ok=True)  # Create destination folder if it d
 gaia_ids = set()
 with open(csv_path, newline='') as csvfile:
     reader = csv.reader(csvfile)
-    header = next(reader)  # Skip header if exists, comment if no header
+    header = next(reader)  # Skip header if exists
     for row in reader:
         if len(row) >= 2:
             gaia_ids.add(row[1].strip())
 
 print(f"Loaded {len(gaia_ids)} Gaia IDs.")
 
-# === Define search + copy function ===
-def search_and_copy(gaia_id):
-    pattern = os.path.join(root_dir, f'sector00*/lc/*/*{gaia_id}*.fits')
-    found = glob.glob(pattern)
-    copied = []
-    for fpath in found:
-        try:
-            fname = os.path.basename(fpath)
-            dest_path = os.path.join(destination_dir, fname)
-            shutil.copy2(fpath, dest_path)
-            copied.append(dest_path)
-        except Exception as e:
-            print(f"Error copying {fpath}: {e}")
-    return copied
+# === Glob all .fits files once ===
+print("Indexing all .fits files... (this might take a while)")
+all_fits_files = glob.glob(os.path.join(root_dir, 'sector00*/lc/*/*.fits'), recursive=True)
+print(f"Indexed {len(all_fits_files)} .fits files.")
 
-# === Run searches + copy in parallel with progress bar ===
-all_copied_files = []
-with ThreadPoolExecutor(max_workers=max_workers) as executor:
-    futures = {executor.submit(search_and_copy, gaia): gaia for gaia in gaia_ids}
-    for future in tqdm(as_completed(futures), total=len(futures), desc="Searching & Copying FITS"):
+# === Match & Copy Function ===
+def match_and_copy(fpath):
+    fname = os.path.basename(fpath)
+    for gaia in gaia_ids:
+        if gaia in fname:
+            try:
+                dest_path = os.path.join(destination_dir, fname)
+                shutil.copy2(fpath, dest_path)
+                return dest_path
+            except Exception as e:
+                print(f"Error copying {fpath}: {e}")
+            break
+    return None
+
+# === Parallel Processing ===
+matched_files = []
+with ThreadPoolExecutor(max_workers=32) as executor:
+    futures = [executor.submit(match_and_copy, fpath) for fpath in all_fits_files]
+    for future in tqdm(as_completed(futures), total=len(futures), desc="Matching & Copying"):
         result = future.result()
         if result:
-            all_copied_files.extend(result)
+            matched_files.append(result)
 
-print(f"Copied {len(all_copied_files)} FITS files to {destination_dir}.")
+print(f"Copied {len(matched_files)} FITS files to {destination_dir}.")
