@@ -26,7 +26,7 @@ print(f"Loaded {len(gaia_ids)} Gaia IDs.")
 
 # === Define search + copy function ===
 def search_and_copy(gaia_id):
-    pattern = os.path.join(root_dir, f'sector00*/lc/*{gaia_id}*.fits')
+    pattern = os.path.join(root_dir, f'sector00*/lc/*/*{gaia_id}*.fits')
     found = glob.glob(pattern)
     copied = []
     for fpath in found:
