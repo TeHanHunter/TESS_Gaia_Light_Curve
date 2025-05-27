@@ -38,7 +38,7 @@ def match_and_copy(fpath):
             break
     return None
 
-for i in range(2,56,2):
+for i in range(1,56,2):
     # === Glob all .fits files once ===
     print(f"Indexing all .fits files of sector {i}... (this might take a while)")
     all_fits_files = glob.glob(os.path.join(root_dir, f'sector{i:04d}/lc/*/*.fits'), recursive=True)
