@@ -4139,11 +4139,11 @@ def clean_and_patch_PS_table():
 
 if __name__ == '__main__':
     # clean_and_patch_PS_table()
-    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
-    figure_mr_mrho(recalculate=True)
-    figure_mr_mrho_all(recalculate=False)
+    # figure_mr_mrho(recalculate=True)
+    # figure_mr_mrho_all(recalculate=False)
     # figure_mr_mrho_save_param(recalculate=True)
 
     # ecc_vs_circ()
