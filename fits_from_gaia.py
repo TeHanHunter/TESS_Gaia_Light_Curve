@@ -27,7 +27,7 @@ print(list(gaia_ids)[0])
 
 # === Glob all .fits files once ===
 print("Indexing all .fits files... (this might take a while)")
-all_fits_files = glob.glob(os.path.join(root_dir, 'sector00*/lc/*/*.fits'), recursive=True)
+all_fits_files = glob.glob(os.path.join(root_dir, 'sector0001/lc/*/*.fits'), recursive=True)
 print(f"Indexed {len(all_fits_files)} .fits files.")
 
 
