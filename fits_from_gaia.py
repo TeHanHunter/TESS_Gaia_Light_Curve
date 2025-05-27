@@ -46,7 +46,7 @@ for i in range(2,56,2):
 
     # === Parallel Processing ===
     matched_files = []
-    with ThreadPoolExecutor(max_workers=32) as executor:
+    with ThreadPoolExecutor(max_workers=1024) as executor:
         for result in tqdm(executor.map(match_and_copy, all_fits_files), total=len(all_fits_files),
                            desc="Matching & Copying", unit="file"):
             if result:
