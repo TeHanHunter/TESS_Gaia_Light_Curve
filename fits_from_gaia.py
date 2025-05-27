@@ -23,13 +23,6 @@ with open(csv_path, newline='') as csvfile:
             gaia_ids.add(row[1].strip())
 
 print(f"Loaded {len(gaia_ids)} Gaia IDs.")
-print(list(gaia_ids)[0])
-
-# === Glob all .fits files once ===
-print("Indexing all .fits files... (this might take a while)")
-all_fits_files = glob.glob(os.path.join(root_dir, 'sector0001/lc/*/*.fits'), recursive=True)
-print(f"Indexed {len(all_fits_files)} .fits files.")
-
 
 # === Match & Copy Function ===
 def match_and_copy(fpath):
@@ -45,13 +38,19 @@ def match_and_copy(fpath):
             break
     return None
 
-# === Parallel Processing ===
-matched_files = []
-with ThreadPoolExecutor(max_workers=32) as executor:
-    futures = [executor.submit(match_and_copy, fpath) for fpath in all_fits_files]
-    for future in tqdm(as_completed(futures), total=len(futures), desc="Matching & Copying"):
-        result = future.result()
-        if result:
-            matched_files.append(result)
+for i in range(1,56,2):
+    # === Glob all .fits files once ===
+    print(f"Indexing all .fits files of sector {i}... (this might take a while)")
+    all_fits_files = glob.glob(os.path.join(root_dir, f'sector{i:04d}/lc/*/*.fits'), recursive=True)
+    print(f"Indexed {len(all_fits_files)} .fits files.")
 
-print(f"Copied {len(matched_files)} FITS files to {destination_dir}.")
+    # === Parallel Processing ===
+    matched_files = []
+    with ThreadPoolExecutor(max_workers=32) as executor:
+        futures = [executor.submit(match_and_copy, fpath) for fpath in all_fits_files]
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Matching & Copying", unit="file"):
+            result = future.result()
+            if result:
+                matched_files.append(result)
+
+    print(f"Copied {len(matched_files)} FITS files to {destination_dir}.")
