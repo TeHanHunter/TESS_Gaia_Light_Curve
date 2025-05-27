@@ -23,7 +23,7 @@ with open(csv_path, newline='') as csvfile:
             gaia_ids.add(row[1].strip())
 
 print(f"Loaded {len(gaia_ids)} Gaia IDs.")
-print(type(list(gaia_ids)[0]))
+print(list(gaia_ids)[0])
 
 # === Glob all .fits files once ===
 print("Indexing all .fits files... (this might take a while)")
