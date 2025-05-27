@@ -47,9 +47,8 @@ for i in range(1,56,2):
     # === Parallel Processing ===
     matched_files = []
     with ThreadPoolExecutor(max_workers=32) as executor:
-        futures = [executor.submit(match_and_copy, fpath) for fpath in all_fits_files]
-        for future in tqdm(as_completed(futures), total=len(futures), desc="Matching & Copying", unit="file"):
-            result = future.result()
+        for result in tqdm(executor.map(match_and_copy, all_fits_files), total=len(all_fits_files),
+                           desc="Matching & Copying", unit="file"):
             if result:
                 matched_files.append(result)
 
