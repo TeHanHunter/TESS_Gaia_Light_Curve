@@ -630,6 +630,107 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 #             dpi=600)
                 plt.close()
 
+
+def plot_contamination_shane(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
+    sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
+                'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
+                'axes.facecolor': '0.95', 'grid.color': '0.9'})
+    if gaia_dr3 is None:
+        files = glob(f'{local_directory}lc/*.fits')
+    else:
+        files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
+    for i in range(len(files)):
+        with fits.open(files[i], mode='denywrite') as hdul:
+            gaia_dr3 = hdul[0].header['GAIADR3']
+            sector = hdul[0].header['SECTOR']
+            q = [a and b for a, b in
+                 zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
+            if ymin is None and ymax is None:
+                ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
+                ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
+            with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
+                source = pickle.load(input_)
+                source.select_sector(sector=sector)
+                star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
+
+                distances = np.sqrt(
+                    (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
+                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)
+
+                # Find closest 5 stars (6-self) or those within 5 pixels
+                nearby_stars = np.argsort(distances)[:6]
+                nearby_stars = nearby_stars[distances[nearby_stars] <= 5]
+                star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
+                star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
+                max_flux = np.nanmax(
+                    np.nanmedian(
+                        source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
+                        axis=0))
+                fig = plt.figure(constrained_layout=False, figsize=(15, 6))
+                gs = fig.add_gridspec(11, 10)
+                gs.update(wspace=0.05, hspace=0.15)
+                try:
+                    t_, y_, x_ = np.shape(hdul[0].data)
+                except ValueError:
+                    warnings.warn(
+                        'Light curves need to have the primary hdu. Set save_aperture=True when producing the light curve to enable this plot.')
+                    sys.exit()
+                max_flux = np.max(
+                    np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
+                arrays = []
+                center_axes = []  # Store center panel axes for red box
+
+                for j in range(y_):
+                    for k in range(x_):
+                        ax_ = fig.add_subplot(gs[(9 - 2 * j):(11 - 2 * j), (2 * k):(2 + 2 * k)])
+                        ax_.patch.set_facecolor('#4682B4')
+                        ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
+
+                        _, trend = flatten(hdul[1].data['time'][q],
+                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
+                                           window_length=1, method='biweight', return_trend=True)
+                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
+                            hdul[0].data[:, j, k][q]) + 1
+                        if 1 <= j <= 3 and 1 <= k <= 3:
+                            arrays.append(cal_aper)
+                        center_axes.append(ax_)  # Collect center panel
+                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
+                        ax_.set_ylim(0.3, 1.1)
+                        ax_.set_xlim(2814.5, 2818.5)
+                        ax_.set_xlabel('TBJD')
+                        ax_.set_ylabel('')
+                        if j != 0:
+                            ax_.set_xticklabels([])
+                            ax_.set_xlabel('')
+                        if k != 0:
+                            ax_.set_yticklabels([])
+                        if j == 2 and k == 0:
+                            ax_.set_ylabel('Normalized and detrended Flux of each pixel')
+
+                # Add red box around center panels
+                if center_axes:
+                # Get combined extent of center panels
+                    x0 = min(ax.get_position().x0 for ax in center_axes)
+                x1 = max(ax.get_position().x1 for ax in center_axes)
+                y0 = min(ax.get_position().y0 for ax in center_axes)
+                y1 = max(ax.get_position().y1 for ax in center_axes)
+                print(x0,y0,x1,y1)
+                # Create red rectangle
+                rect = plt.Rectangle(
+                    (0.229, 0.255), 0.542, 0.48,
+                    fill=False, edgecolor='red', linewidth=2, zorder=10
+                )
+                fig.add_artist(rect)
+
+                plt.subplots_adjust(top=.97, bottom=0.1, left=0.05, right=0.95)
+                plt.savefig(
+                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                    dpi=300, )
+                plt.close()
+
+
 def plot_epsf(local_directory=None):
     files = glob(f'{local_directory}epsf/*.npy')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
@@ -709,17 +810,17 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [258804746,258804746,258804746,258804746,258804746]
-    sectors = [31,42,43,70,71]
-    directory = f'/Users/tehan/Downloads/Kaya/'
+    tics = [305506996]
+    sectors = [55]
+    directory = f'/Users/tehan/Downloads/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     for i in range(len(tics)):
-        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+        plot_contamination_shane(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
         print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
