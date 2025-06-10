@@ -2392,7 +2392,7 @@ def owen_2017_earth_core(mass):
 
 
 def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
-    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced.csv'))
+    t = ascii.read(pkg_resources.resource_stream(__name__, 'PS_reduced_cleaned.csv'))
     b = t['pl_imppar']
     ror = t['pl_rade'] / t['st_rad'] / 109
     # find grazing
@@ -2653,6 +2653,10 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
                    color=ng_corr_color, lw=0.7, zorder=4, capsize=2, capthick=0.7)
 
     ax[1].scatter(mass_ng, r_ng_corr, facecolors='none', edgecolors=ng_corr_color, alpha=0.9, s=marker_size, zorder=4)
+    # for i in range(len(tic_ng)):
+    #     ax[1].text(mass_ng[i], r_ng_corr[i], str(tic_ng[i]),
+    #                fontsize=6, color=ng_corr_color, alpha=0.9,
+    #                ha='left', va='bottom', zorder=5)
     for i in range(len(r_ng)):
         if r_ng[i] < r_ng_corr[i]:
             ax[1].plot([mass_ng[i], mass_ng[i]], [r_ng[i], r_ng_corr[i]], color=increase_color, zorder=2, marker='', linewidth=4, alpha=0.8, )
@@ -4139,10 +4143,10 @@ def clean_and_patch_PS_table():
 
 if __name__ == '__main__':
     # clean_and_patch_PS_table()
-    figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
+    # figure_radius_bias(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_ecc(folder='/Users/tehan/Documents/TGLC/')
     # figure_radius_bias_split(folder='/Users/tehan/Documents/TGLC/')
-    # figure_mr_mrho(recalculate=True)
+    figure_mr_mrho(recalculate=True)
     # figure_mr_mrho_all(recalculate=False)
     # figure_mr_mrho_save_param(recalculate=True)
 
