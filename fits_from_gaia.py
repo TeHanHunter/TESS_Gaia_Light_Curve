@@ -31,11 +31,10 @@ def get_match_and_copy(gaia_ids, dest_dir):
 
 # === Sector Loop ===
 for i in range(1, 56, 2):
-    csv_path = os.path.join(csv_base_path, f'*sector*s{i:02d}.csv')
+    csv_path = os.path.join(csv_base_path, f'TIC_and_Gaia_ids_sector_s{i:02d}.csv')
     if not os.path.exists(csv_path):
         print(f"CSV not found for sector {i}: {csv_path}")
         continue
-
     # === Load Gaia IDs from sector CSV ===
     gaia_ids = set()
     with open(csv_path, newline='') as csvfile:
