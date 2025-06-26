@@ -781,7 +781,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ground = [16005254, 20182780, 33595516, 44792534, 88992642,
     119585136, 144700903, 150098860, 154220877, 179317684, 193641523,
     243641947, 250111245, 259172249, 271893367, 285048486, 335590096,
-    376524552, 388076422, 394050135, 396562848, 409794137,
+    376524552, 388076422, 394050135, 396562848, 409794137, 241249530,
     419411415, 428787891, 445751830, 447061717, 458419328, 460984940,
     464300749]
 
@@ -838,7 +838,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=g_color, linewidth=2, zorder=3, alpha=0.95,
-               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 28 planets)')
+               label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 29 planets)')
     # ax.set_title(f'Ground-based-only radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 13, marker='v', color=g_color, edgecolors='k', linewidths=0.7, s=50,
     #            zorder=4, label=r'TESS-free $f_p$' + f'\n({len(difference_tglc)} fits of 79 planets)')
@@ -951,7 +951,7 @@ def figure_radius_bias(folder='/Users/tehan/Documents/TGLC/'):
     ax1.hist(diff_tglc, bins=np.linspace(-0.5, 0.5, 41),
             weights=(1 / errors_tglc ** 2) * len(diff_tglc) / np.sum(1 / errors_tglc ** 2),
             histtype='step', edgecolor=ng_color, linewidth=2, zorder=3, alpha=0.9,
-               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 229 planets)')
+               label=r'TESS-dependent $f_p$ ' + f'\n({len(difference_tglc)} fits of 228 planets)')
 
     # ax.set_title(f'TESS-influenced radius ({len(difference_tglc)} light curves)')
     # ax.scatter(iw_mean_tglc, 10, marker='v', color=ng_color, edgecolors='k', linewidths=0.7, s=50,
@@ -2436,7 +2436,7 @@ def figure_mr_mrho(folder='/Users/tehan/Documents/TGLC/', recalculate=False):
     ground = [16005254, 20182780, 33595516, 44792534, 88992642,
     119585136, 144700903, 150098860, 154220877, 179317684, 193641523,
     243641947, 250111245, 259172249, 271893367, 285048486, 335590096,
-    376524552, 388076422, 394050135, 396562848, 409794137,
+    376524552, 388076422, 394050135, 396562848, 409794137, 241249530,
     419411415, 428787891, 445751830, 447061717, 458419328, 460984940,
     464300749]
 

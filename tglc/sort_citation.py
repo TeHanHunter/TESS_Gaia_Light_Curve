@@ -266,15 +266,25 @@ def reorder_citations(entries_file, refs_file, citation_order):
 def process_pipeline(pipeline_str):
     """Process pipeline string to split into two columns"""
     # Remove LaTeX commands and dollar signs, keep bracketed content
-    cleaned = re.sub(r'\$?\\[a-zA-Z]+\$?', '', pipeline_str)  # Remove \commands
+    # cleaned = re.sub(r'\$?\\[a-zA-Z]+\$?', '', pipeline_str)  # Remove \commands
+    cleaned = pipeline_str.replace(r'$\blacksquare$', '1.')
+    cleaned = cleaned.replace(r'$\blacklozenge$', '2.')
+    cleaned = cleaned.replace(r'$\lozenge$', '3.')
+    cleaned = cleaned.replace(r'$\square$', '4.')
     cleaned = re.sub(r'\$\s*', '', cleaned)  # Remove dollar signs
     cleaned = re.sub(r'\{([^}]*)\}', r'\1', cleaned)  # Remove brackets but keep content
 
     # Split by '+' and clean
     parts = [p.strip() for p in cleaned.split('+')]
-    phot1 = parts[0] if len(parts) > 0 else ''
-    phot2 = parts[1] if len(parts) > 1 else ''
-    return phot1, phot2
+    cat1 = phot1 = cat2 = phot2 = ''
+
+    if len(parts) > 0:
+        cat1, phot1 = (parts[0].split('.', 1)[0] + '.', parts[0].split('.', 1)[1].strip()) if '.' in parts[0] else (
+        '-', parts[0])
+    if len(parts) > 1:
+        cat2, phot2 = (parts[1].split('.', 1)[0] + '.', parts[1].split('.', 1)[1].strip()) if '.' in parts[1] else (
+        '-', parts[1])
+    return cat1, phot1, cat2, phot2
 
 
 def generate_csv(table_entries, tic_list, rors, ror_errs, fp_list, convert, filename):
@@ -287,7 +297,7 @@ def generate_csv(table_entries, tic_list, rors, ror_errs, fp_list, convert, file
         except ValueError:
             continue
 
-        phot1, phot2 = process_pipeline(entry['pipeline'])
+        cat1, phot1, cat2, phot2 = process_pipeline(entry['pipeline'])
         literature = entry['key']
 
         p_val = rors[idx]
@@ -303,7 +313,9 @@ def generate_csv(table_entries, tic_list, rors, ror_errs, fp_list, convert, file
 
         csv_rows.append([
             tic,
+            cat1,
             phot1,
+            cat2,
             phot2,
             literature,
             p_val,
@@ -313,7 +325,7 @@ def generate_csv(table_entries, tic_list, rors, ror_errs, fp_list, convert, file
         ])
 
     # Updated headers to include f_p_error
-    headers = ['TIC', 'Photometry1', 'Photometry2', 'Literature',
+    headers = ['TIC', 'catogory1', 'Photometry1', 'catogory2', 'Photometry2', 'Literature',
                'p_TGLC_value', 'p_TGLC_error', 'f_p_value', 'f_p_error']
 
     with open(filename, 'w', newline='') as f:
