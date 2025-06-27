@@ -374,7 +374,7 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     # plt.xlim(0.3, 0.43)
     plt.title(title)
     # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
-    plt.ylim(0.8, 1.05)
+    # plt.ylim(0.8, 1.05)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
@@ -810,8 +810,8 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [305506996]
-    sectors = [55]
+    tics = [86263325]
+    sectors = [49]
     directory = f'/Users/tehan/Downloads/'
     # directory = '/home/tehan/data/cosmos/GEMS/'
     os.makedirs(directory, exist_ok=True)
@@ -819,15 +819,15 @@ if __name__ == '__main__':
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    for i in range(len(tics)):
-        plot_contamination_shane(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
-        print('done')
+    # for i in range(len(tics)):
+    #     plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+    #     print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
     #            kind='cal_aper_flux')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
-    #            kind='cal_psf_flux')
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=11, mid_transit_tbjd=1738.71248,
+               kind='aperture_flux')
 
     # directory='/home/tehan/data/cosmos/transit_depth_validation_contamrt/'
     # tic_sector = ascii.read(glob(f'{directory}deviation_TGLC_extra.dat')[0])
