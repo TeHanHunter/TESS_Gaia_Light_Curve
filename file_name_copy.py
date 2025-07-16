@@ -22,7 +22,7 @@ for _, row in df.iterrows():
     outccd = row["outCcd"]
 
     src_path = Path(
-        f"/home/tehan/data/sector{outsec:04d}/lc/{outcam}-{outccd}"
+        f"/home/tehan/data/sector{outsec:04d}/lc/{outcam}-{outccd}/"
         f"hlsp_tglc_tess_ffi_gaiaid-{gaia_id}-s{outsec:04d}-"
         f"cam{outcam}-ccd{outccd}_tess_v1_llc.fits"
     )
