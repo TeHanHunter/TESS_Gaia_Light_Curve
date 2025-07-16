@@ -7,7 +7,7 @@ csv_path = "/home/tehan/data/cosmos/Oddo_2025/Jul2025_new_EBs_tesspoint_output_f
 destination = Path("/home/tehan/data/cosmos/Oddo_2025/")
 copy_group = "odd"  # options: "odd", "even", "both"
 # --- LOAD CSV ---
-df = pd.read_csv(csv_path, sep="\t")
+df = pd.read_csv(csv_path)
 
 # --- COPY LOOP ---
 for _, row in df.iterrows():
