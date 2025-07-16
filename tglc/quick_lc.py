@@ -296,14 +296,18 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
 
 
 # newest
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, detrend=True):
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
-    files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
+    if gaia_dr3 is None:
+        files = glob(f'{local_directory}lc/*.fits')
+    else:
+        files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
+            gaia_dr3 = hdul[0].header['GAIADR3']
             sector = hdul[0].header['SECTOR']
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
@@ -394,15 +398,13 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                         ax_ = fig.add_subplot(gs[(19 - 2 * j):(21 - 2 * j), (2 * k):(2 + 2 * k)])
                         ax_.patch.set_facecolor('#4682B4')
                         ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
-                        if detrend:
-                            _, trend = flatten(hdul[1].data['time'][q],
-                                               hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
-                                               window_length=1, method='biweight', return_trend=True)
-                            cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
-                                hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
-                                hdul[0].data[:, j, k][q]) + 1
-                        else:
-                            cal_aper = (hdul[0].data[:, j, k][q]) / np.nanmedian(hdul[0].data[:, j, k][q])
+
+                        _, trend = flatten(hdul[1].data['time'][q],
+                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
+                                           window_length=1, method='biweight', return_trend=True)
+                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
+                            hdul[0].data[:, j, k][q]) + 1
                         if 1 <= j <= 3 and 1 <= k <= 3:
                             arrays.append(cal_aper)
                         ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
@@ -430,7 +432,10 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 std_dev = np.std(median_abs_diffs)
                 print(f"Standard Deviation: {std_dev}")
                 ax1 = fig.add_subplot(gs[:9, 3:6])
-                ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
+                try:
+                    ax1.hist(median_abs_diffs, color='k', edgecolor='k', facecolor='none', rwidth=0.8, linewidth=2)
+                except ValueError:
+                    continue
                 ax1.set_box_aspect(1)
                 # ax1.set_title(f'Distribution of the MADs among combinations of the center 3*3 pixels')
                 ax1.set_xlabel('MAD between combinations of fluxes')
@@ -465,6 +470,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
                 #             dpi=600)
                 plt.close()
+
 
 def plot_epsf(local_directory=None):
     files = glob(f'{local_directory}epsf/*.npy')
@@ -506,7 +512,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
@@ -514,14 +520,25 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [16005254]
-    directory = f'/Users/tehan/Downloads/'
+    tics =  [3664898, 10056120, 12421477, 12632044, 17540944, 17992446, 29257288, 35760711,
+            39699837, 46739994, 47423224, 51159255, 60764070, 60922830, 61085196, 62560071,
+            65347864, 68581262, 71038757, 77552918, 89205615, 89502706, 92938279, 99303810,
+            117880865, 144282456, 148251101, 149766251, 151058955, 155113423, 166087190,
+            172572159, 189571727, 192415411, 219249241, 220589669, 228507309, 233574265,
+            257397333, 265168621, 266338164, 268717977, 281571049, 283410775, 283866910,
+            285181196, 289706625, 289798581, 298559217, 298649058, 299496195, 307913606,
+            308932824, 311057057, 313874586, 326198086, 333620087, 345778835, 346416638,
+            352409577, 352409590, 352617553, 388814426, 392034167, 405764176, 427314633,
+            435903839, 437229644, 441056236, 446175401, 456334158, 471012349, 471012382
+            ]
+    directory = f'/home/tehan/data/surfsup/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, method='query', directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
-    # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
+    for i in range(len(tics)):
+        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+        print('done')    # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            kind='cal_psf_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
