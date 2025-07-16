@@ -4,7 +4,7 @@ import shutil
 
 # ---- CONFIGURATION ----
 csv_path = "/home/tehan/data/cosmos/Oddo_2025/Jul2025_new_EBs_tesspoint_output_filtered.csv"
-destination = Path("/home/tehan/data/cosmos/Oddo_2025/")
+destination = Path("/home/tehan/data/cosmos/Oddo_2025/lc/")
 copy_group = "odd"  # options: "odd", "even", "both"
 # --- LOAD CSV ---
 df = pd.read_csv(csv_path)
@@ -22,7 +22,7 @@ for _, row in df.iterrows():
     outccd = row["outCcd"]
 
     src_path = Path(
-        f"/home/tehan/data/sector{outsec:04d}/lc/"
+        f"/home/tehan/data/sector{outsec:04d}/lc/{outcam}-{outccd}"
         f"hlsp_tglc_tess_ffi_gaiaid-{gaia_id}-s{outsec:04d}-"
         f"cam{outcam}-ccd{outccd}_tess_v1_llc.fits"
     )
