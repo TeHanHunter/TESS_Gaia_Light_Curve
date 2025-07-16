@@ -9,6 +9,9 @@ copy_group = "even"  # options: "odd", "even", "both"
 # --- LOAD CSV ---
 df = pd.read_csv(csv_path)
 
+# --- Prepare list of missing rows ---
+missing_rows = []
+
 # --- COPY LOOP ---
 for _, row in df.iterrows():
     outsec = int(row["outSec"])
@@ -32,3 +35,12 @@ for _, row in df.iterrows():
         shutil.copy2(src_path, destination)
     else:
         print(f"Missing: {src_path}")
+        missing_rows.append(row)
+
+# --- SAVE MISSING FILES LOG ---
+if missing_rows:
+    df_missing = pd.DataFrame(missing_rows)
+    df_missing.to_csv(f"/home/tehan/data/cosmos/Oddo_2025/missing_files.csv", index=False)
+    print(f"\nSaved {len(missing_rows)} missing entries to missing_files.csv")
+else:
+    print("\nAll files were copied successfully.")
