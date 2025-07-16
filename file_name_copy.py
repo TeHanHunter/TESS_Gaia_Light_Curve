@@ -5,7 +5,7 @@ import shutil
 # ---- CONFIGURATION ----
 csv_path = "/home/tehan/data/cosmos/Oddo_2025/Jul2025_new_EBs_tesspoint_output_filtered.csv"
 destination = Path("/home/tehan/data/cosmos/Oddo_2025/lc/")
-copy_group = "odd"  # options: "odd", "even", "both"
+copy_group = "even"  # options: "odd", "even", "both"
 # --- LOAD CSV ---
 df = pd.read_csv(csv_path)
 
