@@ -150,9 +150,13 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         sector = source.sector
         tjd = time
         coord = SkyCoord([(source.gaia[index]['ra'], source.gaia[index]['dec'])], unit=u.deg,)
-        time_bcc = apply_barycentric_correction(sector, tjd, coord)
+        time_bcc = apply_barycentric_correction(sector, tjd, coord)[0]
+    elif ffi == 'SPOC':
+        time_bcc = source.time
+    else:
+        raise ValueError('ffi must be either TICA or SPOC')
 
-    c1 = fits.Column(name='time', array=np.array(time_bcc[0]), format='D')
+    c1 = fits.Column(name='time', array=np.array(time_bcc), format='D')
     c2 = fits.Column(name='psf_flux', array=np.array(psf_lc), format='E')  # psf factor
     # c3 = fits.Column(name='psf_flux_err',
     #                  array=1.4826 * np.median(np.abs(psf_lc - np.median(psf_lc))) * np.ones(len(psf_lc)), format='E')
