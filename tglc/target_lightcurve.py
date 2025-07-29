@@ -152,7 +152,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         coord = SkyCoord([(source.gaia[index]['ra'], source.gaia[index]['dec'])], unit=u.deg,)
         time_bcc = apply_barycentric_correction(sector, tjd, coord)[0]
     elif ffi == 'SPOC':
-        time_bcc = source.time
+        time_bcc = np.array(time)
     else:
         raise ValueError('ffi must be either TICA or SPOC')
 
