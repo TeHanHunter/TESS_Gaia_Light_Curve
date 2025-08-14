@@ -7,7 +7,7 @@ import tarfile
 csv_file = '/home/tehan/data/cosmos/missing_tics_081425.csv'
 dest_folder = '/home/tehan/data/cosmos/GEMS_missing_081425/'
 failed_log_file = '/home/tehan/data/cosmos/GEMS_missing_081425_failed.csv'
-server = 1
+server = 0
 
 # Make destination folder if not exists
 os.makedirs(dest_folder, exist_ok=True)
