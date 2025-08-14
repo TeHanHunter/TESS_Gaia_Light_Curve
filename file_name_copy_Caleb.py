@@ -15,6 +15,7 @@ df = pd.read_csv(csv_file)
 
 for idx, row in df.iterrows():
     designation = str(row['designation']).split(' ')[2]  # int part of designation
+    detection_type = row['source_id']
     sector = int(row['sector'])  # make sure sector is integer
     camera = int(row['camera'])
     ccd = int(row['ccd'])
