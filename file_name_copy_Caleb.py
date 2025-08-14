@@ -6,19 +6,24 @@ import tarfile
 # Paths
 csv_file = '/home/tehan/data/cosmos/missing_tics_081425.csv'
 dest_folder = '/home/tehan/data/cosmos/GEMS_missing_081425/'
+failed_log_file = '/home/tehan/data/cosmos/GEMS_missing_081425_failed.csv'
 server = 1
+
 # Make destination folder if not exists
 os.makedirs(dest_folder, exist_ok=True)
 
 # Read CSV
 df = pd.read_csv(csv_file)
 
+# List to store failed rows
+failed_rows = []
+
 for idx, row in df.iterrows():
     designation = str(row['designation']).split(' ')[2]  # int part of designation
-    detection_type = row['source_id']
     sector = int(row['sector'])  # make sure sector is integer
     camera = int(row['camera'])
     ccd = int(row['ccd'])
+
     if sector % 2 == server:
         # Original file path
         src_path = f'/home/tehan/data/sector{sector:04d}/lc/{camera}-{ccd}/hlsp_tglc_tess_ffi_gaiaid-{designation}-s{sector:04d}-cam{camera}-ccd{ccd}_tess_v1_llc.fits'
@@ -29,9 +34,14 @@ for idx, row in df.iterrows():
         # Copy file
         if os.path.exists(src_path):
             shutil.copy2(src_path, dest_path)
-            # print(f'Copied: {src_path} -> {dest_path}')
         else:
-            print(f'File not found: {src_path}')
+            failed_rows.append(row)
+
+# Save failed rows to CSV
+if failed_rows:
+    failed_df = pd.DataFrame(failed_rows)
+    failed_df.to_csv(failed_log_file, index=False)
+    print(f'Failed rows saved to: {failed_log_file}')
 
 # Tar the folder
 tar_path = dest_folder.rstrip('/') + f'_{server}.tar.gz'
