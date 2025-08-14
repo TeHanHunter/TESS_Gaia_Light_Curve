@@ -28,7 +28,7 @@ for idx, row in df.iterrows():
         # Copy file
         if os.path.exists(src_path):
             shutil.copy2(src_path, dest_path)
-            print(f'Copied: {src_path} -> {dest_path}')
+            # print(f'Copied: {src_path} -> {dest_path}')
         else:
             print(f'File not found: {src_path}')
 
