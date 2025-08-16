@@ -830,8 +830,9 @@ if __name__ == '__main__':
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    for i in range(len(tics)):
-        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+    all_folders = glob(f'{directory}TIC*/')
+    for i in range(len(all_folders)):
+        plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
         print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
