@@ -467,6 +467,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             gaia_dr3 = hdul[0].header['GAIADR3']
+            TIC = hdul[0].header['TICID']
             sector = hdul[0].header['SECTOR']
             q = [a and b for a, b in
                  zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
@@ -624,7 +625,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                              va='top')
                 plt.subplots_adjust(top=.97, bottom=0.06, left=0.05, right=0.95)
                 plt.savefig(
-                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                    f'{local_directory}plots/TIC_{TIC}_contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
                     dpi=300,)
                 # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
                 #             dpi=600)
@@ -825,7 +826,7 @@ if __name__ == '__main__':
     # directory = f'/Users/tehan/Downloads/'
     directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
