@@ -790,8 +790,8 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
             print("Error: 'tics' list cannot be None when method is 'query'.")
             return
         if sectors is None:
-            print("Error: 'sectors' list cannot be None when method is 'query'.")
-            return
+            print("Getting all sectors possible for each target. ")
+            sectors = [None] * len(tics)
         if len(tics) != len(sectors):
             print("Error: The 'tics' and 'sectors' lists must have the same length.")
             return
@@ -821,18 +821,21 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [445959176]
-    sectors = [71]
-    # directory = f'/Users/tehan/Downloads/'
-    directory = '/home/tehan/data/cosmos/GEMS_200pc/'
+    tics = [49248200, 67598497, 141141249, 200117725, 287066908, 349190413, 394485253, 434482244, 441492442, 442791409, 445959176]
+    sectors = None
+    directory = f'/Users/tehan/Downloads/'
+    # directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    all_folders = glob(f'{directory}TIC*/')
-    for i in range(len(all_folders)):
-        plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
+    # all_folders = glob(f'{directory}TIC*/')
+    # for i in range(len(all_folders)):
+    #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
+    #     print('done')
+    for i in range(len(tics)):
+        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
         print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
