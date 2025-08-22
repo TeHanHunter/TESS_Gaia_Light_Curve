@@ -821,10 +821,12 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [49248200, 67598497, 141141249, 200117725, 287066908, 349190413, 394485253, 434482244, 441492442, 442791409, 445959176]
+    # tics = [49248200, 67598497, 141141249, 200117725, 287066908, 349190413, 394485253, 434482244, 441492442, 442791409, 445959176]
     sectors = None
+    tics = [267574918]
+    directory = f'/home/tehan/data/WD/'
     # directory = f'/Users/tehan/Downloads/'
-    directory = '/home/tehan/data/cosmos/GEMS_200pc/'
+    # directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
