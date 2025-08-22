@@ -276,15 +276,15 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
     time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
                                                meas_err=f_err_all,
-                                               binsize=300 / 86400)
+                                               binsize=60 / 86400)
     plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=1.5,
                  marker='.', ms=8, zorder=3, label=f'All sectors')
 
-    plt.ylim(0.998, 1.001)
+    plt.ylim(0.4, 1.1)
     # plt.xlim(0.3, 0.43)
     plt.legend()
     plt.title(title)
-    # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
+    # plt.xlim((mid_transit_tbjd % period - 0.1 * period)/period, (mid_transit_tbjd % period + 0.1 * period)/period)
     # plt.ylim(0.9, 1.1)
     # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
     # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
@@ -516,13 +516,14 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 if __name__ == '__main__':
     tics = [267574918]  # can be a list of TIC IDs
     directory = f'/Users/tehan/Downloads/'
+    # directory = f'/home/tehan/data/WD/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, directory=directory, ffi='SPOC')
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
-    #            kind='cal_psf_flux')
+    plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=1.4079405, mid_transit_tbjd=1779.3750828,
+               kind='cal_aper_flux')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.23818244, mid_transit_tbjd=1738.71248,
     #            kind='cal_aper_flux')
