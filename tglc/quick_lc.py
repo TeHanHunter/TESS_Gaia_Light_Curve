@@ -808,7 +808,7 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
                 print(f'Sector {sectors[i]} failed for {target}. Producing first possible sector')
                 try:
                     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                            get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
+                            get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                             transient=None)
                 except:
                     print(f'Failed {target}. Skipping')
