@@ -555,7 +555,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
 
 if __name__ == '__main__':
     tics = [267574918]  # can be a list of TIC IDs
-    directory = f'/Users/tehan/Downloads/'
+    directory = f'/Users/tehan/Documents/TWIRL/'
     # directory = f'/home/tehan/data/WD/'
     os.makedirs(directory, exist_ok=True)
     # get_tglc_lc(tics=tics, directory=directory, ffi='SPOC')
