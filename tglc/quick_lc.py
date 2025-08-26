@@ -802,7 +802,7 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
             os.makedirs(local_directory, exist_ok=True)
             try:
                 tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                        get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=prior,
+                        get_all_lc=True, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=prior,
                         transient=None)
             except:
                 print(f'Sector {sectors[i]} failed for {target}. Producing first possible sector')
