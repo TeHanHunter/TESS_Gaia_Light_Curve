@@ -808,7 +808,7 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
                 print(f'Sector {sectors[i]} failed for {target}. Producing first possible sector')
                 try:
                     tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                            get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                            get_all_lc=True, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                             transient=None)
                 except:
                     print(f'Failed {target}. Skipping')
@@ -821,12 +821,13 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    # tics = [49248200, 67598497, 141141249, 200117725, 287066908, 349190413, 394485253, 434482244, 441492442, 442791409, 445959176]
+    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
+           200117725, 287066908, 349190413, 394485253, 434482244]
     sectors = None
-    tics = [267574918]
-    directory = f'/home/tehan/data/WD/'
+    # tics = [267574918]
+    # directory = f'/home/tehan/data/WD/'
     # directory = f'/Users/tehan/Downloads/'
-    # directory = '/home/tehan/data/cosmos/GEMS_200pc/'
+    directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
     get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
@@ -836,8 +837,18 @@ if __name__ == '__main__':
     # for i in range(len(all_folders)):
     #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
     #     print('done')
+    gaias = [2945585126764014208,
+    5014144215207133440,
+    3319258375410990336,
+    2139148765748457984,
+    5286868728630545536,
+    6453234060692039936,
+    5474480832922785920,
+    5042748353802185344,
+    6039853628938973440,
+    3358345811917263360]
     for i in range(len(tics)):
-        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=gaias[i])
         print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
