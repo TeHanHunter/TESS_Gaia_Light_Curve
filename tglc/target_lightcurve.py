@@ -310,6 +310,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             end = start + 1
         except:
             try:
+                print(source.gaia['DESIGNATION'][0])
                 start = int(np.where(source.gaia['DESIGNATION'] == name)[0][0])
                 end = start + 1
             except IndexError:
