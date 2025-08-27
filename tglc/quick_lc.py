@@ -549,11 +549,12 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 ax0.hlines(round(star_y) + 2.5, round(star_x) - 2.5, round(star_x) + 2.5, colors='k', lw=1.2)
                 try:
                     t_, y_, x_ = np.shape(hdul[0].data)
+                    max_flux = np.max(
+                        np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3],
+                                  axis=0))
                 except ValueError:
                     warnings.warn('Light curves need to have the primary hdu. Set save_aperture=True when producing the light curve to enable this plot.')
                     sys.exit()
-                max_flux = np.max(
-                    np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
                 arrays = []
                 for j in range(y_):
                     for k in range(x_):
@@ -823,14 +824,15 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [394485253, 434482244]
+    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
+           200117725, 287066908, 349190413, 394485253, 434482244]
     sectors = None
     # tics = [267574918]
     # directory = f'/home/tehan/data/WD/'
     # directory = f'/Users/tehan/Downloads/'
     directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
@@ -838,8 +840,7 @@ if __name__ == '__main__':
     # for i in range(len(all_folders)):
     #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
     #     print('done')
-    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
-           200117725, 287066908, 349190413, 394485253, 434482244]
+
     for i in range(len(tics)):
             plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
             print('done')
