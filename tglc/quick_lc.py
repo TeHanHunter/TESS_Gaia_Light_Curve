@@ -801,14 +801,14 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             try:
-                tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                        get_all_lc=True, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=prior,
+                tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=20,
+                        get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=prior,
                         transient=None)
             except:
                 print(f'Sector {sectors[i]} failed for {target}. Producing first possible sector')
                 try:
-                    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                            get_all_lc=True, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=20,
+                            get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                             transient=None)
                 except:
                     print(f'Failed {target}. Skipping')
@@ -829,28 +829,15 @@ if __name__ == '__main__':
     # directory = f'/Users/tehan/Downloads/'
     directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # all_folders = glob(f'{directory}TIC*/')
-    # for i in range(len(all_folders)):
-    #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
-    #     print('done')
-    gaias = [2945585126764014208,
-    5014144215207133440,
-    3319258375410990336,
-    2139148765748457984,
-    5286868728630545536,
-    6453234060692039936,
-    5474480832922785920,
-    5042748353802185344,
-    6039853628938973440,
-    3358345811917263360]
-    for i in range(len(tics)):
-        for j in range(len(gaias)):
-            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=gaias[j])
-            print('done')
+    all_folders = glob(f'{directory}TIC*/')
+    for i in range(len(all_folders)):
+        plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
+        print('done')
+
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
