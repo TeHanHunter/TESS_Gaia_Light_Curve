@@ -27,6 +27,10 @@ import numpy as np
 import matplotlib.patheffects as path_effects
 import itertools
 import sys
+from astropy import units
+from astroquery.utils.tap.core import TapPlus
+from astroquery.mast import Catalogs
+import pdb
 controller = ThreadpoolController()
 
 
@@ -105,26 +109,24 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     if get_all_lc:
         name = None
     else:
-        if is_tic:
-            TIC_ID = int(target.strip().split()[-1])
-            with _dot_wait('Resolving TIC -> Gaia DR3 designation via TAP'):
-                ticvals = Catalogs.query_object(
-                    f'TIC {TIC_ID}',
-                    radius=3.0 * units.arcsec.to('degree'),
-                    catalog="tic"
-                ).to_pandas()
-                if ticvals.shape[0] > 1:
-                    ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
-                tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
-                    "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
-                        ticvals.loc[0, 'GAIA'])).get_results().to_pandas()
-                gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
-                    "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
-                        tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
-            dr2_id = tmpgaiavals.loc[0, 'dr2_source_id']
-            dr3_designation = gaiavals.loc[0, 'designation'.upper()]
-            print(f'DR2 source_id: {dr2_id}; DR3 designation: {dr3_designation}')
-            name = f'{dr3_designation}'
+        catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
+        if target[0:3] == 'TIC':
+            # name = int(target[4:])
+            TIC_ID = int(target[4:])
+            ticvals = Catalogs.query_object('TIC {}'.format(TIC_ID), radius=3.0 * units.arcsec.to('degree'),
+                                            catalog="tic").to_pandas()
+            if ticvals.shape[0] > 1:
+                ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
+            tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
+                    ticvals.loc[0, 'GAIA'])).get_results().to_pandas()
+            gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
+                    tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
+            print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
+            print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
+            name = f'Gaia DR3 {gaiavals.loc[0, "designation".upper()]}'
+            print(name)
         elif transient is not None:
             name = transient[0]
         else:
@@ -833,11 +835,24 @@ if __name__ == '__main__':
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    all_folders = glob(f'{directory}TIC*/')
-    for i in range(len(all_folders)):
-        plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
-        print('done')
-
+    # all_folders = glob(f'{directory}TIC*/')
+    # for i in range(len(all_folders)):
+    #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
+    #     print('done')
+    gaias = [2945585126764014208,
+    5014144215207133440,
+    3319258375410990336,
+    2139148765748457984,
+    5286868728630545536,
+    6453234060692039936,
+    5474480832922785920,
+    5042748353802185344,
+    6039853628938973440,
+    3358345811917263360]
+    for i in range(len(tics)):
+        for j in range(len(gaias)):
+            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=gaias[j])
+            print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
