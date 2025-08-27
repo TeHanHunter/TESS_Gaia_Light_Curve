@@ -827,14 +827,14 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [3434482244]
+    tics = [434482244]
     sectors = None
     # tics = [267574918]
     # directory = f'/home/tehan/data/WD/'
     # directory = f'/Users/tehan/Downloads/'
     directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
