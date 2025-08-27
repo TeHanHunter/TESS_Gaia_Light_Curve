@@ -829,7 +829,7 @@ if __name__ == '__main__':
     # directory = f'/Users/tehan/Downloads/'
     directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
@@ -848,8 +848,9 @@ if __name__ == '__main__':
     6039853628938973440,
     3358345811917263360]
     for i in range(len(tics)):
-        plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=gaias[i])
-        print('done')
+        for j in range(len(gaias)):
+            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=gaias[j])
+            print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
