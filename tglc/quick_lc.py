@@ -827,8 +827,7 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
-           200117725, 287066908, 349190413, 394485253, 434482244]
+    tics = [3434482244]
     sectors = None
     # tics = [267574918]
     # directory = f'/home/tehan/data/WD/'
