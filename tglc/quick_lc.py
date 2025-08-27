@@ -125,7 +125,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                     tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
             print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
             print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
-            name = f'Gaia DR3 {gaiavals.loc[0, "designation".upper()]}'
+            name = f'{gaiavals.loc[0, "designation".upper()]}'
             print(name)
         elif transient is not None:
             name = transient[0]
