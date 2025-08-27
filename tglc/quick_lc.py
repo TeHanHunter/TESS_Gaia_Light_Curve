@@ -823,8 +823,7 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
-           200117725, 287066908, 349190413, 394485253, 434482244]
+    tics = [394485253, 434482244]
     sectors = None
     # tics = [267574918]
     # directory = f'/home/tehan/data/WD/'
@@ -839,19 +838,10 @@ if __name__ == '__main__':
     # for i in range(len(all_folders)):
     #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
     #     print('done')
-    gaias = [2945585126764014208,
-    5014144215207133440,
-    3319258375410990336,
-    2139148765748457984,
-    5286868728630545536,
-    6453234060692039936,
-    5474480832922785920,
-    5042748353802185344,
-    6039853628938973440,
-    3358345811917263360]
+    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
+           200117725, 287066908, 349190413, 394485253, 434482244]
     for i in range(len(tics)):
-        for j in range(len(gaias)):
-            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=gaias[j])
+            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
             print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
