@@ -573,7 +573,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                                 arrays.append(cal_aper)
                             ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
                             # ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
-                            ax_.set_ylim(0.6, 1.2)
+                            ax_.set_ylim(0., 1.5)
                             ax_.set_xlabel('TBJD')
                             ax_.set_ylabel('')
                             if j != 0:
