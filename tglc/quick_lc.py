@@ -126,7 +126,6 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
             print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
             name = f'{gaiavals.loc[0, "designation".upper()]}'
-            name = 'Gaia DR3 5474480832922785920'
             print(name)
         elif transient is not None:
             name = transient[0]
@@ -574,7 +573,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                                 arrays.append(cal_aper)
                             ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
                             # ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
-                            ax_.set_ylim(ymin, ymax)
+                            ax_.set_ylim(0.6, 1.2)
                             ax_.set_xlabel('TBJD')
                             ax_.set_ylabel('')
                             if j != 0:
@@ -828,7 +827,8 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [434482244]
+    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
+           200117725, 287066908, 349190413, 394485253, 434482244]
     sectors = None
     # tics = [267574918]
     # directory = f'/home/tehan/data/WD/'
@@ -845,7 +845,7 @@ if __name__ == '__main__':
     #     print('done')
 
     for i in range(len(tics)):
-            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=None)
+            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=5014144215207133440)
             print('done')
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
