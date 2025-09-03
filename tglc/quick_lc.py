@@ -573,7 +573,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                                 arrays.append(cal_aper)
                             ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
                             # ax_.plot(hdul[1].data['time'][q], hdul[0].data[:, j, k][q], '.k', ms=0.5)
-                            ax_.set_ylim(0., 1.5)
+                            ax_.set_ylim(ymin, ymax)
                             ax_.set_xlabel('TBJD')
                             ax_.set_ylabel('')
                             if j != 0:
@@ -835,7 +835,7 @@ if __name__ == '__main__':
     # directory = f'/Users/tehan/Downloads/'
     directory = '/home/tehan/data/cosmos/GEMS_200pc/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
+    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
 
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
