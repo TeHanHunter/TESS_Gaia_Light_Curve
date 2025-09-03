@@ -74,16 +74,28 @@ def get_exposure_time_from_sector(sector: int) -> u.Quantity:
 
 def get_sector_containing_orbit(orbit: int) -> int:
     """Get the TESS sector containing a TESS orbit."""
-    if 9 <= orbit <= 198:
+    if 9 <= orbit <= 200:
         return (orbit - 7) // 2
+    elif 201 <= orbit <= 204:
+        return 97
+    elif 205 <= orbit <= 208:
+        return 98
+    elif 209 <= orbit <= 226:
+        return (orbit - 11) // 2
     else:
         raise ValueError(f"Sector not known for orbit {orbit}")
 
 
 def get_orbits_in_sector(sector: int) -> list[int]:
     """Get the TESS orbits in a TESS sector."""
-    if 1 <= sector <= 95:
+    if 1 <= sector <= 96:
         return [sector * 2 + 7, sector * 2 + 8]
+    elif sector == 97:
+        return [sector * 2 + 7, sector * 2 + 8, sector * 2 + 9, sector * 2 + 10]
+    elif sector == 98:
+        return [sector * 2 + 9, sector * 2 + 10, sector * 2 + 11, sector * 2 + 12]
+    elif 99 <= sector <= 107:
+        return [sector * 2 + 11, sector * 2 + 12]
     else:
         raise ValueError(f"Orbits not known for sector {sector}")
 

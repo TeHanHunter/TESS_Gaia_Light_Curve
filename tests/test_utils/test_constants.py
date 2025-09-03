@@ -68,11 +68,21 @@ def test_get_sector_containing_orbit():
     assert get_sector_containing_orbit(9) == 1
     assert get_sector_containing_orbit(10) == 1
     assert get_sector_containing_orbit(11) == 2
-    assert get_sector_containing_orbit(197) == 95
-    assert get_sector_containing_orbit(198) == 95
+    assert get_sector_containing_orbit(199) == 96
+    assert get_sector_containing_orbit(200) == 96
+    # 4-orbit sectors
+    assert get_sector_containing_orbit(201) == 97
+    assert get_sector_containing_orbit(204) == 97
+    assert get_sector_containing_orbit(205) == 98
+    assert get_sector_containing_orbit(208) == 98
+    # Back to 2-orbit sectors
+    assert get_sector_containing_orbit(209) == 99
+    assert get_sector_containing_orbit(211) == 100
+    assert get_sector_containing_orbit(225) == 107
+    assert get_sector_containing_orbit(226) == 107
 
 
-@pytest.mark.parametrize("bad_orbit", [0, -1, 1, 8, 199, 300])
+@pytest.mark.parametrize("bad_orbit", [0, -1, 1, 8, 227, 300])
 def test_get_sector_containing_orbit_with_invalid_orbit(bad_orbit: int):
     with pytest.raises(ValueError):
         get_sector_containing_orbit(bad_orbit)
@@ -81,16 +91,31 @@ def test_get_sector_containing_orbit_with_invalid_orbit(bad_orbit: int):
 def test_get_orbits_in_sector():
     assert get_orbits_in_sector(1) == [9, 10]
     assert get_orbits_in_sector(2) == [11, 12]
-    assert get_orbits_in_sector(95) == [197, 198]
+    assert get_orbits_in_sector(96) == [199, 200]
+    assert get_orbits_in_sector(97) == [201, 202, 203, 204]
+    assert get_orbits_in_sector(98) == [205, 206, 207, 208]
+    assert get_orbits_in_sector(99) == [209, 210]
+    assert get_orbits_in_sector(107) == [225, 226]
 
 
-@pytest.mark.parametrize("bad_sector", [0, -1, 96, 150])
+@pytest.mark.parametrize("bad_sector", [0, -1, 108, 150])
 def test_get_orbits_in_sector_with_invalid_sector(bad_sector: int):
     with pytest.raises(ValueError):
         get_orbits_in_sector(bad_sector)
 
 
-@pytest.mark.parametrize(["sector", "orbits"], [(1, [9, 10]), (2, [11, 12]), (95, [197, 198])])
+@pytest.mark.parametrize(
+    ["sector", "orbits"],
+    [
+        (1, [9, 10]),
+        (2, [11, 12]),
+        (96, [199, 200]),
+        (97, [201, 202, 203, 204]),
+        (98, [205, 206, 207, 208]),
+        (99, [209, 210]),
+        (107, [225, 226]),
+    ],
+)
 def test_orbits_sector_round_trip(sector: int, orbits: list[int]):
     for orbit in get_orbits_in_sector(sector):
         assert get_sector_containing_orbit(orbit) == sector
