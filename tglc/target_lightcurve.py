@@ -318,6 +318,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 aperture, psf_lc, star_y, star_x, portion = \
                     fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                                        near_edge=near_edge, prior=prior)
+                target_5x5, field_stars_5x5 = None, None
             else:
                 aperture, psf_lc, star_y, star_x, portion, target_5x5, field_stars_5x5 = \
                     fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
