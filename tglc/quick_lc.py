@@ -15,10 +15,6 @@ from astroquery.mast import Catalogs
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
-import sys
-import warnings
-import requests
-import time
 # Tesscut._service_api_connection.TIMEOUT = 6000
 import seaborn as sns
 # warnings.simplefilter('ignore', UserWarning)
@@ -56,50 +52,10 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     os.makedirs(local_directory + f'plots/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     print(f'Target: {target}')
-    if ffi.upper() == 'TICA':
-        warnings.warn('TICA support is experimental; Tesscut product availability may be limited.')
-
-    def _parse_tic_id(t):
-        if not isinstance(t, str):
-            return None
-        s = t.strip()
-        if s.upper().startswith('TIC'):
-            parts = s.split()
-            if len(parts) > 1 and parts[1].isdigit():
-                return int(parts[1])
-            s = s[3:].strip()
-        return int(s) if s.isdigit() else None
-    def _is_tic_id(t):
-        if not isinstance(t, str):
-            return False
-        s = t.strip()
-        return s.upper().startswith('TIC') or s.isdigit()
-
-    radius_deg = 42 * 0.707 / 3600
-    target_ = None
-    is_tic = _is_tic_id(target) and _parse_tic_id(target) is not None
-    try:
-        target_ = Catalogs.query_object(target, radius=radius_deg, catalog="Gaia", version=2)
-    except requests.exceptions.RequestException as e:
-        warnings.warn(f'MAST name lookup failed for "{target}": {e}')
-
-    if target_ is None or len(target_) == 0:
-        if is_tic:
-            raise RuntimeError(
-                f'MAST name lookup failed for TIC target "{target}". Please retry when MAST is available.'
-            )
-        try:
-            if not isinstance(target, str):
-                target_ = Catalogs.query_object(target.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
-        except Exception as e:
-            warnings.warn(f'MAST name lookup (target.name) failed: {e}')
-
-    if target_ is None or len(target_) == 0:
-        raise RuntimeError(
-            f'Unable to resolve target "{target}". MAST name lookup appears unavailable; '
-            f'try passing RA/Dec or a different target.'
-        )
-
+    target_ = Catalogs.query_object(target, radius=42 * 0.707 / 3600, catalog="Gaia", version=2)
+    if len(target_) == 0:
+        print('TIC not found in Gaia DR2')
+        target_ = Catalogs.query_object(target.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
     ra = target_[0]['ra']
     dec = target_[0]['dec']
     coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
@@ -733,8 +689,10 @@ def plot_contamination_shane(local_directory=None, gaia_dr3=None, ymin=None, yma
 
                 plt.subplots_adjust(top=.97, bottom=0.1, left=0.05, right=0.95)
                 plt.savefig(
-                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
-                    dpi=300, )
+                    f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                    dpi=300,)
+                # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
+                #             dpi=600)
                 plt.close()
 
 
@@ -806,48 +764,24 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
-            try:
-                tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=20,
-                        get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=sectors[i], prior=prior,
-                        transient=None)
-            except:
-                print(f'Sector {sectors[i]} failed for {target}. Producing first possible sector')
-                try:
-                    tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=20,
-                            get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
-                            transient=None)
-                except:
-                    print(f'Failed {target}. Skipping')
-                    continue
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', xlow=None, xhigh=None, ylow=0.97, yhigh=1.03)
-    elif method == 'search':
+            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
+                    transient=None)
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
+    if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
     else:
         print(f"Error: Unknown method '{method}'. Choose either 'query' or 'search'.")
 
 
 if __name__ == '__main__':
-    tics = [442791409, 441492442, 445959176, 49248200, 67598497,
-           200117725, 287066908, 349190413, 394485253, 434482244]
-    sectors = None
-    # tics = [267574918]
-    # directory = f'/home/tehan/data/WD/'
-    # directory = f'/Users/tehan/Downloads/'
-    directory = '/home/tehan/data/cosmos/GEMS_200pc/'
+    tics = [358157885]
+    directory = f'/Users/tehan/Downloads/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, sectors=sectors, method='query', server=1, directory=directory)
-
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # all_folders = glob(f'{directory}TIC*/')
-    # for i in range(len(all_folders)):
-    #     plot_contamination(local_directory=all_folders[i], gaia_dr3=None)
-    #     print('done')
-
-    for i in range(len(tics)):
-            plot_contamination(local_directory=f'{directory}TIC {tics[i]}/', gaia_dr3=5014144215207133440)
-            print('done')
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4597001770059110528)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4652877439164133760)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
     #            kind='cal_aper_flux')
