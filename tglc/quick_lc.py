@@ -1,5 +1,6 @@
 import os
 import pickle
+import warnings
 from glob import glob
 from tqdm import trange
 from wotan import flatten
@@ -14,14 +15,18 @@ from astroquery.mast import Catalogs
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.mast import Tesscut
-import sys
-import warnings
 # Tesscut._service_api_connection.TIMEOUT = 6000
+import seaborn as sns
 # warnings.simplefilter('ignore', UserWarning)
 from threadpoolctl import ThreadpoolController, threadpool_limits
 import numpy as np
-import seaborn as sns
+import matplotlib.patheffects as path_effects
 import itertools
+import sys
+from astropy import units
+from astroquery.utils.tap.core import TapPlus
+from astroquery.mast import Catalogs
+import pdb
 controller = ThreadpoolController()
 
 
@@ -45,6 +50,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     print(f'Target: {target}')
     target_ = Catalogs.query_object(target, radius=42 * 0.707 / 3600, catalog="Gaia", version=2)
     if len(target_) == 0:
+        print('TIC not found in Gaia DR2')
         target_ = Catalogs.query_object(target.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
     ra = target_[0]['ra']
     dec = target_[0]['dec']
@@ -56,7 +62,22 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     else:
         catalogdata = Catalogs.query_object(str(target), radius=0.02, catalog="TIC")
         if target[0:3] == 'TIC':
-            name = int(target[4:])
+            # name = int(target[4:])
+            TIC_ID = int(target[4:])
+            ticvals = Catalogs.query_object('TIC {}'.format(TIC_ID), radius=3.0 * units.arcsec.to('degree'),
+                                            catalog="tic").to_pandas()
+            if ticvals.shape[0] > 1:
+                ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
+            tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
+                    ticvals.loc[0, 'GAIA'])).get_results().to_pandas()
+            gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
+                    tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
+            print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
+            print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
+            name = f'{gaiavals.loc[0, "designation".upper()]}'
+            print(name)
         elif transient is not None:
             name = transient[0]
         else:
@@ -460,7 +481,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                              va='top')
                 plt.subplots_adjust(top=.97, bottom=0.06, left=0.05, right=0.95)
                 plt.savefig(
-                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                    f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
                     dpi=300,)
                 # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
                 #             dpi=600)
@@ -506,7 +527,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
+                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
@@ -514,13 +535,13 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None)
 
 
 if __name__ == '__main__':
-    tics = [16005254]
+    tics = [358157885]
     directory = f'/Users/tehan/Downloads/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
     # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=5751990597042725632)
+    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4652877439164133760)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=0.71912603, mid_transit_tbjd=2790.58344,
     #            kind='cal_psf_flux')
