@@ -18,7 +18,40 @@ import matplotlib.patheffects as pe
 from astropy.table import Table
 from scipy.optimize import curve_fit
 from matplotlib import font_manager
+import seaborn as sns
 
+# --- Styling: apply BEFORE creating any figures ---
+sns.set_theme(style="whitegrid", context="talk")
+plt.rcParams.update({
+    # Fonts
+    "font.family": "serif",
+    "font.serif": ["DejaVu Serif", "STIX Two Text", "Times New Roman"],
+    "mathtext.fontset": "dejavuserif",
+
+    # Global font sizes
+    "font.size": 12,          # base size
+    "axes.titlesize": 12,     # panel titles
+    "axes.labelsize": 12,     # x/y labels
+    "xtick.labelsize": 12,    # tick labels
+    "ytick.labelsize": 12,
+    "legend.fontsize": 11,
+    "figure.titlesize": 14,   # overall fig title if you add one
+
+    # Colors / grid
+    "axes.edgecolor": "0.2",
+    "axes.labelcolor": "0.",
+    "xtick.color": "0.",
+    "ytick.color": "0.",
+    "axes.facecolor": "1",
+    "grid.color": "1",
+
+    # Tick directions
+    "xtick.direction": "out",
+    "ytick.direction": "out",
+    "xtick.bottom": True,
+    "ytick.left": True,
+
+})
 
 def timebin(hdul, q, kind='cal_aper_flux', binsize=1800):
     r = int(1800 / binsize)
@@ -130,7 +163,7 @@ def sinusoid(x, amplitude, offset, phase):
     return amplitude * np.sin(2 * np.pi * 1 * x + phase) + offset
 
 
-def fit_rv(file='/Users/tehan/Documents/SURFSUP/GJ_1111_rv_unbin.csv', period=0.459):
+def fit_rv(file='/Users/tehan/Documents/SURFSUP/Assets/GJ_1111_rv_unbin.csv', period=0.459):
     data = Table.read(file)[:16]
     time_bin = np.mean(data['bjd'][:len(data) // 2 * 2].reshape(-1, 2), axis=1)
     rv_bin = np.mean(data['rv'][:len(data) // 2 * 2].reshape(-1, 2), axis=1)
@@ -146,10 +179,6 @@ def fit_rv(file='/Users/tehan/Documents/SURFSUP/GJ_1111_rv_unbin.csv', period=0.
     font_manager.fontManager.addfont(font_path)
     plt.rcParams['font.family'] = 'Crimson Pro'
     # Set Seaborn style with custom font
-    sns.set(style="whitegrid",
-            rc={"axes.edgecolor": "k", "grid.color": "none", "font.family": "serif", "font.serif": "Crimson Pro",
-                "font.size": 16, "axes.titlesize": 16, "axes.labelsize": 15, "xtick.labelsize": 16,
-                "ytick.labelsize": 16, "legend.fontsize": 12})
     # Plot the data and the fitted curve
     fig, ax = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[3, 1], hspace=0.1, wspace=0.05),
                            figsize=(5,4))
@@ -159,8 +188,8 @@ def fit_rv(file='/Users/tehan/Documents/SURFSUP/GJ_1111_rv_unbin.csv', period=0.
     ax[0].set_ylabel('GJ 1111 RV (m/s)')
     ax[0].set_ylim(-130, 130)
 
-    ax[1].errorbar(time_bin_pf, rv_bin - sinusoid(time_bin_pf, *popt), e_rv_bin, fmt='o', color='r', ecolor='r', )
     ax[1].hlines(0, xmin=0, xmax=1, color='black')  # Add horizontal line at y=0
+    ax[1].errorbar(time_bin_pf, rv_bin - sinusoid(time_bin_pf, *popt), e_rv_bin, fmt='o', color='r', ecolor='r', )
     ax[1].set_ylabel('Residual')
     ax[1].set_xlabel('Phase')
     ax[1].set_ylim(-22, 22)
@@ -173,7 +202,7 @@ def fit_rv(file='/Users/tehan/Documents/SURFSUP/GJ_1111_rv_unbin.csv', period=0.
         axis.spines['left'].set_visible(True)
         axis.tick_params(axis='both', which='both', length=5)
 
-    plt.savefig('/Users/tehan/Documents/SURFSUP/GJ1111_RV.svg', format='svg', transparent=True,bbox_inches="tight")
+    plt.savefig('/Users/tehan/Documents/SURFSUP/Assets/GJ1111_RV.pdf', bbox_inches="tight")
     plt.show()
 
 
