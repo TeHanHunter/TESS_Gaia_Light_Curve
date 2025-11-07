@@ -2679,10 +2679,10 @@ def get_MAD(i, files=None):
     with fits.open(files[i], mode='denywrite') as hdul:
         try:
             tic = hdul[0].header['TESSMAG']
-            bin = 9
-            aper_flux = np.mean(
-                hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
-                axis=1)
+            # bin = 9
+            # aper_flux = np.mean(
+            #     hdul[1].data['aperture_flux'][:len(hdul[1].data['aperture_flux']) // bin * bin].reshape(-1, bin),
+            #     axis=1)
             aper_flux = aper_flux[~np.isnan(aper_flux)]
             MAD_aper = np.median(np.abs(np.diff(aper_flux)))
             aper_precision = 1.48 * MAD_aper / (np.sqrt(2) * 1.5e4 * 10 ** ((10 - tic) / 2.5))
@@ -3288,23 +3288,23 @@ def lc_pf(file='hlsp_tglc_tess_ffi_gaiaid-2842961178187518464-s0056-cam1-ccd1_te
     plt.close()
 
 if __name__ == '__main__':
-    lc_pf()
+    # lc_pf()
     # plot_MAD_qlp_bg()
     # lc_comparison()
-    # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
-    # print(len(files))
-    # with Pool() as p:
-    #     results = p.map(partial(get_MAD, files=files), trange(len(files)))
-    #
-    # filtered_results = [res for res in results if res is not None]
-    # # Now unpack safely
-    # if filtered_results:  # Only unpack if there are valid results
-    #     tics, precision = zip(*filtered_results)
-    # else:
-    #     tics, precision = [], []  # Handle case with no valid results
-    # tics = np.array(tics)
-    # precision = np.array(precision)
-    # np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_30min_s56.npy', np.vstack((tics, precision)))
+    files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
+    print(len(files))
+    with Pool() as p:
+        results = p.map(partial(get_MAD, files=files), trange(len(files)))
+    
+    filtered_results = [res for res in results if res is not None]
+    # Now unpack safely
+    if filtered_results:  # Only unpack if there are valid results
+        tics, precision = zip(*filtered_results)
+    else:
+        tics, precision = [], []  # Handle case with no valid results
+    tics = np.array(tics)
+    precision = np.array(precision)
+    np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_200s_s56.npy', np.vstack((tics, precision)))
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
