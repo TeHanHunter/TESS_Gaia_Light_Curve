@@ -3465,8 +3465,8 @@ if __name__ == '__main__':
         tics, precision = [], []  # Handle case with no valid results
     tics = np.array(tics)
     precision = np.array(precision)
-    print(tics[:10], precision.size[:10])
     np.save('/pdo/users/tehan/sector0056/mad_tglc_tica_200s_s56.npy', np.vstack((tics, precision)))
+    print(tics[:10], precision[:10])
 
     # files = glob('/pdo/users/tehan/sector0056/lc/*/*.fits')
     # print(len(files))
