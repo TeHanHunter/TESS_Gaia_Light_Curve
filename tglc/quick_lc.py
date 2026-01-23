@@ -211,8 +211,10 @@ def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, y
             plt.figure(constrained_layout=False, figsize=(8, 4))
             plt.plot(hdul[1].data['time'], hdul[1].data[kind], '.', c='silver', label=kind)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[kind][q], '.k', label=f'{kind}_flagged')
+            # plt.xlim(xlow, xhigh)
+            # plt.ylim(ylow, yhigh)
             plt.xlim(xlow, xhigh)
-            plt.ylim(ylow, yhigh)
+            plt.ylim(0.5, 1.5)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}')
             plt.legend()
             # plt.show()
@@ -765,7 +767,7 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
-                    get_all_lc=False, first_sector_only=True, last_sector_only=False, sector=95, prior=prior,
+                    get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
@@ -775,13 +777,13 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
 
 
 if __name__ == '__main__':
-    tics = [149349867]
+    tics = [712835981]
     directory = f'/Users/tehan/Downloads/'
     os.makedirs(directory, exist_ok=True)
-    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    # plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
+    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
-    plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4652877439164133760)
+    # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4652877439164133760)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
     # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
     #            kind='cal_aper_flux')
