@@ -6,6 +6,8 @@ import numpy as np
 import astropy.units as u
 import requests
 import time
+import contextlib
+import threading
 
 from os.path import exists
 from astroquery.gaia import Gaia
@@ -22,6 +24,31 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
+
+
+@contextlib.contextmanager
+def _dot_wait(message, interval=0.6, done_format=None):
+    stop_event = threading.Event()
+    start = time.time()
+
+    def _run():
+        dots = 0
+        while not stop_event.is_set():
+            dots = (dots % 3) + 1
+            print(f"\r{message} {'.' * dots}", end="", flush=True)
+            time.sleep(interval)
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    try:
+        yield
+    finally:
+        stop_event.set()
+        thread.join()
+        if done_format is None:
+            done_format = "{message} ... done in {elapsed:.1f}s."
+        done_line = done_format.format(message=message, elapsed=time.time() - start)
+        print(f"\r{done_line}   ")
 
 
 class Source_cut(object):
@@ -104,51 +131,50 @@ class Source_cut(object):
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         if target_designation:
             print(f'Target Gaia: {target_designation}')
-        print('Querying Gaia DR3 cone search ...')
-        t0 = time.time()
-        catalogdata = Gaia.cone_search_async(coord, radius=radius,
-                                             columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                                      'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
-        print(f'Gaia DR3 cone search completed in {time.time() - t0:.1f}s.')
+        with _dot_wait('Querying Gaia DR3 cone search'):
+            catalogdata = Gaia.cone_search_async(
+                coord,
+                radius=radius,
+                columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                         'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
+            ).get_results()
         print(f'Found {len(catalogdata)} Gaia DR3 objects.')
-        print('Querying TIC around target ...')
-        t0 = time.time()
-        catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600, limit_mag=limit_mag)
-        print(f'TIC query completed in {time.time() - t0:.1f}s.')
+        with _dot_wait('Querying TIC around target'):
+            catalogdata_tic = tic_advanced_search_position_rows(
+                ra=ra,
+                dec=dec,
+                radius=(self.size + 2) * 21 * 0.707 / 3600,
+                limit_mag=limit_mag
+            )
         print(f'Found {len(catalogdata_tic)} TIC objects.')
-        print('Crossmatching TIC -> Gaia DR3 (this may take a while) ...')
-        t0 = time.time()
-        self.tic = convert_gaia_id(catalogdata_tic)
-        print(f'TIC -> Gaia DR3 crossmatch completed in {time.time() - t0:.1f}s.')
+        with _dot_wait('Crossmatching TIC -> Gaia DR3 (this may take a while)'):
+            self.tic = convert_gaia_id(catalogdata_tic)
         sector_table = Tesscut.get_sectors(coordinates=coord)
         if len(sector_table) == 0:
             warnings.warn('TESS has not observed this position yet :(')
+        wait_note = 'later sectors with 200s cadence can take ~20 minutes'
         if sector is None:
-            print('Requesting Tesscut cutouts (all sectors). Waiting on MAST response ...')
-            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
-            t0 = time.time()
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi)
-            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
+            wait_message = f'Requesting Tesscut cutouts (all sectors). Waiting on MAST response ({wait_note})'
+            with _dot_wait(wait_message):
+                hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi)
         elif sector == 'first':
-            print('Requesting Tesscut cutouts (first sector). Waiting on MAST response ...')
-            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
-            t0 = time.time()
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][0])
-            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
+            wait_message = f'Requesting Tesscut cutouts (first sector). Waiting on MAST response ({wait_note})'
+            with _dot_wait(wait_message):
+                hdulist = Tesscut.get_cutouts(
+                    coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][0]
+                )
             sector = sector_table['sector'][0]
         elif sector == 'last':
-            print('Requesting Tesscut cutouts (last sector). Waiting on MAST response ...')
-            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
-            t0 = time.time()
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][-1])
-            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
+            wait_message = f'Requesting Tesscut cutouts (last sector). Waiting on MAST response ({wait_note})'
+            with _dot_wait(wait_message):
+                hdulist = Tesscut.get_cutouts(
+                    coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][-1]
+                )
             sector = sector_table['sector'][-1]
         else:
-            print(f'Requesting Tesscut cutouts (sector {sector}). Waiting on MAST response ...')
-            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
-            t0 = time.time()
-            hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector)
-            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
+            wait_message = f'Requesting Tesscut cutouts (sector {sector}). Waiting on MAST response ({wait_note})'
+            with _dot_wait(wait_message):
+                hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector)
         self.catalogdata = catalogdata
         self.sector_table = sector_table
         self.camera = int(sector_table[0]['camera'])

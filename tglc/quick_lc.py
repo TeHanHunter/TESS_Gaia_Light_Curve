@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 from functools import partial
 from tglc.target_lightcurve import epsf
-from tglc.ffi_cut import ffi_cut
+from tglc.ffi_cut import ffi_cut, _dot_wait
 from astroquery.mast import Catalogs
 import astropy.units as u
 from astropy.coordinates import SkyCoord
@@ -106,26 +106,24 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     else:
         if is_tic:
             TIC_ID = int(target.strip().split()[-1])
-            print('Resolving TIC -> Gaia DR3 designation via TAP...')
-            t0 = time.time()
-            ticvals = Catalogs.query_object(
-                f'TIC {TIC_ID}',
-                radius=3.0 * units.arcsec.to('degree'),
-                catalog="tic"
-            ).to_pandas()
-            if ticvals.shape[0] > 1:
-                ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
-            tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
-                "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
-                    ticvals.loc[0, 'GAIA'])).get_results().to_pandas()
-            gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
-                "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
-                    tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
-            print(f'DR3 mapping completed in {time.time() - t0:.1f}s.')
-            print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
-            print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
-            name = f'{gaiavals.loc[0, "designation".upper()]}'
-            print(name)
+            with _dot_wait('Resolving TIC -> Gaia DR3 designation via TAP'):
+                ticvals = Catalogs.query_object(
+                    f'TIC {TIC_ID}',
+                    radius=3.0 * units.arcsec.to('degree'),
+                    catalog="tic"
+                ).to_pandas()
+                if ticvals.shape[0] > 1:
+                    ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
+                tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                    "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
+                        ticvals.loc[0, 'GAIA'])).get_results().to_pandas()
+                gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                    "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
+                        tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
+            dr2_id = tmpgaiavals.loc[0, 'dr2_source_id']
+            dr3_designation = gaiavals.loc[0, 'designation'.upper()]
+            print(f'DR2 source_id: {dr2_id}; DR3 designation: {dr3_designation}')
+            name = f'{dr3_designation}'
         elif transient is not None:
             name = transient[0]
         else:
@@ -139,7 +137,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                   "the light curve or try use TIC ID as the target in the format of 'TIC 12345678'.")
     if type(sector) == int:
         print(f'Only processing Sector {sector}.')
-        print('Downloading Data from MAST and Gaia ...')
+        print('Downloading data from MAST and Gaia.')
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
                          limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout)  # sector
@@ -148,7 +146,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     elif first_sector_only:
         print(f'Only processing the first sector the target is observed in: Sector {sector_table["sector"][0]}.')
-        print('Downloading Data from MAST and Gaia ...')
+        print('Downloading data from MAST and Gaia.')
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
         sector = sector_table["sector"][0]
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
@@ -158,7 +156,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     elif last_sector_only:
         print(f'Only processing the last sector the target is observed in: Sector {sector_table["sector"][-1]}.')
-        print('Downloading Data from MAST and Gaia ...')
+        print('Downloading data from MAST and Gaia.')
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
         sector = sector_table["sector"][-1]
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
@@ -168,7 +166,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
              name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
     elif sector == None:
         print(f'Processing all available sectors of the target.')
-        print('Downloading Data from MAST and Gaia ...')
+        print('Downloading data from MAST and Gaia.')
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
         for j in range(len(sector_table)):
             print(f'################################################')
@@ -182,7 +180,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         print(
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
             f'large, the download might cause a timeout error from MAST.')
-        print('Downloading Data from MAST and Gaia ...')
+        print('Downloading data from MAST and Gaia.')
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
         source = ffi_cut(target=target, size=size, local_directory=local_directory, sector=sector,
                          limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout)  # sector
@@ -626,7 +624,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None, ffi=ffi, mast_timeout=mast_timeout)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', ffi=ffi)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
