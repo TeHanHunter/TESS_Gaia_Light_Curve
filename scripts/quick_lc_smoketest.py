@@ -25,7 +25,8 @@ def main() -> None:
     parser.add_argument("--outdir", default="/tmp/tglc_smoketest", help="Base output directory")
     parser.add_argument("--size", type=int, default=90, help="Cutout size")
     parser.add_argument("--limit-mag", type=float, default=16, help="Gaia limiting magnitude")
-    parser.add_argument("--ffi", default="SPOC", choices=["SPOC", "TICA"], help="FFI product to use")
+    parser.add_argument("--ffi", default="SPOC", choices=["SPOC", "TICA"],
+                        help="FFI product to use (TICA is experimental)")
     parser.add_argument("--period", type=float, default=None, help="Optional period for phase-folded plot")
     parser.add_argument("--mid-transit-tbjd", type=float, default=None, help="Optional mid-transit TBJD")
     args = parser.parse_args()

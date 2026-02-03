@@ -9,7 +9,7 @@ import pandas as pd
 
 def get_ephemeris_file_path(sector: int) -> Path:
     """Get the path to the appropriate TESS ephemeris data file for a given sector."""
-    ephemeris_data_directory = Path("ephemeris_data")
+    ephemeris_data_directory = Path(__file__).resolve().parent / "ephemeris_data"
     if 1 <= sector <= 5:
         return ephemeris_data_directory / "20180720_tess_ephem.csv"
     elif 6 <= sector <= 19:

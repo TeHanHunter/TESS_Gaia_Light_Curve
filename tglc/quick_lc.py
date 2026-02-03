@@ -51,6 +51,8 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     os.makedirs(local_directory + f'plots/{ffi}/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     print(f'Target: {target}')
+    if ffi.upper() == 'TICA':
+        warnings.warn('TICA support is experimental; Tesscut product availability may be limited.')
 
     def _parse_tic_id(t):
         if not isinstance(t, str):
