@@ -4,7 +4,7 @@ import pickle
 import sys
 import astropy.units as u
 import numpy as np
-import pkg_resources
+import importlib_resources
 import requests
 import time
 
@@ -327,7 +327,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
         np.save(f'{local_directory}mask/mask_sector{sector:04d}_cam{camera}_ccd{ccd}.npy', mask)
         return
     # load mask
-    mask = pkg_resources.resource_stream(__name__, f'background_mask/median_mask.fits')
+    mask = importlib_resources.files(__package__).joinpath("background_mask/median_mask.fits").open("rb")
     mask = fits.open(mask)[0].data[(camera - 1) * 4 + (ccd - 1), :]
     mask = np.repeat(mask.reshape(1, 2048), repeats=2048, axis=0)
     bad_pixels = np.zeros(np.shape(flux[0]))

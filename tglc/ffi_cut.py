@@ -4,6 +4,8 @@ import sys
 import pickle
 import numpy as np
 import astropy.units as u
+import requests
+import time
 
 from os.path import exists
 from astroquery.gaia import Gaia
@@ -23,7 +25,8 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 
 
 class Source_cut(object):
-    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None, transient=None, ffi='TICA'):
+    def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None, transient=None, ffi='TICA',
+                 mast_timeout=3600):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
@@ -52,35 +55,100 @@ class Source_cut(object):
         self.mask = []
         self.transient = transient
         self.ffi = ffi
+        Tesscut._service_api_connection.TIMEOUT = mast_timeout
+        print(f'MAST Tesscut timeout set to {mast_timeout}s.')
 
-        target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
-        if len(target) == 0:
-            target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
+        def _parse_tic_id(t):
+            if not isinstance(t, str):
+                return None
+            s = t.strip()
+            if s.upper().startswith('TIC'):
+                parts = s.split()
+                if len(parts) > 1 and parts[1].isdigit():
+                    return int(parts[1])
+                s = s[3:].strip()
+            return int(s) if s.isdigit() else None
+
+        def _is_tic_id(t):
+            if not isinstance(t, str):
+                return False
+            s = t.strip()
+            return s.upper().startswith('TIC') or s.isdigit()
+
+        target = None
+        is_tic = _is_tic_id(self.name) and _parse_tic_id(self.name) is not None
+        try:
+            target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+        except requests.exceptions.RequestException as e:
+            warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
+
+        if target is None or len(target) == 0:
+            try:
+                target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
+            except requests.exceptions.RequestException as e:
+                warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
+
+        if target is None or len(target) == 0:
+            if is_tic:
+                raise RuntimeError(
+                    f'MAST name lookup failed for TIC target "{self.name}". Please retry when MAST is available.'
+                )
+            raise RuntimeError(
+                f'Unable to resolve target "{self.name}". MAST name lookup appears unavailable.'
+            )
+
         ra = target[0]['ra']
         dec = target[0]['dec']
+        target_designation = target[0].get('designation', None)
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
-        print(f'Target Gaia: {target[0]["designation"]}')
+        if target_designation:
+            print(f'Target Gaia: {target_designation}')
+        print('Querying Gaia DR3 cone search ...')
+        t0 = time.time()
         catalogdata = Gaia.cone_search_async(coord, radius=radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
                                                       'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
+        print(f'Gaia DR3 cone search completed in {time.time() - t0:.1f}s.')
         print(f'Found {len(catalogdata)} Gaia DR3 objects.')
+        print('Querying TIC around target ...')
+        t0 = time.time()
         catalogdata_tic = tic_advanced_search_position_rows(ra=ra, dec=dec, radius=(self.size + 2) * 21 * 0.707 / 3600, limit_mag=limit_mag)
+        print(f'TIC query completed in {time.time() - t0:.1f}s.')
         print(f'Found {len(catalogdata_tic)} TIC objects.')
+        print('Crossmatching TIC -> Gaia DR3 (this may take a while) ...')
+        t0 = time.time()
         self.tic = convert_gaia_id(catalogdata_tic)
+        print(f'TIC -> Gaia DR3 crossmatch completed in {time.time() - t0:.1f}s.')
         sector_table = Tesscut.get_sectors(coordinates=coord)
         if len(sector_table) == 0:
             warnings.warn('TESS has not observed this position yet :(')
         if sector is None:
+            print('Requesting Tesscut cutouts (all sectors). Waiting on MAST response ...')
+            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
+            t0 = time.time()
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi)
+            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
         elif sector == 'first':
+            print('Requesting Tesscut cutouts (first sector). Waiting on MAST response ...')
+            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
+            t0 = time.time()
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][0])
+            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
             sector = sector_table['sector'][0]
         elif sector == 'last':
+            print('Requesting Tesscut cutouts (last sector). Waiting on MAST response ...')
+            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
+            t0 = time.time()
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector_table['sector'][-1])
+            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
             sector = sector_table['sector'][-1]
         else:
+            print(f'Requesting Tesscut cutouts (sector {sector}). Waiting on MAST response ...')
+            print('Note: later sectors with 200s cadence can take ~20 minutes to download.')
+            t0 = time.time()
             hdulist = Tesscut.get_cutouts(coordinates=coord, size=self.size, product=ffi, sector=sector)
+            print(f'Received Tesscut cutouts in {time.time() - t0:.1f}s.')
         self.catalogdata = catalogdata
         self.sector_table = sector_table
         self.camera = int(sector_table[0]['camera'])
@@ -252,7 +320,8 @@ class Source_cut_pseudo(object):
         self.gaia = gaia_targets
 
 
-def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None, transient=None, ffi='TICA'):
+def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None, transient=None, ffi='TICA',
+            mast_timeout=3600):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -281,6 +350,7 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
         print('Loaded ffi_cut from directory. ')
     else:
         with open(f'{local_directory}source/{source_name}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient, ffi=ffi)
+            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient, ffi=ffi,
+                                mast_timeout=mast_timeout)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source

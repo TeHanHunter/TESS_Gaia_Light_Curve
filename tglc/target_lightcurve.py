@@ -49,7 +49,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
     else:
         objid = transient[0]
-    source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v1_llc.fits'
+    source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v2_llc.fits'
     source_exists = exists(source_path)
     # if source_exists and (os.path.getsize(source_path) > 0):
     #     print('LC exists, please (re)move the file if you wish to overwrite.')
@@ -249,15 +249,16 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
         target = f'{cut_x:02d}_{cut_y:02d}'
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
                                                         edge_compression=edge_compression)
-    lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
-    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
+    lc_directory = f'{local_directory}lc/{ffi}/{source.camera}-{source.ccd}/'
+    epsf_loc = f'{local_directory}epsf/{ffi}/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
     if type(source) == Source_cut:
         bg_dof = 3
-        lc_directory = f'{local_directory}lc/'
-        epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
+        lc_directory = f'{local_directory}lc/{ffi}/'
+        epsf_loc = f'{local_directory}epsf/{ffi}/epsf_{target}_sector_{sector}.npy'
     else:
         bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
+    os.makedirs(os.path.dirname(epsf_loc), exist_ok=True)
     # sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=2817).T)
     # # residual = np.abs(source.flux[2817].flatten() - sim_image)
     # residual = source.flux[2817].flatten() - sim_image
