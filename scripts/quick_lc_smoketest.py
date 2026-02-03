@@ -53,13 +53,13 @@ def main() -> None:
     )
 
     print("Plotting light curves...")
-    plot_lc(local_directory=local_directory, kind="cal_aper_flux", ffi=args.ffi)
-    plot_lc(local_directory=local_directory, kind="cal_psf_flux", ffi=args.ffi)
+    plot_lc(local_directory=local_directory, kind="cal_aper_flux")
+    plot_lc(local_directory=local_directory, kind="cal_psf_flux")
 
     if args.period is not None and args.mid_transit_tbjd is not None:
         print("Plotting phase-folded light curve...")
         plot_pf_lc(
-            local_directory=f"{local_directory}lc/{args.ffi}/",
+            local_directory=f"{local_directory}lc/",
             period=args.period,
             mid_transit_tbjd=args.mid_transit_tbjd,
             kind="cal_aper_flux",

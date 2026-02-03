@@ -46,9 +46,9 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     :kind mast_timeout: int, optional
     '''
     os.makedirs(local_directory + f'logs/', exist_ok=True)
-    os.makedirs(local_directory + f'lc/{ffi}/', exist_ok=True)
-    os.makedirs(local_directory + f'epsf/{ffi}/', exist_ok=True)
-    os.makedirs(local_directory + f'plots/{ffi}/', exist_ok=True)
+    os.makedirs(local_directory + f'lc/', exist_ok=True)
+    os.makedirs(local_directory + f'epsf/', exist_ok=True)
+    os.makedirs(local_directory + f'plots/', exist_ok=True)
     os.makedirs(local_directory + f'source/', exist_ok=True)
     print(f'Target: {target}')
     if ffi.upper() == 'TICA':
@@ -238,15 +238,9 @@ def star_spliter(server=1,  # or 2
     return
 
 
-def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None, ffi=None):
-    lc_dir = f'{local_directory}lc/{ffi}/' if ffi else f'{local_directory}lc/'
-    files = glob(f'{lc_dir}*.fits')
-    if ffi and not files:
-        warnings.warn(f'No files found in {lc_dir}, falling back to {local_directory}lc/')
-        lc_dir = f'{local_directory}lc/'
-        files = glob(f'{lc_dir}*.fits')
-    plot_dir = f'{local_directory}plots/{ffi}/' if ffi else f'{local_directory}plots/'
-    os.makedirs(plot_dir, exist_ok=True)
+def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None):
+    files = glob(f'{local_directory}lc/*.fits')
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
@@ -259,7 +253,7 @@ def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, y
             plt.legend()
             # plt.show()
             plt.savefig(
-                f'{plot_dir}TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}.png',
+                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}.png',
                 dpi=300)
             plt.close()
 
@@ -420,18 +414,12 @@ def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='c
     plt.close(fig)
 
 # newest
-def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, detrend=True, ffi=None):
+def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000, detrend=True):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
-    lc_dir = f'{local_directory}lc/{ffi}/' if ffi else f'{local_directory}lc/'
-    files = glob(f'{lc_dir}*{gaia_dr3}*.fits')
-    if ffi and not files:
-        warnings.warn(f'No files found in {lc_dir}, falling back to {local_directory}lc/')
-        lc_dir = f'{local_directory}lc/'
-        files = glob(f'{lc_dir}*{gaia_dr3}*.fits')
-    plot_dir = f'{local_directory}plots/{ffi}/' if ffi else f'{local_directory}plots/'
-    os.makedirs(plot_dir, exist_ok=True)
+    files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
+    os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             sector = hdul[0].header['SECTOR']
@@ -440,13 +428,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             if ymin is None and ymax is None:
                 ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
                 ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
-            source_glob = f'{local_directory}source/*_{sector}.pkl'
-            if ffi:
-                source_glob = f'{local_directory}source/*{ffi}*_{sector}.pkl'
-            source_matches = glob(source_glob)
-            if not source_matches:
-                raise FileNotFoundError(f'No source cache found for sector {sector} (pattern: {source_glob})')
-            with open(source_matches[0], 'rb') as input_:
+            with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
@@ -596,7 +578,7 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                              va='top')
                 plt.subplots_adjust(top=.97, bottom=0.06, left=0.05, right=0.95)
                 plt.savefig(
-                    f'{plot_dir}contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                    f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
                     dpi=300,)
                 # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
                 #             dpi=600)
@@ -644,7 +626,7 @@ def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None,
             tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None, ffi=ffi, mast_timeout=mast_timeout)
-            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', ffi=ffi)
+            plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
 
