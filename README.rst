@@ -1,19 +1,23 @@
-.. image:: logo/TGLC_Title.png
+.. image:: https://raw.githubusercontent.com/TeHanHunter/TESS_Gaia_Light_Curve/main/logo/TGLC_Title.png
   :width: 800
   :alt: TESS-Gaia Light Curve
+
 .. image:: https://zenodo.org/badge/420868490.svg
    :target: https://zenodo.org/badge/latestdoi/420868490
+
 .. image:: https://static.pepy.tech/personalized-badge/tglc?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Total%20Downloads
    :target: https://pepy.tech/project/tglc
+
 .. image:: https://img.shields.io/badge/Cite-TGLC-blue
    :target: https://www.tomwagg.com/software-citation-station/?auto-select=tglc
+
 ==================================
 Introduction
 ==================================
 
 TESS-Gaia Light Curve (`TGLC <https://archive.stsci.edu/hlsp/tglc>`_) is a dataset of TESS full-frame image light curves publicly available via the MAST portal. It is fitted with effective PSF and decontaminated with Gaia DR3 and achieved percent-level photometric precision down to 16th TESS magnitude! It unlocks astrophysics to a vast number of dim stars below 12th TESS magnitude. A package called tglc is pip-installable for customized light curve fits.
 
-.. image:: logo/EB_comparison_git.png
+.. image:: https://raw.githubusercontent.com/TeHanHunter/TESS_Gaia_Light_Curve/main/logo/EB_comparison_git.png
   :width: 800
   :alt: EB light curve comparison to other pipeline
 
