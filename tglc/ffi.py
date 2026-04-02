@@ -29,6 +29,9 @@ from tglc.utils.mapping import consume_iterator_with_progress_bar, pool_map_if_m
 logger = logging.getLogger(__name__)
 
 
+TICA_QUALITY_HEADER_START_SECTOR = 67
+
+
 # from Tim
 def background_mask(im=None):
     imfilt = im * 1.0
@@ -259,7 +262,7 @@ def _get_science_pixel_limits(scipixs_string: str) -> tuple[int, int, int, int]:
 
 
 def _get_ffi_header_data_and_flux(
-    ffi_file: Path, camera: int
+    ffi_file: Path, camera: int, sector: int
 ) -> tuple[int, int, float, np.ndarray]:
     """
     Harvest important header values and pixel flux values from a TICA FFI file.
@@ -270,6 +273,10 @@ def _get_ffi_header_data_and_flux(
         Path to FFI FITS file to read.
     camera : int
         Camera of FFI. Needed to read stray light header value.
+    sector : int
+        TESS sector of FFI. TICA FFIs before Sector 67 do not reliably carry `COARSE`,
+        `RW_DESAT`, and `STRAYLT1-4`, so those quality bits are treated as zero there when
+        missing.
 
     Returns
     -------
@@ -285,10 +292,20 @@ def _get_ffi_header_data_and_flux(
                 primary_header = hdulist[0].header
                 # Map quality indicators to bits that align with FFI quality flags.
                 # See https://archive.stsci.edu/missions/tess/doc/EXP-TESS-ARC-ICD-TM-0014-Rev-F.pdf?page=56
+                # The QLP update notes indicate these TICA quality keywords were only added
+                # starting in Sector 67, so pre-S67 FFIs fall back to zero when they are absent.
+                if sector < TICA_QUALITY_HEADER_START_SECTOR:
+                    coarse = primary_header.get("COARSE", 0)
+                    rw_desat = primary_header.get("RW_DESAT", 0)
+                    straylt = primary_header.get(f"STRAYLT{camera}", 0)
+                else:
+                    coarse = primary_header["COARSE"]
+                    rw_desat = primary_header["RW_DESAT"]
+                    straylt = primary_header[f"STRAYLT{camera}"]
                 quality = (
-                    (primary_header["COARSE"] << 2)
-                    & (primary_header["RW_DESAT"] << 5)
-                    & (primary_header[f"STRAYLT{camera}"] << 11)
+                    (coarse << 2)
+                    & (rw_desat << 5)
+                    & (straylt << 11)
                 )
                 cadence = primary_header["CADENCE"]
                 time = primary_header["MIDTJD"]
@@ -413,7 +430,10 @@ def ffi(
     cadence = np.zeros_like(ffi_files, dtype=np.int64)
     quality = np.zeros_like(ffi_files, dtype=np.int32)
     flux = np.full((len(ffi_files), 2048, 2048), np.nan, dtype=np.float32)
-    get_ffi_header_data_and_flux_for_camera = partial(_get_ffi_header_data_and_flux, camera=camera)
+    sector = get_sector_containing_orbit(orbit)
+    get_ffi_header_data_and_flux_for_camera = partial(
+        _get_ffi_header_data_and_flux, camera=camera, sector=sector
+    )
     ffi_data_iterator = tqdm(
         pool_map_if_multiprocessing(
             get_ffi_header_data_and_flux_for_camera,
@@ -495,7 +515,7 @@ def ffi(
         flux=flux,
         mask=mask,
         orbit=orbit,
-        sector=get_sector_containing_orbit(orbit),
+        sector=sector,
         time=time,
         size=cutout_size,
         quality=quality,
