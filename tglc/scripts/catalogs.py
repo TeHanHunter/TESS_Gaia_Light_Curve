@@ -24,6 +24,7 @@ from tglc.utils.mapping import consume_iterator_with_progress_bar, pool_map_if_m
 logger = getLogger(__name__)
 
 TIC_CATALOG_FIELDS = ["ID", "GAIA", "ra", "dec", "Tmag", "pmRA", "pmDEC", "Jmag", "Kmag", "Vmag"]
+DR2_TO_DR3_QUERY_CHUNK_SIZE = 50_000
 
 GAIA_CATALOG_FIELDS = [
     "DESIGNATION",
@@ -49,6 +50,32 @@ def _get_camera_query_grid_centers(sector: int, camera: int, ccd: int) -> SkyCoo
     return wcs.pixel_to_world(query_center_ccd_x.ravel(), query_center_ccd_y.ravel())
 
 
+def _query_gaia_dr2_to_dr3_matches(
+    tic: TIC,
+    dr2_source_ids: np.ndarray,
+    chunk_size: int = DR2_TO_DR3_QUERY_CHUNK_SIZE,
+) -> pd.DataFrame:
+    """
+    Query the TIC DR2->DR3 bridge in batches below Postgres's parameter limit.
+    """
+    if len(dr2_source_ids) == 0:
+        return pd.DataFrame(columns=["dr2_source_id", "dr3_source_id"])
+
+    dr2_to_dr3 = tic.table("dr2_to_dr3")
+    gaia_match_query_results = []
+    for chunk_start in range(0, len(dr2_source_ids), chunk_size):
+        dr2_source_ids_chunk = dr2_source_ids[chunk_start : chunk_start + chunk_size]
+        gaia_match_query = tic.select("dr2_to_dr3", "dr2_source_id", "dr3_source_id").where(
+            dr2_to_dr3.c.dr2_source_id.in_(dr2_source_ids_chunk)
+        )
+        gaia_match_query_results.extend(tic.execute(gaia_match_query))
+
+    gaia_match = pd.DataFrame(gaia_match_query_results, columns=["dr2_source_id", "dr3_source_id"])
+    gaia_match["dr2_source_id"] = gaia_match["dr2_source_id"].astype(str)
+    gaia_match["dr3_source_id"] = pd.array(gaia_match["dr3_source_id"]).astype("Int64")
+    return gaia_match
+
+
 def _run_tic_cone_query(
     ra_dec: tuple[float, float],
     radius: float = 5.0,
@@ -67,7 +94,6 @@ def _run_tic_cone_query(
 
     tic = TIC("tic_82")
     tic_entries = tic.table("ticentries")
-    dr2_to_dr3 = tic.table("dr2_to_dr3")
     base_query = tic.select("ticentries", *(field.lower() for field in TIC_CATALOG_FIELDS))
     magnitude_filter = tic_entries.c.tmag < magnitude_cutoff
     # M dwarfs: magnitude < 15, T_eff < 4,000K, radius < 0.8 solar radii
@@ -85,23 +111,10 @@ def _run_tic_cone_query(
     tic_with_gaia_dr2 = pd.DataFrame(
         tic_cone_query_results, columns=[field.lower() for field in TIC_CATALOG_FIELDS]
     )
-    non_null_gaia_dr2_source_ids = tic_with_gaia_dr2["gaia"].dropna().astype(int)
+    non_null_gaia_dr2_source_ids = tic_with_gaia_dr2["gaia"].dropna().astype(int).to_numpy()
 
     logger.debug(f"Querying Gaia DR2 to DR3 table for stars around {ra=:.2f}, {dec=:.2f}")
-    # Note: using `.in_` makes each source ID a separate parameter in SQLAlchemy's query
-    # construction. There is a maximum number of query parameters, which is not hit by 5deg cone
-    # queries, but if those queries ever get larger, `.in_` will break. In that case, `sa.any_`
-    # should be used instead, as in the following snipet:
-    # gaia_match_query = tic.select("dr2_to_dr3", "dr2_source_id", "dr3_source_id").where(
-    #     dr2_to_dr3.c.dr2_source_id == sa.any_(non_null_gaia_dr2_source_ids)
-    # )
-    gaia_match_query = tic.select("dr2_to_dr3", "dr2_source_id", "dr3_source_id").where(
-        dr2_to_dr3.c.dr2_source_id.in_(non_null_gaia_dr2_source_ids)
-    )
-    gaia_match_query_results = tic.execute(gaia_match_query)
-    gaia_match = pd.DataFrame(gaia_match_query_results, columns=["dr2_source_id", "dr3_source_id"])
-    gaia_match["dr2_source_id"] = gaia_match["dr2_source_id"].astype(str)
-    gaia_match["dr3_source_id"] = pd.array(gaia_match["dr3_source_id"]).astype("Int64")
+    gaia_match = _query_gaia_dr2_to_dr3_matches(tic, non_null_gaia_dr2_source_ids)
 
     return (
         tic_with_gaia_dr2.merge(gaia_match, how="left", left_on="gaia", right_on="dr2_source_id")
