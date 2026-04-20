@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 import sys
+import warnings
 import astropy.units as u
 import numpy as np
 import importlib_resources
@@ -90,19 +91,30 @@ def convert_gaia_id(catalogdata_tic):
     gaia_array = gaia_array[gaia_array != 'None']
     # np.save('gaia_array.npy', gaia_array)
     segment = (len(gaia_array) - 1) // 10000
-    gaia_tuple = tuple(gaia_array[:10000])
-    results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
-    # np.save('result.npy', np.array(results))
-    for i in range(segment):
-        gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
-        gaia_tuple_cut = tuple(gaia_array_cut)
-        results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
-    tic_ids = []
-    for j in range(len(results)):
-        tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
-    tic_ids = Column(np.array(tic_ids), name='TIC')
-    results.add_column(tic_ids)
-    return results
+    try:
+        gaia_tuple = tuple(gaia_array[:10000])
+        results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
+        # np.save('result.npy', np.array(results))
+        for i in range(segment):
+            gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
+            gaia_tuple_cut = tuple(gaia_array_cut)
+            results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
+        tic_ids = []
+        for j in range(len(results)):
+            tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
+        tic_ids = Column(np.array(tic_ids), name='TIC')
+        results.add_column(tic_ids)
+        return results
+    except Exception as exc:
+        warnings.warn(
+            f'Gaia DR2->DR3 crossmatch failed ({exc}). Falling back to TIC catalog GAIA (DR2) identifiers.'
+        )
+        valid = np.array(catalogdata_tic['GAIA']) != 'None'
+        results = Table()
+        results['dr2_source_id'] = np.array(catalogdata_tic['GAIA'][valid], dtype=np.int64)
+        results['dr3_source_id'] = np.array(catalogdata_tic['GAIA'][valid], dtype=np.int64)
+        results['TIC'] = np.array(catalogdata_tic['ID'][valid], dtype=np.int64)
+        return results
 
 
 # from Tim
