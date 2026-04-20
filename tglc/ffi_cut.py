@@ -30,6 +30,7 @@ Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 def _dot_wait(message, interval=0.6, done_format=None):
     stop_event = threading.Event()
     start = time.time()
+    is_tty = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
     def _run():
         dots = 0
@@ -38,17 +39,23 @@ def _dot_wait(message, interval=0.6, done_format=None):
             print(f"\r{message} {'.' * dots}", end="", flush=True)
             time.sleep(interval)
 
-    thread = threading.Thread(target=_run, daemon=True)
-    thread.start()
+    if is_tty:
+        thread = threading.Thread(target=_run, daemon=True)
+        thread.start()
+    else:
+        print(f"{message} ...", flush=True)
+        thread = None
     try:
         yield
     finally:
         stop_event.set()
-        thread.join()
+        if thread is not None:
+            thread.join()
         if done_format is None:
             done_format = "{message} ... done in {elapsed:.1f}s."
         done_line = done_format.format(message=message, elapsed=time.time() - start)
-        print(f"\r{done_line}   ")
+        prefix = "\r" if is_tty else ""
+        print(f"{prefix}{done_line}   ")
 
 
 class Source_cut(object):
@@ -131,14 +138,24 @@ class Source_cut(object):
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         if target_designation:
             print(f'Target Gaia: {target_designation}')
-        with _dot_wait('Querying Gaia DR3 cone search'):
-            catalogdata = Gaia.cone_search_async(
-                coord,
-                radius=radius,
-                columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                         'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
-            ).get_results()
-        print(f'Found {len(catalogdata)} Gaia DR3 objects.')
+        try:
+            with _dot_wait('Querying Gaia DR3 cone search'):
+                catalogdata = Gaia.cone_search_async(
+                    coord,
+                    radius=radius,
+                    columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                             'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
+                ).get_results()
+            print(f'Found {len(catalogdata)} Gaia DR3 objects.')
+        except Exception as exc:
+            warnings.warn(
+                f'Gaia DR3 cone search failed ({exc}). Falling back to MAST Gaia catalog (DR2).'
+            )
+            with _dot_wait('Querying Gaia catalog from MAST'):
+                catalogdata = Catalogs.query_region(coord, radius=radius, catalog='Gaia', version=2)
+            if 'designation' in catalogdata.colnames and 'DESIGNATION' not in catalogdata.colnames:
+                catalogdata.rename_column('designation', 'DESIGNATION')
+            print(f'Found {len(catalogdata)} Gaia objects from MAST fallback.')
         with _dot_wait('Querying TIC around target'):
             catalogdata_tic = tic_advanced_search_position_rows(
                 ra=ra,

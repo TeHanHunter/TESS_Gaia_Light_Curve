@@ -24,7 +24,8 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None, ffi='TICA'):
+              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None,
+              ffi='SPOC'):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -336,6 +337,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                 aperture, psf_lc, star_y, star_x, portion = \
                     fit_lc_float_field(A, source, star_info=star_info, x=x_round, y=y_round, star_num=i, e_psf=e_psf,
                                        near_edge=near_edge, prior=prior)
+                target_5x5, field_stars_5x5 = None, None
             else:
                 aperture, psf_lc, star_y, star_x, portion, target_5x5, field_stars_5x5 = \
                     fit_lc(A, source, star_info=star_info, x=x_round[i], y=y_round[i], star_num=i, e_psf=e_psf,
