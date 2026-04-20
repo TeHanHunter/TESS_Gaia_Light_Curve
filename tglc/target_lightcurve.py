@@ -24,7 +24,8 @@ warnings.simplefilter('always', UserWarning)
 def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_psf_lc=None, aper_lc=None,
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
-              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None):
+              local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None,
+              ffi='SPOC'):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required

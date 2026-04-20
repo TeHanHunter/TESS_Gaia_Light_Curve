@@ -6,7 +6,9 @@ from tqdm import trange
 from wotan import flatten
 from astropy.io import ascii
 from astropy.io import fits
+from astropy.timeseries import BoxLeastSquares
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from multiprocessing import Pool
 from functools import partial
 from tglc.target_lightcurve import epsf
@@ -70,18 +72,25 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             # name = int(target[4:])
             TIC_ID = int(target[4:])
             ticvals = Catalogs.query_object('TIC {}'.format(TIC_ID), radius=3.0 * units.arcsec.to('degree'),
-                                            catalog="tic").to_pandas()
-            if ticvals.shape[0] > 1:
-                ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
-            tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
-                "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
-                    ticvals.loc[0, 'GAIA'])).get_results().to_pandas()
-            gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
-                "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
-                    tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
-            print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
-            print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
-            name = f'{gaiavals.loc[0, "designation".upper()]}'
+                                            catalog="tic")
+            if len(ticvals) > 1:
+                ticvals = ticvals[ticvals['ID'].astype(int) == TIC_ID]
+            gaia_id = str(ticvals['GAIA'][0])
+            try:
+                tmpgaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                    "SELECT TOP 1 * FROM gaiadr3.dr2_neighbourhood WHERE dr2_source_id = {}".format(
+                        gaia_id)).get_results().to_pandas()
+                gaiavals = TapPlus(url="https://gea.esac.esa.int/tap-server/tap").launch_job(
+                    "SELECT TOP 1 * FROM gaiadr3.gaia_source WHERE source_id = {}".format(
+                        tmpgaiavals.loc[0, 'dr3_source_id'])).get_results().to_pandas()
+                print('The DR2 ID is {}'.format(tmpgaiavals.loc[0, 'dr2_source_id']))
+                print('The DR3 designation is {}'.format(gaiavals.loc[0, 'designation'.upper()]))
+                name = f'{gaiavals.loc[0, "designation".upper()]}'
+            except Exception as exc:
+                warnings.warn(
+                    f'Gaia TAP DR2->DR3 lookup failed ({exc}). Falling back to TIC catalog GAIA={gaia_id}.'
+                )
+                name = f'Gaia DR3 {gaia_id}'
             print(name)
         elif transient is not None:
             name = transient[0]
@@ -131,14 +140,22 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             print(f'################################################')
             print(f'Downloading Sector {sector_table["sector"][j]}.')
             attempt = 0
+            source = None
+            last_error = None
             while attempt < 5:
                 try:
                     source = ffi_cut(target=target, size=size, local_directory=local_directory,
                                      sector=sector_table['sector'][j],
-                                     limit_mag=limit_mag, transient=transient)
-                    attempt = 5
-                except:
+                                     limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout)
+                    break
+                except Exception as exc:
                     attempt += 1
+                    last_error = exc
+                    print(f'Attempt {attempt}/5 failed for sector {sector_table["sector"][j]}: {exc}')
+            if source is None:
+                raise RuntimeError(
+                    f'Failed to initialize ffi_cut for sector {sector_table["sector"][j]} after 5 attempts.'
+                ) from last_error
 
             epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
                  name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
@@ -212,9 +229,9 @@ def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, y
             plt.plot(hdul[1].data['time'], hdul[1].data[kind], '.', c='silver', label=kind)
             plt.plot(hdul[1].data['time'][q], hdul[1].data[kind][q], '.k', label=f'{kind}_flagged')
             # plt.xlim(xlow, xhigh)
-            # plt.ylim(ylow, yhigh)
+            plt.ylim(ylow, yhigh)
             plt.xlim(xlow, xhigh)
-            plt.ylim(0.5, 1.5)
+            # plt.ylim(0.5, 1.5)
             plt.title(f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}')
             plt.legend()
             # plt.show()
@@ -268,102 +285,165 @@ def plot_aperture(local_directory=None, kind='cal_aper_flux'):
             data = np.append(data, data_, axis=1)
     np.savetxt(f'{local_directory}TESS_TOI-5344_5_5_aper.csv', data, delimiter=',')
 def _phase_centered(t, period, t0):
-    # phase in [-0.5, 0.5)
-    return ((t - t0)/period + 0.5) % 1.0 - 0.5
+    return ((t - t0 + 0.5 * period) % period) / period - 0.5
 
-def phasebin_centered(time, meas, meas_err, period, t0, binsize_days=None, nbins=None):
-    phase = _phase_centered(time, period, t0)
 
-def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
-    files = glob(f'{local_directory}*.fits')
-    # files = np.array(files)[np.array([3,4,0,1,6,2,5])]
+def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux',
+               min_period=1.7, max_period=1.8, phase_window=0.5, show=False, frequency_factor=1.0,
+               manual_period=None, manual_mid_transit_tbjd=None):
+    files = sorted(glob(f'{local_directory}*.fits'))
+    if len(files) == 0:
+        raise FileNotFoundError(f'No FITS files found in: {local_directory}')
+
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
-    fig = plt.figure(figsize=(8, 4))
-    t_all = np.array([])
-    f_all = np.array([])
-    f_err_all = np.array([])
-    for j in range(len(files)):
-        not_plotted_num = 0
-        with fits.open(files[j], mode='denywrite') as hdul:
-            q = [a and b for a, b in
-                 zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
-            # q = [a and b for a, b in zip(q, list(hdul[1].data[kind] > 0.85))]
-            # if hdul[0].header['sector'] == 15:
-            #     q = [a and b for a, b in zip(q, list(hdul[1].data['time'] < 1736))]
-            if len(hdul[1].data['cal_aper_flux']) == len(hdul[1].data['time']):
-                if hdul[0].header["SECTOR"] <= 26:
-                    t = hdul[1].data['time'][q]
-                    f = hdul[1].data[kind][q]
-                elif hdul[0].header["SECTOR"] <= 55:
-                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 3 * 3].reshape(-1, 3), axis=1)
-                    f = np.mean(
-                        hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 3 * 3].reshape(-1, 3), axis=1)
-                else:
-                    t = np.mean(hdul[1].data['time'][q][:len(hdul[1].data['time'][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                    f = np.mean(
-                        hdul[1].data[kind][q][:len(hdul[1].data[kind][q]) // 9 * 9].reshape(-1, 9), axis=1)
-                t_all = np.append(t_all, t)
-                f_all = np.append(f_all, f)
-                f_err_all = np.append(f_err_all, np.array([hdul[1].header['CAPE_ERR']] * len(t)))
 
-                # plt.plot(hdul[1].data['time'] % period / period, hdul[1].data[kind], '.', c='silver', ms=3)
-                plt.errorbar(t % period / period, f, hdul[1].header['CAPE_ERR'], c='silver', ls='', elinewidth=0.1,
-                             marker='.', ms=3, zorder=2)
-                time_out, meas_out, meas_err_out = timebin(time=t % period, meas=f,
-                                                           meas_err=np.array([hdul[1].header['CAPE_ERR']] * len(t)),
-                                                           binsize=600 / 86400)
-                plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'C{j}', ls='', elinewidth=1.5,
-                             marker='o', ms=5, mfc='none', zorder=3, label=f'Sector {hdul[0].header["sector"]}')
-            else:
-                not_plotted_num += 1
-            title = f'TIC_{hdul[0].header["TICID"]} with {len(files) - not_plotted_num} sector(s) of data, {kind}'
-    # PDCSAP_files = glob('/home/tehan/Documents/GEMS/TIC 172370679/PDCSAP/*.txt')
-    # for i in range(len(files)):
-    #     PDCSAP = ascii.read(PDCSAP_files[i])
-    #     t = np.mean(PDCSAP['col1'][:len(PDCSAP['col1']) // 15 * 15].reshape(-1, 15), axis=1)
-    #     f = np.mean(PDCSAP['col2'][:len(PDCSAP['col2']) // 15 * 15].reshape(-1, 15), axis=1)
-    #     ferr = np.mean(PDCSAP['col3'][:len(PDCSAP['col3']) // 15 * 15].reshape(-1, 15), axis=1)
-    #     plt.errorbar((t - 2457000) % period / period, f, ferr, c='C0', ls='', elinewidth=0, marker='.', ms=2, zorder=1)
-    # time_out, meas_out, meas_err_out = timebin(time=t_all % period, meas=f_all,
-    #                                            meas_err=f_err_all,
-    #                                            binsize=300 / 86400)
-    # plt.errorbar(np.array(time_out) / period, meas_out, meas_err_out, c=f'r', ls='', elinewidth=0.5,
-    #              marker='.', ms=8, zorder=3, label=f'All sectors')
+    sector_series = []
+    t_all = []
+    f_all = []
+    ticid = 'unknown'
 
-    # plt.ylim(0.99, 1.01)
-    # plt.xlim(0.3, 0.43)
-    plt.title(title)
-    # plt.xlim(mid_transit_tbjd % period - 0.1 * period, mid_transit_tbjd % period + 0.1 * period)
-    # plt.ylim(0.8, 1.05)
-    # plt.hlines(y=0.92, xmin=0, xmax=1, ls='dotted', colors='k')
-    # plt.hlines(y=0.93, xmin=0, xmax=1, ls='dotted', colors='k')
-    # plt.vlines(x=(mid_transit_tbjd % period / period), ymin=0, ymax=2, ls='dotted', colors='grey')
-    plt.xlabel('Phase')
-    plt.ylabel('Normalized flux')
-    # from astropy.table import Table
-    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s19_raw.csv', delimiter=',')
-    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
-    #                                            meas_err=s19_csv['flux_err'],
-    #                                            binsize=300 / 86400)
-    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C0', ls='', elinewidth=0.5,
-    #              marker='.', ms=8, zorder=3, label='S19')
-    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s43_raw.csv', delimiter=',')
-    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
-    #                                            meas_err=s19_csv['flux_err'],
-    #                                            binsize=300 / 86400)
-    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C1', ls='', elinewidth=0.1,
-    #              marker='.', ms=8, zorder=3, label='S43')
-    # s19_csv = Table.read('/Users/tehan/Downloads/TGLC_56658270_s44_raw.csv', delimiter=',')
-    # time_out, meas_out, meas_err_out = timebin(time=s19_csv['time'] % period, meas=s19_csv['corr_flux'],
-    #                                            meas_err=s19_csv['flux_err'],
-    #                                            binsize=300 / 86400)
-    # plt.errorbar(np.array(time_out) / period, np.array(meas_out) / np.median(meas_out)-0.02, np.array(meas_err_out) / np.median(meas_out), c='C2', ls='', elinewidth=0.1,
-    #              marker='.', ms=8, zorder=3, label='S44')
-    plt.legend(loc=1)
+    for file in files:
+        with fits.open(file, mode='denywrite') as hdul:
+            if 'TESS_flags' not in hdul[1].data.names or 'TGLC_flags' not in hdul[1].data.names:
+                raise KeyError('Missing TESS_flags or TGLC_flags in light curve table.')
+            # Clean for BLS/plotting: only keep cadences that pass both quality flags.
+            q = (hdul[1].data['TESS_flags'] == 0) & (hdul[1].data['TGLC_flags'] == 0)
+            if len(hdul[1].data[kind]) != len(hdul[1].data['time']):
+                continue
+            t = np.array(hdul[1].data['time'][q], dtype=float)
+            f = np.array(hdul[1].data[kind][q], dtype=float)
+            valid = np.isfinite(t) & np.isfinite(f)
+            t = t[valid]
+            f = f[valid]
+            if len(t) < 20:
+                continue
+            f_med = np.nanmedian(f)
+            if not np.isfinite(f_med) or f_med == 0:
+                continue
+            f = f / f_med
+            sector = int(hdul[0].header.get('SECTOR', -1))
+            ticid = hdul[0].header.get('TICID', ticid)
+            sector_series.append((sector, t, f))
+            t_all.append(t)
+            f_all.append(f)
 
-    plt.savefig(f'{local_directory}/plots/{title}.png', dpi=300)
-    plt.show()
+    if len(sector_series) == 0:
+        raise RuntimeError('No usable sector data found for phase-fold plotting.')
+
+    t_all = np.concatenate(t_all)
+    f_all = np.concatenate(f_all)
+
+    sector_series = sorted(sector_series, key=lambda row: row[0])
+    bls_sector, bls_t, bls_f = sector_series[-1]
+
+    if manual_period is not None or manual_mid_transit_tbjd is not None:
+        if manual_period is None or manual_mid_transit_tbjd is None:
+            raise ValueError('manual_period and manual_mid_transit_tbjd must both be provided.')
+        period = float(manual_period)
+        mid_transit_tbjd = float(manual_mid_transit_tbjd)
+        best_duration = 0.1 * float(period)
+        ephem_source = 'manual'
+    elif period is not None and mid_transit_tbjd is not None:
+        period = float(period)
+        mid_transit_tbjd = float(mid_transit_tbjd)
+        best_duration = 0.1 * float(period)
+        ephem_source = 'manual'
+    else:
+        print(f'Running BLS on last available sector: {bls_sector}')
+        if frequency_factor <= 0:
+            raise ValueError('frequency_factor must be > 0.')
+        f_scatter = 1.4826 * np.nanmedian(np.abs(bls_f - np.nanmedian(bls_f)))
+        if not np.isfinite(f_scatter) or f_scatter <= 0:
+            f_scatter = np.nanstd(bls_f)
+        if not np.isfinite(f_scatter) or f_scatter <= 0:
+            f_scatter = 1e-3
+        bls = BoxLeastSquares(bls_t, bls_f, dy=np.full_like(bls_f, f_scatter))
+        duration_max = min(0.25, 0.5 * float(min_period))
+        duration_min = max(0.002, min(0.02, duration_max / 5))
+        if duration_min >= duration_max:
+            duration_min = 0.5 * duration_max
+        durations = np.linspace(duration_min, duration_max, 20)
+        periods = bls.autoperiod(
+            durations,
+            minimum_period=min_period,
+            maximum_period=max_period,
+            frequency_factor=frequency_factor
+        )
+        power = bls.power(periods, durations, objective='snr')
+        best = int(np.nanargmax(power.power))
+        period = float(power.period[best])
+        mid_transit_tbjd = float(power.transit_time[best])
+        best_duration = float(power.duration[best])
+        ephem_source = f'BLS sector {bls_sector}'
+
+    phase_window = float(phase_window)
+    if phase_window <= 0 or phase_window > 1:
+        raise ValueError('phase_window must be in (0, 1].')
+    half_window = phase_window / 2
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    n_sector = len(sector_series)
+    if n_sector <= 20:
+        cmap = plt.get_cmap('tab20', n_sector)
+    else:
+        cmap = plt.get_cmap('turbo', n_sector)
+    bins = np.linspace(-half_window, half_window, 61)
+    centers = 0.5 * (bins[:-1] + bins[1:])
+
+    for i, (sector, t, f) in enumerate(sector_series):
+        color = cmap(i)
+        phase = _phase_centered(t, period, mid_transit_tbjd)
+        keep = np.abs(phase) <= half_window
+        if np.any(keep):
+            phase_keep = phase[keep]
+            flux_keep = f[keep]
+            ax.scatter(phase_keep, flux_keep, s=7, alpha=0.2, color=color, rasterized=True)
+
+            # Sector-level median curve
+            binned_sector = np.full_like(centers, np.nan, dtype=float)
+            idx_sector = np.digitize(phase_keep, bins) - 1
+            for k in range(len(centers)):
+                in_bin = idx_sector == k
+                if np.any(in_bin):
+                    binned_sector[k] = np.nanmedian(flux_keep[in_bin])
+            valid_sector = np.isfinite(binned_sector)
+            if np.any(valid_sector):
+                ax.plot(centers[valid_sector], binned_sector[valid_sector], color=color, lw=1.8,
+                        label=f'Sector {sector} median')
+
+    phase_all = _phase_centered(t_all, period, mid_transit_tbjd)
+    keep_all = np.abs(phase_all) <= half_window
+    if np.sum(keep_all) > 40:
+        binned = np.full_like(centers, np.nan, dtype=float)
+        idx = np.digitize(phase_all[keep_all], bins) - 1
+        flux_keep = f_all[keep_all]
+        for k in range(len(centers)):
+            in_bin = idx == k
+            if np.any(in_bin):
+                binned[k] = np.nanmedian(flux_keep[in_bin])
+        valid = np.isfinite(binned)
+        ax.plot(centers[valid], binned[valid], color='k', lw=1.8, label='All-sector median')
+
+    ax.axvline(0, color='k', lw=1, ls='--', alpha=0.7)
+    ax.set_xlim(-half_window, half_window)
+    ax.set_ylim(0.99, 1.01)
+    ax.set_xlabel('Phase (cycles)')
+    ax.set_ylabel('Normalized flux')
+    ax.set_title(
+        f'TIC {ticid} phase-folded {kind}\n'
+        f'P={period:.6f} d, T0={mid_transit_tbjd:.6f}, duration={best_duration:.4f} d [{ephem_source}]'
+    )
+    ax.legend(loc='best', fontsize=8, ncol=2)
+
+    out_png = f'{local_directory}/plots/TIC_{ticid}_BLS_phase_folded_{kind}.png'
+    plt.tight_layout()
+    plt.savefig(out_png, dpi=300)
+    if show:
+        plt.show()
     plt.close(fig)
+    print(f'Ephemeris used ({ephem_source}): P={period:.6f} d, T0={mid_transit_tbjd:.6f}')
+    print(f'Saved phase-folded plot: {out_png}')
+    return period, mid_transit_tbjd
 
 
 def plot_pf_lc_points(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux'):
@@ -596,7 +676,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             continue
 
 
-def plot_contamination_shane(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000):
+def plot_contamination_shane(local_directory=None, gaia_dr3=None, ymin=None, ymax=None, pm_years=3000,
+                             show_colorbar=True, output_directory=None):
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
@@ -604,7 +685,8 @@ def plot_contamination_shane(local_directory=None, gaia_dr3=None, ymin=None, yma
         files = glob(f'{local_directory}lc/*.fits')
     else:
         files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
-    os.makedirs(f'{local_directory}plots/', exist_ok=True)
+    plot_root = local_directory if output_directory is None else output_directory
+    os.makedirs(f'{plot_root}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             gaia_dr3 = hdul[0].header['GAIADR3']
@@ -614,88 +696,78 @@ def plot_contamination_shane(local_directory=None, gaia_dr3=None, ymin=None, yma
             if ymin is None and ymax is None:
                 ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
                 ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
-            with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
-                source = pickle.load(input_)
-                source.select_sector(sector=sector)
-                star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
+            fig = plt.figure(constrained_layout=False, figsize=(15, 6))
+            gs = fig.add_gridspec(11, 10)
+            gs.update(wspace=0.05, hspace=0.15)
+            try:
+                t_, y_, x_ = np.shape(hdul[0].data)
+            except ValueError:
+                warnings.warn(
+                    'Light curves need to have the primary hdu. Set save_aperture=True when producing the light curve to enable this plot.')
+                sys.exit()
+            median_aperture = np.nanmedian(hdul[0].data, axis=0)
+            max_flux = np.nanmax(median_aperture)
+            if not np.isfinite(max_flux) or max_flux == 0:
+                max_flux = 1
+            pixel_brightness = np.clip(median_aperture / max_flux, 0, 1)
+            pixel_brightness = np.nan_to_num(pixel_brightness)
+            brightness_cmap = LinearSegmentedColormap.from_list(
+                'soft_blues',
+                plt.cm.Blues(np.linspace(0.05, 0.78, 256))
+            )
+            center_axes = []
 
-                distances = np.sqrt(
-                    (source.gaia[f'sector_{sector}_x'][:500] - source.gaia[star_num][f'sector_{sector}_x']) ** 2 +
-                    (source.gaia[f'sector_{sector}_y'][:500] - source.gaia[star_num][f'sector_{sector}_y']) ** 2)
+            for j in range(y_):
+                for k in range(x_):
+                    ax_ = fig.add_subplot(gs[(9 - 2 * j):(11 - 2 * j), (2 * k):(2 + 2 * k)])
+                    ax_.patch.set_facecolor(brightness_cmap(pixel_brightness[j, k]))
 
-                # Find closest 5 stars (6-self) or those within 5 pixels
-                nearby_stars = np.argsort(distances)[:6]
-                nearby_stars = nearby_stars[distances[nearby_stars] <= 5]
-                star_x = source.gaia[star_num][f'sector_{sector}_x'][0]
-                star_y = source.gaia[star_num][f'sector_{sector}_y'][0]
-                max_flux = np.nanmax(
-                    np.nanmedian(
-                        source.flux[:, round(star_y) - 2:round(star_y) + 3, round(star_x) - 2:round(star_x) + 3],
-                        axis=0))
-                fig = plt.figure(constrained_layout=False, figsize=(15, 6))
-                gs = fig.add_gridspec(11, 10)
-                gs.update(wspace=0.05, hspace=0.15)
-                try:
-                    t_, y_, x_ = np.shape(hdul[0].data)
-                except ValueError:
-                    warnings.warn(
-                        'Light curves need to have the primary hdu. Set save_aperture=True when producing the light curve to enable this plot.')
-                    sys.exit()
-                max_flux = np.max(
-                    np.median(source.flux[:, int(star_y) - 2:int(star_y) + 3, int(star_x) - 2:int(star_x) + 3], axis=0))
-                arrays = []
-                center_axes = []  # Store center panel axes for red box
+                    _, trend = flatten(hdul[1].data['time'][q],
+                                       hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
+                                       window_length=1, method='biweight', return_trend=True)
+                    cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
+                        hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
+                        hdul[0].data[:, j, k][q]) + 1
+                    if 1 <= j <= 3 and 1 <= k <= 3:
+                        center_axes.append(ax_)
+                    ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
+                    ax_.set_ylim(0.3, 1.1)
+                    ax_.set_xlim(2814.5, 2818.5)
+                    ax_.set_xlabel('TBJD')
+                    ax_.set_ylabel('')
+                    if j != 0:
+                        ax_.set_xticklabels([])
+                        ax_.set_xlabel('')
+                    if k != 0:
+                        ax_.set_yticklabels([])
+                    if j == 2 and k == 0:
+                        ax_.set_ylabel('Normalized and detrended Flux of each pixel')
 
-                for j in range(y_):
-                    for k in range(x_):
-                        ax_ = fig.add_subplot(gs[(9 - 2 * j):(11 - 2 * j), (2 * k):(2 + 2 * k)])
-                        ax_.patch.set_facecolor('#4682B4')
-                        ax_.patch.set_alpha(min(1, max(0, 5 * np.nanmedian(hdul[0].data[:, j, k]) / max_flux)))
+            right_margin = 0.92 if show_colorbar else 0.95
+            plt.subplots_adjust(top=.97, bottom=0.1, left=0.05, right=right_margin)
+            if show_colorbar:
+                cax = fig.add_axes([0.93, 0.05, 0.015, 0.87])
+                norm = plt.Normalize(vmin=0, vmax=1)
+                sm = plt.cm.ScalarMappable(norm=norm, cmap=brightness_cmap)
+                sm.set_array([])
+                cbar = fig.colorbar(sm, cax=cax)
+                cbar.set_label('Relative median pixel brightness')
 
-                        _, trend = flatten(hdul[1].data['time'][q],
-                                           hdul[0].data[:, j, k][q] - np.nanmin(hdul[0].data[:, j, k][q]) + 1000,
-                                           window_length=1, method='biweight', return_trend=True)
-                        cal_aper = (hdul[0].data[:, j, k][q] - np.nanmin(
-                            hdul[0].data[:, j, k][q]) + 1000 - trend) / np.nanmedian(
-                            hdul[0].data[:, j, k][q]) + 1
-                        if 1 <= j <= 3 and 1 <= k <= 3:
-                            arrays.append(cal_aper)
-                        center_axes.append(ax_)  # Collect center panel
-                        ax_.plot(hdul[1].data['time'][q], cal_aper, '.k', ms=0.5)
-                        ax_.set_ylim(0.3, 1.1)
-                        ax_.set_xlim(2814.5, 2818.5)
-                        ax_.set_xlabel('TBJD')
-                        ax_.set_ylabel('')
-                        if j != 0:
-                            ax_.set_xticklabels([])
-                            ax_.set_xlabel('')
-                        if k != 0:
-                            ax_.set_yticklabels([])
-                        if j == 2 and k == 0:
-                            ax_.set_ylabel('Normalized and detrended Flux of each pixel')
-
-                # Add red box around center panels
-                if center_axes:
-                # Get combined extent of center panels
-                    x0 = min(ax.get_position().x0 for ax in center_axes)
+            if center_axes:
+                x0 = min(ax.get_position().x0 for ax in center_axes)
                 x1 = max(ax.get_position().x1 for ax in center_axes)
                 y0 = min(ax.get_position().y0 for ax in center_axes)
                 y1 = max(ax.get_position().y1 for ax in center_axes)
-                print(x0,y0,x1,y1)
-                # Create red rectangle
                 rect = plt.Rectangle(
-                    (0.229, 0.255), 0.542, 0.48,
-                    fill=False, edgecolor='red', linewidth=2, zorder=10
+                    (x0, y0), x1 - x0, y1 - y0,
+                    transform=fig.transFigure, fill=False, edgecolor='red', linewidth=2, zorder=10
                 )
                 fig.add_artist(rect)
 
-                plt.subplots_adjust(top=.97, bottom=0.1, left=0.05, right=0.95)
-                plt.savefig(
-                    f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
-                    dpi=300,)
-                # plt.savefig(f'{local_directory}plots/contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.png',
-                #             dpi=600)
-                plt.close()
+            plt.savefig(
+                f'{plot_root}plots/TIC_{hdul[0].header["TICID"]}_contamination_sector_{hdul[0].header["SECTOR"]:04d}_Gaia_DR3_{gaia_dr3}.pdf',
+                dpi=300,)
+            plt.close()
 
 
 def plot_epsf(local_directory=None):
@@ -770,23 +842,22 @@ def get_tglc_lc(tics=None, sectors=None, method='query', server=1, directory=Non
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
                     transient=None)
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux')
-    if method == 'search':
+    elif method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
     else:
         print(f"Error: Unknown method '{method}'. Choose either 'query' or 'search'.")
 
 
 if __name__ == '__main__':
-    tics = [712835981]
+    tics = [389040826, 311276853]
     directory = f'/Users/tehan/Downloads/'
     os.makedirs(directory, exist_ok=True)
-    # get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
-    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux')
+    get_tglc_lc(tics=tics, method='query', server=1, directory=directory)
+    plot_lc(local_directory=f'{directory}TIC {tics[0]}/', kind='cal_aper_flux', ylow=0.99, yhigh=1.01)
     # plot_lc(local_directory=f'/home/tehan/Documents/tglc/TIC 16005254/', kind='cal_aper_flux', ylow=0.9, yhigh=1.1)
     # plot_contamination(local_directory=f'{directory}TIC {tics[0]}/', gaia_dr3=4652877439164133760)
     # plot_epsf(local_directory=f'{directory}TIC {tics[0]}/')
-    # plot_pf_lc_points(local_directory=f'{directory}TIC {tics[0]}/lc/', period=3.792622, mid_transit_tbjd=2459477.3131,
-    #            kind='cal_aper_flux')
+    # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', kind='cal_aper_flux', manual_period=1.7666920094826, manual_mid_transit_tbjd=1817.684965)
     # plot_pf_lc(local_directory=f'{directory}TIC {tics[0]}/lc/', period=11, mid_transit_tbjd=1738.71248,
     #            kind='aperture_flux')
 

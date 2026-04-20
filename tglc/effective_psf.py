@@ -202,8 +202,16 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     for j in range(len(source.time)):
         aperture[j] = np.array(source.flux[j][down:up, left:right]).flatten() - np.dot(A_cut, e_psf[j])
     aperture = aperture.reshape((len(source.time), up - down, right - left))
-    target_5x5 = (np.dot(A_target, np.nanmedian(e_psf, axis=0)).reshape(cut_size, cut_size))
-    field_stars_5x5 = (np.dot(A_cut, np.nanmedian(e_psf, axis=0)).reshape(cut_size, cut_size))
+    h = up - down
+    w = right - left
+    target_plane = np.dot(A_target, np.nanmedian(e_psf, axis=0)).reshape(h, w)
+    field_plane = np.dot(A_cut, np.nanmedian(e_psf, axis=0)).reshape(h, w)
+    target_5x5 = np.full((cut_size, cut_size), np.nan)
+    field_stars_5x5 = np.full((cut_size, cut_size), np.nan)
+    y0 = int(down - y + cut_size // 2)
+    x0 = int(left - x + cut_size // 2)
+    target_5x5[y0:y0 + h, x0:x0 + w] = target_plane
+    field_stars_5x5[y0:y0 + h, x0:x0 + w] = field_plane
 
     # psf_lc
     over_size = psf_size * factor + 1
