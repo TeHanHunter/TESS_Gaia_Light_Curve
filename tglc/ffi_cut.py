@@ -13,10 +13,16 @@ from os.path import exists
 from astroquery.gaia import Gaia
 from astroquery.mast import Tesscut
 from astroquery.mast import Catalogs
+from astroquery.utils.tap.core import TapPlus
 from astropy.coordinates import SkyCoord
 from astropy.table import Table, hstack, Column
 from astropy.wcs import WCS
 from tglc.ffi import tic_advanced_search_position_rows, convert_gaia_id
+
+try:
+    from tesscube import TESSCube
+except ImportError:
+    TESSCube = None
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -60,7 +66,7 @@ def _dot_wait(message, interval=0.6, done_format=None):
 
 class Source_cut(object):
     def __init__(self, name, size=50, sector=None, cadence=None, limit_mag=None, transient=None, ffi='TICA',
-                 mast_timeout=3600):
+                 mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
         :param name: str, required
@@ -138,6 +144,7 @@ class Source_cut(object):
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         if target_designation:
             print(f'Target Gaia: {target_designation}')
+        catalogdata = None
         try:
             with _dot_wait('Querying Gaia DR3 cone search'):
                 catalogdata = Gaia.cone_search_async(
@@ -149,13 +156,33 @@ class Source_cut(object):
             print(f'Found {len(catalogdata)} Gaia DR3 objects.')
         except Exception as exc:
             warnings.warn(
-                f'Gaia DR3 cone search failed ({exc}). Falling back to MAST Gaia catalog (DR2).'
+                f'Primary Gaia DR3 cone search failed ({exc}). Retrying via mirror {gaia_tap_server}.'
             )
-            with _dot_wait('Querying Gaia catalog from MAST'):
-                catalogdata = Catalogs.query_region(coord, radius=radius, catalog='Gaia', version=2)
-            if 'designation' in catalogdata.colnames and 'DESIGNATION' not in catalogdata.colnames:
-                catalogdata.rename_column('designation', 'DESIGNATION')
-            print(f'Found {len(catalogdata)} Gaia objects from MAST fallback.')
+            try:
+                cone_columns = ', '.join(['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                                          'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec'])
+                row_limit = f"TOP {Gaia.ROW_LIMIT}" if Gaia.ROW_LIMIT > 0 else ""
+                cone_query = (
+                    f"SELECT {row_limit} {cone_columns}, "
+                    f"DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', {ra}, {dec})) AS dist "
+                    f"FROM {Gaia.MAIN_GAIA_TABLE} "
+                    f"WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), "
+                    f"CIRCLE('ICRS', {ra}, {dec}, {radius.value})) ORDER BY dist ASC"
+                )
+                with _dot_wait(f'Querying Gaia via mirror TAP'):
+                    catalogdata = TapPlus(url=gaia_tap_server).launch_job_async(cone_query).get_results()
+                if 'designation' in catalogdata.colnames and 'DESIGNATION' not in catalogdata.colnames:
+                    catalogdata.rename_column('designation', 'DESIGNATION')
+                print(f'Found {len(catalogdata)} Gaia DR3 objects from mirror TAP.')
+            except Exception as exc2:
+                warnings.warn(
+                    f'Mirror Gaia TAP also failed ({exc2}). Falling back to MAST Gaia catalog (DR2).'
+                )
+                with _dot_wait('Querying Gaia catalog from MAST'):
+                    catalogdata = Catalogs.query_region(coord, radius=radius, catalog='Gaia', version=2)
+                if 'designation' in catalogdata.colnames and 'DESIGNATION' not in catalogdata.colnames:
+                    catalogdata.rename_column('designation', 'DESIGNATION')
+                print(f'Found {len(catalogdata)} Gaia objects from MAST fallback.')
         with _dot_wait('Querying TIC around target'):
             catalogdata_tic = tic_advanced_search_position_rows(
                 ra=ra,
@@ -165,7 +192,7 @@ class Source_cut(object):
             )
         print(f'Found {len(catalogdata_tic)} TIC objects.')
         with _dot_wait('Crossmatching TIC -> Gaia DR3 (this may take a while)'):
-            self.tic = convert_gaia_id(catalogdata_tic)
+            self.tic = convert_gaia_id(catalogdata_tic, gaia_tap_server=gaia_tap_server)
         sector_table = Tesscut.get_sectors(coordinates=coord)
         if len(sector_table) == 0:
             warnings.warn('TESS has not observed this position yet :(')
@@ -364,7 +391,7 @@ class Source_cut_pseudo(object):
 
 
 def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None, transient=None, ffi='TICA',
-            mast_timeout=3600):
+            mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
     """
     Function to generate Source_cut objects
     :param target: string, required
@@ -394,6 +421,6 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
     else:
         with open(f'{local_directory}source/{source_name}.pkl', 'wb') as output:
             source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient, ffi=ffi,
-                                mast_timeout=mast_timeout)
+                                mast_timeout=mast_timeout, gaia_tap_server=gaia_tap_server)
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
     return source
