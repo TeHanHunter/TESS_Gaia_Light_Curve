@@ -28,7 +28,6 @@ import sys
 from astropy import units
 from astroquery.utils.tap.core import TapPlus
 from astroquery.mast import Catalogs
-import pdb
 controller = ThreadpoolController()
 
 
