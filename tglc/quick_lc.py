@@ -56,6 +56,8 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         warnings.warn('TICA support is experimental; Tesscut product availability may be limited.')
 
     def _parse_tic_id(t):
+        if isinstance(t, (int, np.integer)):
+            return int(t)
         if not isinstance(t, str):
             return None
         s = t.strip()
@@ -66,6 +68,8 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             s = s[3:].strip()
         return int(s) if s.isdigit() else None
     def _is_tic_id(t):
+        if isinstance(t, (int, np.integer)):
+            return True
         if not isinstance(t, str):
             return False
         s = t.strip()
@@ -74,8 +78,9 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     radius_deg = 42 * 0.707 / 3600
     target_ = None
     is_tic = _is_tic_id(target) and _parse_tic_id(target) is not None
+    mast_target = f'TIC {_parse_tic_id(target)}' if is_tic else target
     try:
-        target_ = Catalogs.query_object(target, radius=radius_deg, catalog="Gaia", version=2)
+        target_ = Catalogs.query_object(mast_target, radius=radius_deg, catalog="Gaia", version=2)
     except requests.exceptions.RequestException as e:
         warnings.warn(f'MAST name lookup failed for "{target}": {e}')
 
@@ -106,7 +111,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         name = None
     else:
         if is_tic:
-            TIC_ID = int(target.strip().split()[-1])
+            TIC_ID = _parse_tic_id(target)
             with _dot_wait('Resolving TIC -> Gaia DR3 designation via TAP'):
                 ticvals = Catalogs.query_object(
                     f'TIC {TIC_ID}',

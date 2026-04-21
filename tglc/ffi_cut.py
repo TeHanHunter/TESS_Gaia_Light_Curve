@@ -99,6 +99,8 @@ class Source_cut(object):
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
 
         def _parse_tic_id(t):
+            if isinstance(t, (int, np.integer)):
+                return int(t)
             if not isinstance(t, str):
                 return None
             s = t.strip()
@@ -110,6 +112,8 @@ class Source_cut(object):
             return int(s) if s.isdigit() else None
 
         def _is_tic_id(t):
+            if isinstance(t, (int, np.integer)):
+                return True
             if not isinstance(t, str):
                 return False
             s = t.strip()
@@ -117,14 +121,15 @@ class Source_cut(object):
 
         target = None
         is_tic = _is_tic_id(self.name) and _parse_tic_id(self.name) is not None
+        mast_name = f'TIC {_parse_tic_id(self.name)}' if is_tic else self.name
         try:
-            target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+            target = Catalogs.query_object(mast_name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         except requests.exceptions.RequestException as e:
             warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
 
         if target is None or len(target) == 0:
             try:
-                target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
+                target = Catalogs.query_object(mast_name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
             except requests.exceptions.RequestException as e:
                 warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
 
