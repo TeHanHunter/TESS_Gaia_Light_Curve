@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.3
+- Fix regression from 0.7.2: `tglc_lc(target=<int>)` and `ffi_cut(target=<int>)` raised because `Catalogs.query_object` rejects bare integers. Integer TIC IDs are now accepted by `_is_tic_id` / `_parse_tic_id` and wrapped as `f'TIC {id}'` before any MAST call, matching the `'TIC N'` string path end-to-end (same DR3 designation filename).
+
 ## 0.7.2
 - Added a configurable `gaia_tap_server` parameter to `tglc_lc`, `ffi_cut`, `Source_cut`, and `convert_gaia_id` so Gaia TAP queries can fall back to a user-specified mirror when the primary ESA server is down. Credit: Caleb Cañas (@cicanas).
 - `convert_gaia_id` now retries each 10k-ID batch against the mirror before giving up and using the TIC-GAIA (DR2) fallback.
