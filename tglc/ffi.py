@@ -16,6 +16,7 @@ from astropy.io import fits
 from astropy.table import Table, hstack, vstack, unique, Column
 from astropy.wcs import WCS
 from astroquery.gaia import Gaia
+from astroquery.utils.tap.core import TapPlus
 from scipy import ndimage
 from tqdm import tqdm, trange
 
@@ -81,24 +82,34 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5, limit_mag=16):
     return mast_json2table(out_data)
 
 
-def convert_gaia_id(catalogdata_tic):
+def convert_gaia_id(catalogdata_tic, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
     query = """
             SELECT dr2_source_id, dr3_source_id
             FROM gaiadr3.dr2_neighbourhood
             WHERE dr2_source_id IN {gaia_ids}
             """
+
+    def _run_query(gaia_tuple):
+        try:
+            return Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
+        except Exception as exc:
+            warnings.warn(
+                f'Primary Gaia TAP crossmatch failed ({exc}). Retrying via mirror {gaia_tap_server}.'
+            )
+            return TapPlus(url=gaia_tap_server).launch_job_async(
+                query.format(gaia_ids=gaia_tuple)
+            ).get_results()
+
     gaia_array = np.array([str(item) for item in catalogdata_tic['GAIA']], dtype=object)
     gaia_array = gaia_array[gaia_array != 'None']
-    # np.save('gaia_array.npy', gaia_array)
     segment = (len(gaia_array) - 1) // 10000
     try:
         gaia_tuple = tuple(gaia_array[:10000])
-        results = Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple)).get_results()
-        # np.save('result.npy', np.array(results))
+        results = _run_query(gaia_tuple)
         for i in range(segment):
             gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
             gaia_tuple_cut = tuple(gaia_array_cut)
-            results = vstack([results, Gaia.launch_job_async(query.format(gaia_ids=gaia_tuple_cut)).get_results()])
+            results = vstack([results, _run_query(gaia_tuple_cut)])
         tic_ids = []
         for j in range(len(results)):
             tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
