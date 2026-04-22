@@ -34,6 +34,8 @@ def get_ephemeris_file_path(sector: int) -> Path:
         return ephemeris_data_directory / "20231201_tess_ephem.csv"
     elif 88 <= sector <= 101:
         return ephemeris_data_directory / "20241201_tess_ephem.csv"
+    elif 102 <= sector <= 115:
+        return ephemeris_data_directory / "20260401_tess_ephem.csv"
     else:
         raise ValueError(f"No spacecraft ephemeris file assigned for sector {sector}.")
 
