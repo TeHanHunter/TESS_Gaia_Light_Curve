@@ -81,8 +81,11 @@ def plot_epsf(sector=1, camccd='', local_directory=''):
 if __name__ == '__main__':
     print("Number of cpu : ", multiprocessing.cpu_count())
     sector = 56
-    local_directory = f'/pdo/users/tehan/sector{sector:04d}/'
-    lc_per_ccd(local_directory=local_directory)
+    local_directory = f'/pdo/users/tehan/_archive/raw-aperture-flux-v2.1/sector{sector:04d}/'
+    print(f"Source basis: SPOC pkls (symlinked); writing v2.1 LC files to {local_directory}")
+    for ccd in (1, 2, 3, 4):
+        print(f"=== cam 4 ccd {ccd} ===")
+        lc_per_ccd(local_directory=local_directory, cam=4, ccd=ccd, cores=32)
     # for i in range(16):
     #     name = f'{1 + i // 4}-{1 + i % 4}'
     #     plot_epsf(sector=sector, camccd=name, local_directory=local_directory)
