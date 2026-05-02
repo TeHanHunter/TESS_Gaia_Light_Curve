@@ -25,7 +25,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
               local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None,
-              ffi='SPOC'):
+              ffi='SPOC', raw_aper_lc=None):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -50,7 +50,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
         objid = [int(s) for s in (source.gaia[index]['DESIGNATION']).split() if s.isdigit()][0]
     else:
         objid = transient[0]
-    source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v2_llc.fits'
+    source_path = f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v2.1_llc.fits'
     source_exists = exists(source_path)
     # if source_exists and (os.path.getsize(source_path) > 0):
     #     print('LC exists, please (re)move the file if you wish to overwrite.')
@@ -176,7 +176,11 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     c11 = fits.Column(name='cadence_num', array=np.array(cadence), format='J')  # 32 bit int
     c12 = fits.Column(name='TESS_flags', array=np.array(tess_flag), format='I')  # 16 bit int
     c13 = fits.Column(name='TGLC_flags', array=tglc_flag, format='I')
-    table_hdu = fits.BinTableHDU.from_columns([c1, c2, c4, c6, c8, c10, c11, c12, c13])
+    # raw on-CCD aperture sum after field-star decontamination, before any zero-point-based background offset
+    if raw_aper_lc is None:
+        raw_aper_lc = aper_lc + local_bg
+    c14 = fits.Column(name='aperture_flux_raw', array=np.array(raw_aper_lc), format='E')
+    table_hdu = fits.BinTableHDU.from_columns([c1, c2, c4, c6, c8, c10, c11, c12, c13, c14])
     table_hdu.header.append(('INHERIT', 'T', 'inherit the primary header'), end=True)
     table_hdu.header.append(('EXTNAME', 'LIGHTCURVE', 'name of extension'), end=True)
     table_hdu.header.append(('EXTVER', 1, 'extension version'),
@@ -211,6 +215,9 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('CAPE_ERR', cal_aper_err, '[e-/s] calibrated aperture flux error'), end=True)
     table_hdu.header.append(('NEAREDGE', near_edge, 'distance to edges of FFI <= 2'), end=True)
     table_hdu.header.append(('LOC_BG', local_bg, '[e-/s] locally modified background'), end=True)
+    table_hdu.header.append(('PORTION', portion, 'fraction of stellar PSF flux inside aperture'), end=True)
+    table_hdu.header.append(('ZPTFLUX', 15000, '[e-/s] assumed zero-point flux at TESS mag 10'), end=True)
+    table_hdu.header.append(('COMMENT', "aperture_flux_raw = aperture_flux*PORTION + LOC_BG (decontaminated CCD aperture sum)"), end=True)
     table_hdu.header.append(('COMMENT', "TRUE_BG = hdul[1].data['background'] + LOC_BG"), end=True)
     table_hdu.header.append(('WOTAN_WL', 1, 'wotan detrending window length'), end=True)
     table_hdu.header.append(('WOTAN_MT', 'biweight', 'wotan detrending method'), end=True)
@@ -219,7 +226,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
     hdul = fits.HDUList([primary_hdu, table_hdu, image_hdu])
     hdul.writeto(
-        f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v2_llc.fits',
+        f'{local_directory}hlsp_tglc_tess_ffi_gaiaid-{objid}-s{source.sector:04d}-cam{source.camera}-ccd{source.ccd}_tess_v2.1_llc.fits',
         overwrite=True)
     return
 
@@ -355,6 +362,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             aper_lc[saturated_arg_aper] = np.nan
             saturated_arg_psf = np.where(psf_lc > 1e5 * 9 * 2e5 / exposure_time)
             psf_lc[saturated_arg_psf] = np.nan
+            raw_aper_lc = np.array(aper_lc, copy=True)
 
             local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
                                                                         psf_lc=psf_lc,
@@ -380,7 +388,8 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                               bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                              prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5)
+                              prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5,
+                              raw_aper_lc=raw_aper_lc)
                 else:
                     lc_output(source, local_directory=lc_directory, index=i,
                               tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
@@ -389,4 +398,5 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                               bg=background_, time=source.time, psf_lc=psf_lc, cal_psf_lc=cal_psf_lc, aper_lc=aper_lc,
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
-                              prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5)
+                              prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5,
+                              raw_aper_lc=raw_aper_lc)
