@@ -5,7 +5,10 @@ import sys
 import warnings
 import astropy.units as u
 import numpy as np
-import importlib_resources
+try:
+    import importlib_resources
+except ModuleNotFoundError:  # py>=3.9 stdlib fallback
+    from importlib import resources as importlib_resources
 import requests
 import time
 
