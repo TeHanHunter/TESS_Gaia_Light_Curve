@@ -36,6 +36,16 @@ CCDS = (1, 2, 3, 4)
 N_CUTS = 196  # 14 x 14
 
 
+def _normalize_schema(source):
+    """The twirl GPU pipeline writes lowercase `designation` and `tic.gaia3`;
+    the CPU LC pipeline expects `DESIGNATION` and `tic.dr3_source_id`."""
+    if "designation" in source.gaia.colnames and "DESIGNATION" not in source.gaia.colnames:
+        source.gaia.rename_column("designation", "DESIGNATION")
+    if hasattr(source.tic, "colnames") and "gaia3" in source.tic.colnames and "dr3_source_id" not in source.tic.colnames:
+        source.tic.rename_column("gaia3", "dr3_source_id")
+    return source
+
+
 def merge_orbits(pkl_paths):
     sources = []
     for p in pkl_paths:
@@ -48,7 +58,7 @@ def merge_orbits(pkl_paths):
     base.quality = np.concatenate([s.quality for s in sources])
     if not hasattr(base, "transient"):
         base.transient = None
-    return base
+    return _normalize_schema(base)
 
 
 def run_cut(i, ccd, prod_root, out_root):
