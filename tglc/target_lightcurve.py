@@ -25,7 +25,7 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
               cal_aper_lc=None, bg=None, tess_flag=None, tglc_flag=None, cadence=None, aperture=None,
               cut_x=None, cut_y=None, star_x=2, star_y=2, x_aperture=None, y_aperture=None, near_edge=False,
               local_bg=None, save_aper=False, portion=1, prior=None, transient=None, target_5x5=None, field_stars_5x5=None,
-              ffi='SPOC', raw_aper_lc=None):
+              ffi='SPOC', raw_aper_lc=None, psf_local_bg=None):
     """
     lc output to .FITS file in MAST HLSP standards
     :param tglc_flag: np.array(), required
@@ -214,7 +214,8 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
     table_hdu.header.append(('CPSF_ERR', cal_psf_err, '[e-/s] calibrated PSF flux error'), end=True)
     table_hdu.header.append(('CAPE_ERR', cal_aper_err, '[e-/s] calibrated aperture flux error'), end=True)
     table_hdu.header.append(('NEAREDGE', near_edge, 'distance to edges of FFI <= 2'), end=True)
-    table_hdu.header.append(('LOC_BG', local_bg, '[e-/s] locally modified background'), end=True)
+    table_hdu.header.append(('LOC_BG', local_bg, '[e-/s] aperture local background offset (per-aperture sum)'), end=True)
+    table_hdu.header.append(('PSF_BG', psf_local_bg if psf_local_bg is not None else 0, '[e-/s] PSF local background offset'), end=True)
     table_hdu.header.append(('PORTION', portion, 'fraction of stellar PSF flux inside aperture'), end=True)
     table_hdu.header.append(('ZPTFLUX', 15000, '[e-/s] assumed zero-point flux at TESS mag 10'), end=True)
     table_hdu.header.append(('COMMENT', "aperture_flux_raw = aperture_flux*PORTION + LOC_BG (decontaminated CCD aperture sum)"), end=True)
@@ -364,10 +365,10 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
             psf_lc[saturated_arg_psf] = np.nan
             raw_aper_lc = np.array(aper_lc, copy=True)
 
-            local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
-                                                                        psf_lc=psf_lc,
-                                                                        aper_lc=aper_lc,
-                                                                        near_edge=near_edge, star_num=i)
+            local_bg, psf_local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc = bg_mod(source, q=index, portion=portion,
+                                                                                      psf_lc=psf_lc,
+                                                                                      aper_lc=aper_lc,
+                                                                                      near_edge=near_edge, star_num=i)
             background_ = background[x_round[i] + source.size * y_round[i], :]
             quality = np.zeros(len(source.time), dtype=np.int16)
             sigma = 1.4826 * np.nanmedian(np.abs(background_ - np.nanmedian(background_)))
@@ -389,7 +390,7 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
                               prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5,
-                              raw_aper_lc=raw_aper_lc)
+                              raw_aper_lc=raw_aper_lc, psf_local_bg=psf_local_bg)
                 else:
                     lc_output(source, local_directory=lc_directory, index=i,
                               tess_flag=source.quality, cut_x=cut_x, cut_y=cut_y, cadence=source.cadence,
@@ -399,4 +400,4 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
                               cal_aper_lc=cal_aper_lc, local_bg=local_bg, x_aperture=x_aperture[i],
                               y_aperture=y_aperture[i], near_edge=near_edge, save_aper=save_aper, portion=portion,
                               prior=prior, transient=source.transient, target_5x5=target_5x5, field_stars_5x5=field_stars_5x5,
-                              raw_aper_lc=raw_aper_lc)
+                              raw_aper_lc=raw_aper_lc, psf_local_bg=psf_local_bg)
