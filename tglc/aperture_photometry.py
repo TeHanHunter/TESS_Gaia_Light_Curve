@@ -111,13 +111,21 @@ def get_normalized_aperture_photometry(
     if not np.isnan(local_background):
         # `local_background` is NaN if there are no good-flagged, non-NaN points
         flux -= local_background
-    flux[flux <= 0] = np.nan  # Prevent runtime warnings converting to magnitude
+    # TWIRL fork: preserve negative flux for downstream flux-space cotrending.
+    # Magnitude is computed on a positive-only copy (NaN where flux <= 0) so
+    # convert_tess_flux_to_tess_magnitude emits no runtime warnings; the
+    # magnitude column behaviour is unchanged (NaN at flux <= 0). The linear
+    # flux column is preserved including its negative excursions, which are
+    # physically real Poisson + background-subtraction fluctuations on faint
+    # (T >= 19) targets and are needed for unbiased flux-space detrending.
+    pos_flux = flux.copy()
+    pos_flux[flux <= 0 * flux.unit] = np.nan * flux.unit
 
     table = QTable(
         {
             f"{column_name_prefix}flux": flux,
             f"{column_name_prefix}magnitude": convert_tess_flux_to_tess_magnitude(
-                flux / flux_portion_in_aperture / exposure_time
+                pos_flux / flux_portion_in_aperture / exposure_time
             ),
             f"{column_name_prefix}centroid_x": centroids[:, 1],
             f"{column_name_prefix}centroid_y": centroids[:, 0],

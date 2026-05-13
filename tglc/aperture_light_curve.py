@@ -143,6 +143,19 @@ class ApertureLightCurve(TimeSeries):
                     data=np.full_like(aperture_data, mad_std(aperture_data)),
                     dtype="f",
                 )
+                # TWIRL fork: emit linear flux alongside magnitude so flux-space
+                # detrending downstream can use it (negative cadences preserved).
+                # Existing magnitude consumers (QLP detrend + HLSP) are unchanged.
+                flux_data = self[f"{aperture_name.lower()}_aperture_flux"]
+                rf_ds = aperture_group.create_dataset(
+                    "RawFlux", data=flux_data, dtype=np.float64
+                )
+                rf_ds.attrs["unit"] = "electron"
+                aperture_group.create_dataset(
+                    "RawFluxError",
+                    data=np.full_like(flux_data, mad_std(flux_data)),
+                    dtype="f",
+                )
                 aperture_group.create_dataset(
                     "X", data=self[f"{aperture_name.lower()}_aperture_centroid_x"], dtype="f"
                 )
