@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Adapted from QLP: https://github.com/havijw/tess-time-correction/
 
 from pathlib import Path

@@ -10,7 +10,16 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from tqdm import trange
 from os.path import exists
-from tglc.effective_psf import get_psf, fit_psf, fit_lc, fit_lc_float_field, bg_mod
+from tglc.effective_psf import (
+    build_overexposure_mask,
+    fit_lc,
+    fit_lc_float_field,
+    fit_psf,
+    get_psf,
+    normalize_epsf_unit_sum,
+    reconstruct_epsf_unit_sum,
+    bg_mod,
+)
 from tglc.ffi import Source
 from tglc.ffi_cut import Source_cut
 import tglc
@@ -233,8 +242,39 @@ def lc_output(source, local_directory='', index=0, time=None, psf_lc=None, cal_p
 
 
 
+def _epsf_suffix(flux_scale='relative', epsf_normalization='none'):
+    suffix = []
+    if flux_scale != 'relative':
+        suffix.append(flux_scale)
+    if epsf_normalization == 'unit_sum':
+        suffix.append('unit')
+    elif epsf_normalization != 'none':
+        raise ValueError("epsf_normalization must be 'none' or 'unit_sum'.")
+    return '' if len(suffix) == 0 else '_' + '_'.join(suffix)
+
+
+def _save_overexposure_mask_png(source, mask, output_path):
+    image = np.nanmedian(source.flux, axis=0)
+    finite = np.isfinite(image)
+    if np.any(finite):
+        vmin, vmax = np.nanpercentile(image[finite], [5, 99.5])
+    else:
+        vmin, vmax = 0, 1
+    fig, ax = plt.subplots(figsize=(5, 5), constrained_layout=True)
+    ax.imshow(image, origin='lower', cmap='gray', vmin=vmin, vmax=vmax)
+    ax.contour(mask.astype(float), levels=[0.5], colors='tab:red', linewidths=0.7, origin='lower')
+    ax.set_title('static overexposure mask')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    fig.savefig(output_path, dpi=180)
+    plt.close(fig)
+
+
 def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0, cut_y=0, sector=0, ffi='TICA',
-         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False, prior=None):
+         limit_mag=16, edge_compression=1e-4, power=1.4, name=None, save_aper=False, no_progress_bar=False, prior=None,
+         flux_scale='relative', epsf_normalization='none', overexposure_mask=False, overwrite=False,
+         overexposure_seed_sigma=100, overexposure_grow_sigma=20, overexposure_dilation=2,
+         overexposure_max_mask_fraction=0.2, overexposure_min_bleed_length=12):
     """
     User function that unites all necessary steps
     :param source: TGLC.ffi_cut.Source or TGLC.ffi_cut.Source_cut, required
@@ -252,38 +292,100 @@ def epsf(source, psf_size=11, factor=2, local_directory='', target=None, cut_x=0
     :param power: float, optional
     power for weighting bright stars' contribution to the fit. 1 means same contribution from all stars,
     <1 means emphasizing dimmer stars
+    :param flux_scale: str, optional
+    Catalog flux scale for the ePSF fit. ``relative`` keeps the historical
+    per-cut brightest-star normalization; ``absolute`` uses T=10 -> 15000 e-/s;
+    ``tmag10`` uses a unitless T=10 reference.
+    :param epsf_normalization: str, optional
+    ``none`` saves the fitted ePSF vector. ``unit_sum`` saves a unit-sum ePSF
+    shape and a matching per-cadence scale file, then reconstructs scale*shape
+    for the existing light-curve fitting math.
+    :param overexposure_mask: bool, optional
+    If True, build a static image-only mask and remove those pixel rows from the
+    ePSF fit.
+    :param overwrite: bool, optional
+    If True, refit and overwrite existing ePSF products.
     :return:
     """
     if target is None:
         target = f'{cut_x:02d}_{cut_y:02d}'
+    if epsf_normalization not in ('none', 'unit_sum'):
+        raise ValueError("epsf_normalization must be 'none' or 'unit_sum'.")
     A, star_info, over_size, x_round, y_round = get_psf(source, psf_size=psf_size, factor=factor,
-                                                        edge_compression=edge_compression)
+                                                        edge_compression=edge_compression, flux_scale=flux_scale)
     lc_directory = f'{local_directory}lc/{source.camera}-{source.ccd}/'
-    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}.npy'
+    epsf_suffix = _epsf_suffix(flux_scale=flux_scale, epsf_normalization=epsf_normalization)
+    epsf_directory = f'{local_directory}epsf/{source.camera}-{source.ccd}/'
+    diagnostics_directory = f'{local_directory}diagnostics/{source.camera}-{source.ccd}/'
+    epsf_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_{target}_sector_{sector}_{source.camera}-{source.ccd}{epsf_suffix}.npy'
+    scale_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/epsf_scale_{target}_sector_{sector}_{source.camera}-{source.ccd}{epsf_suffix}.npy'
+    mask_loc = f'{local_directory}epsf/{source.camera}-{source.ccd}/overexposure_mask_{target}_sector_{sector}_{source.camera}-{source.ccd}{epsf_suffix}.npy'
+    mask_png_loc = f'{diagnostics_directory}overexposure_mask_{target}_sector_{sector}_{source.camera}-{source.ccd}{epsf_suffix}.png'
     if type(source) == Source_cut:
         bg_dof = 3
         lc_directory = f'{local_directory}lc/'
-        epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}.npy'
+        epsf_directory = f'{local_directory}epsf/'
+        diagnostics_directory = f'{local_directory}diagnostics/'
+        epsf_loc = f'{local_directory}epsf/epsf_{target}_sector_{sector}{epsf_suffix}.npy'
+        scale_loc = f'{local_directory}epsf/epsf_scale_{target}_sector_{sector}{epsf_suffix}.npy'
+        mask_loc = f'{local_directory}epsf/overexposure_mask_{target}_sector_{sector}{epsf_suffix}.npy'
+        mask_png_loc = f'{diagnostics_directory}overexposure_mask_{target}_sector_{sector}{epsf_suffix}.png'
     else:
         bg_dof = 6
     os.makedirs(lc_directory, exist_ok=True)
+    os.makedirs(epsf_directory, exist_ok=True)
+    if overexposure_mask:
+        os.makedirs(diagnostics_directory, exist_ok=True)
     # sim_image = np.dot(A[:source.size ** 2, :], fit_psf(A, source, over_size, power=power, time=2817).T)
     # # residual = np.abs(source.flux[2817].flatten() - sim_image)
     # residual = source.flux[2817].flatten() - sim_image
     # return residual.reshape((source.size, source.size))
 
     epsf_exists = exists(epsf_loc)
-    if epsf_exists:
-        e_psf = np.load(epsf_loc)
+    scale_exists = exists(scale_loc)
+    need_fit = overwrite or not epsf_exists or (epsf_normalization == 'unit_sum' and not scale_exists)
+    fit_pixel_mask = None
+    if overexposure_mask:
+        if not need_fit and exists(mask_loc):
+            fit_pixel_mask = np.load(mask_loc)
+        else:
+            fit_pixel_mask = build_overexposure_mask(
+                source,
+                seed_sigma=overexposure_seed_sigma,
+                grow_sigma=overexposure_grow_sigma,
+                dilation=overexposure_dilation,
+                max_mask_fraction=overexposure_max_mask_fraction,
+                min_bleed_length=overexposure_min_bleed_length,
+            )
+            np.save(mask_loc, fit_pixel_mask)
+            _save_overexposure_mask_png(source, fit_pixel_mask, mask_png_loc)
+
+    if not need_fit:
+        e_psf_saved = np.load(epsf_loc)
+        if epsf_normalization == 'unit_sum':
+            e_psf_scale = np.load(scale_loc)
+            e_psf = reconstruct_epsf_unit_sum(e_psf_saved, e_psf_scale, over_size)
+        else:
+            e_psf = e_psf_saved
         print(f'Loaded ePSF {target} from directory. ')
     else:
-        e_psf = np.zeros((len(source.time), over_size ** 2 + bg_dof))
+        e_psf_fit = np.zeros((len(source.time), over_size ** 2 + bg_dof))
         for i in trange(len(source.time), desc='Fitting ePSF', disable=no_progress_bar):
-            e_psf[i] = fit_psf(A, source, over_size, power=power, time=i)
+            e_psf_fit[i] = fit_psf(A, source, over_size, power=power, time=i, extra_pixel_mask=fit_pixel_mask)
+        e_psf = e_psf_fit
         if np.isnan(e_psf).any():
             warnings.warn(
                 f"TESS FFI cut includes Nan values. Please shift the center of the cutout to remove Nan near edge. Target: {target}")
-        np.save(epsf_loc, e_psf)
+        if epsf_normalization == 'unit_sum':
+            e_psf_unit, e_psf_scale = normalize_epsf_unit_sum(e_psf_fit, over_size)
+            e_psf_reconstructed = reconstruct_epsf_unit_sum(e_psf_unit, e_psf_scale, over_size)
+            if not np.allclose(e_psf_fit, e_psf_reconstructed, rtol=1e-10, atol=1e-8, equal_nan=True):
+                warnings.warn(f'Unit-sum ePSF reconstruction check failed for target: {target}')
+            np.save(epsf_loc, e_psf_unit)
+            np.save(scale_loc, e_psf_scale)
+            e_psf = e_psf_reconstructed
+        else:
+            np.save(epsf_loc, e_psf)
     # contamination_8 = np.dot(A[:source.size ** 2, :], e_psf[0].T)
     # np.save('/mnt/c/users/tehan/desktop/7654/contamination_8_.npy', contamination_8)
     # TODO: quality use which background?

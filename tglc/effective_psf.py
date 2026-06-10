@@ -1,6 +1,13 @@
+import warnings
+
 import numpy as np
 from wotan import flatten
 import tglc
+
+try:
+    from scipy import ndimage
+except ImportError:
+    ndimage = None
 
 
 def bilinear(x, y, repeat=1):
@@ -17,7 +24,7 @@ def bilinear(x, y, repeat=1):
     return np.array([1 - x - y + x * y, x - x * y, y - x * y, x * y] * repeat)
 
 
-def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0])):
+def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0, 0, 0]), flux_scale='relative'):
     """
     Generate matrix for PSF fitting
     :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
@@ -30,6 +37,11 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     parameter for edge compression
     :param c: np.ndarray, optional
     manual modification of Gaia positions in the format of [x, y, theta]
+    :param flux_scale: str, optional
+    Catalog flux scale used in the ePSF design matrix. ``relative`` preserves the
+    historical per-cut normalization by the brightest Gaia star. ``absolute``
+    uses the TGLC zero point convention, T=10 -> 15000 e-/s. ``tmag10`` is
+    unitless and uses T=10 as the fixed reference flux.
     :return: A, star_info, over_size, x_round, y_round
     A: 2d matrix for least_square
     star_info: star parameters
@@ -44,7 +56,14 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     half_size = int((psf_size - 1) / 2)
     over_size = psf_size * factor + 1
     size = source.size  # TODO: must be even?
-    flux_ratio = np.array(source.gaia['tess_flux_ratio'])
+    if flux_scale == 'relative':
+        flux_ratio = np.array(source.gaia['tess_flux_ratio'])
+    elif flux_scale == 'absolute':
+        flux_ratio = 15000 * 10 ** ((np.array(source.gaia['tess_mag']) - 10) / -2.5)
+    elif flux_scale == 'tmag10':
+        flux_ratio = 10 ** ((10 - np.array(source.gaia['tess_mag'])) / 2.5)
+    else:
+        raise ValueError("flux_scale must be 'relative', 'absolute', or 'tmag10'.")
     # flux_ratio = 0.9998 * flux_ratio + 0.0002
     # x_shift = np.array(source.gaia[f'sector_{source.sector}_x'])
     # y_shift = np.array(source.gaia[f'sector_{source.sector}_y'])
@@ -111,7 +130,89 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     return A, star_info, over_size, x_round, y_round
 
 
-def fit_psf(A, source, over_size, power=0.8, time=0):
+def _long_run_mask(mask, min_length=12):
+    run_mask = np.zeros_like(mask, dtype=bool)
+    for axis in (0, 1):
+        scan = np.moveaxis(mask, axis, 0)
+        marked = np.zeros_like(scan, dtype=bool)
+        for index in np.ndindex(scan.shape[1:]):
+            line = scan[(slice(None),) + index]
+            padded = np.concatenate(([False], line, [False]))
+            changes = np.flatnonzero(padded[1:] != padded[:-1])
+            for start, stop in zip(changes[::2], changes[1::2]):
+                if stop - start >= min_length:
+                    marked[(slice(start, stop),) + index] = True
+        run_mask |= np.moveaxis(marked, 0, axis)
+    return run_mask
+
+
+def build_overexposure_mask(source, seed_sigma=100, grow_sigma=20, dilation=2, max_mask_fraction=0.2,
+                            min_bleed_length=12):
+    """
+    Build a static image-only mask for overexposed bleed-like regions.
+
+    The mask is intentionally a pixel-row mask for the ePSF fit. It does not
+    remove stars from the design matrix; it only removes contaminated image rows.
+    Compact bright stars are rejected by requiring a long contiguous bright run.
+    """
+    image = np.nanmedian(source.flux, axis=0)
+    finite = np.isfinite(image)
+    if not np.any(finite):
+        return np.ones((source.size, source.size), dtype=bool)
+
+    background = np.nanmedian(image[finite])
+    scatter = 1.4826 * np.nanmedian(np.abs(image[finite] - background))
+    if not np.isfinite(scatter) or scatter <= 0:
+        scatter = np.nanstd(image[finite])
+    if not np.isfinite(scatter) or scatter <= 0:
+        return ~finite
+
+    seed = finite & (image > background + seed_sigma * scatter)
+    grow = finite & (image > background + grow_sigma * scatter)
+    if ndimage is None:
+        mask = seed & _long_run_mask(grow, min_length=min_bleed_length)
+    else:
+        candidate = ndimage.binary_propagation(seed, mask=grow)
+        mask = candidate & _long_run_mask(candidate, min_length=min_bleed_length)
+        if dilation > 0:
+            mask = ndimage.binary_dilation(mask, iterations=int(dilation))
+    mask = np.asarray(mask, dtype=bool) | ~finite
+
+    mask_fraction = float(np.mean(mask))
+    if mask_fraction > max_mask_fraction:
+        warnings.warn(
+            f"Overexposure mask covers {mask_fraction:.3f} of the cut, above "
+            f"the configured {max_mask_fraction:.3f} limit."
+        )
+    return mask
+
+
+def normalize_epsf_unit_sum(e_psf, over_size):
+    """
+    Split fitted ePSFs into a unit-sum shape and a per-cadence PSF scale.
+    """
+    psf_cols = over_size ** 2
+    e_psf_unit = np.array(e_psf, copy=True)
+    psf_block = e_psf_unit[:, :psf_cols]
+    scale = np.nansum(psf_block, axis=1)
+    scale[np.isnan(psf_block).all(axis=1)] = np.nan
+    valid = np.isfinite(scale) & (scale != 0)
+    e_psf_unit[valid, :psf_cols] /= scale[valid, np.newaxis]
+    e_psf_unit[~valid, :psf_cols] = np.nan
+    return e_psf_unit, scale
+
+
+def reconstruct_epsf_unit_sum(e_psf_unit, scale, over_size):
+    """
+    Reconstruct the fitted ePSF vector from unit-sum shape and scale products.
+    """
+    psf_cols = over_size ** 2
+    e_psf = np.array(e_psf_unit, copy=True)
+    e_psf[:, :psf_cols] *= np.asarray(scale)[:, np.newaxis]
+    return e_psf
+
+
+def fit_psf(A, source, over_size, power=0.8, time=0, extra_pixel_mask=None):
     """
     fit_psf using least_square (improved performance by changing to np.linalg.solve)
     :param A: np.ndarray, required
@@ -127,9 +228,17 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     time index of this ePSF fit
     :return: fit result
     """
-    saturated_index = source.mask.mask.flatten()
+    saturated_index = np.ma.getmaskarray(source.mask)
+    if saturated_index.shape == ():
+        saturated_index = np.zeros((source.size, source.size), dtype=bool)
+    saturated_index = np.asarray(saturated_index, dtype=bool).flatten()
+    if extra_pixel_mask is not None:
+        saturated_index |= np.asarray(extra_pixel_mask, dtype=bool).flatten()
     flux = source.flux[time].flatten()
-    saturated_index[flux < 0.8 * np.nanmedian(flux)] = True
+    saturated_index[~np.isfinite(flux)] = True
+    flux_median = np.nanmedian(flux)
+    if np.isfinite(flux_median):
+        saturated_index[flux < 0.8 * flux_median] = True
 
     b = np.delete(flux, saturated_index)
     scaler = np.abs(np.delete(flux, saturated_index)) ** power
