@@ -28,4 +28,5 @@ Contents
 .. toctree::
 
    usage
+   epsf_masks
    api
