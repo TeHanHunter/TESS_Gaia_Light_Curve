@@ -164,3 +164,9 @@ cython_debug/
 analysis_outputs/
 dist_0.7.0_backup/
 shortcbar_preview.png
+tmp/
+
+# Local TGLC diagnostics/products
+beam_tglc_status/
+nets_vi_tglc_rotation/
+s30_beam_default_tica_precision_summary.png

@@ -71,15 +71,39 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         s = t.strip()
         return s.upper().startswith('TIC') or s.isdigit()
 
+    def _query_exact_tic(tic_id):
+        rows = Catalogs.query_object(f'TIC {tic_id}', radius=0.01, catalog='TIC')
+        if len(rows) == 0:
+            raise RuntimeError(f'No TIC rows returned for TIC {tic_id}')
+        matches = rows[np.asarray(rows['ID'], dtype=int) == int(tic_id)]
+        if len(matches) == 0:
+            raise RuntimeError(f'TIC {tic_id} not found in returned TIC rows')
+        return matches[0]
+
     radius_deg = 42 * 0.707 / 3600
     target_ = None
-    is_tic = _is_tic_id(target) and _parse_tic_id(target) is not None
-    try:
-        target_ = Catalogs.query_object(target, radius=radius_deg, catalog="Gaia", version=2)
-    except requests.exceptions.RequestException as e:
-        warnings.warn(f'MAST name lookup failed for "{target}": {e}')
+    tic_id = _parse_tic_id(target)
+    is_tic = _is_tic_id(target) and tic_id is not None
+    exact_tic_resolved = False
+    if is_tic:
+        try:
+            tic_row = _query_exact_tic(tic_id)
+            ra = float(tic_row['ra'])
+            dec = float(tic_row['dec'])
+            exact_tic_resolved = True
+        except Exception as e:
+            warnings.warn(f'Exact TIC lookup failed for "{target}"; falling back to Gaia name lookup: {e}')
+            try:
+                target_ = Catalogs.query_object(target, radius=radius_deg, catalog="Gaia", version=2)
+            except requests.exceptions.RequestException as e:
+                warnings.warn(f'MAST name lookup failed for "{target}": {e}')
+    else:
+        try:
+            target_ = Catalogs.query_object(target, radius=radius_deg, catalog="Gaia", version=2)
+        except requests.exceptions.RequestException as e:
+            warnings.warn(f'MAST name lookup failed for "{target}": {e}')
 
-    if target_ is None or len(target_) == 0:
+    if not exact_tic_resolved and (target_ is None or len(target_) == 0):
         if is_tic:
             raise RuntimeError(
                 f'MAST name lookup failed for TIC target "{target}". Please retry when MAST is available.'
@@ -90,14 +114,15 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         except Exception as e:
             warnings.warn(f'MAST name lookup (target.name) failed: {e}')
 
-    if target_ is None or len(target_) == 0:
+    if not exact_tic_resolved and (target_ is None or len(target_) == 0):
         raise RuntimeError(
             f'Unable to resolve target "{target}". MAST name lookup appears unavailable; '
             f'try passing RA/Dec or a different target.'
         )
 
-    ra = target_[0]['ra']
-    dec = target_[0]['dec']
+    if not exact_tic_resolved:
+        ra = target_[0]['ra']
+        dec = target_[0]['dec']
     coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
     sector_table = Tesscut.get_sectors(coordinates=coord)
     print(sector_table)
@@ -106,7 +131,7 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
         name = None
     else:
         if is_tic:
-            TIC_ID = int(target.strip().split()[-1])
+            TIC_ID = tic_id
             with _dot_wait('Resolving TIC -> Gaia DR3 designation via TAP'):
                 ticvals = Catalogs.query_object(
                     f'TIC {TIC_ID}',

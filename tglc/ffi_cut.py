@@ -115,20 +115,46 @@ class Source_cut(object):
             s = t.strip()
             return s.upper().startswith('TIC') or s.isdigit()
 
-        target = None
-        is_tic = _is_tic_id(self.name) and _parse_tic_id(self.name) is not None
-        try:
-            target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
-        except requests.exceptions.RequestException as e:
-            warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
+        def _query_exact_tic(tic_id):
+            rows = Catalogs.query_object(f'TIC {tic_id}', radius=0.01, catalog='TIC')
+            if len(rows) == 0:
+                raise RuntimeError(f'No TIC rows returned for TIC {tic_id}')
+            matches = rows[np.asarray(rows['ID'], dtype=int) == int(tic_id)]
+            if len(matches) == 0:
+                raise RuntimeError(f'TIC {tic_id} not found in returned TIC rows')
+            return matches[0]
 
-        if target is None or len(target) == 0:
+        target = None
+        tic_id = _parse_tic_id(self.name)
+        is_tic = _is_tic_id(self.name) and tic_id is not None
+        exact_tic_resolved = False
+        target_designation = None
+        if is_tic:
+            try:
+                tic_row = _query_exact_tic(tic_id)
+                ra = float(tic_row['ra'])
+                dec = float(tic_row['dec'])
+                target_designation = f'TIC {tic_id}'
+                exact_tic_resolved = True
+            except Exception as e:
+                warnings.warn(f'Exact TIC lookup failed for "{self.name}"; falling back to Gaia name lookup: {e}')
+                try:
+                    target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+                except requests.exceptions.RequestException as e:
+                    warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
+        else:
+            try:
+                target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
+            except requests.exceptions.RequestException as e:
+                warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
+
+        if not exact_tic_resolved and (target is None or len(target) == 0):
             try:
                 target = Catalogs.query_object(self.name, radius=5 * 21 * 0.707 / 3600, catalog="Gaia", version=2)
             except requests.exceptions.RequestException as e:
                 warnings.warn(f'MAST name lookup failed for "{self.name}": {e}')
 
-        if target is None or len(target) == 0:
+        if not exact_tic_resolved and (target is None or len(target) == 0):
             if is_tic:
                 raise RuntimeError(
                     f'MAST name lookup failed for TIC target "{self.name}". Please retry when MAST is available.'
@@ -137,9 +163,10 @@ class Source_cut(object):
                 f'Unable to resolve target "{self.name}". MAST name lookup appears unavailable.'
             )
 
-        ra = target[0]['ra']
-        dec = target[0]['dec']
-        target_designation = target[0].get('designation', None)
+        if not exact_tic_resolved:
+            ra = target[0]['ra']
+            dec = target[0]['dec']
+            target_designation = target[0].get('designation', None)
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
         radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
         if target_designation:
