@@ -11,6 +11,7 @@ from pathlib import Path
 import pickle
 
 import numpy as np
+from astropy.table import Table
 
 from tglc.ffi import Source
 from tglc.light_curve import generate_light_curves
@@ -19,6 +20,18 @@ from tglc.utils.mapping import consume_iterator_with_progress_bar, pool_map_if_m
 
 
 logger = logging.getLogger()
+
+
+def _source_tic_overlay_path(source_file: Path) -> Path:
+    return source_file.parent.parent / "source_tic" / f"{source_file.stem}.ecsv"
+
+
+def _apply_source_tic_overlay(source: Source, source_file: Path) -> None:
+    overlay_path = _source_tic_overlay_path(source_file)
+    if not overlay_path.is_file():
+        return
+    source.tic = Table.read(overlay_path)
+    logger.debug("Using source TIC overlay %s with %d rows", overlay_path, len(source.tic))
 
 
 def read_source_and_epsf_and_save_light_curves(
@@ -38,6 +51,7 @@ def read_source_and_epsf_and_save_light_curves(
     source_file, epsf_file = source_and_epsf_files
     with source_file.open("rb") as source_pickle:
         source: Source = pickle.load(source_pickle)
+    _apply_source_tic_overlay(source, source_file)
     epsf = np.load(epsf_file)
     for light_curve in generate_light_curves(source, epsf, psf_size, oversample_factor, tic_ids):
         manifest.tic_id = light_curve.meta["tic_id"]
