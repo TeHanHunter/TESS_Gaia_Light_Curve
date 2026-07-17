@@ -13,7 +13,7 @@ import numpy as np
 
 from tglc.aperture_light_curve import ApertureLightCurve, ApertureLightCurveMetadata
 from tglc.aperture_photometry import get_normalized_aperture_photometry
-from tglc.epsf import make_tglc_design_matrix
+from tglc.epsf import get_star_flux_ratios, make_tglc_design_matrix
 from tglc.ffi import Source
 from tglc.utils.constants import TESSJD, apply_barycentric_correction  # noqa: F401 for tjd format
 from tglc.utils.tess_ephemeris import get_tess_spacecraft_position
@@ -117,6 +117,7 @@ def generate_light_curves(
     psf_size: int,
     psf_oversample_factor: int,
     tic_ids: list[int] | None = None,
+    flux_scale: str = "relative",
 ) -> Generator[ApertureLightCurve, None, None]:
     """
     Generator function that yields aperture light curves extracted from the source cutout.
@@ -137,6 +138,9 @@ def generate_light_curves(
     tic_ids : list[int] | None
         Optional list of TIC IDs that should have light curves made. If specified, all other targets
         will be ignored. By default, all targets in the source TIC catalog have light curves made.
+    flux_scale : str
+        Catalog flux scale used when the ePSFs were fitted. Must match the `tglc epsfs`
+        `--flux-scale` setting.
 
     Yields
     ------
@@ -154,12 +158,13 @@ def generate_light_curves(
     star_positions = np.array(
         [source.gaia[f"sector_{source.sector}_x"], source.gaia[f"sector_{source.sector}_y"]]
     ).T
+    star_flux_ratios = get_star_flux_ratios(source.gaia, flux_scale=flux_scale)
     design_matrix, _ = make_tglc_design_matrix(
         source.flux.shape[1:],
         (psf_size, psf_size),
         psf_oversample_factor,
         star_positions,
-        source.gaia["tess_flux_ratio"].data,
+        star_flux_ratios,
         source.mask.data,
     )
 
@@ -202,7 +207,7 @@ def generate_light_curves(
             design_matrix,
             star_positions[i][0],
             star_positions[i][1],
-            source.gaia["tess_flux_ratio"].data[i],
+            star_flux_ratios[i],
             (psf_size, psf_size),
             psf_oversample_factor,
             cutout_size=5,

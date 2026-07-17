@@ -1,6 +1,7 @@
 """Command line interface definintion for TGLC."""
 
 import argparse
+import os
 from pathlib import Path
 
 from tglc import __version__ as tglc_version
@@ -25,6 +26,31 @@ def get_parent_tglc_data_dir(path: Path):
 TGLC_DATA_DIR_DEFAULT = get_parent_tglc_data_dir(Path.cwd().expanduser()).resolve()
 
 
+def env_flag(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+EPSF_FLUX_SCALE_DEFAULT = os.environ.get("TGLC_EPSF_FLUX_SCALE", "relative")
+EPSF_NORMALIZATION_DEFAULT = os.environ.get("TGLC_EPSF_NORMALIZATION", "none")
+EPSF_OVEREXPOSURE_MASK_DEFAULT = env_flag("TGLC_EPSF_OVEREXPOSURE_MASK")
+EPSF_OVEREXPOSURE_SEED_SIGMA_DEFAULT = float(
+    os.environ.get("TGLC_EPSF_OVEREXPOSURE_SEED_SIGMA", 100)
+)
+EPSF_OVEREXPOSURE_GROW_SIGMA_DEFAULT = float(
+    os.environ.get("TGLC_EPSF_OVEREXPOSURE_GROW_SIGMA", 20)
+)
+EPSF_OVEREXPOSURE_DILATION_DEFAULT = int(os.environ.get("TGLC_EPSF_OVEREXPOSURE_DILATION", 2))
+EPSF_OVEREXPOSURE_MAX_MASK_FRACTION_DEFAULT = float(
+    os.environ.get("TGLC_EPSF_OVEREXPOSURE_MAX_MASK_FRACTION", 0.2)
+)
+EPSF_OVEREXPOSURE_MIN_BLEED_LENGTH_DEFAULT = int(
+    os.environ.get("TGLC_EPSF_OVEREXPOSURE_MIN_BLEED_LENGTH", 12)
+)
+
+
 def ccd(arg: str) -> tuple[int, int]:
     """Parse "cam,ccd" as passed to --ccd. Used as a type for argparse."""
     try:
@@ -47,6 +73,70 @@ def cutout(arg: str) -> tuple[int, int]:
     except Exception as e:
         raise ValueError(f"Invalid CCD specifier: {arg:r}. Should be 'x,y'.") from e
     return cam, ccd
+
+
+def add_epsf_scale_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--flux-scale",
+        choices=["relative", "absolute", "tmag10"],
+        default=EPSF_FLUX_SCALE_DEFAULT,
+        help=(
+            "Catalog flux scale for the ePSF design matrix. Default can be set with "
+            "TGLC_EPSF_FLUX_SCALE and otherwise is 'relative'."
+        ),
+    )
+
+
+def add_epsf_fit_variant_options(parser: argparse.ArgumentParser) -> None:
+    add_epsf_scale_options(parser)
+    parser.add_argument(
+        "--epsf-normalization",
+        choices=["none", "unit_sum"],
+        default=EPSF_NORMALIZATION_DEFAULT,
+        help=(
+            "How to store fitted ePSFs. 'unit_sum' saves a unit-sum PSF shape plus an "
+            "epsf_scale sidecar and reconstructs the full ePSF during light-curve extraction."
+        ),
+    )
+    parser.add_argument(
+        "--overexposure-mask",
+        action="store_true",
+        default=EPSF_OVEREXPOSURE_MASK_DEFAULT,
+        help=(
+            "Build a static overexposure/bleed-like image mask and exclude those rows "
+            "from the ePSF fit. Default can be enabled with TGLC_EPSF_OVEREXPOSURE_MASK=1."
+        ),
+    )
+    parser.add_argument(
+        "--overexposure-seed-sigma",
+        type=float,
+        default=EPSF_OVEREXPOSURE_SEED_SIGMA_DEFAULT,
+        help="Seed threshold for overexposure mask growth. Default=100.",
+    )
+    parser.add_argument(
+        "--overexposure-grow-sigma",
+        type=float,
+        default=EPSF_OVEREXPOSURE_GROW_SIGMA_DEFAULT,
+        help="Growth threshold for overexposure mask propagation. Default=20.",
+    )
+    parser.add_argument(
+        "--overexposure-dilation",
+        type=int,
+        default=EPSF_OVEREXPOSURE_DILATION_DEFAULT,
+        help="Binary dilation iterations after overexposure mask growth. Default=2.",
+    )
+    parser.add_argument(
+        "--overexposure-max-mask-fraction",
+        type=float,
+        default=EPSF_OVEREXPOSURE_MAX_MASK_FRACTION_DEFAULT,
+        help="Warn when an overexposure mask covers more than this image fraction. Default=0.2.",
+    )
+    parser.add_argument(
+        "--overexposure-min-bleed-length",
+        type=int,
+        default=EPSF_OVEREXPOSURE_MIN_BLEED_LENGTH_DEFAULT,
+        help="Minimum contiguous bright run length for bleed-like masks. Default=12.",
+    )
 
 
 command_base_parser = argparse.ArgumentParser(add_help=False)
@@ -164,6 +254,7 @@ def parse_tglc_args() -> argparse.Namespace:
         action="store_true",
         help="Do not use GPUs to fit ePSFs (ignored if cupy not installed or GPUs not available)",
     )
+    add_epsf_fit_variant_options(all_parser)
 
     catalogs_parser = tglc_commands.add_parser(
         "catalogs",
@@ -237,6 +328,7 @@ def parse_tglc_args() -> argparse.Namespace:
         action="store_true",
         help="Do not use GPUs to fit ePSFs (ignored if cupy not installed or GPUs not available)",
     )
+    add_epsf_fit_variant_options(epsfs_parser)
 
     lightcurves_parser = tglc_commands.add_parser(
         "lightcurves",
@@ -256,6 +348,7 @@ def parse_tglc_args() -> argparse.Namespace:
         default=2,
         help="Factor used to oversample the PSF compared to image pixels. Default=2.",
     )
+    add_epsf_scale_options(lightcurves_parser)
 
     args = tglc_parser.parse_args()
 

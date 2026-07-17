@@ -14,7 +14,13 @@ import re
 
 import numpy as np
 
-from tglc.epsf import fit_epsf, make_tglc_design_matrix
+from tglc.epsf import (
+    build_overexposure_mask,
+    fit_epsf,
+    get_star_flux_ratios,
+    make_tglc_design_matrix,
+    normalize_epsf_unit_sum,
+)
 from tglc.ffi import Source
 from tglc.utils._optional_deps import HAS_CUPY
 from tglc.utils.manifest import Manifest
@@ -24,12 +30,25 @@ from tglc.utils.mapping import consume_iterator_with_progress_bar, pool_map_if_m
 logger = logging.getLogger(__name__)
 
 
+def get_epsf_scale_file(epsf_output_file: Path) -> Path:
+    """Return the sidecar scale path for a saved unit-sum ePSF file."""
+    suffix = epsf_output_file.stem.removeprefix("epsf")
+    return epsf_output_file.with_name(f"epsf_scale{suffix}.npy")
+
+
 def fit_epsf_for_source(
     source: Source,
     psf_size: int,
     oversample_factor: int,
     edge_compression_factor: float,
     flux_uncertainty_power: float,
+    flux_scale: str = "relative",
+    overexposure_mask: bool = False,
+    overexposure_seed_sigma: float = 100,
+    overexposure_grow_sigma: float = 20,
+    overexposure_dilation: int = 2,
+    overexposure_max_mask_fraction: float = 0.2,
+    overexposure_min_bleed_length: int = 12,
     use_gpu: bool = True,
 ):
     """
@@ -46,6 +65,13 @@ def fit_epsf_for_source(
     flux_uncertainty_power : float
         Power of pixel value used as observational uncertainty in ePSF fit. <1 emphasizes
         contributions from dimmer stars, 1 means all contributions are equal.
+    flux_scale : str
+        Catalog flux scale for the ePSF design matrix. ``relative`` is the historical per-cut
+        brightest-star normalization; ``absolute`` is T=10 -> 15000 e-/s; ``tmag10`` uses a
+        unitless T=10 reference.
+    overexposure_mask : bool
+        If `True`, build a static overexposure/bleed-like pixel mask and exclude those image rows
+        from the ePSF fit.
     use_gpu : bool
         If `True`, use `cupy` to run the ePSF parameter fit on the GPU. Requires `cupy` to be
         installed and at least one CUDA device to be available.
@@ -62,18 +88,29 @@ def fit_epsf_for_source(
     star_positions = np.array(
         [source.gaia[f"sector_{source.sector}_x"], source.gaia[f"sector_{source.sector}_y"]]
     ).T
+    star_flux_ratios = get_star_flux_ratios(source.gaia, flux_scale=flux_scale)
     design_matrix, regularization_extension_size = make_tglc_design_matrix(
         source.flux.shape[1:],
         (psf_size, psf_size),
         oversample_factor,
         star_positions,
-        source.gaia["tess_flux_ratio"].data,
+        star_flux_ratios,
         source.mask.data,
         edge_compression_factor,
     )
     flux = source.flux
     # Mask out saturated pixels as a base
     base_flux_mask = source.mask.mask
+    extra_flux_mask = None
+    if overexposure_mask:
+        extra_flux_mask = build_overexposure_mask(
+            source,
+            seed_sigma=overexposure_seed_sigma,
+            grow_sigma=overexposure_grow_sigma,
+            dilation=overexposure_dilation,
+            max_mask_fraction=overexposure_max_mask_fraction,
+            min_bleed_length=overexposure_min_bleed_length,
+        )
 
     if use_gpu and HAS_CUPY:
         import cupy as cp
@@ -81,6 +118,8 @@ def fit_epsf_for_source(
         design_matrix = cp.asarray(design_matrix)
         flux = cp.asarray(flux)
         base_flux_mask = cp.asarray(base_flux_mask)
+        if extra_flux_mask is not None:
+            extra_flux_mask = cp.asarray(extra_flux_mask)
         xp = cp
     else:
         xp = np
@@ -96,6 +135,7 @@ def fit_epsf_for_source(
                 base_flux_mask,
                 flux_uncertainty_power,
                 regularization_extension_size,
+                extra_flux_mask=extra_flux_mask,
             )
         except np.linalg.LinAlgError as e:
             logger.warning(f"Error while fitting ePSF: {e}")
@@ -112,6 +152,14 @@ def read_source_and_fit_and_save_epsf(
     oversample_factor: int,
     edge_compression_factor: float,
     flux_uncertainty_power: float,
+    flux_scale: str = "relative",
+    epsf_normalization: str = "none",
+    overexposure_mask: bool = False,
+    overexposure_seed_sigma: float = 100,
+    overexposure_grow_sigma: float = 20,
+    overexposure_dilation: int = 2,
+    overexposure_max_mask_fraction: float = 0.2,
+    overexposure_min_bleed_length: int = 12,
     use_gpu: bool = True,
 ):
     """
@@ -123,7 +171,12 @@ def read_source_and_fit_and_save_epsf(
     Most arguments are passed to `fit_epsf_for_source`.
     """
     source_file, epsf_output_file = source_and_epsf_files
-    if not replace and epsf_output_file.is_file():
+    scale_output_file = get_epsf_scale_file(epsf_output_file)
+    if (
+        not replace
+        and epsf_output_file.is_file()
+        and (epsf_normalization != "unit_sum" or scale_output_file.is_file())
+    ):
         logger.debug(f"ePSF file {epsf_output_file.resolve()} exists and will not be overwritten")
         return
     with source_file.open("rb") as source_pickle:
@@ -165,9 +218,24 @@ def read_source_and_fit_and_save_epsf(
             oversample_factor,
             edge_compression_factor,
             flux_uncertainty_power,
+            flux_scale=flux_scale,
+            overexposure_mask=overexposure_mask,
+            overexposure_seed_sigma=overexposure_seed_sigma,
+            overexposure_grow_sigma=overexposure_grow_sigma,
+            overexposure_dilation=overexposure_dilation,
+            overexposure_max_mask_fraction=overexposure_max_mask_fraction,
+            overexposure_min_bleed_length=overexposure_min_bleed_length,
             use_gpu=use_gpu,
         )
-    np.save(epsf_output_file, epsf)
+    if epsf_normalization == "unit_sum":
+        over_size = psf_size * oversample_factor + 1
+        epsf_unit, epsf_scale = normalize_epsf_unit_sum(epsf, over_size)
+        np.save(epsf_output_file, epsf_unit)
+        np.save(scale_output_file, epsf_scale)
+    elif epsf_normalization == "none":
+        np.save(epsf_output_file, epsf)
+    else:
+        raise ValueError("epsf_normalization must be 'none' or 'unit_sum'.")
 
 
 def make_epsfs_main(args: argparse.Namespace):
@@ -211,6 +279,14 @@ def make_epsfs_main(args: argparse.Namespace):
             oversample_factor=args.oversample,
             edge_compression_factor=args.edge_compression_factor,
             flux_uncertainty_power=args.uncertainty_power,
+            flux_scale=args.flux_scale,
+            epsf_normalization=args.epsf_normalization,
+            overexposure_mask=args.overexposure_mask,
+            overexposure_seed_sigma=args.overexposure_seed_sigma,
+            overexposure_grow_sigma=args.overexposure_grow_sigma,
+            overexposure_dilation=args.overexposure_dilation,
+            overexposure_max_mask_fraction=args.overexposure_max_mask_fraction,
+            overexposure_min_bleed_length=args.overexposure_min_bleed_length,
             use_gpu=not args.no_gpu,
         )
         # For GPU multiprocessing, the "spawn" start method is necessary

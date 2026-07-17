@@ -1,11 +1,17 @@
 """ePSF helper functions."""
 
 from math import ceil, floor
+import warnings
 
 from numba import jit
 import numpy as np
 
 from tglc.utils._optional_deps import HAS_CUPY
+
+try:
+    from scipy import ndimage
+except ImportError:  # pragma: no cover - scipy is part of the PDO runtime
+    ndimage = None
 
 
 @jit
@@ -196,12 +202,112 @@ def make_tglc_design_matrix(
     return design_matrix, regularization_extension_size
 
 
+def get_star_flux_ratios(gaia_table, flux_scale: str = "relative") -> np.ndarray:
+    """Return the catalog flux scale used in the ePSF design matrix."""
+    if flux_scale == "relative":
+        return np.asarray(gaia_table["tess_flux_ratio"].data)
+
+    tess_mag = np.asarray(gaia_table["tess_mag"], dtype=float)
+    if flux_scale == "absolute":
+        return 15000 * 10 ** ((tess_mag - 10) / -2.5)
+    if flux_scale == "tmag10":
+        return 10 ** ((10 - tess_mag) / 2.5)
+    raise ValueError("flux_scale must be 'relative', 'absolute', or 'tmag10'.")
+
+
+def _long_run_mask(mask: np.ndarray, min_length: int = 12) -> np.ndarray:
+    run_mask = np.zeros_like(mask, dtype=bool)
+    for axis in (0, 1):
+        scan = np.moveaxis(mask, axis, 0)
+        marked = np.zeros_like(scan, dtype=bool)
+        for index in np.ndindex(scan.shape[1:]):
+            line = scan[(slice(None),) + index]
+            padded = np.concatenate(([False], line, [False]))
+            changes = np.flatnonzero(padded[1:] != padded[:-1])
+            for start, stop in zip(changes[::2], changes[1::2], strict=False):
+                if stop - start >= min_length:
+                    marked[(slice(start, stop),) + index] = True
+        run_mask |= np.moveaxis(marked, 0, axis)
+    return run_mask
+
+
+def build_overexposure_mask(
+    source,
+    seed_sigma: float = 100,
+    grow_sigma: float = 20,
+    dilation: int = 2,
+    max_mask_fraction: float = 0.2,
+    min_bleed_length: int = 12,
+) -> np.ndarray:
+    """
+    Build a static image mask for overexposed bleed-like regions.
+
+    The mask removes contaminated image rows from ePSF fitting without removing
+    stars from the model. Compact bright stars are rejected by requiring a long
+    contiguous bright run.
+    """
+    image = np.nanmedian(source.flux, axis=0)
+    finite = np.isfinite(image)
+    if not np.any(finite):
+        return np.ones(source.flux.shape[1:], dtype=bool)
+
+    background = np.nanmedian(image[finite])
+    scatter = 1.4826 * np.nanmedian(np.abs(image[finite] - background))
+    if not np.isfinite(scatter) or scatter <= 0:
+        scatter = np.nanstd(image[finite])
+    if not np.isfinite(scatter) or scatter <= 0:
+        return ~finite
+
+    seed = finite & (image > background + seed_sigma * scatter)
+    grow = finite & (image > background + grow_sigma * scatter)
+    if ndimage is None:
+        mask = seed & _long_run_mask(grow, min_length=min_bleed_length)
+    else:
+        candidate = ndimage.binary_propagation(seed, mask=grow)
+        mask = candidate & _long_run_mask(candidate, min_length=min_bleed_length)
+        if dilation > 0:
+            mask = ndimage.binary_dilation(mask, iterations=int(dilation))
+    mask = np.asarray(mask, dtype=bool) | ~finite
+
+    mask_fraction = float(np.mean(mask))
+    if mask_fraction > max_mask_fraction:
+        warnings.warn(
+            f"Overexposure mask covers {mask_fraction:.3f} of the cut, above "
+            f"the configured {max_mask_fraction:.3f} limit."
+        )
+    return mask
+
+
+def normalize_epsf_unit_sum(epsf: np.ndarray, over_size: int) -> tuple[np.ndarray, np.ndarray]:
+    """Split fitted ePSFs into a unit-sum shape and per-cadence scale."""
+    psf_cols = over_size**2
+    epsf_unit = np.array(epsf, copy=True)
+    psf_block = epsf_unit[:, :psf_cols]
+    scale = np.nansum(psf_block, axis=1)
+    scale[np.isnan(psf_block).all(axis=1)] = np.nan
+    valid = np.isfinite(scale) & (scale != 0)
+    epsf_unit[valid, :psf_cols] /= scale[valid, np.newaxis]
+    epsf_unit[~valid, :psf_cols] = np.nan
+    return epsf_unit, scale
+
+
+def reconstruct_epsf_unit_sum(
+    epsf_unit: np.ndarray, scale: np.ndarray, over_size: int
+) -> np.ndarray:
+    """Reconstruct full fitted ePSF parameters from unit-sum shape and scale."""
+    psf_cols = over_size**2
+    epsf = np.array(epsf_unit, copy=True)
+    epsf[:, :psf_cols] *= np.asarray(scale)[:, np.newaxis]
+    return epsf
+
+
 def fit_epsf(
     design_matrix: np.ndarray,
     flux: np.ndarray,
     base_flux_mask: np.ndarray,
     flux_uncertainty_power: float,
     regularization_dimensions: int,
+    extra_flux_mask: np.ndarray | None = None,
 ):
     """
     Find the best-fit ePSF parameters given a design matrix and observed flux values.
@@ -225,28 +331,36 @@ def fit_epsf(
         from dimmer stars, 1 means all contributions are equal.
     regularization_dimensions : int
         Number of extra dimensions used for regularization. Must be added to observed vector.
+    extra_flux_mask : array[bool] | None
+        Additional image-pixel mask, for example a static overexposure/bleed mask.
 
     Returns
     -------
     epsf_parameters : array
         Array of best-fit ePSF parameters.
     """
-    flux_uncertainty_scale = 1 / (np.abs(flux) ** flux_uncertainty_power)
-    flux_mask = base_flux_mask | (flux < 0.8 * np.nanmedian(flux))
-
-    # Set up observed vector accounting for regularization
-    observed_vector = np.hstack((flux.flatten(), np.zeros(regularization_dimensions)))
-    uncertainty_scale = np.hstack(
-        (flux_uncertainty_scale.flatten(), np.ones(regularization_dimensions))
-    )
-    mask = np.hstack((flux_mask.flatten(), np.zeros(regularization_dimensions, dtype=bool)))
-
     if HAS_CUPY:
         import cupy as cp
 
         xp = cp.get_array_module(design_matrix, flux)
     else:
         xp = np
+
+    finite_flux = xp.isfinite(flux)
+    flux_uncertainty_scale = 1 / (xp.abs(flux) ** flux_uncertainty_power)
+    flux_uncertainty_scale = xp.where(finite_flux, flux_uncertainty_scale, 1)
+    flux_mask = base_flux_mask | ~finite_flux | (flux < 0.8 * xp.nanmedian(flux))
+    if extra_flux_mask is not None:
+        flux_mask = flux_mask | extra_flux_mask
+
+    # Set up observed vector accounting for regularization.
+    observed_vector = xp.concatenate((flux.ravel(), xp.zeros(regularization_dimensions)))
+    uncertainty_scale = xp.concatenate(
+        (flux_uncertainty_scale.ravel(), xp.ones(regularization_dimensions))
+    )
+    mask = xp.concatenate(
+        (flux_mask.ravel(), xp.zeros(regularization_dimensions, dtype=bool))
+    )
 
     A = (design_matrix * uncertainty_scale[:, np.newaxis])[~mask]
     b = (observed_vector * uncertainty_scale)[~mask]

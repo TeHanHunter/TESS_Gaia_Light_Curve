@@ -12,6 +12,7 @@ import pickle
 
 import numpy as np
 
+from tglc.epsf import reconstruct_epsf_unit_sum
 from tglc.ffi import Source
 from tglc.light_curve import generate_light_curves
 from tglc.utils.manifest import Manifest
@@ -21,12 +22,19 @@ from tglc.utils.mapping import consume_iterator_with_progress_bar, pool_map_if_m
 logger = logging.getLogger()
 
 
+def get_epsf_scale_file(epsf_file: Path) -> Path:
+    """Return the sidecar scale path for a saved unit-sum ePSF file."""
+    suffix = epsf_file.stem.removeprefix("epsf")
+    return epsf_file.with_name(f"epsf_scale{suffix}.npy")
+
+
 def read_source_and_epsf_and_save_light_curves(
     source_and_epsf_files: tuple[Path, Path],
     manifest: Manifest,
     replace: bool,
     psf_size: int,
     oversample_factor: int,
+    flux_scale: str = "relative",
     tic_ids: list[int] | None = None,
 ):
     """
@@ -39,7 +47,14 @@ def read_source_and_epsf_and_save_light_curves(
     with source_file.open("rb") as source_pickle:
         source: Source = pickle.load(source_pickle)
     epsf = np.load(epsf_file)
-    for light_curve in generate_light_curves(source, epsf, psf_size, oversample_factor, tic_ids):
+    scale_file = get_epsf_scale_file(epsf_file)
+    if scale_file.is_file():
+        epsf = reconstruct_epsf_unit_sum(
+            epsf, np.load(scale_file), psf_size * oversample_factor + 1
+        )
+    for light_curve in generate_light_curves(
+        source, epsf, psf_size, oversample_factor, tic_ids, flux_scale=flux_scale
+    ):
         manifest.tic_id = light_curve.meta["tic_id"]
         if replace or not manifest.light_curve_file.is_file():
             light_curve.write_hdf5(manifest.light_curve_file)
@@ -93,6 +108,7 @@ def make_light_curves_main(args: argparse.Namespace):
             replace=args.replace,
             psf_size=args.psf_size,
             oversample_factor=args.oversample,
+            flux_scale=args.flux_scale,
             tic_ids=args.tic,
         )
         consume_iterator_with_progress_bar(
