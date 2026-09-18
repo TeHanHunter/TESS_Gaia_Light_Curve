@@ -13,12 +13,16 @@ from glob import glob
 from os.path import exists
 from urllib.parse import quote as urlencode
 from astropy.io import fits
-from astropy.table import Table, hstack, vstack, unique, Column
+from astropy.table import Table, hstack, vstack, unique, Column, MaskedColumn
 from astropy.wcs import WCS
 from astroquery.gaia import Gaia
 from astroquery.utils.tap.core import TapPlus
 from scipy import ndimage
 from tqdm import tqdm, trange
+from tglc.astrometry import (
+    MODEL_CATALOG_HALO, SOURCE_SCHEMA_VERSION, in_model_catalog,
+    persistent_bad_pixels, propagate_catalog_positions,
+)
 
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # TODO: dr3 MJD = 2457388.5, TBJD = 388.5
@@ -83,6 +87,12 @@ def tic_advanced_search_position_rows(ra=1., dec=1., radius=0.5, limit_mag=16):
 
 
 def convert_gaia_id(catalogdata_tic, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
+    """Crossmatch TIC DR2 identifiers, retaining unknown DR3 identities as masked.
+
+    An unavailable or ambiguous bridge is not evidence that a DR2 identifier
+    identifies the same DR3 source. Keep every valid input TIC/DR2 pair so the
+    caller can distinguish an unknown match from a missing TIC record.
+    """
     query = """
             SELECT dr2_source_id, dr3_source_id
             FROM gaiadr3.dr2_neighbourhood
@@ -100,32 +110,36 @@ def convert_gaia_id(catalogdata_tic, gaia_tap_server="https://gea.esac.esa.int/t
                 query.format(gaia_ids=gaia_tuple)
             ).get_results()
 
-    gaia_array = np.array([str(item) for item in catalogdata_tic['GAIA']], dtype=object)
-    gaia_array = gaia_array[gaia_array != 'None']
-    segment = (len(gaia_array) - 1) // 10000
-    try:
-        gaia_tuple = tuple(gaia_array[:10000])
-        results = _run_query(gaia_tuple)
-        for i in range(segment):
-            gaia_array_cut = gaia_array[((i+1)*10000):((i+2)*10000)]
-            gaia_tuple_cut = tuple(gaia_array_cut)
-            results = vstack([results, _run_query(gaia_tuple_cut)])
-        tic_ids = []
-        for j in range(len(results)):
-            tic_ids.append(int(catalogdata_tic['ID'][np.where(catalogdata_tic['GAIA'] == str(results['dr2_source_id'][j]))][0]))
-        tic_ids = Column(np.array(tic_ids), name='TIC')
-        results.add_column(tic_ids)
-        return results
-    except Exception as exc:
-        warnings.warn(
-            f'Gaia DR2->DR3 crossmatch failed ({exc}). Falling back to TIC catalog GAIA (DR2) identifiers.'
-        )
-        valid = np.array(catalogdata_tic['GAIA']) != 'None'
-        results = Table()
-        results['dr2_source_id'] = np.array(catalogdata_tic['GAIA'][valid], dtype=np.int64)
-        results['dr3_source_id'] = np.array(catalogdata_tic['GAIA'][valid], dtype=np.int64)
-        results['TIC'] = np.array(catalogdata_tic['ID'][valid], dtype=np.int64)
-        return results
+    pairs = []
+    for tic_id, gaia_id in zip(catalogdata_tic['ID'], catalogdata_tic['GAIA']):
+        if np.ma.is_masked(gaia_id) or np.ma.is_masked(tic_id):
+            continue
+        gaia_id = str(gaia_id).strip()
+        if gaia_id.isdigit() and int(gaia_id) > 0:
+            pairs.append((int(tic_id), int(gaia_id)))
+    results = Table()
+    results['dr2_source_id'] = np.array([pair[1] for pair in pairs], dtype=np.int64)
+    results['dr3_source_id'] = MaskedColumn(np.zeros(len(pairs), dtype=np.int64), mask=True)
+    results['TIC'] = np.array([pair[0] for pair in pairs], dtype=np.int64)
+    gaia_ids = sorted({pair[1] for pair in pairs})
+    matches = {}
+    for start in range(0, len(gaia_ids), 10000):
+        # A one-element Python tuple has a trailing comma, which is not valid
+        # ADQL. These integers have already been validated above.
+        gaia_tuple = '(' + ','.join(map(str, gaia_ids[start:start + 10000])) + ')'
+        try:
+            bridge = _run_query(gaia_tuple)
+        except Exception as exc:
+            warnings.warn(f'Gaia DR2->DR3 crossmatch failed ({exc}); DR3 identities remain unknown.')
+            continue
+        for row in bridge:
+            if not np.ma.is_masked(row['dr3_source_id']):
+                matches.setdefault(int(row['dr2_source_id']), set()).add(int(row['dr3_source_id']))
+    for index, (_, dr2_id) in enumerate(pairs):
+        candidates = matches.get(dr2_id, set())
+        if len(candidates) == 1:
+            results['dr3_source_id'][index] = next(iter(candidates))
+    return results
 
 
 # from Tim
@@ -208,8 +222,11 @@ class Source(object):
         self.quality = quality
         self.exposure = exposure
         self.wcs = wcs
-        co1 = 38.5
-        co2 = 116.5
+        self.transient = None
+        self.ffi = 'SPOC'
+        self.source_schema_version = SOURCE_SCHEMA_VERSION
+        co1 = (size - 1) / 4
+        co2 = 3 * (size - 1) / 4
         catalog_1 = self.search_gaia(x, y, co1, co1)
         catalog_2 = self.search_gaia(x, y, co1, co2)
         catalog_3 = self.search_gaia(x, y, co2, co1)
@@ -225,10 +242,9 @@ class Source(object):
         self.flux = flux[:, y:y + size, x:x + size]
         self.mask = mask[y:y + size, x:x + size]
         self.time = np.array(time)
-        median_time = np.median(self.time)
-        interval = (median_time - 388.5) / 365.25
-        # Julian Day Number:	2457000.0 (TBJD=0)
-        # Calendar Date/Time:	2014-12-08 12:00:00 388.5 days before J2016
+        catalogdata = propagate_catalog_positions(catalogdata, self.time)
+        for column in ['phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag']:
+            catalogdata[column] = np.ma.asarray(catalogdata[column], dtype=float).filled(np.nan)
 
         num_gaia = len(catalogdata)
         tic_id = np.zeros(num_gaia)
@@ -237,14 +253,8 @@ class Source(object):
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
         for i, designation in enumerate(catalogdata['DESIGNATION']):
-            ra = catalogdata['ra'][i]
-            dec = catalogdata['dec'][i]
-            if not np.isnan(catalogdata['pmra'].mask[i]):  # masked?
-                ra += catalogdata['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-            if not np.isnan(catalogdata['pmdec'].mask[i]):
-                dec += catalogdata['pmdec'][i] * interval / 1000 / 3600
             pixel = self.wcs.all_world2pix(
-                np.array([catalogdata['ra'][i], catalogdata['dec'][i]]).reshape((1, 2)), 0, quiet=True)
+                np.array([catalogdata['ra_epoch'][i], catalogdata['dec_epoch'][i]]).reshape((1, 2)), 0, quiet=True)
             x_gaia[i] = pixel[0][0] - x - 44
             y_gaia[i] = pixel[0][1] - y
             try:
@@ -255,7 +265,7 @@ class Source(object):
                 in_frame[i] = False
             elif catalogdata['phot_g_mean_mag'][i] >= 25:
                 in_frame[i] = False
-            elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
+            elif in_model_catalog(x_gaia[i], y_gaia[i], self.flux.shape[1:]):
                 dif = catalogdata['phot_bp_mean_mag'][i] - catalogdata['phot_rp_mean_mag'][i]
                 tess_mag[i] = catalogdata['phot_g_mean_mag'][
                                   i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
@@ -266,6 +276,8 @@ class Source(object):
             else:
                 in_frame[i] = False
 
+        if not np.any(in_frame):
+            raise ValueError('No usable Gaia DR3 sources overlap this image and its PSF halo')
         tess_flux = 10 ** (- tess_mag / 2.5)
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
@@ -279,13 +291,13 @@ class Source(object):
 
     def search_gaia(self, x, y, co1, co2):
         coord = self.wcs.pixel_to_world([x + co1 + 44], [y + co2])[0].to_string()
-        radius = u.Quantity((self.size / 2 + 4) * 21 * 0.707 / 3600, u.deg)
+        radius = u.Quantity((self.size / 2 + 2 * MODEL_CATALOG_HALO) * 21 / np.sqrt(2) / 3600, u.deg)
         attempt = 0
         while attempt < 5:
             try:
                 catalogdata = Gaia.cone_search_async(coord, radius=radius,
                                              columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                                      'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']).get_results()
+                                                      'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec', 'ref_epoch']).get_results()
                 return catalogdata
             except:
                 attempt += 1
@@ -333,6 +345,7 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
                 flux[i] = hdul[1].data[0:2048, 44:2092]
                 time.append((hdul[1].header['TSTOP'] + hdul[1].header['TSTART']) / 2)
     time_order = np.argsort(np.array(time))
+    input_files = [input_files[index] for index in time_order]
     time = np.array(time)[time_order]
     flux = flux[time_order, :, :]
     quality = np.array(quality)[time_order]
@@ -353,24 +366,8 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
     mask = importlib_resources.files(__package__).joinpath("background_mask/median_mask.fits").open("rb")
     mask = fits.open(mask)[0].data[(camera - 1) * 4 + (ccd - 1), :]
     mask = np.repeat(mask.reshape(1, 2048), repeats=2048, axis=0)
-    bad_pixels = np.zeros(np.shape(flux[0]))
-    med_flux = np.median(flux, axis=0)
-    bad_pixels[med_flux > 0.8 * np.nanmax(med_flux)] = 1
-    bad_pixels[med_flux < 0.2 * np.nanmedian(med_flux)] = 1
-    bad_pixels[np.isnan(med_flux)] = 1
-
-    x_b, y_b = np.where(bad_pixels)
-    for i in range(len(x_b)):
-        if x_b[i] < 2047:
-            bad_pixels[x_b[i] + 1, y_b[i]] = 1
-        if x_b[i] > 0:
-            bad_pixels[x_b[i] - 1, y_b[i]] = 1
-        if y_b[i] < 2047:
-            bad_pixels[x_b[i], y_b[i] + 1] = 1
-        if y_b[i] > 0:
-            bad_pixels[x_b[i], y_b[i] - 1] = 1
-
-    mask = np.ma.masked_array(mask, mask=bad_pixels)
+    bad_pixels = persistent_bad_pixels(flux)
+    mask = np.ma.masked_array(mask, mask=bad_pixels | ~np.isfinite(mask))
     mask = np.ma.masked_equal(mask, 0)
 
     for i in range(10):
@@ -388,12 +385,31 @@ def ffi(ccd=1, camera=1, sector=1, size=150, local_directory='', producing_mask=
         for j in range(14):  # 22
             source_path = f'{local_directory}source/{camera}-{ccd}/source_{i:02d}_{j:02d}.pkl'
             source_exists = exists(source_path)
+            source_config = {
+                'source_schema': SOURCE_SCHEMA_VERSION, 'ffi': 'SPOC',
+                'sector': sector, 'camera': camera, 'ccd': ccd, 'size': size,
+                'x': i * (size - 4), 'y': j * (size - 4),
+                'cadence': cadence.tolist(), 'time': time.tolist(),
+            }
             if source_exists and os.path.getsize(source_path) > 0:
-                # print(f'{source_path} exists. ')
-                pass
-            else:
-                with open(source_path, 'wb') as output:
-                    source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
-                                    time=time, size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
-                                    exposure=exposure, cadence=cadence)
+                try:
+                    with open(source_path, 'rb') as cached:
+                        source = pickle.load(cached)
+                    if getattr(source, '_tglc_cache_config', None) == source_config:
+                        continue
+                except (OSError, ValueError, EOFError, pickle.UnpicklingError, AttributeError, ImportError):
+                    pass
+                warnings.warn(f'Rebuilding incompatible source cache {source_path}')
+            source = Source(x=i * (size - 4), y=j * (size - 4), flux=flux, mask=mask, sector=sector,
+                            time=time, size=size, quality=quality, wcs=wcs, camera=camera, ccd=ccd,
+                            exposure=exposure, cadence=cadence)
+            source.cadence_origin = 'FFIINDEX'
+            source._tglc_cache_config = source_config
+            temporary = f'{source_path}.{os.getpid()}.tmp'
+            try:
+                with open(temporary, 'wb') as output:
                     pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+                os.replace(temporary, source_path)
+            finally:
+                if exists(temporary):
+                    os.remove(temporary)

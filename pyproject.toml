@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tglc"
+dynamic = ["version"]
+description = "TESS-Gaia Light Curve"
+readme = "README.rst"
+requires-python = ">=3.10, <3.13"
+license = {text = "MIT"}
+authors = [{name = "Te Han", email = "tehanhunter@gmail.com"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "astropy>=6.1,<6.2",
+    "astroquery==0.4.7",
+    "matplotlib>=3.8,<4.0",
+    "numpy>=1.23,<2.0",
+    "oauthlib",
+    "requests>=2.28,<3.0",
+    "scipy>=1.10,<2.0",
+    "threadpoolctl>=3.1,<4.0",
+    "tqdm>=4.64",
+    "wotan~=1.9",
+    "seaborn",
+    "pandas",
+    "importlib_resources",
+]
+
+[project.urls]
+Homepage = "https://github.com/TeHanHunter/TESS_Gaia_Light_Curve"
+Issues = "https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/issues"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+dev = ["pytest>=7", "build>=1", "twine>=5", "ruff"]
+
+[tool.setuptools.dynamic]
+version = {attr = "tglc.__version__"}
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["tglc", "tglc.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -m 'not network'"
+markers = ["network: tests requiring remote archives or other live services"]

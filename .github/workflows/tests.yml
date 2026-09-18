@@ -1,0 +1,33 @@
+name: Offline tests and package build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.10", "3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: python -m pip install --upgrade pip build twine
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - run: python -m pip install pytest dist/*.whl
+      - name: Test installed wheel outside the checkout
+        run: |
+          mkdir -p "$RUNNER_TEMP/tglc-wheel-tests"
+          cp -R tests "$RUNNER_TEMP/tglc-wheel-tests/tests"
+          cp pyproject.toml "$RUNNER_TEMP/tglc-wheel-tests/pyproject.toml"
+          cd "$RUNNER_TEMP/tglc-wheel-tests"
+          python -m pytest -ra --strict-markers -m 'not network' tests

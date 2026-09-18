@@ -8,6 +8,8 @@ import requests
 import time
 import contextlib
 import threading
+import json
+from pathlib import Path
 
 from os.path import exists
 from astroquery.gaia import Gaia
@@ -18,18 +20,90 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table, hstack, Column
 from astropy.wcs import WCS
 from tglc.ffi import tic_advanced_search_position_rows, convert_gaia_id
+from tglc.astrometry import (
+    MODEL_CATALOG_HALO, SOURCE_SCHEMA_VERSION, in_model_catalog,
+    persistent_bad_pixels, propagate_catalog_positions,
+)
 
 try:
     from tesscube import TESSCube
 except ImportError:
     TESSCube = None
 
-if not sys.warnoptions:
-    warnings.simplefilter("ignore")
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
+
+
+def _normalize_tic_target(target):
+    """Give equivalent TIC identifiers one query name and source-cache key."""
+    if isinstance(target, (bool, np.bool_)):
+        raise TypeError('A TIC identifier must be a positive integer, not a boolean.')
+    if isinstance(target, (int, np.integer)):
+        tic_id = int(target)
+    elif isinstance(target, str):
+        value = target.strip()
+        if value.upper().startswith('TIC'):
+            value = value[3:].strip()
+            if not value.isdecimal():
+                raise ValueError('Use a positive TIC identifier, for example "TIC 16005254".')
+        elif not value.isdecimal():
+            return target
+        tic_id = int(value)
+    else:
+        return target
+    if tic_id <= 0:
+        raise ValueError('A TIC identifier must be a positive integer.')
+    return f'TIC {tic_id}'
+
+
+def _validated_cadence_numbers(values, length):
+    """Validate identifiers, retaining -1 as unknown rather than inventing IDs."""
+    numbers = np.ma.asarray(values, dtype=float).filled(np.nan)
+    if numbers.ndim != 1 or len(numbers) != length:
+        raise ValueError('Cadence identifiers must have one value per image')
+    if np.any(np.isfinite(numbers) & ((numbers < -1) | (numbers != np.floor(numbers)))):
+        raise ValueError('Cadence identifiers must be nonnegative integers or -1 for unknown')
+    if np.any(np.isfinite(numbers) & (numbers > np.iinfo(np.int32).max)):
+        raise ValueError('Cadence identifiers must fit the FITS 32-bit cadence column')
+    result = np.full(length, -1, dtype=np.int64)
+    valid = np.isfinite(numbers) & (numbers >= 0)
+    result[valid] = numbers[valid].astype(np.int64)
+    if len(np.unique(result[valid])) != np.count_nonzero(valid):
+        raise ValueError('Repeated cadence identifiers do not uniquely identify images')
+    return result
+
+
+def _cutout_cadence_numbers(hdu, supplied=None):
+    """Read actual FITS cadence identifiers, excluding TESScut zero placeholders.
+
+    Some TESScut products contain a CADENCENO column filled entirely with zero.
+    Repeated values are placeholders, not usable mission cadence identifiers.
+    Missing identifiers stay -1; array row numbers are never substituted.
+    """
+    length = len(hdu.data)
+    explicit = None if supplied is None else _validated_cadence_numbers(supplied, length)
+    names = {name.upper(): name for name in hdu.columns.names}
+    for name in ('FFIINDEX', 'CADENCENO', 'CADENCE'):
+        if name not in names:
+            continue
+        values = np.asarray(hdu.data[names[name]], dtype=float).copy()
+        null = hdu.columns[names[name]].null
+        if null is not None:
+            values[values == null] = np.nan
+        try:
+            numbers = _validated_cadence_numbers(values, length)
+        except ValueError:
+            continue
+        # A sole zero still carries no evidence of a genuine identifier: this
+        # occurs when a zero-filled TESScut table is subset to one row.
+        if not np.any(numbers > 0):
+            continue
+        if explicit is not None and not np.array_equal(explicit, numbers):
+            raise ValueError('Explicit cadence identifiers disagree with the FITS cadence column')
+        return numbers, name
+    if explicit is not None:
+        return explicit, 'supplied'
+    return np.full(length, -1, dtype=np.int64), 'unavailable'
 
 
 @contextlib.contextmanager
@@ -69,7 +143,7 @@ class Source_cut(object):
                  mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
-        :param name: str, required
+        :param name: str or int, required
         Target identifier (e.g. "NGC 7654" or "M31"),
         or coordinate in the format of ra dec (e.g. '351.40691 61.646657')
         :param size: int, optional
@@ -78,6 +152,9 @@ class Source_cut(object):
         list of cadences of TESS FFI
         """
         super(Source_cut, self).__init__()
+        name = _normalize_tic_target(name)
+        self._provided_cadence = None if cadence is None or len(cadence) == 0 else cadence
+        self._provided_cadence_sector = None
         if cadence is None:
             cadence = []
         if size < 25:
@@ -94,29 +171,16 @@ class Source_cut(object):
         self.quality = []
         self.mask = []
         self.transient = transient
-        self.ffi = ffi
+        self.ffi = ffi.upper()
+        if self.ffi not in {'SPOC', 'TICA'}:
+            raise ValueError('ffi must be either SPOC or TICA')
+        ffi = self.ffi
+        self.source_schema_version = SOURCE_SCHEMA_VERSION
         Tesscut._service_api_connection.TIMEOUT = mast_timeout
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
 
-        def _parse_tic_id(t):
-            if not isinstance(t, str):
-                return None
-            s = t.strip()
-            if s.upper().startswith('TIC'):
-                parts = s.split()
-                if len(parts) > 1 and parts[1].isdigit():
-                    return int(parts[1])
-                s = s[3:].strip()
-            return int(s) if s.isdigit() else None
-
-        def _is_tic_id(t):
-            if not isinstance(t, str):
-                return False
-            s = t.strip()
-            return s.upper().startswith('TIC') or s.isdigit()
-
         target = None
-        is_tic = _is_tic_id(self.name) and _parse_tic_id(self.name) is not None
+        is_tic = isinstance(self.name, str) and self.name.startswith('TIC ')
         try:
             target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         except requests.exceptions.RequestException as e:
@@ -141,7 +205,7 @@ class Source_cut(object):
         dec = target[0]['dec']
         target_designation = target[0].get('designation', None)
         coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
-        radius = u.Quantity((self.size + 6) * 21 * 0.707 / 3600, u.deg)
+        radius = u.Quantity((self.size + 2 * MODEL_CATALOG_HALO) * 21 / np.sqrt(2) / 3600, u.deg)
         if target_designation:
             print(f'Target Gaia: {target_designation}')
         catalogdata = None
@@ -151,7 +215,7 @@ class Source_cut(object):
                     coord,
                     radius=radius,
                     columns=['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                             'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
+                             'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec', 'ref_epoch']
                 ).get_results()
             print(f'Found {len(catalogdata)} Gaia DR3 objects.')
         except Exception as exc:
@@ -160,7 +224,7 @@ class Source_cut(object):
             )
             try:
                 cone_columns = ', '.join(['DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag',
-                                          'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec'])
+                                          'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec', 'ref_epoch'])
                 row_limit = f"TOP {Gaia.ROW_LIMIT}" if Gaia.ROW_LIMIT > 0 else ""
                 cone_query = (
                     f"SELECT {row_limit} {cone_columns}, "
@@ -175,14 +239,10 @@ class Source_cut(object):
                     catalogdata.rename_column('designation', 'DESIGNATION')
                 print(f'Found {len(catalogdata)} Gaia DR3 objects from mirror TAP.')
             except Exception as exc2:
-                warnings.warn(
-                    f'Mirror Gaia TAP also failed ({exc2}). Falling back to MAST Gaia catalog (DR2).'
-                )
-                with _dot_wait('Querying Gaia catalog from MAST'):
-                    catalogdata = Catalogs.query_region(coord, radius=radius, catalog='Gaia', version=2)
-                if 'designation' in catalogdata.colnames and 'DESIGNATION' not in catalogdata.colnames:
-                    catalogdata.rename_column('designation', 'DESIGNATION')
-                print(f'Found {len(catalogdata)} Gaia objects from MAST fallback.')
+                raise RuntimeError(
+                    'Gaia DR3 cone search failed on both TAP services. Retry when a '
+                    'DR3 service is available; a DR2 catalog cannot be used as DR3.'
+                ) from exc2
         with _dot_wait('Querying TIC around target'):
             catalogdata_tic = tic_advanced_search_position_rows(
                 ra=ra,
@@ -247,12 +307,19 @@ class Source_cut(object):
             return
 
         index = self.sector_list.index(sector)
-        self.sector = sector
         hdu = self.hdulist[index]
         self.camera = int(hdu[0].header['CAMERA'])
         self.ccd = int(hdu[0].header['CCD'])
         wcs = WCS(hdu[2].header)
         data_time = hdu[1].data['TIME']
+        supplied = getattr(self, '_provided_cadence', None)
+        supplied_sector = getattr(self, '_provided_cadence_sector', None)
+        if supplied is not None and supplied_sector not in (None, sector):
+            raise ValueError('An explicit cadence array applies to one sector; create a separate source for another sector')
+        data_cadence, cadence_origin = _cutout_cadence_numbers(hdu[1], supplied=supplied)
+        if supplied is not None:
+            self._provided_cadence_sector = sector
+        self.sector = sector
         if self.ffi == 'SPOC':
             data_flux = hdu[1].data['FLUX']
             data_flux_err = hdu[1].data['FLUX_ERR']
@@ -270,30 +337,31 @@ class Source_cut(object):
         self.flux = data_flux
         self.flux_err = data_flux_err
         self.quality = data_quality
-        median_time = np.median(data_time)
-        interval = (median_time - 388.5) / 365.25
-
+        self.cadence = data_cadence
+        self.cadence_origin = cadence_origin
         mask = np.ones(np.shape(data_flux[0]))
-        bad_pixels = np.zeros(np.shape(data_flux[0]))
-        med_flux = np.median(data_flux, axis=0)
-        bad_pixels[med_flux > 0.8 * np.nanmax(med_flux)] = 1
-        bad_pixels[med_flux < 0.2 * np.nanmedian(med_flux)] = 1
-        bad_pixels[np.isnan(med_flux)] = 1
+        bad_pixels = persistent_bad_pixels(data_flux)
         mask = np.ma.masked_array(mask, mask=bad_pixels)
         self.mask = mask
 
-        gaia_targets = self.catalogdata[
-            'DESIGNATION', 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'ra', 'dec', 'pmra', 'pmdec']
+        # Copy before transient injection and propagation; selecting another
+        # sector must always start from the original reference coordinates.
+        gaia_targets = self.catalogdata.copy(copy_data=True)
 
         # inject transients
         if self.transient is not None:
-            gaia_targets.add_row([self.transient[0], 20, 20, 20, self.transient[1], self.transient[2], 0, 0])
+            transient_row = {
+                'DESIGNATION': self.transient[0], 'phot_g_mean_mag': 20,
+                'phot_bp_mean_mag': 20, 'phot_rp_mean_mag': 20,
+                'ra': self.transient[1], 'dec': self.transient[2], 'pmra': 0, 'pmdec': 0,
+            }
+            if 'ref_epoch' in gaia_targets.colnames:
+                transient_row['ref_epoch'] = 2016.0
+            gaia_targets.add_row(transient_row)
 
-        gaia_targets['phot_bp_mean_mag'].fill_value = np.nan
-        gaia_targets['phot_rp_mean_mag'].fill_value = np.nan
-        gaia_targets['pmra'].fill_value = np.nan
-        gaia_targets['pmdec'].fill_value = np.nan
-        gaia_targets = gaia_targets.filled()
+        for column in ['phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag', 'pmra', 'pmdec']:
+            gaia_targets[column] = np.ma.asarray(gaia_targets[column], dtype=float).filled(np.nan)
+        gaia_targets = propagate_catalog_positions(gaia_targets, self.time)
         num_gaia = len(gaia_targets)
         # tic_id = np.zeros(num_gaia)
         x_gaia = np.zeros(num_gaia)
@@ -301,12 +369,8 @@ class Source_cut(object):
         tess_mag = np.zeros(num_gaia)
         in_frame = [True] * num_gaia
         for i, designation in enumerate(gaia_targets['DESIGNATION']):
-            ra = gaia_targets['ra'][i]
-            dec = gaia_targets['dec'][i]
-            if not np.isnan(gaia_targets['pmra'][i]):
-                ra += gaia_targets['pmra'][i] * np.cos(np.deg2rad(dec)) * interval / 1000 / 3600
-            if not np.isnan(gaia_targets['pmdec'][i]):
-                dec += gaia_targets['pmdec'][i] * interval / 1000 / 3600
+            ra = gaia_targets['ra_epoch'][i]
+            dec = gaia_targets['dec_epoch'][i]
             pixel = self.wcs.all_world2pix(np.array([ra, dec]).reshape((1, 2)), 0)
             x_gaia[i] = pixel[0][0]
             y_gaia[i] = pixel[0][1]
@@ -314,7 +378,7 @@ class Source_cut(object):
                 in_frame[i] = False
             elif gaia_targets['phot_g_mean_mag'][i] >= 25:
                 in_frame[i] = False
-            elif -4 < x_gaia[i] < self.size + 3 and -4 < y_gaia[i] < self.size + 3:
+            elif in_model_catalog(x_gaia[i], y_gaia[i], self.flux.shape[1:]):
                 dif = gaia_targets['phot_bp_mean_mag'][i] - gaia_targets['phot_rp_mean_mag'][i]
                 tess_mag[i] = gaia_targets['phot_g_mean_mag'][
                                   i] - 0.00522555 * dif ** 3 + 0.0891337 * dif ** 2 - 0.633923 * dif + 0.0324473
@@ -322,6 +386,8 @@ class Source_cut(object):
                     tess_mag[i] = gaia_targets['phot_g_mean_mag'][i] - 0.430
             else:
                 in_frame[i] = False
+        if not np.any(in_frame):
+            raise ValueError('No usable Gaia DR3 sources overlap this image and its PSF halo')
         tess_flux = 10 ** (- tess_mag / 2.5)
         t = Table()
         t[f'tess_mag'] = tess_mag[in_frame]
@@ -394,7 +460,7 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
             mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
     """
     Function to generate Source_cut objects
-    :param target: string, required
+    :param target: string or integer, required
     target name
     :param local_directory: string, required
     output directory
@@ -404,6 +470,18 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
     TESS sector number
     :return: tglc.ffi_cut.Source_cut
     """
+    target = _normalize_tic_target(target)
+    ffi = ffi.upper()
+    if ffi not in {'SPOC', 'TICA'}:
+        raise ValueError('ffi must be either SPOC or TICA')
+    source_config = {
+        'source_schema': SOURCE_SCHEMA_VERSION, 'catalog': 'Gaia DR3',
+        'target': str(target), 'ffi': ffi, 'size': int(size), 'sector': sector,
+        'limit_mag': limit_mag, 'transient': transient,
+    }
+    # A JSON-normalized manifest gives lists/tuples and numpy/Python scalar
+    # requests the same cache identity without ambiguous array comparisons.
+    source_config = json.loads(json.dumps(source_config, default=lambda value: value.tolist()))
     if sector is None:
         source_name = f'source_{ffi}_{target}'
     elif sector == 'first':
@@ -412,15 +490,28 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
         source_name = f'source_{ffi}_{target}_last_sector'
     else:
         source_name = f'source_{ffi}_{target}_sector_{sector}'
-    source_exists = exists(f'{local_directory}source/{source_name}.pkl')
-    if source_exists and os.path.getsize(f'{local_directory}source/{source_name}.pkl') > 0:
-        with open(f'{local_directory}source/{source_name}.pkl', 'rb') as input_:
-            source = pickle.load(input_)
-        print(source.sector_table)
-        print('Loaded ffi_cut from directory. ')
-    else:
-        with open(f'{local_directory}source/{source_name}.pkl', 'wb') as output:
-            source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient, ffi=ffi,
-                                mast_timeout=mast_timeout, gaia_tap_server=gaia_tap_server)
+    source_path = Path(local_directory) / 'source' / f'{source_name}.pkl'
+    if source_path.is_file() and source_path.stat().st_size > 0:
+        try:
+            with source_path.open('rb') as input_:
+                source = pickle.load(input_)
+            if getattr(source, '_tglc_cache_config', None) == source_config:
+                print(source.sector_table)
+                print('Loaded ffi_cut from directory. ')
+                return source
+        except (OSError, ValueError, EOFError, pickle.UnpicklingError, AttributeError, ImportError):
+            pass
+        warnings.warn(f'Rebuilding incompatible source cache {source_path}')
+    source = Source_cut(target, size=size, sector=sector, limit_mag=limit_mag, transient=transient, ffi=ffi,
+                        mast_timeout=mast_timeout, gaia_tap_server=gaia_tap_server)
+    source._tglc_cache_config = source_config
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = source_path.with_name(f'{source_path.name}.{os.getpid()}.tmp')
+    try:
+        with temporary.open('wb') as output:
             pickle.dump(source, output, pickle.HIGHEST_PROTOCOL)
+        os.replace(temporary, source_path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
     return source

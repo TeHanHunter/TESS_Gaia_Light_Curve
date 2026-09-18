@@ -24,13 +24,29 @@ TESS-Gaia Light Curve (`TGLC <https://archive.stsci.edu/hlsp/tglc>`_) is a datas
 ==================================
 Usage
 ==================================
-There are four fluxes in each FITS file: aperture flux, PSF flux, calibrated aperture flux, and calibrated PSF flux.
-If you are uncertain which to use:
+Historical products contain four main flux columns. TGLC 0.8.0
+also writes ``aperture_flux_raw`` and ``psf_flux_raw``, giving six flux columns.
+Check the product's processing version and available columns before choosing:
 
-* Calibrated psf flux is better in **deblending** targets. Use this if you need to deblend a target near a variable source. The best deblending can be achieved with tglc package by setting a non-zero prior. It also gives the more accurate **transit depth** in most cases, especially when fitting with an optimized prior.
-* Calibrated aperture flux usually has slightly **higher SNR**. The transit depth (or variation amplitude), however, can be imperfect since the normalization depends on the PSF fitting which is imperfect. This imperfection can be minimized by using a bigger aperture than the default aperture (3*3). One need to use the tglc package and set tglc_lc(save_aper=True) to access the 5*5 aperture. In the presence of a bright but "constant" contamination (several magnitudes brighter), the calibrated aperture flux is better in removing the constant contamination. 
-* The aperture flux and PSF flux are not detrended or normalized. Use this if you are doing stellar variability science with long baseline. Or, if the detrending is not optimal (default detrending has a window length of 1 day; see Known Problems below), start with the aperture flux or PSF flux and detrend carefully!
-* **If you are uncertain, start with calibrated aperture flux!**
+* ``aperture_flux_raw`` is the decontaminated 3 by 3 pixel sum;
+  ``psf_flux_raw`` is the fitted target amplitude. Both retain signed values in
+  electrons/second before catalog-based additive offsets and detrending. They
+  are extracted photometry, not unprocessed detector measurements.
+* ``aperture_flux`` and ``psf_flux`` are not detrended, but **do include
+  catalog-based additive offsets**. Aperture flux also includes the modeled
+  aperture-fraction correction. The headers record the exact relationships:
+  ``aperture_flux = (aperture_flux_raw - LOC_BG) / PORTION`` and
+  ``psf_flux = psf_flux_raw - PSF_BG``.
+* ``cal_aper_flux`` and ``cal_psf_flux`` are normalized and detrended. They are
+  useful for an initial inspection of short-period signals; the default
+  one-day detrending can alter longer stellar variations.
+* Compare aperture and PSF results for your target. Transit depths and stellar
+  amplitudes depend on contamination, catalog flux estimates and the modeled
+  aperture fraction; neither flux choice guarantees the correct amplitude.
+  For custom calibration or detrending, start from the raw columns, inspect
+  the offsets and quality flags, and account for remaining contamination.
+  ``tglc_lc(save_aper=True)`` also saves the decontaminated 5 by 5 pixel cube for
+  inspecting other apertures, whose flux fractions need their own calibration.
 
 The `tutorial <tutorial/TGLC_tutorial.ipynb>`_ shows the syntaxes and differences among these light curves in several examples.
 
@@ -41,7 +57,7 @@ There are three data access methods:
 
 * MAST Portal: Easiest for acquiring light curves for a few stars. However, new sectors are updated relatively slowly. 
 * MAST bulk download: Best for downloading light curves for all stars (<16 TESS magnitude) in a sectors. 
-* tglc package: Capable of producing similar quality light curves for any sector and any star with custom options. 
+* tglc package: Generate customized light curves from available SPOC cutouts; see the workflow and limitations below.
 
 MAST Portal/bulk download
 ----------------------------
@@ -52,19 +68,79 @@ MAST available sectors: `sector worklist <https://docs.google.com/spreadsheets/d
 
 tglc package
 ----------------------------
-Users can also fit light curves using the package tglc. Using tglc, one can specify a region, sector(s), and customized aperture shape if needed. It can also allow all field stars to float by assigning Gaussian priors, which can help decontaminate variable field stars. tglc is currently only available for linux. Run::
+Users can also fit light curves using the package tglc. Using tglc, one can specify a region, sector(s), and customized aperture shape if needed. It can also allow all field stars to float by assigning Gaussian priors, which can help decontaminate variable field stars. The supported Python range is 3.10–3.12. Use a separate environment from the MIT QLP implementation because both packages install as ``tglc``. Run::
 
   pip install tglc
   
-for the latest tglc release. After installation, follow the `tutorial <tutorial/TGLC_tutorial.ipynb>`_ to fit light curves. If there is a problem, please leave a comment in the Issues section to help us improve. Thank you!
+for the latest published release. This documentation describes 0.8.0; see
+`GitHub Releases <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/releases>`_
+for published versions. To install this checkout, run
+``python -m pip install -e .`` from the repository directory.
+The `0.8.0 release notes <docs/release_0_8_0.md>`_ describe changes, migration,
+and validation status; the `1.0 roadmap <docs/release_1_0_0.md>`_ covers later work.
+
+**Important for upgrades:** earlier public versions contained an error in the
+subpixel coordinate mapping used for bilinear interpolation. Version 0.8.0 fixes
+it in both ePSF fitting and target rendering. **Fitted ePSFs from 0.8.0 and earlier
+versions are not interchangeable in either direction.** Refit from the science
+images and rerun extraction; renaming or converting old ePSF caches is insufficient.
+Existing light curves remain readable but are not corrected by installation.
+
+A single-target example::
+
+  from pathlib import Path
+  from tglc.quick_lc import tglc_lc, plot_lc
+
+  output = Path("tglc-output")
+  paths = tglc_lc(
+      target=16005254,                 # equivalent to "TIC 16005254"
+      local_directory=output,
+      first_sector_only=True,          # choose one sector for a first run
+      ffi="SPOC",
+      saturation_limit=80000.0,         # conservative cutoff in electrons/second
+      saturation_dilation=1,
+  )
+  print(paths)                         # FITS paths generated during this call
+  plot_lc(local_directory=output, ffi="SPOC")
+
+This example contacts MAST and Gaia and downloads science data. New files are
+written below ``lc/SPOC/`` (or ``lc/TICA/``). Old files in ``lc/`` remain separate.
+Path objects and strings work without a trailing slash. The saturation cutoff
+masks pixels during fitting; it does not establish validated photometry for
+saturated targets. See the `usage reference <docs/usage.rst>`_ and
+`tutorial <tutorial/TGLC_tutorial.ipynb>`_ for interpreting the outputs.
+
+Development
+-----------
+
+From a checkout, install into a dedicated virtual environment::
+
+  python -m pip install -e '.[dev]'
+  python -m pytest
+  python -m build
+  python -m twine check dist/*
+
+The default test suite is offline. Network tests are marked separately. The CI
+workflow is configured to build and test the installed wheel on Linux and macOS
+with Python 3.10–3.12. The
+standalone ``scripts/quick_lc_smoketest.py`` downloads all available sectors and
+should be run deliberately, with sufficient disk space and time.
 
 
 ==================================
 Known Problems
 ==================================
-There are several imperfections we noticed in the MAST TGLC light curves and tglc package:
-
-* If the star is very dim (~< 15 Tmag) near a variable source, it can make the aperture and/or PSF light curve negative for some cadences. The detrending algorithm could malfunction and result in bad cal_aper_flux and/or cal_psf_flux. This is now fixed for tglc package, but this problem remains for the primary mission light curves published on MAST. Please detrend again if necessary. The extended mission light curves on MAST will not be affected. This is a very rare scenario, but could be important.
+* Catalog-based offsets and aperture fractions can change fractional amplitudes.
+  The raw columns and reconstruction headers let users inspect these adjustments;
+  catalog-normalized flux is not independently calibrated absolute photometry.
+* The configurable saturation mask protects PSF fits. Its default 80000 e-/s
+  cutoff and one-pixel dilation are approximate, and long bleed trails can extend
+  beyond the mask. Accurate photometry of saturated targets is not established.
+* TICA remains experimental. The recommended public workflow uses SPOC inputs.
+  For precise timing, verify the target-versus-cutout reference correction;
+  SPOC timestamps are retained without a second full barycentric correction.
+* Installing 0.8.0 does not regenerate existing MAST products. Check their
+  version, flags and flux definitions separately from newly extracted files.
 
 ==================================
 Reference
