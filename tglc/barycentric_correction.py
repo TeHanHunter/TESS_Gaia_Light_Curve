@@ -5,6 +5,7 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimeDelta, TimeFromEpoch
 import astropy.units as u
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
 
 def get_ephemeris_file_path(sector: int) -> Path:
@@ -47,7 +48,7 @@ class TESSJD(TimeFromEpoch):
 
 
 def apply_barycentric_correction(
-        sector: int, tjd: np.typing.ArrayLike, coord: SkyCoord
+        sector: int, tjd: ArrayLike, coord: SkyCoord
 ) -> np.ndarray:
     """
     Apply barycentric time correction to timestamps in from a given sector.

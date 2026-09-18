@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.1
+
+- Fix issue #18: explicitly import `ArrayLike` from `numpy.typing` so importing
+  TGLC does not depend on another package exposing `np.typing` first. This fixes
+  the `AttributeError: module 'numpy' has no attribute 'typing'` reported with
+  NumPy 1.26.4.
+- Add an isolated import regression that removes incidental NumPy typing
+  initialization before importing the real barycentric-correction module.
+- Use absolute README documentation links so they also work on PyPI.
+
+No changes to photometry, interpolation, saturation masking, or numerical
+settings. `PROCVER` remains `spoc-0.8.0`; 0.8.0 and 0.8.1 ePSF caches are
+compatible. The incompatibility with pre-0.8.0 fitted ePSFs still applies.
+
 ## 0.8.0
 
 Corrected SPOC extraction and robustness improvements. New products carry
