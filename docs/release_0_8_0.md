@@ -24,6 +24,8 @@ this checkout does not by itself mean that PyPI or GitHub artifacts are publishe
 - Validate source/ePSF caches and record fit configuration/provenance in outputs.
 - Accept integer/string TIC IDs and filesystem paths, return generated FITS
   paths, update plotting, and consolidate packaging, documentation, and tests.
+  The integer-TIC fix proposed in PR #16 is included for both `tglc_lc` and
+  direct `ffi_cut`/`Source_cut` calls; equivalent TIC forms share a source cache.
 
 ## Migration from 0.7.x and preparation builds
 
@@ -53,7 +55,7 @@ this checkout does not by itself mean that PyPI or GitHub artifacts are publishe
 
 ## Evidence and limits
 
-The installed 0.8.0 wheel passed 106 offline tests with one explicit small-field
+The installed 0.8.0 wheel passed 135 offline tests with one explicit small-field
 stress-case expected failure. Wheel/sdist validation and an identical wheel
 rebuilt from the sdist passed. The Linux/macOS Python 3.10–3.12 matrix also
 passed. Real-signal comparisons cover three planet sectors and a known stellar

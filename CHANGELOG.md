@@ -29,6 +29,9 @@ processing and are not corrected by installing the update.
   Separate output directories by FFI product and validate scientific caches.
 - Consolidate package metadata, Python 3.10–3.12 support, public TIC/path handling,
   returned output paths, product-aware plotting, documentation, and wheel CI.
+- Include the integer-TIC regression fix proposed in PR #16 for both `tglc_lc`
+  and direct `ffi_cut`/`Source_cut` calls. Equivalent integer and string TIC
+  identifiers use the same catalog lookup and source-cache identity.
 - Add independent numerical, mixed-failure, public API, and serialization tests.
   A strict expected failure records variable-target feedback in a small
   12-star stress case. Larger-field experiments strongly reduce the effect;

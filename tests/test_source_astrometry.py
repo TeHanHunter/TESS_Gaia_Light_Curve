@@ -287,3 +287,67 @@ def test_failed_source_rebuild_preserves_previous_cache(tmp_path, monkeypatch):
         with pytest.raises(RuntimeError, match='catalog unavailable'):
             module.ffi_cut('TIC 123', tmp_path, sector=56, ffi='SPOC')
     assert cache.read_bytes() == old_bytes
+
+
+@pytest.mark.parametrize('target', [123, np.int64(123), '123', 'TIC 123', 'tic123', ' TIC 00123 '])
+@pytest.mark.parametrize('entrypoint', ['Source_cut', 'ffi_cut'])
+def test_direct_cutout_tic_forms_normalize_both_name_lookups(tmp_path, monkeypatch, target, entrypoint):
+    module = importlib.import_module('tglc.ffi_cut')
+    queries = []
+    def missing_target(name, **kwargs):
+        queries.append((name, kwargs))
+        return Table()
+    monkeypatch.setattr(module.Catalogs, 'query_object', missing_target)
+    # Empty first and wider lookups stop the real constructor before catalog
+    # or image downloads, while exercising both remote request boundaries.
+    with pytest.raises(RuntimeError, match='MAST name lookup failed for TIC target'):
+        if entrypoint == 'Source_cut':
+            module.Source_cut(target, size=30, sector=56, ffi='SPOC')
+        else:
+            module.ffi_cut(target, local_directory=tmp_path, size=30, sector=56, ffi='SPOC')
+    assert [query[0] for query in queries] == ['TIC 123', 'TIC 123']
+    assert queries[1][1]['radius'] == pytest.approx(5 * queries[0][1]['radius'])
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize('target', [True, np.bool_(False), 0, np.int64(-1), '0', 'TIC 0', 'TIC wrong'])
+@pytest.mark.parametrize('entrypoint', ['Source_cut', 'ffi_cut'])
+def test_direct_cutout_rejects_invalid_tic_before_queries(tmp_path, monkeypatch, target, entrypoint):
+    module = importlib.import_module('tglc.ffi_cut')
+    def forbidden_query(*args, **kwargs):
+        pytest.fail('Invalid TIC identifiers must fail before a remote query')
+    monkeypatch.setattr(module.Catalogs, 'query_object', forbidden_query)
+    with pytest.raises((ValueError, TypeError), match='TIC'):
+        if entrypoint == 'Source_cut':
+            module.Source_cut(target, ffi='SPOC')
+        else:
+            module.ffi_cut(target, local_directory=tmp_path, ffi='SPOC')
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize('target', ['NGC 7654', '351.40691 61.646657'])
+def test_direct_cutout_preserves_non_tic_names(monkeypatch, target):
+    module = importlib.import_module('tglc.ffi_cut')
+    queries = []
+    def missing_target(name, **kwargs):
+        queries.append(name)
+        return Table()
+    monkeypatch.setattr(module.Catalogs, 'query_object', missing_target)
+    with pytest.raises(RuntimeError, match='Unable to resolve target'):
+        module.Source_cut(target, ffi='SPOC')
+    assert queries == [target, target]
+
+
+def test_direct_cutout_tic_forms_share_one_source_cache(tmp_path, monkeypatch):
+    module = importlib.import_module('tglc.ffi_cut')
+    names = []
+    def build(name, **kwargs):
+        names.append(name)
+        return SimpleNamespace(name=name, sector_table='test')
+    monkeypatch.setattr(module, 'Source_cut', build)
+    for target in [123, np.int64(123), '123', 'TIC 123', 'tic123', ' TIC 00123 ']:
+        source = module.ffi_cut(target, local_directory=tmp_path, sector=56, ffi='SPOC')
+        assert source.name == 'TIC 123'
+        assert source._tglc_cache_config['target'] == 'TIC 123'
+    assert names == ['TIC 123']
+    assert [path.name for path in (tmp_path / 'source').iterdir()] == ['source_SPOC_TIC 123_sector_56.pkl']

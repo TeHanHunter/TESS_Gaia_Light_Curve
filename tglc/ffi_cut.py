@@ -34,6 +34,28 @@ Gaia.ROW_LIMIT = -1
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 
 
+def _normalize_tic_target(target):
+    """Give equivalent TIC identifiers one query name and source-cache key."""
+    if isinstance(target, (bool, np.bool_)):
+        raise TypeError('A TIC identifier must be a positive integer, not a boolean.')
+    if isinstance(target, (int, np.integer)):
+        tic_id = int(target)
+    elif isinstance(target, str):
+        value = target.strip()
+        if value.upper().startswith('TIC'):
+            value = value[3:].strip()
+            if not value.isdecimal():
+                raise ValueError('Use a positive TIC identifier, for example "TIC 16005254".')
+        elif not value.isdecimal():
+            return target
+        tic_id = int(value)
+    else:
+        return target
+    if tic_id <= 0:
+        raise ValueError('A TIC identifier must be a positive integer.')
+    return f'TIC {tic_id}'
+
+
 def _validated_cadence_numbers(values, length):
     """Validate identifiers, retaining -1 as unknown rather than inventing IDs."""
     numbers = np.ma.asarray(values, dtype=float).filled(np.nan)
@@ -121,7 +143,7 @@ class Source_cut(object):
                  mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
         """
         Source_cut object that includes all data from TESS and Gaia DR3
-        :param name: str, required
+        :param name: str or int, required
         Target identifier (e.g. "NGC 7654" or "M31"),
         or coordinate in the format of ra dec (e.g. '351.40691 61.646657')
         :param size: int, optional
@@ -130,6 +152,7 @@ class Source_cut(object):
         list of cadences of TESS FFI
         """
         super(Source_cut, self).__init__()
+        name = _normalize_tic_target(name)
         self._provided_cadence = None if cadence is None or len(cadence) == 0 else cadence
         self._provided_cadence_sector = None
         if cadence is None:
@@ -156,25 +179,8 @@ class Source_cut(object):
         Tesscut._service_api_connection.TIMEOUT = mast_timeout
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
 
-        def _parse_tic_id(t):
-            if not isinstance(t, str):
-                return None
-            s = t.strip()
-            if s.upper().startswith('TIC'):
-                parts = s.split()
-                if len(parts) > 1 and parts[1].isdigit():
-                    return int(parts[1])
-                s = s[3:].strip()
-            return int(s) if s.isdigit() else None
-
-        def _is_tic_id(t):
-            if not isinstance(t, str):
-                return False
-            s = t.strip()
-            return s.upper().startswith('TIC') or s.isdigit()
-
         target = None
-        is_tic = _is_tic_id(self.name) and _parse_tic_id(self.name) is not None
+        is_tic = isinstance(self.name, str) and self.name.startswith('TIC ')
         try:
             target = Catalogs.query_object(self.name, radius=21 * 0.707 / 3600, catalog="Gaia", version=2)
         except requests.exceptions.RequestException as e:
@@ -454,7 +460,7 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
             mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
     """
     Function to generate Source_cut objects
-    :param target: string, required
+    :param target: string or integer, required
     target name
     :param local_directory: string, required
     output directory
@@ -464,6 +470,7 @@ def ffi_cut(target='', local_directory='', size=90, sector=None, limit_mag=None,
     TESS sector number
     :return: tglc.ffi_cut.Source_cut
     """
+    target = _normalize_tic_target(target)
     ffi = ffi.upper()
     if ffi not in {'SPOC', 'TICA'}:
         raise ValueError('ffi must be either SPOC or TICA')
