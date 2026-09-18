@@ -1,6 +1,89 @@
 import numpy as np
+from scipy.linalg import lstsq
 from wotan import flatten
 import tglc
+from tglc.pixel_quality import build_pixel_mask
+
+
+def _source_pixel_mask(source, time, saturation_limit, saturation_dilation, extra_pixel_mask=None):
+    base = np.ma.getmaskarray(source.mask)
+    if base.shape != source.flux[time].shape:
+        base = np.zeros(source.flux[time].shape, dtype=bool)
+    supplied = getattr(source, 'pixel_mask', None)
+    if supplied is not None:
+        supplied = np.asarray(supplied, dtype=bool)
+        if supplied.shape == source.flux.shape:
+            supplied = supplied[time]
+        if supplied.shape != base.shape:
+            raise ValueError('source.pixel_mask must match an image or the flux cube')
+        base = base | supplied
+    if extra_pixel_mask is not None:
+        extra = np.asarray(extra_pixel_mask, dtype=bool)
+        if extra.shape != base.shape:
+            raise ValueError('extra_pixel_mask must match the image shape')
+        base = base | extra
+    return build_pixel_mask(source.flux[time], base, saturation_limit, saturation_dilation)
+
+
+def _fit_linear_model(matrix, values):
+    """Solve finite, full-rank systems without squaring their condition number."""
+    matrix, values = np.asarray(matrix), np.asarray(values)
+    failed = np.full(matrix.shape[1], np.nan)
+    valid = np.isfinite(values) & np.isfinite(matrix).all(axis=1)
+    if np.count_nonzero(valid) < matrix.shape[1]:
+        return failed
+    try:
+        fit, _, rank, _ = lstsq(matrix[valid], values[valid], lapack_driver='gelsy', check_finite=False)
+    except (ValueError, np.linalg.LinAlgError):
+        return failed
+    return fit if rank == matrix.shape[1] and np.isfinite(fit).all() else failed
+
+
+def _psf_axis_samples(pixels, position, factor, over_size):
+    """Sample the centered ePSF at detector-pixel minus actual star position."""
+    coordinates = (pixels - position) * factor + over_size // 2
+    nodes = np.floor(coordinates).astype(int)
+    # At the last grid node use the interval to its left with weight one.
+    # All detector pixels have the same subpixel phase, so shift the entire
+    # sequence together and retain the historical four-weights star_info API.
+    if len(nodes) and np.max(nodes) == over_size - 1:
+        nodes -= 1
+    fraction = coordinates[0] - nodes[0] if len(nodes) else 0.0
+    if len(nodes) and (np.min(nodes) < 0 or np.max(nodes) >= over_size - 1):
+        raise ValueError('Detector samples fall outside the supported PSF grid')
+    return nodes, fraction
+
+
+def _is_full_frame_source(source):
+    # Importing the numerical module must not require catalog/network clients.
+    return type(source) is getattr(getattr(tglc, 'ffi', None), 'Source', None)
+
+
+def _target_psf_model(source, star_num, e_psf, factor, psf_size):
+    """Evaluate a target over its full support, including pixels outside the cutout."""
+    over_size = psf_size * factor + 1
+    x = float(source.gaia[f'sector_{source.sector}_x'][star_num])
+    y = float(source.gaia[f'sector_{source.sector}_y'][star_num])
+    offsets = np.arange(psf_size) - psf_size // 2
+    ix, dx = _psf_axis_samples(offsets + round(x), x, factor, over_size)
+    iy, dy = _psf_axis_samples(offsets + round(y), y, factor, over_size)
+    nodes = (ix[None, :] + over_size * iy[:, None]).flatten()
+    indices = np.stack((nodes, nodes + 1, nodes + over_size, nodes + over_size + 1), axis=1)
+    weights = bilinear(dx, dy) * source.gaia['tess_flux_ratio'][star_num]
+    return (e_psf[:, indices] @ weights).reshape(len(e_psf), psf_size, psf_size)
+
+
+def _aperture_portion(psf_shape, source_size, x, y):
+    """Fraction in the available central 3x3, relative to complete PSF support."""
+    half = psf_shape.shape[1] // 2
+    valid = np.isfinite(psf_shape).all(axis=(1, 2))
+    model = psf_shape[valid]
+    denominator = np.sum(model)
+    if not model.size or not np.isfinite(denominator) or denominator <= 0:
+        return np.nan
+    left, right = max(half - 1, half - int(x)), min(half + 2, half + source_size - int(x))
+    down, up = max(half - 1, half - int(y)), min(half + 2, half + source_size - int(y))
+    return np.sum(model[:, down:up, left:right]) / denominator
 
 
 def bilinear(x, y, repeat=1):
@@ -38,8 +121,10 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     y_round: star vertical pixel coordinates rounded
     """
     # even only
-    if factor % 2 != 0:
-        raise ValueError('Factor must be even.')
+    if factor <= 0 or int(factor) != factor or factor % 2 != 0:
+        raise ValueError('Factor must be a positive even integer.')
+    if psf_size <= 0 or int(psf_size) != psf_size or psf_size % 2 != 1:
+        raise ValueError('psf_size must be a positive odd integer.')
     psf_size = psf_size
     half_size = int((psf_size - 1) / 2)
     over_size = psf_size * factor + 1
@@ -58,19 +143,17 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     x_round = np.round(x_shift).astype(int)
     y_round = np.round(y_shift).astype(int)
 
-    left = np.maximum(0, x_round - half_size)
-    right = np.minimum(size, x_round + half_size) + 1
-    down = np.maximum(0, y_round - half_size)
-    up = np.minimum(size, y_round + half_size) + 1
-    x_residual = x_shift % (1 / factor) * factor
-    y_residual = y_shift % (1 / factor) * factor
+    left = np.clip(x_round - half_size, 0, size)
+    right = np.clip(x_round + half_size + 1, 0, size)
+    down = np.clip(y_round - half_size, 0, size)
+    up = np.clip(y_round + half_size + 1, 0, size)
 
     x_p = np.arange(size)
     y_p = np.arange(size)
     coord = np.arange(size ** 2).reshape(size, size)
     xx, yy = np.meshgrid((np.arange(size) - (size - 1) / 2), (np.arange(size) - (size - 1) / 2))
 
-    if type(source) == tglc.ffi.Source:
+    if _is_full_frame_source(source):
         bg_dof = 6
         A = np.zeros((size ** 2, over_size ** 2 + bg_dof))
         A[:, -1] = np.ones(size ** 2)
@@ -89,19 +172,19 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     for i in range(len(source.gaia)):
         #     if i == 8:
         #         continue
-        x_psf = factor * (x_p[left[i]:right[i]] - x_round[i] + half_size) + (x_shift[i] % 1) // (1 / factor)
-        y_psf = factor * (y_p[down[i]:up[i]] - y_round[i] + half_size) + (y_shift[i] % 1) // (1 / factor)
+        x_psf, x_residual = _psf_axis_samples(x_p[left[i]:right[i]], x_shift[i], factor, over_size)
+        y_psf, y_residual = _psf_axis_samples(y_p[down[i]:up[i]], y_shift[i], factor, over_size)
         x_psf, y_psf = np.meshgrid(x_psf, y_psf)  # super slow here
         a = np.array(x_psf + y_psf * over_size, dtype=np.int64).flatten()
         index = coord[down[i]:up[i], left[i]:right[i]]
         A[np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F')] += \
-            flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))
+            flux_ratio[i] * bilinear(x_residual, y_residual, repeat=len(a))
         # star_info.append(
         #     (np.repeat(index, 4), np.array([a, a + 1, a + over_size, a + over_size + 1]).flatten(order='F'),
         #      flux_ratio[i] * bilinear(x_residual[i], y_residual[i], repeat=len(a))))
         star_info.append(
-            (index, a, flux_ratio[i] * bilinear(x_residual[i], y_residual[i])))
-    coord_ = np.arange(- psf_size * factor / 2 + 1, psf_size * factor / 2 + 2)
+            (index, a, flux_ratio[i] * bilinear(x_residual, y_residual)))
+    coord_ = np.arange(over_size) - over_size // 2
     x_coord, y_coord = np.meshgrid(coord_, coord_)
     variance = psf_size
     dist = (1 - np.exp(- 0.5 * (x_coord ** 4 + y_coord ** 4) / variance ** 4)) * edge_compression  # 1e-3
@@ -111,9 +194,14 @@ def get_psf(source, factor=2, psf_size=11, edge_compression=1e-4, c=np.array([0,
     return A, star_info, over_size, x_round, y_round
 
 
-def fit_psf(A, source, over_size, power=0.8, time=0):
+def fit_psf(A, source, over_size, power=0.8, time=0, saturation_limit=80000.0,
+            saturation_dilation=1, extra_pixel_mask=None):
     """
-    fit_psf using least_square (improved performance by changing to np.linalg.solve)
+    Fit the ePSF with weighted, rank-revealing least squares.
+
+    Saturation thresholds are in e-/s. Persistent masks, per-cadence saturation,
+    nonfinite pixels, and zero-weight pixels are excluded. An underdetermined or
+    numerically failed fit returns NaN parameters rather than plausible values.
     :param A: np.ndarray, required
     2d matrix for least_square
     :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
@@ -125,11 +213,21 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     <1 means emphasizing dimmer stars
     :param time: int, required
     time index of this ePSF fit
+    :param saturation_limit: float or None, optional
+    Pixel saturation threshold in e-/s; None disables the brightness threshold.
+    :param saturation_dilation: int, optional
+    Number of adjacent-pixel dilation iterations around saturated pixels.
+    :param extra_pixel_mask: array, optional
+    Additional two-dimensional mask, with True indicating excluded pixels.
     :return: fit result
     """
-    saturated_index = source.mask.mask.flatten()
+    saturated_index = _source_pixel_mask(source, time, saturation_limit, saturation_dilation,
+                                         extra_pixel_mask).flatten()
     flux = source.flux[time].flatten()
-    saturated_index[flux < 0.8 * np.nanmedian(flux)] = True
+    usable = ~saturated_index
+    if not np.any(usable):
+        return np.full(A.shape[1], np.nan)
+    saturated_index |= flux < 0.8 * np.median(flux[usable])
 
     b = np.delete(flux, saturated_index)
     scaler = np.abs(np.delete(flux, saturated_index)) ** power
@@ -139,17 +237,11 @@ def fit_psf(A, source, over_size, power=0.8, time=0):
     # fit = np.linalg.lstsq(A / scaler[:, np.newaxis], b / scaler, rcond=None)[0]
     a = np.delete(A, np.where(saturated_index), 0) / scaler[:, np.newaxis]
     b = b / scaler
-    alpha = np.dot(a.T, a)
-    beta = np.dot(a.T, b)
-    try:
-        fit = np.linalg.solve(alpha, beta)
-    except np.linalg.LinAlgError:
-        fit = np.full(np.shape(a)[1], np.nan)
-        # fit = np.linalg.lstsq(a, b, rcond=None)[0]
-    return fit
+    return _fit_linear_model(a, b)
 
 
-def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size=11, e_psf=None, near_edge=False):
+def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size=11, e_psf=None,
+           near_edge=False, saturation_limit=80000.0, saturation_dilation=1, extra_pixel_mask=None):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -183,11 +275,9 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
     cut_size = 5
-    in_frame = np.where(np.invert(np.isnan(source.flux[0])))
-    left = np.maximum(np.min(in_frame[1]), x - cut_size // 2)
-    right = np.minimum(np.max(in_frame[1]), x + cut_size // 2 + 1)
-    down = np.maximum(np.min(in_frame[0]), y - cut_size // 2)
-    up = np.minimum(np.max(in_frame[0]), y + cut_size // 2 + 1)
+    left, right = max(0, int(x) - cut_size // 2), min(size, int(x) + cut_size // 2 + 1)
+    down, up = max(0, int(y) - cut_size // 2), min(size, int(y) + cut_size // 2 + 1)
+    near_edge = near_edge or right - left != cut_size or up - down != cut_size
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
@@ -215,30 +305,16 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
 
     # psf_lc
     over_size = psf_size * factor + 1
+    psf_shape = _target_psf_model(source, star_num, e_psf, factor, psf_size)
+    portion = _aperture_portion(psf_shape, size, x, y)
     if near_edge:  # TODO: near_edge
         psf_lc = np.zeros(len(source.time))
-        psf_lc[:] = np.NaN
-        e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
-        portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
+        psf_lc[:] = np.nan
         return aperture, psf_lc, y - down, x - left, portion, target_5x5, field_stars_5x5
-    left_ = left - x + 5
-    right_ = right - x + 5
-    down_ = down - y + 5
-    up_ = up - y + 5
-
-    left_11 = np.maximum(- x + 5, 0)
-    right_11 = np.minimum(size - x + 5, 11)
-    down_11 = np.maximum(- y + 5, 0)
-    up_11 = np.minimum(size - y + 5, 11)
-    coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
-    index = coord[down_11:up_11, left_11:right_11]
-    if type(source) == tglc.ffi.Source:
-        bg_dof = 6
-    else:
-        bg_dof = 3
-    A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
-    A[np.repeat(index, 4), star_info_num[1]] = star_info_num[2]
-    psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
+    left_ = left - x + psf_size // 2
+    right_ = right - x + psf_size // 2
+    down_ = down - y + psf_size // 2
+    up_ = up - y + psf_size // 2
     psf_sim = psf_shape[:, down_:up_, left_: right_]
     # psf_sim = np.transpose(psf_shape[:, down_:up_, left_: right_], (0, 2, 1))
 
@@ -257,9 +333,12 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
     #                        28, 29, 33, 34,
     #                        35, 36, 37, 38, 39, 40, 41,
     #                        42, 43, 44, 45, 46, 47, 48])
-    med_aperture = np.median(aperture, axis=0).flatten()
-    outliers = np.abs(med_aperture[edge_pixel] - np.nanmedian(med_aperture[edge_pixel])) > 1 * np.std(
-        med_aperture[edge_pixel])
+    med_aperture = np.ma.median(np.ma.masked_invalid(aperture), axis=0).filled(np.nan).flatten()
+    edge_flux = med_aperture[edge_pixel]
+    finite_edge = edge_flux[np.isfinite(edge_flux)]
+    outliers = np.zeros(len(edge_pixel), dtype=bool)
+    if finite_edge.size:
+        outliers = np.abs(edge_flux - np.median(finite_edge)) > np.std(finite_edge)
     epsf_sum = np.sum(np.nanmedian(psf_shape, axis=0))
     for j in range(len(source.time)):
         if np.isnan(psf_sim[j, :, :]).any():
@@ -267,17 +346,18 @@ def fit_lc(A, source, star_info=None, x=0., y=0., star_num=0, factor=2, psf_size
         else:
             aper_flat = aperture[j, :, :].flatten()
             A_[:, 0] = psf_sim[j, :, :].flatten() / epsf_sum
-            a = np.delete(A_, edge_pixel[outliers], 0)
-            aper_flat = np.delete(aper_flat, edge_pixel[outliers])
-            psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][0]
-    portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
+            bad = _source_pixel_mask(source, j, saturation_limit, saturation_dilation,
+                                     extra_pixel_mask)[down:up, left:right].flatten()
+            bad[edge_pixel[outliers]] = True
+            psf_lc[j] = _fit_linear_model(A_[~bad], aper_flat[~bad])[0]
     # print(np.nansum(psf_shape[:, 5, 5]) / np.nansum(psf_shape))
     # np.save(f'toi-5344_psf_{source.sector}.npy', psf_shape)
     return aperture, psf_lc, y - down, x - left, portion, target_5x5, field_stars_5x5
 
 
 def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([]), star_num=0, factor=2, psf_size=11,
-                       e_psf=None, near_edge=False, prior=0.001):
+                       e_psf=None, near_edge=False, prior=0.001, saturation_limit=80000.0,
+                       saturation_dilation=1, extra_pixel_mask=None):
     """
     Produce matrix for least_square fitting without a certain target
     :param A: np.ndarray, required
@@ -302,6 +382,8 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
     whether the star is 2 pixels or closer to the edge of a CCD
     :return: aperture lightcurve, PSF lightcurve, vertical pixel coord, horizontal pixel coord, portion of light in aperture
     """
+    if not np.isfinite(prior) or prior <= 0:
+        raise ValueError('prior must be positive and finite')
     over_size = psf_size * factor + 1
     a = star_info[star_num][1]
     star_info_num = (np.repeat(star_info[star_num][0], 4),
@@ -311,11 +393,11 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
     # star_position = int(x + source.size * y - 5 * size - 5)
     # aper_lc
     cut_size = 5
-    in_frame = np.where(np.invert(np.isnan(source.flux[0])))
-    left = np.maximum(np.min(in_frame[1]), x[star_num] - cut_size // 2)
-    right = np.minimum(np.max(in_frame[1]), x[star_num] + cut_size // 2 + 1)
-    down = np.maximum(np.min(in_frame[0]), y[star_num] - cut_size // 2)
-    up = np.minimum(np.max(in_frame[0]), y[star_num] + cut_size // 2 + 1)
+    left = max(0, int(x[star_num]) - cut_size // 2)
+    right = min(size, int(x[star_num]) + cut_size // 2 + 1)
+    down = max(0, int(y[star_num]) - cut_size // 2)
+    up = min(size, int(y[star_num]) + cut_size // 2 + 1)
+    near_edge = near_edge or right - left != cut_size or up - down != cut_size
     coord = np.arange(size ** 2).reshape(size, size)
     index = np.array(coord[down:up, left:right]).flatten()
     A_cut = np.zeros((len(index), np.shape(A)[1]))
@@ -331,17 +413,17 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
 
     # psf_lc
     over_size = psf_size * factor + 1
+    target_model = _target_psf_model(source, star_num, e_psf, factor, psf_size)
+    portion = _aperture_portion(target_model, size, x[star_num], y[star_num])
     if near_edge:  # TODO: near_edge
         psf_lc = np.zeros(len(source.time))
-        psf_lc[:] = np.NaN
-        e_psf_1d = np.nanmedian(e_psf[:, :over_size ** 2], axis=0).reshape(over_size, over_size)
-        portion = (36 / 49) * np.nansum(e_psf_1d[8:15, 8:15]) / np.nansum(e_psf_1d)  # only valid for factor = 2
+        psf_lc[:] = np.nan
         return aperture, psf_lc, y[star_num] - down, x[star_num] - left, portion
     # left_ = left - x[star_num] + 5
     # right_ = right - x[star_num] + 5
     # down_ = down - y[star_num] + 5
     # up_ = up - y[star_num] + 5
-    if type(source) == tglc.ffi.Source:
+    if _is_full_frame_source(source):
         bg_dof = 6
     else:
         bg_dof = 3
@@ -357,7 +439,11 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
     A_[:(cut_size ** 2), -1] = np.ones(cut_size ** 2)
     A_[:(cut_size ** 2), -2] = yy.flatten()
     A_[:(cut_size ** 2), -3] = xx.flatten()
-    psf_sim = np.zeros((len(source.time), 11 ** 2 + len(field_star_num), len(field_star_num)))
+    psf_sim = np.zeros((len(source.time), psf_size ** 2 + len(field_star_num), len(field_star_num)))
+    coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
+    center = psf_size // 2
+    window_indices = coord[center - cut_size // 2:center + cut_size // 2 + 1,
+                           center - cut_size // 2:center + cut_size // 2 + 1]
     for j, star in enumerate(field_star_num):
         a = star_info[star][1]
         star_info_star = (np.repeat(star_info[star][0], 4),
@@ -367,37 +453,26 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
         delta_y = y[star_num] - y[star]
         # for psf_sim
         left_shift = np.maximum(delta_x, 0)
-        right_shift = np.minimum(11 + delta_x, 11)
+        right_shift = np.minimum(psf_size + delta_x, psf_size)
         down_shift = np.maximum(delta_y, 0)
-        up_shift = np.minimum(11 + delta_y, 11)
+        up_shift = np.minimum(psf_size + delta_y, psf_size)
         # for psf_shape
         left_shift_ = np.maximum(-delta_x, 0)
-        right_shift_ = np.minimum(11 - delta_x, 11)
+        right_shift_ = np.minimum(psf_size - delta_x, psf_size)
         down_shift_ = np.maximum(-delta_y, 0)
-        up_shift_ = np.minimum(11 - delta_y, 11)
+        up_shift_ = np.minimum(psf_size - delta_y, psf_size)
 
-        left_11 = np.maximum(- x[star] + 5, 0)
-        right_11 = np.minimum(size - x[star] + 5, 11)
-        down_11 = np.maximum(- y[star] + 5, 0)
-        up_11 = np.minimum(size - y[star] + 5, 11)
-
-        coord = np.arange(psf_size ** 2).reshape(psf_size, psf_size)
-        index = coord[down_11:up_11, left_11:right_11]
-        A = np.zeros((psf_size ** 2, over_size ** 2 + bg_dof))
-        A[np.repeat(index, 4), star_info_star[1]] = star_info_star[2]
-        psf_shape = np.dot(e_psf, A.T).reshape(len(source.time), psf_size, psf_size)
+        psf_shape = _target_psf_model(source, star, e_psf, factor, psf_size)
         epsf_sum = np.sum(np.nanmedian(psf_shape, axis=0))
         psf_sim_index = coord[down_shift:up_shift, left_shift:right_shift].flatten()
         psf_sim[:, psf_sim_index, j] = psf_shape[:, down_shift_:up_shift_, left_shift_:right_shift_].reshape(
             len(source.time), -1) / epsf_sum
         if star != star_num:
-            psf_sim[:, 11 ** 2 + j, j] = np.ones(len(source.time)) / (
+            psf_sim[:, psf_size ** 2 + j, j] = np.ones(len(source.time)) / (
                     prior * 1.5e4 * 10 ** ((10 - source.gaia[star]['tess_mag']) / 2.5))
-        else:
-            portion = np.nansum(psf_shape[:, 4:7, 4:7]) / np.nansum(psf_shape)
 
     star_index = np.where(np.array(field_star_num) == star_num)[0]
-    field_star = psf_sim[0, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8], :].reshape(cut_size ** 2,
+    field_star = psf_sim[0, window_indices, :].reshape(cut_size ** 2,
                                                                                      len(field_star_num)) * \
                  source.gaia['tess_flux_ratio'][field_star_num]
     field_star[:, star_index] = 0
@@ -407,21 +482,42 @@ def fit_lc_float_field(A, source, star_info=None, x=np.array([]), y=np.array([])
         else:
             aper_flat = aperture[j, :, :].flatten()
             aper_flat = np.append(aper_flat, np.zeros(len(field_star_num) - 1))  # / prior
-            aper_flat[cut_size ** 2 + star_index] = 0
-            postcards = psf_sim[j, np.arange(11 ** 2).reshape(11, 11)[3:8, 3:8], :].reshape(cut_size ** 2,
+            postcards = psf_sim[j, window_indices, :].reshape(cut_size ** 2,
                                                                                             len(field_star_num))
             A_[:cut_size ** 2, :len(field_star_num)] = postcards
             field_star = postcards * source.gaia['tess_flux_ratio'][field_star_num]
             field_star[:, star_index] = 0
             # A_[:(cut_size ** 2), -4] = np.sum(field_star, axis=1)
-            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, 11 ** 2:, :].reshape(len(field_star_num),
+            A_[cut_size ** 2:, :len(field_star_num)] = psf_sim[j, psf_size ** 2:, :].reshape(len(field_star_num),
                                                                                        len(field_star_num))
             a = np.delete(A_, cut_size ** 2 + star_index, 0)
-            psf_lc[j] = np.linalg.lstsq(a, aper_flat)[0][star_index]
+            bad = _source_pixel_mask(source, j, saturation_limit, saturation_dilation,
+                                     extra_pixel_mask)[down:up, left:right].flatten()
+            bad = np.append(bad, np.zeros(len(field_star_num) - 1, dtype=bool))
+            psf_lc[j] = _fit_linear_model(a[~bad], aper_flat[~bad])[star_index[0]]
     return aperture, psf_lc, y[star_num] - down, x[star_num] - left, portion
 
 
-def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False):
+def _detrend_flux(time, flux):
+    finite = np.isfinite(flux) & np.isfinite(time)
+    if np.count_nonzero(finite) < 3:
+        return np.full(len(flux), np.nan)
+    median = np.median(flux[finite])
+    if median == 0:
+        return np.full(len(flux), np.nan)
+    normalized = flux / median
+    # Keep the legacy detrending guard without censoring the signed flux product.
+    normalized[(normalized > 100) | ~finite] = np.nan
+    usable = np.isfinite(normalized)
+    if np.count_nonzero(usable) < 3:
+        return np.full(len(flux), np.nan)
+    shifted = normalized - np.min(normalized[usable]) + 1000
+    _, trend = flatten(time, shifted, window_length=1, method='biweight', return_trend=True)
+    return (shifted - trend) / np.median(normalized[usable]) + 1
+
+
+def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, near_edge=False,
+           return_offsets=False):
     '''
     background modification
     :param source: tglc.ffi_cut.Source or tglc.ffi_cut.Source_cut, required
@@ -438,6 +534,10 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     star index
     :param near_edge: boolean, required
     whether the star is 2 pixels or closer to the edge of a CCD
+    :param return_offsets: boolean, optional
+    Return (aperture offset, PSF offset) as the first item. The historical default
+    returns just the PSF offset. Linear flux retains negative values; an empty
+    valid reference set produces a missing offset and missing normalized flux.
     :return: local background, modified aperture light curve, modified PSF light curve
     '''
     bar = 15000 * 10 ** ((source.gaia['tess_mag'][star_num] - 10) / -2.5)
@@ -449,47 +549,18 @@ def bg_mod(source, q=None, aper_lc=None, psf_lc=None, portion=None, star_num=0, 
     # lightcurve = lightcurve + (flux_bar - np.nanmedian(lightcurve[q]))
     aperture_bar = bar * portion
     # print(bar)
-    local_bg = np.nanmedian(aper_lc[q]) - aperture_bar
-    if np.isnan(local_bg):
-        local_bg = 0
-    aper_lc = aper_lc - local_bg
+    if q is None:
+        q = slice(None)
+    aper_reference = np.asarray(aper_lc)[q]
+    aper_reference = aper_reference[np.isfinite(aper_reference)]
+    aper_bg = np.median(aper_reference) - aperture_bar if aper_reference.size else np.nan
+    aper_lc = np.asarray(aper_lc, dtype=float) - aper_bg
     psf_bar = bar
-    local_bg = np.nanmedian(psf_lc[q]) - psf_bar
-    if np.isnan(local_bg):
-        local_bg = 0
-    psf_lc = psf_lc - local_bg
-    negative_arg_aper = np.where(aper_lc <= 0)  # Negative frames
-    aper_lc[negative_arg_aper] = np.nan
-    negative_arg_psf = np.where(psf_lc <= 0)
-    psf_lc[negative_arg_psf] = np.nan
-    # removes very large outliers to prevent wotan to freeze
-    cal_aper_lc = aper_lc / np.nanmedian(aper_lc)
-    cal_aper_lc[np.where(cal_aper_lc > 100)] = np.nan
-    if np.isnan(cal_aper_lc).all():
-        print('Calibrated aperture flux are not accessible or processed incorrectly. ')
-    else:
-        _, trend = flatten(source.time, cal_aper_lc - np.nanmin(cal_aper_lc) + 1000,
-                           window_length=1, method='biweight', return_trend=True)
-        cal_aper_lc = (cal_aper_lc - np.nanmin(cal_aper_lc) + 1000 - trend) / np.nanmedian(cal_aper_lc) + 1
-        # cal_aper_lc = flatten(source.time, cal_aper_lc, window_length=1, method='biweight',
-        #                       return_trend=False)
-    if near_edge:
-        cal_psf_lc = psf_lc
-        return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc
-    else:
-        cal_psf_lc = psf_lc / np.nanmedian(psf_lc)
-        cal_psf_lc[np.where(cal_psf_lc > 100)] = np.nan
-        if np.isnan(cal_psf_lc).all():
-            print('Calibrated PSF flux are not accessible or processed incorrectly. ')
-        else:
-            _, trend = flatten(source.time, cal_psf_lc - np.nanmin(cal_psf_lc) + 1000,
-                               window_length=1, method='biweight', return_trend=True)
-            cal_psf_lc = (cal_psf_lc - np.nanmin(cal_psf_lc) + 1000 - trend) / np.nanmedian(cal_psf_lc) + 1
-            # cal_psf_lc = flatten(source.time, cal_psf_lc, window_length=1, method='biweight',
-            #                      return_trend=False)
-    # aper_mad = 1.4826 * np.nanmedian(np.abs(cal_aper_lc - 1))
-    # if aper_mad > 0.02:
-    #     psf_mad = 1.4826 * np.nanmedian(np.abs(cal_psf_lc - 1))
-    #     cal_psf_lc /= psf_mad / aper_mad
-    #     cal_psf_lc += 1 - np.median(cal_psf_lc)
+    psf_reference = np.asarray(psf_lc)[q]
+    psf_reference = psf_reference[np.isfinite(psf_reference)]
+    psf_bg = np.median(psf_reference) - psf_bar if psf_reference.size else np.nan
+    psf_lc = np.asarray(psf_lc, dtype=float) - psf_bg
+    local_bg = (aper_bg, psf_bg) if return_offsets else psf_bg
+    cal_aper_lc = _detrend_flux(source.time, aper_lc)
+    cal_psf_lc = psf_lc.copy() if near_edge else _detrend_flux(source.time, psf_lc)
     return local_bg, aper_lc, psf_lc, cal_aper_lc, cal_psf_lc

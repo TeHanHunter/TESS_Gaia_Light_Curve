@@ -1,5 +1,7 @@
 import os
 import pickle
+import json
+from pathlib import Path
 from glob import glob
 from tqdm import trange
 from wotan import flatten
@@ -30,22 +32,64 @@ from astroquery.utils.tap.core import TapPlus
 controller = ThreadpoolController()
 
 
+def _output_directory(directory):
+    """Accept filesystem paths without requiring a trailing separator."""
+    return os.path.join(os.path.expanduser(os.fspath(directory)), '')
+
+
+def _parse_tic_id(target):
+    """Recognize integer, bare-number, and TIC-prefixed identifiers."""
+    if isinstance(target, (bool, np.bool_)):
+        raise TypeError('A TIC identifier must be a positive integer, not a boolean.')
+    if isinstance(target, (int, np.integer)):
+        tic_id = int(target)
+    elif isinstance(target, str):
+        value = target.strip()
+        if value.upper().startswith('TIC'):
+            value = value[3:].strip()
+            if not value.isdecimal():
+                raise ValueError('Use a positive TIC identifier, for example "TIC 16005254".')
+        elif not value.isdecimal():
+            return None
+        tic_id = int(value)
+    else:
+        return None
+    if tic_id <= 0:
+        raise ValueError('A TIC identifier must be a positive integer.')
+    return tic_id
+
+
 @controller.wrap(limits=1, user_api='blas')
 def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True, limit_mag=16, get_all_lc=False,
             first_sector_only=False, last_sector_only=False, sector=None, prior=None, transient=None, ffi='SPOC',
-            mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap"):
+            mast_timeout=3600, gaia_tap_server="https://gea.esac.esa.int/tap-server/tap",
+            saturation_limit=80000.0, saturation_dilation=1):
     '''
     Generate light curve for a single target.
 
-    :param target: target identifier
-    :kind target: str, required
-    :param local_directory: output directory
-    :kind local_directory: str, required
+    :param target: target identifier; integer TIC IDs and "TIC 123" strings are equivalent
+    :kind target: str or int, required
+    :param local_directory: output directory (no trailing separator required)
+    :kind local_directory: str or pathlib.Path, required
     :param size: size of the FFI cut, default size is 90. Recommend large number for better quality. Cannot exceed 100.
     :kind size: int, optional
     :param mast_timeout: timeout in seconds for MAST Tesscut requests
     :kind mast_timeout: int, optional
+    :param saturation_limit: conservative saturation cutoff in e-/s; None disables it
+    :param saturation_dilation: number of neighboring detector pixels to mask
+    :returns: paths to FITS light curves written during this call
     '''
+    local_directory = _output_directory(local_directory)
+    tic_id = _parse_tic_id(target)
+    is_tic = tic_id is not None
+    if is_tic:
+        target = f'TIC {tic_id}'
+    ffi = ffi.upper()
+    if ffi not in ('SPOC', 'TICA'):
+        raise ValueError('ffi must be either SPOC or TICA')
+    if first_sector_only and last_sector_only:
+        raise ValueError('Choose only one of first_sector_only and last_sector_only.')
+    output_paths = []
     os.makedirs(local_directory + f'logs/', exist_ok=True)
     os.makedirs(local_directory + f'lc/', exist_ok=True)
     os.makedirs(local_directory + f'epsf/', exist_ok=True)
@@ -55,25 +99,8 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     if ffi.upper() == 'TICA':
         warnings.warn('TICA support is experimental; Tesscut product availability may be limited.')
 
-    def _parse_tic_id(t):
-        if not isinstance(t, str):
-            return None
-        s = t.strip()
-        if s.upper().startswith('TIC'):
-            parts = s.split()
-            if len(parts) > 1 and parts[1].isdigit():
-                return int(parts[1])
-            s = s[3:].strip()
-        return int(s) if s.isdigit() else None
-    def _is_tic_id(t):
-        if not isinstance(t, str):
-            return False
-        s = t.strip()
-        return s.upper().startswith('TIC') or s.isdigit()
-
     radius_deg = 42 * 0.707 / 3600
     target_ = None
-    is_tic = _is_tic_id(target) and _parse_tic_id(target) is not None
     try:
         target_ = Catalogs.query_object(target, radius=radius_deg, catalog="Gaia", version=2)
     except requests.exceptions.RequestException as e:
@@ -102,25 +129,31 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
     sector_table = Tesscut.get_sectors(coordinates=coord)
     print(sector_table)
     print(f'Found {len(sector_table)} sector(s) for this target.')
+    if len(sector_table) == 0:
+        raise RuntimeError(f'No TESS sectors are available for {target}.')
     if get_all_lc:
         name = None
     else:
         if is_tic:
-            TIC_ID = int(target.strip().split()[-1])
+            TIC_ID = tic_id
             with _dot_wait('Resolving TIC -> Gaia DR3 designation via TAP'):
                 ticvals = Catalogs.query_object(
                     f'TIC {TIC_ID}',
                     radius=3.0 * units.arcsec.to('degree'),
                     catalog="tic"
                 ).to_pandas()
-                if ticvals.shape[0] > 1:
-                    ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
+                ticvals = ticvals[ticvals.ID.astype(int).isin([TIC_ID])].reset_index(drop=True)
+                if len(ticvals) != 1:
+                    raise RuntimeError(f'Expected exactly one catalog match for TIC {TIC_ID}.')
+                dr2_source_id = str(ticvals.loc[0, 'GAIA']).strip()
+                if not dr2_source_id.isdecimal():
+                    raise RuntimeError(f'TIC {TIC_ID} has no usable Gaia DR2 identifier for crossmatching.')
                 join_query = (
                     "SELECT dr3.*, dr2.dr2_source_id FROM {0}.gaia_source AS dr3 "
                     "INNER JOIN {0}.dr2_neighbourhood AS dr2 "
                     "ON dr3.source_id = dr2.dr3_source_id "
                     "WHERE dr2.dr2_source_id = {1}"
-                ).format(Gaia.MAIN_GAIA_TABLE.split('.')[0], ticvals.loc[0, 'GAIA'])
+                ).format(Gaia.MAIN_GAIA_TABLE.split('.')[0], dr2_source_id)
                 try:
                     gaiavals = Gaia.launch_job(join_query).get_results().to_pandas()
                 except Exception as exc:
@@ -130,6 +163,11 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                     gaiavals = TapPlus(url=gaia_tap_server).launch_job(join_query).get_results().to_pandas()
                 if 'DESIGNATION' not in gaiavals.columns and 'designation' in gaiavals.columns:
                     gaiavals['DESIGNATION'] = gaiavals['designation'].values
+                if 'DESIGNATION' not in gaiavals.columns:
+                    raise RuntimeError(f'Gaia returned no DR3 designation for TIC {TIC_ID}.')
+                gaiavals = gaiavals.drop_duplicates(subset=['DESIGNATION']).reset_index(drop=True)
+                if len(gaiavals) != 1 or not isinstance(gaiavals.loc[0, 'DESIGNATION'], str):
+                    raise RuntimeError(f'TIC {TIC_ID} has no unique Gaia DR3 match; inspect the crossmatch.')
             dr2_id = gaiavals.loc[0, 'dr2_source_id']
             dr3_designation = gaiavals.loc[0, 'DESIGNATION']
             print(f'DR2 source_id: {dr2_id}; DR3 designation: {dr3_designation}')
@@ -145,7 +183,8 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
             print("Since the provided target is not TIC ID, the resulted light curve with get_all_lc=False can not be "
                   "guaranteed to be the target's light curve. Please check the TIC ID of the output file before using "
                   "the light curve or try use TIC ID as the target in the format of 'TIC 12345678'.")
-    if type(sector) == int:
+    if isinstance(sector, (int, np.integer)):
+        sector = int(sector)
         print(f'Only processing Sector {sector}.')
         print('Downloading data from MAST and Gaia.')
         print(f'MAST Tesscut timeout set to {mast_timeout}s.')
@@ -153,8 +192,10 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout,
                          gaia_tap_server=gaia_tap_server)  # sector
         source.select_sector(sector=sector)
-        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
+        output_paths.extend(epsf(
+            source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+            name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi,
+            saturation_limit=saturation_limit, saturation_dilation=saturation_dilation) or [])
     elif first_sector_only:
         print(f'Only processing the first sector the target is observed in: Sector {sector_table["sector"][0]}.')
         print('Downloading data from MAST and Gaia.')
@@ -164,8 +205,10 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout,
                          gaia_tap_server=gaia_tap_server)  # sector
         source.select_sector(sector=source.sector_table['sector'][0])
-        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
+        output_paths.extend(epsf(
+            source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+            name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi,
+            saturation_limit=saturation_limit, saturation_dilation=saturation_dilation) or [])
     elif last_sector_only:
         print(f'Only processing the last sector the target is observed in: Sector {sector_table["sector"][-1]}.')
         print('Downloading data from MAST and Gaia.')
@@ -175,8 +218,10 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout,
                          gaia_tap_server=gaia_tap_server)  # sector
         source.select_sector(sector=source.sector_table['sector'][-1])
-        epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-             name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
+        output_paths.extend(epsf(
+            source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+            name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi,
+            saturation_limit=saturation_limit, saturation_dilation=saturation_dilation) or [])
     elif sector == None:
         print(f'Processing all available sectors of the target.')
         print('Downloading data from MAST and Gaia.')
@@ -188,8 +233,10 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                              sector=sector_table['sector'][j],
                              limit_mag=limit_mag, transient=transient, ffi=ffi, mast_timeout=mast_timeout,
                              gaia_tap_server=gaia_tap_server)
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
+            output_paths.extend(epsf(
+                source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi,
+                saturation_limit=saturation_limit, saturation_dilation=saturation_dilation) or [])
     else:
         print(
             f'Processing all available sectors of the target in a single run. Note that if the number of sectors is '
@@ -201,8 +248,11 @@ def tglc_lc(target='TIC 264468702', local_directory='', size=90, save_aper=True,
                          gaia_tap_server=gaia_tap_server)  # sector
         for j in range(len(source.sector_table)):
             source.select_sector(sector=source.sector_table['sector'][j])
-            epsf(source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
-                 name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi)
+            output_paths.extend(epsf(
+                source, factor=2, sector=source.sector, target=target, local_directory=local_directory,
+                name=name, limit_mag=limit_mag, save_aper=save_aper, prior=prior, ffi=ffi,
+                saturation_limit=saturation_limit, saturation_dilation=saturation_dilation) or [])
+    return output_paths
 
 
 def search_stars(i, sector=1, tics=None, local_directory=None):
@@ -251,9 +301,15 @@ def star_spliter(server=1,  # or 2
     return
 
 
-def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None):
-    files = glob(f'{local_directory}lc/*.fits')
-    os.makedirs(f'{local_directory}plots/', exist_ok=True)
+def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, ylow=None, yhigh=None,
+            ffi=None):
+    local_directory = _output_directory(local_directory)
+    product = '' if ffi is None else ffi.upper()
+    if product not in ('', 'SPOC', 'TICA'):
+        raise ValueError('ffi must be SPOC, TICA, or None')
+    files = sorted(glob(f'{local_directory}lc/{product}/**/*.fits', recursive=True))
+    plot_directory = Path(local_directory) / 'plots' / product
+    plot_directory.mkdir(parents=True, exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
             q = [a and b for a, b in zip(list(hdul[1].data['TESS_flags'] == 0), list(hdul[1].data['TGLC_flags'] == 0))]
@@ -266,7 +322,7 @@ def plot_lc(local_directory=None, kind='cal_aper_flux', xlow=None, xhigh=None, y
             plt.legend()
             # plt.show()
             plt.savefig(
-                f'{local_directory}plots/TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{kind}.png',
+                plot_directory / f'TIC_{hdul[0].header["TICID"]}_sector_{hdul[0].header["SECTOR"]:04d}_{hdul[0].header.get("FFIVER", "unknown")}_{kind}.png',
                 dpi=300)
             plt.close()
 
@@ -362,7 +418,8 @@ def phasebin_centered(time, meas, meas_err, period, t0, binsize_days=None, nbins
 
 def plot_pf_lc(local_directory=None, period=None, mid_transit_tbjd=None, kind='cal_aper_flux',
                binsize_days=60/86400, nbins=None):
-    files = sorted(glob(f'{local_directory}*.fits'))
+    local_directory = _output_directory(local_directory)
+    files = sorted(glob(f'{local_directory}**/*.fits', recursive=True))
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
 
     fig = plt.figure(figsize=(13, 5))
@@ -431,7 +488,8 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
     sns.set(rc={'font.family': 'serif', 'font.serif': 'DejaVu Serif', 'font.size': 12,
                 'axes.edgecolor': '0.2', 'axes.labelcolor': '0.', 'xtick.color': '0.', 'ytick.color': '0.',
                 'axes.facecolor': '0.95', 'grid.color': '0.9'})
-    files = glob(f'{local_directory}lc/*{gaia_dr3}*.fits')
+    local_directory = _output_directory(local_directory)
+    files = sorted(glob(f'{local_directory}lc/**/*{gaia_dr3}*.fits', recursive=True))
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
     for i in range(len(files)):
         with fits.open(files[i], mode='denywrite') as hdul:
@@ -441,7 +499,11 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
             if ymin is None and ymax is None:
                 ymin = np.nanmin(hdul[1].data['cal_aper_flux'][q]) - 0.05
                 ymax = np.nanmax(hdul[1].data['cal_aper_flux'][q]) + 0.05
-            with open(glob(f'{local_directory}source/*_{sector}.pkl')[0], 'rb') as input_:
+            product = hdul[0].header.get('FFIVER', 'SPOC')
+            source_files = glob(f'{local_directory}source/source_{product}_*_sector_{sector}.pkl')
+            if len(source_files) != 1:
+                raise ValueError('Contamination plotting requires exactly one matching source cache.')
+            with open(source_files[0], 'rb') as input_:
                 source = pickle.load(input_)
                 source.select_sector(sector=sector)
                 star_num = np.where(source.gaia['DESIGNATION'] == f'Gaia DR3 {gaia_dr3}')
@@ -598,15 +660,22 @@ def plot_contamination(local_directory=None, gaia_dr3=None, ymin=None, ymax=None
                 plt.close()
 
 def plot_epsf(local_directory=None):
-    files = glob(f'{local_directory}epsf/*.npy')
+    local_directory = _output_directory(local_directory)
+    files = sorted(glob(f'{local_directory}epsf/**/*.npz', recursive=True))
     os.makedirs(f'{local_directory}plots/', exist_ok=True)
-    for i in range(len(files)):
-        psf = np.load(files[i])
-        plt.imshow(psf[0, :23 ** 2].reshape(23, 23), cmap='bone', origin='lower')
+    for filename in files:
+        with np.load(filename, allow_pickle=False) as cached:
+            metadata = json.loads(str(cached['metadata'].item()))
+            width = metadata['psf_size'] * metadata['factor'] + 1
+            psf = cached['e_psf'][0, :width ** 2].reshape(width, width)
+        plt.figure()
+        plt.imshow(psf, cmap='bone', origin='lower')
         plt.tick_params(axis='x', bottom=False)
         plt.tick_params(axis='y', left=False)
-        plt.title(f'{files[i].split("/")[-1].split(".")[0]}')
-        plt.savefig(f'{local_directory}plots/{files[i].split("/")[-1]}.png', bbox_inches='tight', dpi=300)
+        plt.title(Path(filename).stem)
+        plt.savefig(Path(local_directory) / 'plots' / f'{Path(filename).stem}.png', bbox_inches='tight')
+        plt.close()
+
 
 
 def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
@@ -631,17 +700,20 @@ def choose_prior(tics, local_directory=None, priors=np.logspace(-5, 0, 100)):
 
 
 def get_tglc_lc(tics=None, method='query', server=1, directory=None, prior=None, ffi='SPOC', mast_timeout=3600):
+    directory = _output_directory(directory)
+    output_paths = []
     if method == 'query':
         for i in range(len(tics)):
             target = f'TIC {tics[i]}'
             local_directory = f'{directory}{target}/'
             os.makedirs(local_directory, exist_ok=True)
-            tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
+            output_paths.extend(tglc_lc(target=target, local_directory=local_directory, size=90, save_aper=True, limit_mag=16,
                     get_all_lc=False, first_sector_only=False, last_sector_only=False, sector=None, prior=prior,
-                    transient=None, ffi=ffi, mast_timeout=mast_timeout)
+                    transient=None, ffi=ffi, mast_timeout=mast_timeout) or [])
             plot_lc(local_directory=f'{directory}TIC {tics[i]}/', kind='cal_aper_flux', ffi=ffi)
     if method == 'search':
         star_spliter(server=server, tics=tics, local_directory=directory)
+    return output_paths
 
 
 if __name__ == '__main__':
