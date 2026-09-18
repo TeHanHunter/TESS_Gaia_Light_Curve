@@ -43,12 +43,28 @@ this checkout does not by itself mean that PyPI or GitHub artifacts are publishe
 
 ## Evidence and limits
 
-The assembled correction implementation passed 105 offline tests with one
-explicit small-field stress-case expected failure. Its preparation wheel/sdist
-and installed-wheel tests passed. Real-signal comparisons cover three planet
-sectors and a known stellar eclipse in two sectors, alongside source/cache/FITS
-checks. These are evidence for the correction implementation; the final 0.8.0
-artifact and platform checks remain separate tasks below.
+The installed 0.8.0 wheel passed 106 offline tests with one explicit small-field
+stress-case expected failure. Wheel/sdist validation and an identical wheel
+rebuilt from the sdist passed. The Linux/macOS Python 3.10–3.12 matrix also
+passed. Real-signal comparisons cover three planet sectors and a known stellar
+eclipse in two sectors, alongside source/cache/FITS checks.
+
+A fresh public `tglc_lc` extraction of WASP-4 (TIC 402026209, Sector 2,
+50x50 pixels) processed all 1245 cadences with the installed wheel. Target
+identity, time, units, flags, raw-flux reconstruction and both plots passed
+inspection. Repeating the request reused unchanged source/ePSF caches and
+reproduced every FITS column exactly (51.5 seconds initially, 2.1 seconds on
+this machine with cache reuse). This check exposed and fixed byte-order-dependent
+cache identities after FITS arrays were pickled; a regression test now covers it.
+
+Six quality-zero Beta Dor Sector 1 frames provided a real saturation check.
+Each contained 74–99 pixels above 80000 e-/s, expanding to 152–199 after dilation.
+Multiplying excluded saturated pixels by seven left the fitted coefficients
+exactly unchanged. Unusable Beta Dor flux remained missing with explicit flags;
+a nearby unsaturated control retained six finite measurements and zero flags.
+The installed wheel reproduced the source masks, coefficients and FITS columns
+exactly. The bleed trail reaches the cutout edges, so this establishes masking
+and failure reporting rather than saturated-star flux recovery.
 
 PSF reference residuals improved in the small real-signal cohort, but
 catalog-normalized fractional amplitudes did not improve uniformly. Catalog
@@ -68,13 +84,13 @@ work should verify the remaining reference-to-target correction.
 
 - [x] Consolidate the corrected implementation and its regression evidence.
 - [x] Set 0.8.0 software/processing identifiers and document migration/limitations.
-- [ ] Run the final installed package through a live, single-sector `tglc_lc`
+- [x] Run the final installed package through a live, single-sector `tglc_lc`
   extraction, FITS inspection, plotting and cache reuse. Confirm target identity,
   units, flags and raw-to-corrected reconstruction in actual products.
-- [ ] Check the new default mask/flags on a real saturated or bleeding field;
+- [x] Check the new default mask/flags on a real saturated or bleeding field;
   this is a focused sanity check, not a detector-wide photometric calibration.
-- [ ] Pass the configured Linux/macOS Python 3.10–3.12 matrix.
-- [ ] Build, check and install the exact 0.8.0 wheel/sdist; inspect packaged data
+- [x] Pass the configured Linux/macOS Python 3.10–3.12 matrix.
+- [x] Build, check and install the exact 0.8.0 wheel/sdist; inspect packaged data
   and repeat the installed-artifact checks after any final source changes.
 - [ ] Review the final change, tag and publish verified artifacts and release notes.
 
