@@ -6,11 +6,21 @@ Corrected SPOC extraction and robustness improvements. New products carry
 `TGLCVER=0.8.0` and `PROCVER=spoc-0.8.0`. See `docs/release_0_8_0.md` for
 migration notes, limitations, and release-validation status.
 
-- Correct the original subpixel coordinate mapping in both ePSF training and
-  target rendering; center the regularization grid consistently. Retain the
+**Bilinear interpolation correction and ePSF incompatibility:** earlier public
+versions contained an error in the subpixel coordinate mapping used for bilinear
+interpolation. Version 0.8.0 fixes that error in both ePSF fitting and target
+rendering. Fitted ePSFs from 0.8.0 and earlier versions are not interchangeable
+in either direction. Refit the ePSF from the science images and rerun extraction
+with 0.8.0; renaming or converting an old cache file does not make it compatible.
+Previously generated light curves remain readable but retain the earlier
+processing and are not corrected by installing the update.
+
+- Correct the bilinear interpolation coordinate mapping described above and
+  center the regularization grid consistently. Retain the
   SPOC `edge_compression=1e-4` setting rather than copying TICA's new value.
-- Apply configurable pixel-rate saturation masks, supplied masks, and finite-
-  data checks in global and target PSF fits. Use rank-aware least squares and
+- Exclude saturated pixels and a configurable surrounding neighborhood from
+  global ePSF and target PSF fits to prevent those pixel values from biasing the
+  fitted model. Also apply supplied masks and finite-data checks. Use rank-aware least squares and
   preserve failed cadences as missing with processing flags.
 - Propagate Gaia positions to the observing epoch, retain outside-neighbor PSF
   support, and keep unknown/ambiguous DR2-to-DR3 matches explicitly unknown.

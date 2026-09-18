@@ -79,6 +79,13 @@ for published versions. To install this checkout, run
 The `0.8.0 release notes <docs/release_0_8_0.md>`_ describe changes, migration,
 and validation status; the `1.0 roadmap <docs/release_1_0_0.md>`_ covers later work.
 
+**Important for upgrades:** earlier public versions contained an error in the
+subpixel coordinate mapping used for bilinear interpolation. Version 0.8.0 fixes
+it in both ePSF fitting and target rendering. **Fitted ePSFs from 0.8.0 and earlier
+versions are not interchangeable in either direction.** Refit from the science
+images and rerun extraction; renaming or converting old ePSF caches is insufficient.
+Existing light curves remain readable but are not corrected by installation.
+
 A single-target example::
 
   from pathlib import Path

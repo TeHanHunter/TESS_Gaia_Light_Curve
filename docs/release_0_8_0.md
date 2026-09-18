@@ -9,9 +9,13 @@ this checkout does not by itself mean that PyPI or GitHub artifacts are publishe
 
 ## Changes
 
-- Correct detector-pixel/ePSF interpolation in fitting and target rendering;
-  center the edge-regularization grid consistently.
-- Exclude saturation, missing/zero-weight pixels, and supplied masks from fits.
+- Fix an error in the subpixel coordinate mapping used for bilinear interpolation
+  in earlier public versions, in both ePSF fitting and target rendering.
+  Fitted ePSFs are incompatible across this change; see the migration notice.
+  Center the edge-regularization grid consistently.
+- Exclude saturated pixels and a configurable surrounding neighborhood from
+  global ePSF and target PSF fits, preventing those values from biasing the fit.
+  Also exclude missing/zero-weight pixels and apply supplied masks.
   Use rank-aware solving and preserve failed cadences as missing with flags.
 - Propagate Gaia positions to the observation epoch, retain contributing stars
   outside the cutout, and preserve unknown or ambiguous crossmatches as unknown.
@@ -23,6 +27,12 @@ this checkout does not by itself mean that PyPI or GitHub artifacts are publishe
 
 ## Migration from 0.7.x and preparation builds
 
+- **The 0.8.0 ePSF model is incompatible with earlier versions.** The corrected
+  interpolation changes how the fitted coefficients are sampled. Do not use an
+  earlier fitted ePSF with 0.8.0, or a 0.8.0 ePSF with an earlier version. Refit
+  from the science images and rerun extraction with 0.8.0. Renaming or converting
+  an old cache file does not fix the incompatibility. Older light curves remain
+  readable but retain the earlier processing until they are regenerated.
 - Use Python 3.10–3.12. Install the public and MIT QLP packages into different
   environments because both distributions/imports are named `tglc`.
 - New light curves live under `lc/SPOC/` or `lc/TICA/`, with camera/CCD

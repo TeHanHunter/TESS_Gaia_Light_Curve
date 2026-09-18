@@ -102,6 +102,13 @@ are not independently propagated per-cadence measurement uncertainties.
 Caches and reproducibility
 --------------------------
 
+Version 0.8.0 fixes an error in the subpixel coordinate mapping used for bilinear
+interpolation in ePSF fitting and target rendering. **Fitted ePSFs from 0.8.0
+and earlier versions are incompatible in both directions.** Refit the ePSF from
+the science images and rerun extraction with 0.8.0; renaming or converting an old
+cache does not fix its model coefficients. Previously generated light curves
+remain readable but retain the earlier processing until regenerated.
+
 Source caches are validated against extraction configuration and schema. ePSF caches use
 ``.npz`` files containing a fingerprint and fit metadata; old unvalidated
 ``.npy`` caches are not a valid source for the corrected fit. Version 0.8.0
