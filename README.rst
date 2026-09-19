@@ -48,7 +48,7 @@ Check the product's processing version and available columns before choosing:
   ``tglc_lc(save_aper=True)`` also saves the decontaminated 5 by 5 pixel cube for
   inspecting other apertures, whose flux fractions need their own calibration.
 
-The `tutorial <tutorial/TGLC_tutorial.ipynb>`_ shows the syntaxes and differences among these light curves in several examples.
+The `tutorial <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/blob/main/tutorial/TGLC_tutorial.ipynb>`_ shows the syntaxes and differences among these light curves in several examples.
 
 ==================================
 Data Access
@@ -72,17 +72,25 @@ Users can also fit light curves using the package tglc. Using tglc, one can spec
 
   pip install tglc
   
-for the latest published release. This documentation describes 0.8.0; see
+for the latest published release. This documentation describes 0.8.1; see
 `GitHub Releases <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/releases>`_
 for published versions. To install this checkout, run
 ``python -m pip install -e .`` from the repository directory.
-The `0.8.0 release notes <docs/release_0_8_0.md>`_ describe changes, migration,
-and validation status; the `1.0 roadmap <docs/release_1_0_0.md>`_ covers later work.
+The `changelog <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/blob/main/CHANGELOG.md>`_
+includes the 0.8.1 import fix. The
+`0.8.0 release notes <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/blob/main/docs/release_0_8_0.md>`_
+describe the scientific changes, migration, and validation status; the
+`1.0 roadmap <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/blob/main/docs/release_1_0_0.md>`_
+covers later work.
+
+Version 0.8.1 fixes the NumPy typing import error reported in issue #18.
+Photometry and ePSF models are unchanged from 0.8.0, and their caches remain
+compatible; the processing version is still ``spoc-0.8.0``.
 
 **Important for upgrades:** earlier public versions contained an error in the
 subpixel coordinate mapping used for bilinear interpolation. Version 0.8.0 fixes
-it in both ePSF fitting and target rendering. **Fitted ePSFs from 0.8.0 and earlier
-versions are not interchangeable in either direction.** Refit from the science
+it in both ePSF fitting and target rendering. **Fitted ePSFs from pre-0.8.0
+versions and 0.8.x are not interchangeable in either direction.** Refit from the science
 images and rerun extraction; renaming or converting old ePSF caches is insufficient.
 Existing light curves remain readable but are not corrected by installation.
 
@@ -107,8 +115,10 @@ This example contacts MAST and Gaia and downloads science data. New files are
 written below ``lc/SPOC/`` (or ``lc/TICA/``). Old files in ``lc/`` remain separate.
 Path objects and strings work without a trailing slash. The saturation cutoff
 masks pixels during fitting; it does not establish validated photometry for
-saturated targets. See the `usage reference <docs/usage.rst>`_ and
-`tutorial <tutorial/TGLC_tutorial.ipynb>`_ for interpreting the outputs.
+saturated targets. See the
+`usage reference <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/blob/main/docs/usage.rst>`_
+and `tutorial <https://github.com/TeHanHunter/TESS_Gaia_Light_Curve/blob/main/tutorial/TGLC_tutorial.ipynb>`_
+for interpreting the outputs.
 
 Development
 -----------
